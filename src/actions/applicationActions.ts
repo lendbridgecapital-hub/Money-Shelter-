@@ -54,6 +54,7 @@ export async function createApplicationLinkAction(): Promise<CreateLinkResult> {
     const cleanBase = base.replace(/\/$/, '');
     const url = `${cleanBase}/apply/${token}`;
 
+    revalidatePath('/dashboard');
     revalidatePath('/branch/requests');
     return { ok: true, url, token };
   } catch {
@@ -108,6 +109,7 @@ export async function updateApplicationStatusAction(
     applicationsRepo.updateApplicationStatus(applicationId, status);
     statusHistoryRepo.addStatusHistory({ applicationId, status, note: note || null, changedById: user.id });
 
+    revalidatePath('/dashboard');
     revalidatePath('/branch/requests');
     revalidatePath(`/branch/requests/${applicationId}`);
     return { ok: true, message: 'Status updated.' };

@@ -136,14 +136,15 @@ function createPortableStorage(storageFilePath: string): DatabaseAdapter {
 
   let cachedData: StorageData = defaultData;
   let hasHydratedFromNeon = false;
-  let neonPushTimer: NodeJS.Timeout | null = null;
+  let lastDiskMtime = 0;
+  const getDbUrl = () => process.env.DATABASE_URL || process.env.POSTGRES_URL;
 
   function syncWithNeonAsync(data: StorageData) {
-    const dbUrl = process.env.DATABASE_URL || process.env.POSTGRES_URL;
+    const dbUrl = getDbUrl();
     if (!dbUrl) return;
 
-    if (neonPushTimer) clearTimeout(neonPushTimer);
-    neonPushTimer = setTimeout(async () => {
+    // Execute immediately without setTimeout delay so server actions and requests persist
+    (async () => {
       try {
         const { neon } = require('@neondatabase/serverless');
         const sql = neon(dbUrl);
@@ -169,28 +170,31 @@ function createPortableStorage(storageFilePath: string): DatabaseAdapter {
       } catch (err) {
         console.error('[db] Error pushing updates to Neon PostgreSQL:', (err as Error).message);
       }
-    }, 60);
+    })();
   }
 
   function loadData(): StorageData {
-    if (Array.isArray(cachedData.users) && cachedData.users.length > 0 && hasHydratedFromNeon) {
-      return cachedData;
-    }
-
-    const dbUrl = process.env.DATABASE_URL || process.env.POSTGRES_URL;
-
-    // 1. Try reading from disk cache (which sync-neon.js init populated before next start)
+    const dbUrl = getDbUrl();
+    // 1. If storage file on disk has changed, reload it immediately
     if (fs.existsSync(storageFilePath)) {
       try {
-        const raw = fs.readFileSync(storageFilePath, 'utf8');
-        let parsed = JSON.parse(raw);
-        if (parsed && parsed.default) parsed = parsed.default;
-        if (parsed && typeof parsed === 'object' && Array.isArray(parsed.users) && parsed.users.length > 0) {
-          cachedData = { ...defaultData, ...parsed };
-          hasHydratedFromNeon = true;
-          return cachedData;
+        const stats = fs.statSync(storageFilePath);
+        if (stats.mtimeMs > lastDiskMtime) {
+          lastDiskMtime = stats.mtimeMs;
+          const raw = fs.readFileSync(storageFilePath, 'utf8');
+          let parsed = JSON.parse(raw);
+          if (parsed && parsed.default) parsed = parsed.default;
+          if (parsed && typeof parsed === 'object' && Array.isArray(parsed.users) && parsed.users.length > 0) {
+            cachedData = { ...defaultData, ...parsed };
+            hasHydratedFromNeon = true;
+            return cachedData;
+          }
         }
       } catch {}
+    }
+
+    if (Array.isArray(cachedData.users) && cachedData.users.length > 0 && hasHydratedFromNeon) {
+      return cachedData;
     }
 
     // 2. If Neon PostgreSQL is configured, pull fresh database snapshot on startup
@@ -235,6 +239,7 @@ function createPortableStorage(storageFilePath: string): DatabaseAdapter {
     cachedData = data;
     try {
       fs.writeFileSync(storageFilePath, JSON.stringify(data, null, 2), 'utf8');
+      lastDiskMtime = fs.statSync(storageFilePath).mtimeMs;
     } catch {
       // Local cache write might fail on read-only environments; Neon is the primary store
     }

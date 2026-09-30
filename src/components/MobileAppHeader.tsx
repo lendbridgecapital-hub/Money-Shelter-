@@ -57,7 +57,12 @@ export default function MobileAppHeader({
 
   return (
     <>
-      <header className="md:hidden sticky top-0 z-30 bg-white/95 backdrop-blur-md border-b border-slate-200/80 px-3 py-2 flex items-center justify-between shadow-2xs">
+      <header
+        className="md:hidden sticky top-0 z-30 bg-white/95 backdrop-blur-md border-b border-slate-200/80 px-3.5 pb-2.5 flex items-center justify-between shadow-2xs"
+        style={{
+          paddingTop: 'max(env(safe-area-inset-top, 0px), 32px)',
+        }}
+      >
         {/* Left Side Navigation */}
         {isHome ? (
           /* Home Screen: Show Brand Logo & Name */

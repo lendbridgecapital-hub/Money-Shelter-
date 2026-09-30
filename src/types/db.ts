@@ -125,7 +125,7 @@ export interface OperationalRemark {
   applicationId: string;
   authorId: string;
   authorName: string;
-  authorRole: Role;
+  authorRole: Role | 'BORROWER';
   statusChangedTo?: ApplicationStatus | null;
   remark: string;
   createdAt: string;

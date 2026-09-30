@@ -122,7 +122,12 @@ export default function DigitalBusinessCardClient({ advisor, companySettings }: 
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900 py-4 sm:py-8 px-3 sm:px-4">
+    <div
+      className="min-h-screen bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900 pb-8 px-3 sm:px-4"
+      style={{
+        paddingTop: 'max(env(safe-area-inset-top, 0px), 32px)',
+      }}
+    >
       <div className="max-w-md mx-auto space-y-4">
         {/* Top Sticky Navigation Bar (Provides 1-tap Return to App / Dashboard) */}
         <div className="sticky top-2 z-50 bg-slate-900/90 backdrop-blur-md border border-white/15 px-3 py-2.5 rounded-2xl flex items-center justify-between shadow-xl">

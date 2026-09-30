@@ -11,6 +11,7 @@ import { sendMail, customerConfirmationEmail, branchAlertEmail } from '@/lib/mai
 import { revalidatePath } from 'next/cache';
 import { generateApplicationToken } from '@/lib/tokens';
 import * as usersRepo from '@/lib/repos/usersRepo';
+import * as workflowRepo from '@/lib/repos/workflowRepo';
 import { DOCUMENT_GROUPS } from '@/lib/documentChecklist';
 import { LOAN_TYPE_LABELS } from '@/lib/format';
 import type { LoanType } from '@/types/db';
@@ -129,6 +130,10 @@ export async function submitCustomerApplication(token: string, formData: FormDat
     await sendMail({ to: alertTo, ...alert });
   }
 
+  revalidatePath('/dashboard');
+  revalidatePath('/branch/requests');
+  revalidatePath(`/branch/requests/${application.id}`);
+
   redirect(`/apply/${token}/success`);
 }
 
@@ -180,5 +185,104 @@ export async function submitDigitalCardInquiryAction(formData: FormData): Promis
     };
   } catch {
     return { ok: false, error: 'Failed to submit inquiry. Please try again.' };
+  }
+}
+
+export async function uploadCustomerRequiredDocumentAction(
+  formData: FormData
+): Promise<{ ok: boolean; error?: string; message?: string }> {
+  try {
+    const token = (formData.get('token') as string) || '';
+    const requiredDocId = (formData.get('requiredDocId') as string) || '';
+    const file = formData.get('file') as File | null;
+
+    if (!token || !requiredDocId) {
+      return { ok: false, error: 'Invalid document upload request.' };
+    }
+
+    const application = applicationsRepo.getApplicationByToken(token);
+    if (!application) {
+      return { ok: false, error: 'Loan application not found.' };
+    }
+
+    if (!file || !(file instanceof File) || file.size === 0) {
+      return { ok: false, error: 'Please select a valid document file to upload.' };
+    }
+
+    if (file.size > MAX_FILE_SIZE) {
+      return { ok: false, error: 'File size exceeds maximum allowable limit of 10MB.' };
+    }
+
+    const reqDoc = workflowRepo.getRequiredDocumentById(requiredDocId);
+    if (!reqDoc || reqDoc.applicationId !== application.id) {
+      return { ok: false, error: 'Requested document item not found for this application.' };
+    }
+
+    const docLabel = reqDoc.documentTitle || file.name || 'Additional Document';
+    const saved = await saveUploadedFile(file, application.id);
+
+    workflowRepo.markRequiredDocumentUploaded(requiredDocId, saved.fileUrl);
+
+    documentsRepo.addDocument({
+      applicationId: application.id,
+      category: 'ADDITIONAL_REQUIRED',
+      label: docLabel,
+      fileName: saved.fileName,
+      fileUrl: saved.fileUrl,
+      fileSize: saved.fileSize,
+      mimeType: saved.mimeType,
+    });
+
+    workflowRepo.addOperationalRemark({
+      applicationId: application.id,
+      authorId: 'customer',
+      authorName: application.fullName || 'Customer (Applicant)',
+      authorRole: 'BORROWER',
+      remark: `Applicant uploaded required document: "${docLabel}" via secure link.`,
+    });
+
+    const allRequired = workflowRepo.listRequiredDocuments(application.id);
+    const stillPending = allRequired.some((d) => d.id !== requiredDocId && d.status === 'PENDING');
+
+    if (!stillPending) {
+      applicationsRepo.updateApplicationStatus(application.id, 'DOCUMENTS_IN');
+      statusHistoryRepo.addStatusHistory({
+        applicationId: application.id,
+        status: 'DOCUMENTS_IN',
+        note: 'All requested documents have been uploaded by customer. Application returned to Documents In for Operations review.',
+        changedById: null,
+      });
+
+      if (application.relationshipManagerId) {
+        workflowRepo.createNotification({
+          recipientId: application.relationshipManagerId,
+          recipientRole: 'RELATIONSHIP_MANAGER',
+          applicationId: application.id,
+          title: 'Requested Documents Uploaded',
+          message: `Applicant ${application.fullName || 'Customer'} uploaded all requested documents for Case #${application.id.slice(-6)}.`,
+        });
+      }
+    } else {
+      statusHistoryRepo.addStatusHistory({
+        applicationId: application.id,
+        status: application.status,
+        note: `Applicant uploaded required document: "${docLabel}". Remaining pending: ${
+          allRequired.filter((d) => d.id !== requiredDocId && d.status === 'PENDING').length
+        }.`,
+        changedById: null,
+      });
+    }
+
+    revalidatePath('/dashboard');
+    revalidatePath('/branch/requests');
+    revalidatePath(`/branch/requests/${application.id}`);
+    revalidatePath(`/apply/${token}`);
+
+    return {
+      ok: true,
+      message: `Document "${docLabel}" uploaded successfully!`,
+    };
+  } catch (err: unknown) {
+    return { ok: false, error: err instanceof Error ? err.message : 'Upload failed.' };
   }
 }

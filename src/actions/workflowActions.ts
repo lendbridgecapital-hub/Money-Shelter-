@@ -77,6 +77,7 @@ export async function sendToBankAction(
       });
     }
 
+    revalidatePath('/dashboard');
     revalidatePath('/branch/requests');
     revalidatePath(`/branch/requests/${applicationId}`);
     return { ok: true, message: `Successfully forwarded loan file to ${bank.name}.` };
@@ -188,6 +189,7 @@ export async function submitRemarkAction(
       });
     }
 
+    revalidatePath('/dashboard');
     revalidatePath('/branch/requests');
     revalidatePath(`/branch/requests/${applicationId}`);
     return { ok: true, message: 'Operational remark recorded and notifications dispatched.' };
@@ -317,8 +319,12 @@ export async function uploadRequiredDocumentFileAction(
       });
     }
 
+    revalidatePath('/dashboard');
     revalidatePath('/branch/requests');
     revalidatePath(`/branch/requests/${applicationId}`);
+    if (application.token) {
+      revalidatePath(`/apply/${application.token}`);
+    }
     return {
       ok: true,
       message: `Document "${docLabel}" uploaded successfully and submitted for review.`,
@@ -396,6 +402,7 @@ export async function partnerUploadRequiredDocAction(
       });
     }
 
+    revalidatePath('/dashboard');
     revalidatePath('/branch/requests');
     revalidatePath(`/branch/requests/${applicationId}`);
     return { ok: true, message: 'Document uploaded successfully.' };
@@ -487,8 +494,12 @@ export async function approveCaseAction(
       });
     }
 
+    revalidatePath('/dashboard');
     revalidatePath('/branch/requests');
     revalidatePath(`/branch/requests/${applicationId}`);
+    if (application.token) {
+      revalidatePath(`/offer/${application.token}`);
+    }
     return { ok: true, message: 'Case approved. Sanction offer link generated for customer acceptance.' };
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : 'Failed to approve case.';
@@ -544,8 +555,10 @@ export async function customerAcceptOfferAction(
       });
     }
 
+    revalidatePath('/dashboard');
     revalidatePath('/branch/requests');
     revalidatePath(`/branch/requests/${updated.id}`);
+    revalidatePath(`/offer/${token}`);
     return { ok: true, message: 'Offer accepted successfully!', acceptanceRef };
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : 'Failed to accept loan offer.';
@@ -635,6 +648,7 @@ export async function disburseCaseAction(
       });
     }
 
+    revalidatePath('/dashboard');
     revalidatePath('/branch/requests');
     revalidatePath(`/branch/requests/${applicationId}`);
     return { ok: true, message: `Disbursement recorded successfully. Partner commission ₹${commissionAmount.toLocaleString('en-IN')} logged.` };

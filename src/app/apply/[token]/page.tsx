@@ -1,8 +1,10 @@
-import { notFound } from 'next/navigation';
+import Link from 'next/link';
 import { getApplicationByToken } from '@/lib/repos/applicationsRepo';
 import { getBranchById } from '@/lib/repos/branchesRepo';
 import { getCompanySettings } from '@/lib/settings';
+import { listRequiredDocuments } from '@/lib/repos/workflowRepo';
 import CustomerApplicationForm from '@/components/CustomerApplicationForm';
+import CustomerRequiredDocsUploader from '@/components/CustomerRequiredDocsUploader';
 
 export default async function CustomerApplyPage({ params }: { params: { token: string } }) {
   const application = getApplicationByToken(params.token);
@@ -44,13 +46,13 @@ export default async function CustomerApplyPage({ params }: { params: { token: s
             )}
           </div>
 
-          <a
-            href="/"
+          <Link
+            href="/dashboard"
             className="inline-flex items-center justify-center w-full py-3 px-4 rounded-xl text-xs font-semibold text-white transition shadow-sm hover:opacity-95"
             style={{ backgroundColor: defaultSettings.primaryColor }}
           >
-            Go to {defaultSettings.companyName} Home
-          </a>
+            Go to {defaultSettings.companyName} Home Dashboard
+          </Link>
         </div>
       </div>
     );
@@ -59,7 +61,73 @@ export default async function CustomerApplyPage({ params }: { params: { token: s
   const settings = await getCompanySettings(application.tenantId || 'default');
   const branch = getBranchById(application.branchId);
 
-  // If already submitted, inform the applicant gracefully
+  // If status is DOCUMENTS_REQUIRED: Render the dedicated document upload checklist
+  if (application.status === 'DOCUMENTS_REQUIRED') {
+    const requiredDocs = listRequiredDocuments(application.id);
+    return (
+      <div className="min-h-screen bg-slate-50/70 pb-16">
+        {/* Safe Area Aware Header with Home & Exit Navigation */}
+        <header
+          className="bg-white border-b border-slate-200/80 sticky top-0 z-30 shadow-xs"
+          style={{ paddingTop: 'max(env(safe-area-inset-top, 0px), 24px)' }}
+        >
+          <div className="max-w-4xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <Link
+                href="/dashboard"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white text-xs font-bold transition shadow-xs"
+                title="Return to Home Dashboard"
+              >
+                <svg className="w-3.5 h-3.5 stroke-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.4} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                </svg>
+                <span>Home</span>
+              </Link>
+              {settings.logoUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={settings.logoUrl} alt={settings.companyName} className="h-8 max-w-[130px] object-contain" />
+              ) : (
+                <div
+                  className="w-8 h-8 rounded-xl flex items-center justify-center text-white font-bold text-sm shadow-sm"
+                  style={{ backgroundColor: settings.primaryColor }}
+                >
+                  {settings.companyName.charAt(0)}
+                </div>
+              )}
+              <span className="font-bold text-slate-900 text-sm hidden sm:inline">
+                {settings.companyName}
+              </span>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <Link
+                href={`/branch/requests/${application.id}`}
+                className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold active:scale-95 transition border border-slate-200"
+              >
+                <span>Exit Preview ✕</span>
+              </Link>
+            </div>
+          </div>
+        </header>
+
+        <main className="max-w-4xl mx-auto px-4 sm:px-6 pt-6">
+          <CustomerRequiredDocsUploader
+            token={params.token}
+            application={application}
+            requiredDocs={requiredDocs}
+            settings={settings}
+            branch={branch}
+          />
+        </main>
+
+        <footer className="max-w-4xl mx-auto px-4 sm:px-6 mt-16 pt-8 border-t border-slate-200 text-center text-xs text-slate-400">
+          <p className="font-medium text-slate-500">{settings.footerText}</p>
+        </footer>
+      </div>
+    );
+  }
+
+  // If already submitted and not DOCUMENTS_REQUIRED, inform gracefully with Home button
   if (application.status !== 'LINK_SHARED') {
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center p-6">
@@ -100,34 +168,52 @@ export default async function CustomerApplyPage({ params }: { params: { token: s
             )}
           </div>
 
-          <p className="text-[11px] text-slate-400">
-            Need to update details or upload additional documents? Please contact your loan relationship executive.
-          </p>
+          <div className="space-y-2">
+            <Link
+              href="/dashboard"
+              className="inline-flex items-center justify-center w-full py-3 px-4 rounded-xl text-xs font-bold text-white transition shadow-sm bg-emerald-600 hover:bg-emerald-700"
+            >
+              Return to Home Dashboard
+            </Link>
+          </div>
         </div>
       </div>
     );
   }
 
-  const advisorName = application.channelPartnerName || application.createdByName || 'Loan Origination Desk';
-
   return (
     <div className="min-h-screen bg-slate-50/70 pb-16">
-      {/* Brand Header */}
-      <header className="bg-white border-b border-slate-200/80 sticky top-0 z-30 shadow-xs">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
+      {/* Brand Header with Safe Area and Home Navigation */}
+      <header
+        className="bg-white border-b border-slate-200/80 sticky top-0 z-30 shadow-xs"
+        style={{ paddingTop: 'max(env(safe-area-inset-top, 0px), 24px)' }}
+      >
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between">
           <div className="flex items-center gap-3">
+            {/* Direct Home Navigation for Previews */}
+            <Link
+              href="/dashboard"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white text-xs font-bold transition shadow-xs"
+              title="Return to Home Dashboard"
+            >
+              <svg className="w-3.5 h-3.5 stroke-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.4} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+              </svg>
+              <span>Home</span>
+            </Link>
+
             {settings.logoUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
-              <img src={settings.logoUrl} alt={settings.companyName} className="h-9 max-w-[140px] object-contain" />
+              <img src={settings.logoUrl} alt={settings.companyName} className="h-8 max-w-[130px] object-contain" />
             ) : (
               <div
-                className="w-10 h-10 rounded-xl flex items-center justify-center text-white font-bold text-lg shadow-sm"
+                className="w-8 h-8 rounded-xl flex items-center justify-center text-white font-bold text-sm shadow-sm"
                 style={{ backgroundColor: settings.primaryColor }}
               >
                 {settings.companyName.charAt(0)}
               </div>
             )}
-            <div>
+            <div className="hidden sm:block">
               <h1 className="font-bold text-slate-900 text-sm sm:text-base leading-tight">
                 {settings.companyName}
               </h1>
@@ -137,9 +223,17 @@ export default async function CustomerApplyPage({ params }: { params: { token: s
             </div>
           </div>
 
-          <div className="hidden sm:flex items-center gap-2 text-xs font-semibold text-emerald-700 bg-emerald-50 px-3 py-1.5 rounded-full border border-emerald-200">
-            <span>🔒</span>
-            <span>256-Bit SSL Encrypted</span>
+          <div className="flex items-center gap-2">
+            <Link
+              href="/dashboard"
+              className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold active:scale-95 transition border border-slate-200"
+            >
+              <span>Exit Preview ✕</span>
+            </Link>
+            <div className="hidden md:flex items-center gap-2 text-xs font-semibold text-emerald-700 bg-emerald-50 px-3 py-1.5 rounded-full border border-emerald-200">
+              <span>🔒</span>
+              <span>256-Bit SSL Encrypted</span>
+            </div>
           </div>
         </div>
       </header>

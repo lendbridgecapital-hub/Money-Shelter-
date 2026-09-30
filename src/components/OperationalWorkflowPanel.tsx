@@ -76,6 +76,7 @@ export default function OperationalWorkflowPanel({
     currentUser.role === 'CENTRAL_SUPPORT';
   const isPartner = currentUser.role === 'CHANNEL_PARTNER';
   const isRM = currentUser.role === 'RELATIONSHIP_MANAGER';
+  const canUpload = isPartner || isOpsOrAdmin || isRM;
 
   const rawOrigin = typeof window !== 'undefined' && window.location.origin ? window.location.origin : (baseUrl || '');
   const isLocal = !rawOrigin || rawOrigin.includes('localhost') || rawOrigin.startsWith('capacitor:');
@@ -362,6 +363,30 @@ export default function OperationalWorkflowPanel({
             </div>
           </div>
 
+          {/* Documents Required Banner (Alerts RM, Partner, and Ops) */}
+          {application.status === 'DOCUMENTS_REQUIRED' && (
+            <div className="bg-amber-50 border-2 border-amber-300 rounded-xl p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 shadow-xs">
+              <div>
+                <p className="text-xs font-bold text-amber-950 flex items-center gap-1.5">
+                  <span className="w-2.5 h-2.5 rounded-full bg-amber-500 inline-block animate-ping" />
+                  Action Required: Operations Requested Additional Documents
+                </p>
+                <p className="text-xs text-amber-900 mt-1">
+                  Bank sanction requires supplementary documentation. You or the customer can upload the requested files directly.
+                </p>
+              </div>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('REQUIRED_DOCS')}
+                  className="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold rounded-lg shadow-xs transition flex items-center gap-1.5 shrink-0"
+                >
+                  📂 View & Upload Documents ({requiredDocs.filter((d) => d.status === 'PENDING').length} Pending) ➔
+                </button>
+              </div>
+            </div>
+          )}
+
           {/* If Approved or Customer Accepted: Show Offer Link */}
           {(application.status === 'APPROVED' ||
             application.status === 'CUSTOMER_ACCEPTED' ||
@@ -490,8 +515,8 @@ export default function OperationalWorkflowPanel({
                 </button>
               )}
 
-              {/* Channel Partner: Upload Required Documents */}
-              {isPartner && (
+              {/* Channel Partner & RM: Upload Required Documents */}
+              {canUpload && (
                 <button
                   type="button"
                   onClick={() => setActiveTab('REQUIRED_DOCS')}
@@ -575,7 +600,7 @@ export default function OperationalWorkflowPanel({
                           View File ↗
                         </a>
                       </div>
-                    ) : isPartner || isOpsOrAdmin ? (
+                    ) : canUpload ? (
                       <button
                         type="button"
                         onClick={() => openUploadDocModal(doc)}
@@ -584,7 +609,7 @@ export default function OperationalWorkflowPanel({
                         Upload Document ⤒
                       </button>
                     ) : (
-                      <span className="text-xs text-slate-400 italic">Waiting on Partner</span>
+                      <span className="text-xs text-slate-400 italic">Waiting on Partner / RM</span>
                     )}
                   </div>
                 </div>
@@ -1017,30 +1042,29 @@ export default function OperationalWorkflowPanel({
                     const f = e.dataTransfer.files?.[0] || null;
                     handleFilePick(f);
                   }}
-                  className={`border-2 border-dashed rounded-xl p-6 text-center transition cursor-pointer ${
+                  className={`relative border-2 border-dashed rounded-xl p-6 text-center transition cursor-pointer overflow-hidden ${
                     isDragOver
                       ? 'border-emerald-500 bg-emerald-50/50'
                       : 'border-slate-300 hover:border-emerald-400 bg-slate-50/50'
                   }`}
-                  onClick={() => document.getElementById('target-doc-file-input')?.click()}
                 >
                   <input
                     id="target-doc-file-input"
                     type="file"
                     accept=".pdf,.png,.jpg,.jpeg,.doc,.docx"
-                    className="hidden"
+                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
                     onChange={(e) => {
                       const f = e.target.files?.[0] || null;
                       handleFilePick(f);
                     }}
                   />
-                  <div className="w-12 h-12 mx-auto mb-2 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center text-xl">
+                  <div className="w-12 h-12 mx-auto mb-2 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center text-xl pointer-events-none">
                     ⤒
                   </div>
-                  <p className="text-xs font-bold text-slate-800">
-                    Click to browse or drag & drop document file here
+                  <p className="text-xs font-bold text-slate-800 pointer-events-none">
+                    Tap to browse or select document file here
                   </p>
-                  <p className="text-[11px] text-slate-500 mt-1">
+                  <p className="text-[11px] text-slate-500 mt-1 pointer-events-none">
                     Supports PDF, JPG, PNG, DOC, DOCX up to 10 MB
                   </p>
                 </div>

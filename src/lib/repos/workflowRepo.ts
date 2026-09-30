@@ -7,7 +7,7 @@ export function addOperationalRemark(data: {
   applicationId: string;
   authorId: string;
   authorName: string;
-  authorRole: Role;
+  authorRole: Role | 'BORROWER';
   statusChangedTo?: ApplicationStatus | null;
   remark: string;
 }): OperationalRemark {
@@ -50,7 +50,7 @@ export function listRemarksForApplication(applicationId: string): OperationalRem
     applicationId: String(r.application_id || r.applicationId),
     authorId: String(r.author_id || r.authorId),
     authorName: String(r.author_name || r.authorName || 'Operations'),
-    authorRole: (r.author_role || r.authorRole) as Role,
+    authorRole: (r.author_role || r.authorRole) as Role | 'BORROWER',
     statusChangedTo: (r.status_changed_to || r.statusChangedTo) as ApplicationStatus | null,
     remark: String(r.remark || ''),
     createdAt: String(r.created_at || r.createdAt || ''),
