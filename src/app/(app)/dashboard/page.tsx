@@ -1,95 +1,441 @@
 import Link from 'next/link';
 import { requireUser } from '@/lib/auth';
-import { branchStats } from '@/lib/repos/applicationsRepo';
+import { getPipelineStats, listApplicationsByRole } from '@/lib/repos/applicationsRepo';
 import { listBranchesWithCounts } from '@/lib/repos/branchesRepo';
+import { listPartnersByRm, getUserById } from '@/lib/repos/usersRepo';
+import { formatCurrencyINR, LOAN_TYPE_LABELS, formatDate } from '@/lib/format';
+import StatusBadge from '@/components/StatusBadge';
+import ActiveReportsSection from '@/components/ActiveReportsSection';
+import MobileDashboardSlider from '@/components/MobileDashboardSlider';
+import {
+  getOrganisationReport,
+  getRmTerritoryReport,
+  getSupportOperationalReport,
+  getPartnerPersonalReport,
+} from '@/lib/repos/reportsRepo';
 
 export default async function DashboardPage() {
-  const user = await requireUser();
+  const sessionUser = await requireUser();
+  const user = getUserById(sessionUser.id) || sessionUser;
+  const tenantId = user.tenantId || 'default';
+  const stats = getPipelineStats(user, tenantId);
+  const applications = listApplicationsByRole(user);
+  const recentApplications = applications.slice(0, 4);
 
-  if (user.role === 'ADMIN') {
-    const branches = listBranchesWithCounts();
-    const totalUsers = branches.reduce((sum, b) => sum + b.userCount, 0);
-    const totalApplications = branches.reduce((sum, b) => sum + b.applicationCount, 0);
+  const isAdmin = user.role === 'ADMIN';
+  const isSupport = user.role === 'CENTRAL_SUPPORT';
+  const isPartner = user.role === 'CHANNEL_PARTNER';
+  const isRM = user.role === 'RELATIONSHIP_MANAGER';
 
-    return (
-      <div>
-        <h1 className="text-xl font-semibold text-slate-900 mb-1">Overview</h1>
-        <p className="text-sm text-slate-500 mb-6">Organization-wide snapshot across all branches.</p>
+  // Compute access-scoped active reports
+  const orgReport = isAdmin ? getOrganisationReport(tenantId) : null;
+  const rmReport = isRM ? getRmTerritoryReport(user.id, tenantId) : null;
+  const supportReport = isSupport ? getSupportOperationalReport(tenantId) : null;
+  const partnerPersonalReport = isPartner ? getPartnerPersonalReport(user.id, tenantId) : null;
 
-        <div className="grid sm:grid-cols-3 gap-4 mb-8">
-          <SummaryCard label="Branches" value={branches.length} />
-          <SummaryCard label="Users" value={totalUsers} />
-          <SummaryCard label="Total Applications" value={totalApplications} />
-        </div>
+  // Compute business metrics for the 1/3 mobile dashboard slider
+  const totalDisbursedAmount = applications
+    .filter((a) => a.status === 'DISBURSED')
+    .reduce((sum, a) => sum + (a.disbursedAmount || a.approvedAmount || a.loanAmount || 0), 0);
+  const totalDisbursedCases = stats.disbursed;
+  const totalRequestedAmount = applications.reduce((sum, a) => sum + (a.loanAmount || a.approvedAmount || 0), 0);
+  const approvalRate = stats.total > 0 ? Math.round(((stats.approved + stats.disbursed) / stats.total) * 100) : 0;
+  const disbursementRate = stats.total > 0 ? Math.round((stats.disbursed / stats.total) * 100) : 0;
 
-        <div className="bg-white border border-slate-200 rounded-xl overflow-hidden mb-8">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="bg-slate-50 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">
-                <th className="px-4 py-3">Branch</th>
-                <th className="px-4 py-3">Code</th>
-                <th className="px-4 py-3">Users</th>
-                <th className="px-4 py-3">Applications</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              {branches.map((b) => (
-                <tr key={b.id}>
-                  <td className="px-4 py-3 font-medium text-slate-800">{b.name}</td>
-                  <td className="px-4 py-3 text-slate-500">{b.code}</td>
-                  <td className="px-4 py-3 text-slate-600">{b.userCount}</td>
-                  <td className="px-4 py-3 text-slate-600">{b.applicationCount}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+  const businessMetrics = {
+    totalDisbursedAmount: orgReport ? orgReport.metrics.totalDisbursedAmount : totalDisbursedAmount,
+    totalDisbursedCases: orgReport ? orgReport.metrics.totalDisbursedCases : totalDisbursedCases,
+    totalRequestedAmount: orgReport ? orgReport.metrics.totalRequestedAmount : totalRequestedAmount,
+    approvalRate: orgReport ? orgReport.metrics.approvalRate : approvalRate,
+    disbursementRate: orgReport ? orgReport.metrics.disbursementRate : disbursementRate,
+  };
 
-        <div className="flex gap-3 flex-wrap">
-          <QuickLink href="/branch/requests" label="View all requests" />
-          <QuickLink href="/admin/branches" label="Manage branches" />
-          <QuickLink href="/admin/users" label="Manage users" />
-          <QuickLink href="/admin/company" label="Company & branding" />
-        </div>
-      </div>
-    );
-  }
+  const rmPartners = isRM ? listPartnersByRm(user.id, tenantId) : [];
+  const branches = isAdmin || isSupport ? listBranchesWithCounts(tenantId) : [];
+  const hasSideColumn = (isAdmin && branches.length > 0) || (isRM && rmPartners.length > 0);
 
-  const stats = branchStats(user.branchId);
   return (
-    <div>
-      <h1 className="text-xl font-semibold text-slate-900 mb-1">Welcome, {user.name.split(' ')[0]}</h1>
-      <p className="text-sm text-slate-500 mb-6">{user.branchName} branch overview.</p>
+    <div className="space-y-2.5">
+      {/* Dedicated Executive Mobile Dashboard (Visible on mobile, hidden on desktop) */}
+      <MobileDashboardSlider
+        stats={stats}
+        metrics={businessMetrics}
+        userName={user.name}
+        role={user.role}
+        userId={user.id}
+        firmName={user.firmName}
+        branchName={user.branchName}
+        photoUrl={user.photoUrl}
+      />
 
-      <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 mb-8">
-        <SummaryCard label="Total" value={stats.total ?? 0} />
-        <SummaryCard label="Link Shared" value={stats.linkShared ?? 0} />
-        <SummaryCard label="Document Received" value={stats.documentReceived ?? 0} />
-        <SummaryCard label="Approved" value={stats.approved ?? 0} />
-        <SummaryCard label="Disbursed" value={stats.disbursed ?? 0} />
+      {/* Mobile Digital Business Card Quick Share Card (Visible on mobile, hidden on desktop) */}
+      <div className="block md:hidden bg-gradient-to-r from-slate-900 via-slate-800 to-emerald-950 border border-emerald-500/25 text-white rounded-2xl p-3.5 shadow-md mb-3">
+        <div className="flex items-center justify-between gap-3">
+          <div className="min-w-0">
+            <div className="flex items-center gap-1.5">
+              <span className="text-xs">🪪</span>
+              <p className="text-xs font-bold text-white tracking-wide">Smart Visiting Card</p>
+              <span className="px-1.5 py-0.5 rounded bg-emerald-400/20 text-emerald-300 text-[9px] font-bold border border-emerald-400/30">1-Click Save</span>
+            </div>
+            <p className="text-[10px] text-slate-300 mt-0.5 truncate">
+              Share your digital profile & auto-capture loan leads
+            </p>
+          </div>
+          <div className="flex items-center gap-1.5 shrink-0">
+            <Link
+              href={`/card/${user.id}`}
+              target="_blank"
+              className="px-2.5 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 border border-white/15 text-white text-[11px] font-bold active:scale-95 transition"
+            >
+              View
+            </Link>
+            <Link
+              href="/profile"
+              className="px-3 py-1.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-[11px] font-extrabold shadow-sm active:scale-95 transition flex items-center gap-1"
+            >
+              <span>Share</span>
+              <span>↗</span>
+            </Link>
+          </div>
+        </div>
       </div>
 
-      <div className="flex gap-3">
-        <QuickLink href="/branch/requests" label="View requests" />
-        <QuickLink href="/branch/create-link" label="Create a new link" />
+      {/* Partner Approval Notice Banner if Partner is not approved yet */}
+      {isPartner && user.partnerStatus !== 'APPROVED' && (
+        <div className="bg-amber-50 border border-amber-200 rounded-xl px-3.5 py-2 shadow-2xs flex flex-wrap items-center justify-between gap-2">
+          <div className="flex items-center gap-2">
+            <span className="text-base">⏳</span>
+            <div>
+              <p className="text-xs font-bold text-amber-900">
+                Onboarding Under Central Support Review (Status: {user.partnerStatus || 'Pending Approval'})
+              </p>
+              <p className="text-[11px] text-amber-700">
+                {user.partnerStatus === 'DOCUMENTS_REQUIRED'
+                  ? `Central Support update needed: "${user.approvalRemark}". Go to Create Link tab to re-upload.`
+                  : 'Your Sub-DSA application and documents are being vetted. Link creation will unlock upon Central Support approval.'}
+              </p>
+            </div>
+          </div>
+          <Link
+            href="/branch/create-link"
+            className="px-2.5 py-1 bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold rounded-lg shadow-2xs transition"
+          >
+            Check Status →
+          </Link>
+        </div>
+      )}
+
+      {/* Square Flowchart Pipeline Cards (Desktop only: 6 cols) */}
+      <div className="hidden md:grid sm:grid-cols-3 lg:grid-cols-6 gap-2 sm:gap-2.5">
+        <PipelineCard
+          label="Total Leads"
+          count={stats.total}
+          colorClass="text-slate-900"
+          href="/branch/requests"
+          dotColor="bg-slate-400"
+        />
+        <PipelineCard
+          label="Link Shared"
+          count={stats.linkShared}
+          colorClass="text-emerald-700"
+          href="/branch/requests?status=LINK_SHARED"
+          dotColor="bg-emerald-500"
+        />
+        <PipelineCard
+          label="Docs In"
+          count={stats.documentsIn}
+          colorClass="text-slate-800"
+          href="/branch/requests?status=DOCUMENTS_IN"
+          dotColor="bg-slate-700"
+        />
+        <PipelineCard
+          label="Sent to Bank"
+          count={stats.sentToBank}
+          colorClass="text-emerald-800"
+          href="/branch/requests?status=SENT_TO_BANK"
+          dotColor="bg-emerald-700"
+        />
+        <PipelineCard
+          label="Docs Req."
+          count={stats.documentsRequired}
+          colorClass="text-amber-700"
+          href="/branch/requests?status=DOCUMENTS_REQUIRED"
+          dotColor="bg-amber-500"
+        />
+        <PipelineCard
+          label="Approved"
+          count={stats.approved}
+          colorClass="text-emerald-600"
+          href="/branch/requests?status=APPROVED"
+          dotColor="bg-emerald-500"
+        />
+      </div>
+
+      {/* 4. Access-Wise Active Reports & Organization Intelligence (Desktop only) */}
+      <div className="hidden md:block">
+        <ActiveReportsSection
+          role={user.role}
+          currentUserId={user.id}
+          orgReport={orgReport}
+          rmReport={rmReport}
+          supportReport={supportReport}
+          partnerReport={partnerPersonalReport}
+        />
+      </div>
+
+      {/* 5. Main Workspace */}
+      <div className={`grid grid-cols-1 ${hasSideColumn ? 'lg:grid-cols-12' : ''} gap-2`}>
+        {/* Left Column: Recent Applications & Active Cases */}
+        <div className={`${hasSideColumn ? 'lg:col-span-8' : 'w-full'} bg-white border border-slate-200/90 rounded-xl shadow-2xs overflow-hidden flex flex-col justify-between`}>
+          <div>
+            <div className="px-3 py-1.5 border-b border-slate-100 flex items-center justify-between bg-slate-50/60">
+              <div className="flex items-center gap-1.5">
+                <span className="text-xs">📋</span>
+                <h3 className="text-xs font-bold uppercase tracking-wider text-slate-800">
+                  Recent Loan Applications
+                </h3>
+                <span className="text-[10px] text-slate-400 hidden sm:inline">
+                  • Active customer loan files
+                </span>
+              </div>
+              <Link
+                href="/branch/requests"
+                className="text-xs font-bold text-emerald-700 hover:text-emerald-900 transition-colors"
+              >
+                View All ({stats.total}) →
+              </Link>
+            </div>
+
+            {recentApplications.length === 0 ? (
+              <div className="p-4 text-center">
+                <p className="text-xs font-semibold text-slate-700">No active applications yet</p>
+                <p className="text-[10px] text-slate-400 mt-0.5 mb-1.5">
+                  Generate a custom link to receive borrower files.
+                </p>
+                <Link
+                  href="/branch/create-link"
+                  className="inline-flex items-center gap-1 px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold rounded-lg shadow-2xs transition"
+                >
+                  <span>🔗</span>
+                  <span>Create Link</span>
+                </Link>
+              </div>
+            ) : (
+              <>
+                {/* Mobile Recent Applications List (Visible on mobile, hidden on desktop) */}
+                <div className="block md:hidden p-2 space-y-2">
+                  {recentApplications.map((app) => (
+                    <Link
+                      key={app.id}
+                      href={`/branch/requests/${app.id}`}
+                      className="block p-3 rounded-xl bg-slate-50 border border-slate-200/80 active:bg-slate-100 transition shadow-2xs"
+                    >
+                      <div className="flex items-start justify-between gap-2 mb-1.5">
+                        <div className="flex items-center gap-2">
+                          <div className="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-800 font-bold flex items-center justify-center text-xs">
+                            {app.fullName ? app.fullName.charAt(0).toUpperCase() : 'C'}
+                          </div>
+                          <div className="min-w-0">
+                            <p className="font-bold text-slate-900 text-xs truncate leading-tight">
+                              {app.fullName || app.token}
+                            </p>
+                            <p className="text-[10px] text-slate-400 font-mono mt-0.5">
+                              {app.mobile || app.email || 'Awaiting Details'}
+                            </p>
+                          </div>
+                        </div>
+                        <StatusBadge status={app.status} size="sm" />
+                      </div>
+
+                      <div className="flex items-center justify-between pt-1 border-t border-slate-200/60 text-xs">
+                        <div>
+                          <span className="font-extrabold text-slate-900 text-sm">
+                            {app.loanAmount || app.approvedAmount
+                              ? formatCurrencyINR(app.approvedAmount || app.loanAmount)
+                              : '—'}
+                          </span>
+                          <span className="text-[10px] text-slate-500 ml-1.5">
+                            {app.loanType ? LOAN_TYPE_LABELS[app.loanType] : 'General'}
+                          </span>
+                        </div>
+                        <span className="text-[11px] font-bold text-emerald-700 flex items-center gap-0.5">
+                          Open →
+                        </span>
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+
+                {/* Desktop Recent Applications Table (Hidden on mobile, visible on desktop) */}
+                <div className="hidden md:block overflow-x-auto w-full">
+                  <table className="w-full text-left">
+                    <thead>
+                      <tr className="bg-slate-50/70 text-[10px] uppercase font-bold text-slate-400 border-b border-slate-100">
+                        <th className="px-3 py-1">Borrower</th>
+                        <th className="px-3 py-1">Loan & Amount</th>
+                        <th className="px-3 py-1">Flowchart Stage</th>
+                        <th className="px-3 py-1">Date</th>
+                        <th className="px-3 py-1 text-right">Action</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100 text-xs">
+                      {recentApplications.map((app) => (
+                        <tr key={app.id} className="hover:bg-slate-50/60 transition-colors">
+                          <td className="px-3 py-1.5">
+                            <p className="font-bold text-slate-900 leading-tight truncate max-w-[130px]">
+                              {app.fullName || 'Unnamed Applicant'}
+                            </p>
+                            <p className="text-[10px] text-slate-400 font-mono">
+                              {app.mobile || app.email || 'Awaiting Details'}
+                            </p>
+                          </td>
+                          <td className="px-3 py-1.5">
+                            <p className="font-semibold text-slate-800 leading-tight">
+                              {app.loanAmount || app.approvedAmount
+                                ? formatCurrencyINR(app.approvedAmount || app.loanAmount)
+                                : '—'}
+                            </p>
+                            <p className="text-[10px] text-slate-500 truncate max-w-[120px]">
+                              {app.loanType ? LOAN_TYPE_LABELS[app.loanType] : 'General Loan'}
+                            </p>
+                          </td>
+                          <td className="px-3 py-1.5">
+                            <StatusBadge status={app.status} size="sm" />
+                          </td>
+                          <td className="px-3 py-1.5 text-[10px] text-slate-500 whitespace-nowrap">
+                            {formatDate(app.createdAt)}
+                          </td>
+                          <td className="px-3 py-1.5 text-right whitespace-nowrap">
+                            <Link
+                              href={`/branch/requests/${app.id}`}
+                              className="text-[11px] font-semibold text-emerald-700 hover:text-emerald-900 bg-emerald-50 hover:bg-emerald-100 px-2 py-0.5 rounded transition-colors inline-flex items-center gap-0.5"
+                            >
+                              <span>Case File</span>
+                              <span>→</span>
+                            </Link>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+
+        {/* Right Column: Branch / Partner Overview (4 cols) */}
+        {hasSideColumn && (
+          <div className="lg:col-span-4 space-y-1.5 flex flex-col justify-between">
+            {isAdmin && branches.length > 0 ? (
+              <div className="bg-white border border-slate-200/90 rounded-xl p-2 shadow-2xs">
+                <div className="flex items-center justify-between mb-1">
+                  <h3 className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                    Branches Overview
+                  </h3>
+                  <Link
+                    href="/admin/branches"
+                    className="text-[10px] font-bold text-emerald-700 hover:text-emerald-900"
+                  >
+                    Manage →
+                  </Link>
+                </div>
+                <div className="divide-y divide-slate-100">
+                  {branches.slice(0, 3).map((b) => (
+                    <div key={b.id} className="py-1 flex items-center justify-between text-xs">
+                      <div>
+                        <p className="font-bold text-slate-900 leading-tight text-[11px] truncate max-w-[120px]">
+                          {b.name}
+                        </p>
+                        <p className="text-[9px] text-slate-400 font-mono">{b.code}</p>
+                      </div>
+                      <div className="text-right">
+                        <span className="font-bold text-slate-800 text-[11px]">{b.applicationCount}</span>
+                        <span className="text-[9px] text-slate-400 ml-0.5">cases</span>
+                        <p className="text-[9px] text-slate-400">{b.userCount} users</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : isRM && rmPartners.length > 0 ? (
+              <div className="bg-white border border-slate-200/90 rounded-xl p-2 shadow-2xs">
+                <div className="flex items-center justify-between mb-1">
+                  <h3 className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                    My Channel Partners ({rmPartners.length})
+                  </h3>
+                  <Link
+                    href="/admin/partners"
+                    className="text-[10px] font-bold text-emerald-700 hover:text-emerald-900"
+                  >
+                    View All →
+                  </Link>
+                </div>
+                <div className="divide-y divide-slate-100">
+                  {rmPartners.slice(0, 3).map((p) => (
+                    <div key={p.id} className="py-1 flex items-center justify-between text-xs">
+                      <div>
+                        <p className="font-bold text-slate-900 leading-tight text-[11px] truncate max-w-[120px]">
+                          {p.name}
+                        </p>
+                        <p className="text-[9px] text-slate-400 font-mono">{p.partnerCode || p.phone || p.email}</p>
+                      </div>
+                      <div className="text-right">
+                        <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-800 border border-emerald-200/60">
+                          {p.partnerCode || 'Active Partner'}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : null}
+          </div>
+        )}
       </div>
     </div>
   );
 }
 
-function SummaryCard({ label, value }: { label: string; value: number }) {
+function PipelineCard({
+  label,
+  count,
+  colorClass,
+  href,
+  dotColor,
+}: {
+  label: string;
+  count: number;
+  colorClass: string;
+  href: string;
+  dotColor: string;
+}) {
   return (
-    <div className="bg-white border border-slate-200 rounded-xl px-5 py-4">
-      <p className="text-2xl font-semibold text-slate-900">{value}</p>
-      <p className="text-xs text-slate-500 mt-0.5">{label}</p>
-    </div>
-  );
-}
+    <Link
+      href={href}
+      className="bg-white border border-slate-200/90 hover:border-emerald-400 hover:shadow-xs rounded-2xl p-2 sm:p-3 aspect-[1.05/1] sm:aspect-square flex flex-col justify-between items-center text-center transition-all group shadow-2xs active:scale-[0.98]"
+    >
+      {/* Top: Card Name */}
+      <div className="flex items-center justify-center gap-1.5 w-full pt-0.5">
+        <span className={`w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full ${dotColor} shrink-0`} />
+        <span className="text-[10px] sm:text-xs font-bold text-slate-600 uppercase tracking-wider truncate group-hover:text-slate-900 transition-colors">
+          {label}
+        </span>
+      </div>
 
-function QuickLink({ href, label }: { href: string; label: string }) {
-  return (
-    <Link href={href} className="bg-white border border-slate-200 rounded-lg px-4 py-2.5 text-sm font-medium text-slate-700 hover:border-slate-300">
-      {label} →
+      {/* Center: Number */}
+      <div className="flex-1 flex items-center justify-center py-0.5 sm:py-1">
+        <span className={`text-xl sm:text-3xl lg:text-4xl font-black ${colorClass} tracking-tight group-hover:scale-105 transition-transform`}>
+          {count}
+        </span>
+      </div>
+
+      {/* Bottom hint (desktop only) */}
+      <div className="pb-0.5 hidden sm:block">
+        <span className="text-[10px] font-medium text-slate-400 group-hover:text-emerald-700 transition-colors">
+          View Pipeline →
+        </span>
+      </div>
     </Link>
   );
 }

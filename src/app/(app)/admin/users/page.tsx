@@ -4,14 +4,18 @@ import { listBranches } from '@/lib/repos/branchesRepo';
 import UserManager from '@/components/UserManager';
 
 export default async function UsersPage() {
-  await requireRole('ADMIN');
-  const [users, branches] = [listUsers(), listBranches()];
+  const currentUser = await requireRole('ADMIN', 'CENTRAL_SUPPORT');
+  const [users, branches] = [listUsers(currentUser.tenantId || 'default'), listBranches(currentUser.tenantId || 'default')];
 
   return (
     <div>
-      <h1 className="text-xl font-semibold text-slate-900 mb-1">Users</h1>
-      <p className="text-sm text-slate-500 mb-6">Manage staff accounts — Admins, Loan Managers, and Operation Executives — and their branch assignment.</p>
-      <UserManager users={users} branches={branches} />
+      <div className="mb-5">
+        <h1 className="text-xl font-bold text-slate-900">Staff & Relationship Managers</h1>
+        <p className="text-xs text-slate-500 mt-0.5">
+          Manage team members, provision individual or bulk Relationship Managers (RMs), and control branch assignments.
+        </p>
+      </div>
+      <UserManager users={users} branches={branches} currentUserRole={currentUser.role} />
     </div>
   );
 }

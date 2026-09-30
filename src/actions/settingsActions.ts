@@ -36,7 +36,7 @@ export async function updateBranding(formData: FormData): Promise<ActionResult> 
 
     updateSettings({
       companyName,
-      officialEmail: officialEmail || null,
+      officialEmail: officialEmail || undefined,
       primaryColor,
       accentColor,
       ...(logoUrl ? { logoUrl } : {}),
@@ -63,13 +63,13 @@ export async function updateSmtpSettings(formData: FormData): Promise<ActionResu
     const current = await getCompanySettings();
 
     updateSettings({
-      smtpHost: smtpHost || null,
+      smtpHost: smtpHost || undefined,
       smtpPort: Number.isFinite(smtpPort) ? smtpPort : 587,
       smtpSecure,
-      smtpUser: smtpUser || null,
+      smtpUser: smtpUser || undefined,
       // Keep the existing password if the admin left the field blank (masked).
       smtpPassword: smtpPasswordRaw ? smtpPasswordRaw : current.smtpPassword,
-      smtpFromName: smtpFromName || null,
+      smtpFromName: smtpFromName || undefined,
     });
 
     revalidatePath('/admin/email-settings');

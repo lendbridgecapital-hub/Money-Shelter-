@@ -8,6 +8,9 @@ import { getBranchById } from '@/lib/repos/branchesRepo';
 import { getCompanySettings } from '@/lib/settings';
 import { saveUploadedFile, MAX_FILE_SIZE } from '@/lib/uploads';
 import { sendMail, customerConfirmationEmail, branchAlertEmail } from '@/lib/mail';
+import { revalidatePath } from 'next/cache';
+import { generateApplicationToken } from '@/lib/tokens';
+import * as usersRepo from '@/lib/repos/usersRepo';
 import { DOCUMENT_GROUPS } from '@/lib/documentChecklist';
 import { LOAN_TYPE_LABELS } from '@/lib/format';
 import type { LoanType } from '@/types/db';
@@ -90,7 +93,7 @@ export async function submitCustomerApplication(token: string, formData: FormDat
 
   statusHistoryRepo.addStatusHistory({
     applicationId: application.id,
-    status: 'DOCUMENT_RECEIVED',
+    status: 'DOCUMENTS_IN',
     note: 'Customer submitted the application form and documents via the shared link.',
     changedById: null,
   });
@@ -123,4 +126,55 @@ export async function submitCustomerApplication(token: string, formData: FormDat
   }
 
   redirect(`/apply/${token}/success`);
+}
+
+export async function submitDigitalCardInquiryAction(formData: FormData): Promise<{ ok: boolean; error?: string; message?: string }> {
+  try {
+    const advisorId = String(formData.get('advisorId') || '').trim();
+    const fullName = String(formData.get('fullName') || '').trim();
+    const mobile = String(formData.get('mobile') || '').trim();
+    const email = String(formData.get('email') || '').trim().toLowerCase();
+    const loanType = (formData.get('loanType') || 'PERSONAL_LOAN') as LoanType;
+    const loanAmount = Number(formData.get('loanAmount') || 0);
+    const city = String(formData.get('city') || '').trim();
+    const notes = String(formData.get('notes') || '').trim();
+
+    if (!advisorId) return { ok: false, error: 'Advisor ID is missing.' };
+    if (!fullName) return { ok: false, error: 'Please enter your full name.' };
+    const cleanMobile = mobile.replace(/[^0-9]/g, '');
+    if (!cleanMobile || cleanMobile.length < 10) {
+      return { ok: false, error: 'Please enter a valid 10-digit mobile number.' };
+    }
+
+    const advisor = usersRepo.getUserById(advisorId);
+    if (!advisor) return { ok: false, error: 'Financial advisor not found.' };
+
+    const app = applicationsRepo.createInquiryFromCard({
+      advisorId,
+      fullName,
+      mobile: cleanMobile,
+      email: email || undefined,
+      loanType,
+      loanAmount: loanAmount > 0 ? loanAmount : undefined,
+      city: city || undefined,
+      notes: notes || undefined,
+    });
+
+    statusHistoryRepo.addStatusHistory({
+      applicationId: app.id,
+      status: 'LINK_SHARED',
+      note: `Inquiry received via ${advisor.name}'s Digital Business Card (${fullName} • ${cleanMobile}).`,
+      changedById: advisor.id,
+    });
+
+    revalidatePath('/branch/requests');
+    revalidatePath('/dashboard');
+
+    return {
+      ok: true,
+      message: `Thank you, ${fullName}! Your inquiry has been sent directly to ${advisor.name}. They will contact you shortly on ${cleanMobile}.`,
+    };
+  } catch {
+    return { ok: false, error: 'Failed to submit inquiry. Please try again.' };
+  }
 }

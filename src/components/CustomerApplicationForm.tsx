@@ -1,0 +1,276 @@
+'use client';
+
+import React, { useState, useTransition } from 'react';
+import { submitCustomerApplication } from '@/actions/publicActions';
+import { DOCUMENT_GROUPS, RESIDENCE_PROOF_OPTIONS } from '@/lib/documentChecklist';
+import type { CompanySettings, Branch } from '@/types/db';
+
+interface CustomerApplicationFormProps {
+  token: string;
+  settings: CompanySettings;
+  branch?: Branch | null;
+}
+
+export default function CustomerApplicationForm({ token, settings, branch }: CustomerApplicationFormProps) {
+  const [isPending, startTransition] = useTransition();
+  const [error, setError] = useState<string | null>(null);
+  const [residenceProofType, setResidenceProofType] = useState('');
+
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setError(null);
+
+    const formData = new FormData(e.currentTarget);
+
+    startTransition(async () => {
+      try {
+        const res = await submitCustomerApplication(token, formData);
+        if (res && !res.ok) {
+          setError(res.error || 'Submission failed. Please check the required fields.');
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+      } catch (err) {
+        // Next.js redirect throws, which is normal for successful navigation
+        if ((err as Error)?.message?.includes('NEXT_REDIRECT')) {
+          return;
+        }
+        setError('Something went wrong during submission. Please try again.');
+      }
+    });
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-8">
+      {error && (
+        <div className="p-4 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-sm font-semibold flex items-center gap-3">
+          <span className="text-xl">⚠️</span>
+          <span>{error}</span>
+        </div>
+      )}
+
+      {/* Section 1: Basic Applicant Details */}
+      <section className="bg-white border border-slate-200 rounded-2xl p-6 sm:p-8 shadow-xs">
+        <div className="flex items-center gap-3 mb-6 pb-4 border-b border-slate-100">
+          <span
+            className="w-8 h-8 rounded-lg flex items-center justify-center text-white font-bold text-sm"
+            style={{ backgroundColor: settings.primaryColor }}
+          >
+            1
+          </span>
+          <div>
+            <h2 className="text-base font-bold text-slate-900">Personal & Loan Details</h2>
+            <p className="text-xs text-slate-500">Enter your primary contact and desired loan requirements.</p>
+          </div>
+        </div>
+
+        <div className="grid sm:grid-cols-2 gap-5">
+          <div className="sm:col-span-2">
+            <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+              Full Legal Name (as per PAN Card) <span className="text-rose-500">*</span>
+            </label>
+            <input
+              type="text"
+              name="fullName"
+              required
+              placeholder="e.g. Rahul Anant Deshmukh"
+              className="w-full px-4 py-2.5 text-sm border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+              10-Digit Mobile Number <span className="text-rose-500">*</span>
+            </label>
+            <div className="flex">
+              <span className="inline-flex items-center px-3 text-xs font-medium text-slate-500 bg-slate-50 border border-r-0 border-slate-200 rounded-l-xl">
+                +91
+              </span>
+              <input
+                type="tel"
+                name="mobile"
+                required
+                maxLength={10}
+                pattern="[0-9]{10}"
+                placeholder="9876543210"
+                className="w-full px-4 py-2.5 text-sm border border-slate-200 rounded-r-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+              Email Address <span className="text-rose-500">*</span>
+            </label>
+            <input
+              type="email"
+              name="email"
+              required
+              placeholder="rahul.deshmukh@example.com"
+              className="w-full px-4 py-2.5 text-sm border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+              Loan Type Required <span className="text-rose-500">*</span>
+            </label>
+            <select
+              name="loanType"
+              required
+              defaultValue="HOME_LOAN"
+              className="w-full px-4 py-2.5 text-sm border border-slate-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="HOME_LOAN">Home Loan</option>
+              <option value="PERSONAL_LOAN">Personal Loan</option>
+              <option value="BUSINESS_LOAN">Business Loan</option>
+              <option value="LOAN_AGAINST_PROPERTY">Loan Against Property (LAP)</option>
+              <option value="EDUCATION_LOAN">Education Loan</option>
+              <option value="GOLD_LOAN">Gold Loan</option>
+              <option value="OTHERS">Other / Custom Requirement</option>
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+              Loan Amount Desired (in INR ₹) <span className="text-rose-500">*</span>
+            </label>
+            <input
+              type="number"
+              name="loanAmount"
+              required
+              min={10000}
+              step={5000}
+              placeholder="e.g. 2500000"
+              className="w-full px-4 py-2.5 text-sm border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+        </div>
+      </section>
+
+      {/* Section 2: Document Upload Checklist */}
+      <section className="bg-white border border-slate-200 rounded-2xl p-6 sm:p-8 shadow-xs">
+        <div className="flex items-center gap-3 mb-6 pb-4 border-b border-slate-100">
+          <span
+            className="w-8 h-8 rounded-lg flex items-center justify-center text-white font-bold text-sm"
+            style={{ backgroundColor: settings.primaryColor }}
+          >
+            2
+          </span>
+          <div>
+            <h2 className="text-base font-bold text-slate-900">Document Upload Checklist</h2>
+            <p className="text-xs text-slate-500">
+              Please upload clear, self-attested copies (PDF, JPG, PNG up to 10MB per file).
+            </p>
+          </div>
+        </div>
+
+        <div className="space-y-6">
+          {DOCUMENT_GROUPS.map((group) => (
+            <div key={group.category} className="border border-slate-100 bg-slate-50/60 rounded-xl p-5">
+              <div className="flex items-baseline justify-between mb-1">
+                <h3 className="text-sm font-bold text-slate-900">
+                  {group.title} {group.required && <span className="text-rose-500">*</span>}
+                </h3>
+                <span className="text-[11px] font-semibold text-slate-400">
+                  {group.required ? 'Mandatory' : 'Optional'}
+                </span>
+              </div>
+              <p className="text-xs text-slate-500 mb-4">{group.description}</p>
+
+              {/* Special Residence Proof dropdown */}
+              {group.category === 'RESIDENCE_PROOF' && (
+                <div className="mb-4">
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">
+                    Select Residence Proof Type <span className="text-rose-500">*</span>
+                  </label>
+                  <select
+                    name="residence_proof_type"
+                    value={residenceProofType}
+                    onChange={(e) => setResidenceProofType(e.target.value)}
+                    className="w-full sm:max-w-md px-3.5 py-2 text-xs border border-slate-200 rounded-lg bg-white"
+                  >
+                    <option value="">-- Choose document type --</option>
+                    {RESIDENCE_PROOF_OPTIONS.map((opt) => (
+                      <option key={opt} value={opt}>
+                        {opt}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
+              <div className="grid sm:grid-cols-2 gap-4">
+                {group.fields.map((field) => (
+                  <div key={field.name} className="bg-white p-3.5 rounded-lg border border-slate-200/80">
+                    <label className="block text-xs font-semibold text-slate-800 mb-1">{field.label}</label>
+                    <input
+                      type="file"
+                      name={field.name}
+                      accept={field.accept || '.pdf,image/*'}
+                      className="w-full text-xs text-slate-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-slate-100 hover:file:bg-slate-200 cursor-pointer"
+                    />
+                    {field.helperText && <p className="text-[11px] text-slate-400 mt-1">{field.helperText}</p>}
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* Section 3: Self-Attestation & Submission */}
+      <section className="bg-white border border-slate-200 rounded-2xl p-6 sm:p-8 shadow-xs">
+        <div className="flex items-center gap-3 mb-6 pb-4 border-b border-slate-100">
+          <span
+            className="w-8 h-8 rounded-lg flex items-center justify-center text-white font-bold text-sm"
+            style={{ backgroundColor: settings.primaryColor }}
+          >
+            3
+          </span>
+          <div>
+            <h2 className="text-base font-bold text-slate-900">Declaration & Self-Attestation</h2>
+            <p className="text-xs text-slate-500">Legal confirmation for partner bank submission.</p>
+          </div>
+        </div>
+
+        <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-600 leading-relaxed mb-6">
+          <p className="font-semibold text-slate-900 mb-1">Self-Attestation Undertaking:</p>
+          I hereby declare that all information and uploaded documents submitted by me are true, correct, and complete
+          to the best of my knowledge. I authorize <strong>{settings.companyName}</strong> and its partner financial
+          institutions to verify my details, fetch my credit bureau report (CIBIL / Experian), and process my loan
+          application in accordance with applicable banking and RBI regulations.
+        </div>
+
+        <div className="flex items-start gap-3 mb-6">
+          <input
+            type="checkbox"
+            id="selfAttested"
+            name="selfAttested"
+            required
+            className="mt-1 h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+          />
+          <label htmlFor="selfAttested" className="text-xs font-medium text-slate-800 cursor-pointer">
+            I confirm that all uploaded documents are self-attested by me, and I accept the terms of loan processing.
+          </label>
+        </div>
+
+        <div className="pt-2">
+          <button
+            type="submit"
+            disabled={isPending}
+            className="w-full sm:w-auto px-8 py-3.5 rounded-xl font-bold text-sm text-white shadow-md transition-all hover:opacity-95 disabled:opacity-50"
+            style={{ backgroundColor: settings.primaryColor }}
+          >
+            {isPending ? 'Submitting Application & Uploading Documents…' : '✓ Submit Complete Loan Application'}
+          </button>
+        </div>
+
+        {branch && (
+          <p className="text-[11px] text-slate-400 mt-4">
+            Assigned Branch: {branch.name} ({branch.code}) · {branch.phone || branch.email || ''}
+          </p>
+        )}
+      </section>
+    </form>
+  );
+}

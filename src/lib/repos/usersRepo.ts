@@ -1,0 +1,413 @@
+import crypto from 'crypto';
+import { db } from '@/lib/db';
+import type { User, Role, PartnerStatus } from '@/types/db';
+
+export function listUsers(tenantId = 'default'): User[] {
+  const rows = db
+    .prepare('SELECT * FROM users WHERE tenant_id = ? ORDER BY created_at DESC')
+    .all(tenantId) as Record<string, unknown>[];
+
+  return rows.map(mapRowToUser);
+}
+
+export function getUserById(id: string): User | undefined {
+  const row = db
+    .prepare('SELECT * FROM users WHERE id = ?')
+    .get(id) as Record<string, unknown> | undefined;
+
+  return row ? mapRowToUser(row) : undefined;
+}
+
+export function getUserByEmail(email: string): User | undefined {
+  const lower = email.trim().toLowerCase();
+  const row = db
+    .prepare('SELECT * FROM users WHERE email = ?')
+    .get(lower) as Record<string, unknown> | undefined;
+
+  return row ? mapRowToUser(row) : undefined;
+}
+
+export function emailExists(email: string, excludeId?: string): boolean {
+  const lower = email.trim().toLowerCase();
+  const rows = db.prepare('SELECT id, email FROM users').all() as { id: string; email: string }[];
+  return rows.some((u) => u.email.toLowerCase() === lower && (!excludeId || u.id !== excludeId));
+}
+
+export function createUser(data: {
+  name: string;
+  email: string;
+  passwordHash: string;
+  role: Role;
+  branchId: string;
+  tenantId?: string;
+  phone?: string;
+}): User {
+  const id = `usr_${crypto.randomBytes(8).toString('hex')}`;
+  const now = new Date().toISOString();
+  const email = data.email.trim().toLowerCase();
+  const tenantId = data.tenantId || 'default';
+
+  db.prepare(
+    `INSERT INTO users (id, tenant_id, name, email, password_hash, role, branch_id, phone, active, created_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+  ).run(id, tenantId, data.name.trim(), email, data.passwordHash, data.role, data.branchId, data.phone || null, 1, now);
+
+  const created = getUserById(id);
+  if (!created) {
+    throw new Error('Failed to create user');
+  }
+  return created;
+}
+
+export function setUserActive(id: string, active: boolean): void {
+  db.prepare('UPDATE users SET active = ? WHERE id = ?').run(active ? 1 : 0, id);
+}
+
+export function setUserBlocked(id: string, isBlocked: boolean, reason?: string | null): void {
+  db.prepare('UPDATE users SET is_blocked = ?, blocked_reason = ? WHERE id = ?').run(
+    isBlocked ? 1 : 0,
+    reason || null,
+    id
+  );
+}
+
+export function updatePartnerCommissionRate(id: string, rate: number): void {
+  db.prepare('UPDATE users SET commission_rate = ? WHERE id = ?').run(rate, id);
+}
+
+export function updateUserRoleAndBranch(id: string, role: Role, branchId: string): void {
+  db.prepare('UPDATE users SET role = ?, branch_id = ? WHERE id = ?').run(role, branchId, id);
+}
+
+export function listPartners(tenantId = 'default'): User[] {
+  const users = listUsers(tenantId);
+  return users.filter((u) => u.role === 'CHANNEL_PARTNER');
+}
+
+export function listPartnersByRm(rmId: string, tenantId = 'default'): User[] {
+  const partners = listPartners(tenantId);
+  return partners.filter((p) => p.assignedRmId === rmId);
+}
+
+export function searchRegisteredPartners(query: string, tenantId = 'default'): User[] {
+  const partners = listPartners(tenantId).filter((p) => p.active && !p.isBlocked);
+  const q = query.trim().toLowerCase();
+  if (!q) return partners;
+  return partners.filter((p) => {
+    const matchName = p.name.toLowerCase().includes(q);
+    const matchPhone = p.phone ? p.phone.toLowerCase().includes(q) : false;
+    const matchEmail = p.email.toLowerCase().includes(q);
+    return matchName || matchPhone || matchEmail;
+  });
+}
+
+export function getPartnerByCode(code: string): User | undefined {
+  const clean = code.trim().toUpperCase();
+  const users = listPartners();
+  return users.find((u) => (u.partnerCode || '').toUpperCase() === clean);
+}
+
+export function listRelationshipManagers(tenantId = 'default'): User[] {
+  const users = listUsers(tenantId);
+  return users.filter((u) => u.role === 'RELATIONSHIP_MANAGER' && u.active && !u.isBlocked);
+}
+
+export function listPartnerRequests(status?: PartnerStatus, tenantId = 'default'): User[] {
+  const partners = listPartners(tenantId);
+  if (!status) return partners;
+  return partners.filter((p) => (p.partnerStatus || 'APPROVED') === status);
+}
+
+export function approvePartnerOnboarding(
+  partnerId: string,
+  assignedRmId: string,
+  assignedRmName: string,
+  approvedBy: { id: string; name: string },
+  remark?: string
+): User {
+  const now = new Date().toISOString();
+  const certSuffix = Math.floor(1000 + Math.random() * 9000);
+  const certNum = `QFS-CERT-2026-${certSuffix}`;
+
+  db.prepare(
+    `UPDATE users 
+     SET partner_status = 'APPROVED',
+         assigned_rm_id = ?,
+         assigned_rm_name = ?,
+         approved_by_id = ?,
+         approved_by_name = ?,
+         approved_at = ?,
+         certificate_number = ?,
+         certificate_issued_at = ?,
+         approval_remark = ?
+     WHERE id = ?`
+  ).run(
+    assignedRmId,
+    assignedRmName,
+    approvedBy.id,
+    approvedBy.name,
+    now,
+    certNum,
+    now,
+    remark || 'Application approved by Central Support.',
+    partnerId
+  );
+
+  const updated = getUserById(partnerId);
+  if (!updated) throw new Error('Partner not found');
+  return updated;
+}
+
+export function requestPartnerDocUpdate(
+  partnerId: string,
+  remark: string,
+  _author: { id: string; name: string }
+): User {
+  db.prepare(
+    `UPDATE users 
+     SET partner_status = 'DOCUMENTS_REQUIRED',
+         approval_remark = ?
+     WHERE id = ?`
+  ).run(remark, partnerId);
+
+  const updated = getUserById(partnerId);
+  if (!updated) throw new Error('Partner not found');
+  return updated;
+}
+
+export function rejectPartnerOnboarding(
+  partnerId: string,
+  reason: string,
+  _author: { id: string; name: string }
+): User {
+  db.prepare(
+    `UPDATE users 
+     SET partner_status = 'REJECTED',
+         approval_remark = ?
+     WHERE id = ?`
+  ).run(reason, partnerId);
+
+  const updated = getUserById(partnerId);
+  if (!updated) throw new Error('Partner not found');
+  return updated;
+}
+
+export function resubmitPartnerDocuments(
+  partnerId: string,
+  panDocUrl?: string,
+  aadhaarDocUrl?: string
+): User {
+  if (panDocUrl && aadhaarDocUrl) {
+    db.prepare(
+      `UPDATE users 
+       SET partner_status = 'PENDING_APPROVAL',
+           pan_document_url = ?,
+           aadhaar_document_url = ?,
+           approval_remark = 'Updated documents submitted for Central Support re-verification.'
+       WHERE id = ?`
+    ).run(panDocUrl, aadhaarDocUrl, partnerId);
+  } else if (panDocUrl) {
+    db.prepare(
+      `UPDATE users 
+       SET partner_status = 'PENDING_APPROVAL',
+           pan_document_url = ?,
+           approval_remark = 'Updated PAN document submitted for Central Support re-verification.'
+       WHERE id = ?`
+    ).run(panDocUrl, partnerId);
+  } else if (aadhaarDocUrl) {
+    db.prepare(
+      `UPDATE users 
+       SET partner_status = 'PENDING_APPROVAL',
+           aadhaar_document_url = ?,
+           approval_remark = 'Updated Aadhaar document submitted for Central Support re-verification.'
+       WHERE id = ?`
+    ).run(aadhaarDocUrl, partnerId);
+  } else {
+    db.prepare(
+      `UPDATE users 
+       SET partner_status = 'PENDING_APPROVAL',
+           approval_remark = 'Information re-submitted for Central Support review.'
+       WHERE id = ?`
+    ).run(partnerId);
+  }
+
+  const updated = getUserById(partnerId);
+  if (!updated) throw new Error('Partner not found');
+  return updated;
+}
+
+export function createPartnerOnboarding(data: {
+  name: string;
+  email: string;
+  phone: string;
+  passwordHash: string;
+  fatherSpouseName: string;
+  address: string;
+  panNumber: string;
+  panDocumentUrl?: string | null;
+  aadhaarNumber: string;
+  aadhaarDocumentUrl?: string | null;
+  agreementAuthorizedText?: string | null;
+  branchId?: string;
+  tenantId?: string;
+  assignedRmId?: string | null;
+  assignedRmName?: string | null;
+}): User {
+  const id = `usr_${crypto.randomBytes(8).toString('hex')}`;
+  const now = new Date().toISOString();
+  const email = data.email.trim().toLowerCase();
+  const tenantId = data.tenantId || 'default';
+  const branchId = data.branchId || 'br_c95492722e36abe1'; // Default HQ branch
+  const randomSuffix = Math.floor(1000 + Math.random() * 9000);
+  const partnerCode = `QFS-PRT-${randomSuffix}`;
+
+  db.prepare(
+    `INSERT INTO users (
+      id, tenant_id, name, email, password_hash, role, branch_id, phone,
+      partner_code, partner_status, father_spouse_name, address, pan_number, pan_document_url,
+      aadhaar_number, aadhaar_document_url, agreement_accepted, agreement_signed_at,
+      agreement_authorized_text, assigned_rm_id, assigned_rm_name, active, is_blocked, created_at
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'PENDING_APPROVAL', ?, ?, ?, ?, ?, ?, 1, ?, ?, ?, ?, 1, 0, ?)`
+  ).run(
+    id,
+    tenantId,
+    data.name.trim(),
+    email,
+    data.passwordHash,
+    'CHANNEL_PARTNER',
+    branchId,
+    data.phone.trim(),
+    partnerCode,
+    data.fatherSpouseName.trim(),
+    data.address.trim(),
+    data.panNumber.trim().toUpperCase(),
+    data.panDocumentUrl || null,
+    data.aadhaarNumber.trim(),
+    data.aadhaarDocumentUrl || null,
+    now,
+    data.agreementAuthorizedText || null,
+    data.assignedRmId || null,
+    data.assignedRmName || null,
+    now
+  );
+
+  const created = getUserById(id);
+  if (!created) {
+    throw new Error('Failed to create partner account');
+  }
+  return created;
+}
+
+function mapRowToUser(row: Record<string, unknown>): User {
+  const role = (row.role as Role) || 'OPERATIONS';
+  const rawStatus = (row.partner_status || row.partnerStatus) as PartnerStatus | undefined;
+  // Default legacy partners to APPROVED, but preserve PENDING_APPROVAL / DOCUMENTS_REQUIRED / REJECTED
+  const partnerStatus: PartnerStatus | undefined =
+    role === 'CHANNEL_PARTNER' ? rawStatus || 'APPROVED' : undefined;
+
+  return {
+    id: String(row.id),
+    tenantId: String(row.tenant_id || row.tenantId || 'default'),
+    name: String(row.name),
+    email: String(row.email),
+    passwordHash: String(row.password_hash || row.passwordHash || ''),
+    role,
+    branchId: String(row.branch_id || row.branchId),
+    branchName: row.branch_name || row.branchName ? String(row.branch_name || row.branchName) : undefined,
+    active: row.active !== 0 && row.active !== false && row.active !== '0',
+    isBlocked: Boolean(row.is_blocked === 1 || row.is_blocked === true || row.isBlocked === true),
+    blockedReason: row.blocked_reason || row.blockedReason ? String(row.blocked_reason || row.blockedReason) : null,
+    phone: row.phone ? String(row.phone) : null,
+    commissionRate: row.commission_rate !== undefined ? Number(row.commission_rate) : (row.commissionRate !== undefined ? Number(row.commissionRate) : undefined),
+    partnerCode: row.partner_code || row.partnerCode ? String(row.partner_code || row.partnerCode) : undefined,
+    partnerStatus,
+    fatherSpouseName: row.father_spouse_name || row.fatherSpouseName ? String(row.father_spouse_name || row.fatherSpouseName) : null,
+    address: row.address ? String(row.address) : null,
+    panNumber: row.pan_number || row.panNumber ? String(row.pan_number || row.panNumber) : null,
+    panDocumentUrl: row.pan_document_url || row.panDocumentUrl ? String(row.pan_document_url || row.panDocumentUrl) : null,
+    aadhaarNumber: row.aadhaar_number || row.aadhaarNumber ? String(row.aadhaar_number || row.aadhaarNumber) : null,
+    aadhaarDocumentUrl: row.aadhaar_document_url || row.aadhaarDocumentUrl ? String(row.aadhaar_document_url || row.aadhaarDocumentUrl) : null,
+    agreementAccepted: Boolean(row.agreement_accepted === 1 || row.agreement_accepted === true || row.agreementAccepted === true),
+    agreementSignedAt: row.agreement_signed_at || row.agreementSignedAt ? String(row.agreement_signed_at || row.agreementSignedAt) : null,
+    agreementAuthorizedText: row.agreement_authorized_text || row.agreementAuthorizedText ? String(row.agreement_authorized_text || row.agreementAuthorizedText) : null,
+    assignedRmId: row.assigned_rm_id || row.assignedRmId ? String(row.assigned_rm_id || row.assignedRmId) : null,
+    assignedRmName: row.assigned_rm_name || row.assignedRmName ? String(row.assigned_rm_name || row.assignedRmName) : null,
+    approvalRemark: row.approval_remark || row.approvalRemark ? String(row.approval_remark || row.approvalRemark) : null,
+    approvedAt: row.approved_at || row.approvedAt ? String(row.approved_at || row.approvedAt) : null,
+    approvedById: row.approved_by_id || row.approvedById ? String(row.approved_by_id || row.approvedById) : null,
+    approvedByName: row.approved_by_name || row.approvedByName ? String(row.approved_by_name || row.approvedByName) : null,
+    certificateNumber: row.certificate_number || row.certificateNumber ? String(row.certificate_number || row.certificateNumber) : null,
+    certificateIssuedAt: row.certificate_issued_at || row.certificateIssuedAt ? String(row.certificate_issued_at || row.certificateIssuedAt) : null,
+    photoUrl: row.photo_url || row.photoUrl ? String(row.photo_url || row.photoUrl) : null,
+    firmLogoUrl: row.firm_logo_url || row.firmLogoUrl ? String(row.firm_logo_url || row.firmLogoUrl) : null,
+    firmName: row.firm_name || row.firmName ? String(row.firm_name || row.firmName) : null,
+    bio: row.bio ? String(row.bio) : null,
+    city: row.city ? String(row.city) : null,
+    createdAt: String(row.created_at || row.createdAt || ''),
+  };
+}
+
+export function updateUserProfile(
+  id: string,
+  data: {
+    name?: string;
+    phone?: string | null;
+    email?: string;
+    photoUrl?: string | null;
+    firmLogoUrl?: string | null;
+    firmName?: string | null;
+    bio?: string | null;
+    city?: string | null;
+  }
+): User {
+  const existing = getUserById(id);
+  if (!existing) {
+    throw new Error('User not found');
+  }
+
+  const updates: string[] = [];
+  const params: unknown[] = [];
+
+  if (data.name !== undefined) {
+    updates.push('name = ?');
+    params.push(data.name.trim());
+  }
+  if (data.phone !== undefined) {
+    updates.push('phone = ?');
+    params.push(data.phone ? data.phone.trim() : null);
+  }
+  if (data.email !== undefined) {
+    updates.push('email = ?');
+    params.push(data.email.trim().toLowerCase());
+  }
+  if (data.photoUrl !== undefined) {
+    updates.push('photo_url = ?');
+    params.push(data.photoUrl);
+  }
+  if (data.firmLogoUrl !== undefined) {
+    updates.push('firm_logo_url = ?');
+    params.push(data.firmLogoUrl);
+  }
+  if (data.firmName !== undefined) {
+    updates.push('firm_name = ?');
+    params.push(data.firmName ? data.firmName.trim() : null);
+  }
+  if (data.bio !== undefined) {
+    updates.push('bio = ?');
+    params.push(data.bio ? data.bio.trim() : null);
+  }
+  if (data.city !== undefined) {
+    updates.push('city = ?');
+    params.push(data.city ? data.city.trim() : null);
+  }
+
+  if (updates.length > 0) {
+    params.push(id);
+    db.prepare(`UPDATE users SET ${updates.join(', ')} WHERE id = ?`).run(...params);
+  }
+
+  const updated = getUserById(id);
+  if (!updated) throw new Error('User not found after update');
+  return updated;
+}
+

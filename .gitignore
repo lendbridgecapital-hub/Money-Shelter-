@@ -1,0 +1,38 @@
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Next.js build
+.next/
+out/
+build/
+dist/
+
+# TypeScript cache
+*.tsbuildinfo
+next-env.d.ts
+
+# Environment variables
+.env
+.env*.local
+
+# Android build cache & binaries
+.gradle/
+android/.gradle/
+android/app/build/
+android/build/
+android/local.properties
+android/captures/
+*.apk
+*.ap_
+*.aab
+
+# OS files
+Thumbs.db
+.DS_Store
+
+# Local database and customer uploads
+data/*.db
+data/app-portable.json
+public/uploads/app_*
