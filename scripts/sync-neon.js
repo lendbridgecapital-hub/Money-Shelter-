@@ -260,11 +260,22 @@ async function initSchema(client) {
 }
 
 function loadInitialSeedData() {
+  const tryNormalize = (data) => {
+    if (!data) return null;
+    let obj = data;
+    if (obj.default && (obj.default.users || obj.default.tenants)) {
+      obj = obj.default;
+    }
+    if (typeof obj === 'object' && Array.isArray(obj.users) && obj.users.length > 0) {
+      return obj;
+    }
+    return null;
+  };
+
   try {
     const directData = require('../data/initial-data.json');
-    if (directData && Array.isArray(directData.users) && directData.users.length > 0) {
-      return directData;
-    }
+    const norm = tryNormalize(directData);
+    if (norm) return norm;
   } catch (e) {
     // fallback to path resolution
   }
@@ -279,9 +290,8 @@ function loadInitialSeedData() {
       try {
         const raw = fs.readFileSync(file, 'utf8');
         const parsed = JSON.parse(raw);
-        if (parsed && typeof parsed === 'object' && Array.isArray(parsed.users) && parsed.users.length > 0) {
-          return parsed;
-        }
+        const norm = tryNormalize(parsed);
+        if (norm) return norm;
       } catch (err) {
         console.warn('[neon-seed] Warning reading', file, err.message);
       }
@@ -310,25 +320,50 @@ async function pullData(client) {
   await initSchema(client);
 
   const rows = await client.query("SELECT value FROM quickfinsure_store WHERE key = 'main_store' LIMIT 1;");
-  if (rows && rows.length > 0 && rows[0].value && Array.isArray(rows[0].value.users) && rows[0].value.users.length > 0) {
-    return rows[0].value;
+  if (rows && rows.length > 0 && rows[0].value) {
+    let val = rows[0].value;
+    if (typeof val === 'string') {
+      try { val = JSON.parse(val); } catch {}
+    }
+    if (val && val.default && (val.default.users || val.default.tenants)) {
+      val = val.default;
+    }
+    if (val && Array.isArray(val.users) && val.users.length > 0) {
+      try {
+        const appPortablePath = path.resolve(process.cwd(), 'data/app-portable.json');
+        fs.writeFileSync(appPortablePath, JSON.stringify(val, null, 2), 'utf8');
+      } catch {}
+      return val;
+    }
   }
 
   // If empty on Neon or has 0 users, populate with initial seed data
   const seed = loadInitialSeedData();
   await pushData(client, seed);
+  try {
+    const appPortablePath = path.resolve(process.cwd(), 'data/app-portable.json');
+    fs.writeFileSync(appPortablePath, JSON.stringify(seed, null, 2), 'utf8');
+  } catch {}
   return seed;
 }
 
 async function pushData(client, data) {
   await initSchema(client);
-  const jsonStr = JSON.stringify(data);
+  let payload = data;
+  if (payload && payload.default && (payload.default.users || payload.default.tenants)) {
+    payload = payload.default;
+  }
+  const jsonStr = JSON.stringify(payload);
   await client.query(
     `INSERT INTO quickfinsure_store (key, value, updated_at) 
      VALUES ('main_store', $1::jsonb, NOW()) 
      ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, updated_at = NOW();`,
     [jsonStr]
   );
+  try {
+    const appPortablePath = path.resolve(process.cwd(), 'data/app-portable.json');
+    fs.writeFileSync(appPortablePath, JSON.stringify(payload, null, 2), 'utf8');
+  } catch {}
 }
 
 // CLI handler for synchronous invocation or manual setup
@@ -337,13 +372,16 @@ async function main() {
   const dbUrl = getDatabaseUrl();
 
   if (!dbUrl) {
+    const fallback = loadInitialSeedData();
+    try {
+      const dbDir = path.resolve(process.cwd(), 'data');
+      if (!fs.existsSync(dbDir)) fs.mkdirSync(dbDir, { recursive: true });
+      fs.writeFileSync(path.join(dbDir, 'app-portable.json'), JSON.stringify(fallback, null, 2), 'utf8');
+    } catch {}
     if (mode === 'pull') {
-      const fallback = loadInitialSeedData();
       process.stdout.write(JSON.stringify(fallback));
-      process.exit(0);
     }
-    console.error('DATABASE_URL is not set.');
-    process.exit(1);
+    process.exit(0);
   }
 
   try {

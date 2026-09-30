@@ -12,6 +12,7 @@ if (!process.env.NEXTAUTH_URL) {
 }
 
 export const authOptions: NextAuthOptions = {
+  secret: process.env.NEXTAUTH_SECRET || 'lendbridge_whitelabel_super_secret_key_change_in_production_2026',
   session: {
     strategy: 'jwt',
     maxAge: 30 * 24 * 60 * 60, // 30 days
@@ -36,8 +37,11 @@ export const authOptions: NextAuthOptions = {
 
         // Failsafe: if database is fresh or empty, restore account from initialSeedData
         if (!user) {
-          const seedUser = (initialSeedData.users as Array<Record<string, unknown>>).find(
-            (u) => String(u.email).toLowerCase() === email
+          const rawSeed: any = initialSeedData;
+          const seed = (rawSeed?.default && (rawSeed.default.users || rawSeed.default.tenants)) ? rawSeed.default : rawSeed;
+          const userList = Array.isArray(seed?.users) ? seed.users : [];
+          const seedUser = userList.find(
+            (u: any) => String(u.email).toLowerCase() === email
           );
           if (seedUser) {
             try {
@@ -107,7 +111,6 @@ export const authOptions: NextAuthOptions = {
       return session;
     },
   },
-  secret: process.env.NEXTAUTH_SECRET || 'quickfinsure-whitelabel-secret-key-2026-production',
 };
 
 export async function auth() {

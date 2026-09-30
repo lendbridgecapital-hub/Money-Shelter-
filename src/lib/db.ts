@@ -22,12 +22,20 @@ function initDatabase(): DatabaseAdapter {
     fs.mkdirSync(dbDir, { recursive: true });
   }
 
-  const dbFilePath = process.env.DATABASE_FILE || path.join(dbDir, 'app.db');
-  const schemaPath = path.resolve(process.cwd(), 'src/db/schema.sql');
-  const schemaSql = fs.existsSync(schemaPath) ? fs.readFileSync(schemaPath, 'utf8') : '';
+  const dbUrl = process.env.DATABASE_URL || process.env.POSTGRES_URL;
 
-  // Try loading native better-sqlite3 first
+  // Cloud deployment: when Neon PostgreSQL connection URL is present, use cloud-synced storage adapter
+  if (dbUrl) {
+    console.log('[db] Neon PostgreSQL connection detected. Using cloud-synced storage adapter.');
+    return createPortableStorage(path.join(dbDir, 'app-portable.json'));
+  }
+
+  // Local offline development: prefer better-sqlite3 if available
   try {
+    const dbFilePath = process.env.DATABASE_FILE || path.join(dbDir, 'app.db');
+    const schemaPath = path.resolve(process.cwd(), 'src/db/schema.sql');
+    const schemaSql = fs.existsSync(schemaPath) ? fs.readFileSync(schemaPath, 'utf8') : '';
+
     // eslint-disable-next-line @typescript-eslint/no-var-requires
     const DatabaseConstructor = require('better-sqlite3');
     const nativeDb = new DatabaseConstructor(dbFilePath);
@@ -37,6 +45,38 @@ function initDatabase(): DatabaseAdapter {
     if (schemaSql) {
       nativeDb.exec(schemaSql);
     }
+
+    // Auto-seed SQLite if users table is empty
+    try {
+      const row = nativeDb.prepare('SELECT COUNT(*) as c FROM users').get() as { c: number } | undefined;
+      if (!row || row.c === 0) {
+        console.log('[db] SQLite database empty. Populating with initial seed users...');
+        const rawSeed: any = initialSeedData;
+        const seed = (rawSeed?.default && (rawSeed.default.users || rawSeed.default.tenants)) ? rawSeed.default : rawSeed;
+        if (Array.isArray(seed.users)) {
+          const insertStmt = nativeDb.prepare(
+            `INSERT INTO users (id, tenant_id, name, email, password_hash, role, branch_id, active, created_at)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
+          );
+          for (const u of seed.users) {
+            try {
+              insertStmt.run(
+                u.id,
+                u.tenant_id || 'default',
+                u.name,
+                u.email,
+                u.password_hash || u.passwordHash,
+                u.role,
+                u.branch_id || u.branchId || 'default',
+                1,
+                u.created_at || new Date().toISOString()
+              );
+            } catch {}
+          }
+        }
+      }
+    } catch {}
+
     return nativeDb;
   } catch (nativeErr) {
     console.warn(
@@ -71,23 +111,28 @@ function createPortableStorage(storageFilePath: string): DatabaseAdapter {
     [key: string]: Record<string, unknown>[];
   }
 
-  const defaultData: StorageData = {
-    tenants: [],
-    company_settings: [],
-    branches: [],
-    users: [],
-    loan_applications: [],
-    application_documents: [],
-    status_history: [],
-    banks: [],
-    bank_products: [],
-    commissions: [],
-    clawbacks: [],
-    operational_remarks: [],
-    partner_notifications: [],
-    required_documents: [],
-    ...(initialSeedData as unknown as Partial<StorageData>),
-  };
+  function getSeedData(): StorageData {
+    const raw: any = initialSeedData;
+    const seed: any = (raw && raw.default && (raw.default.users || raw.default.tenants)) ? raw.default : raw;
+    return {
+      tenants: seed?.tenants || [],
+      company_settings: seed?.company_settings || [],
+      branches: seed?.branches || [],
+      users: seed?.users || [],
+      loan_applications: seed?.loan_applications || [],
+      application_documents: seed?.application_documents || [],
+      status_history: seed?.status_history || [],
+      banks: seed?.banks || [],
+      bank_products: seed?.bank_products || [],
+      commissions: seed?.commissions || [],
+      clawbacks: seed?.clawbacks || [],
+      operational_remarks: seed?.operational_remarks || [],
+      partner_notifications: seed?.partner_notifications || [],
+      required_documents: seed?.required_documents || [],
+    };
+  }
+
+  const defaultData: StorageData = getSeedData();
 
   let cachedData: StorageData = defaultData;
   let hasHydratedFromNeon = false;
@@ -102,8 +147,19 @@ function createPortableStorage(storageFilePath: string): DatabaseAdapter {
       try {
         const { neon } = require('@neondatabase/serverless');
         const sql = neon(dbUrl);
-        const jsonStr = JSON.stringify(data);
+        let payload = data;
+        if (payload && (payload as any).default) {
+          payload = (payload as any).default;
+        }
+        const jsonStr = JSON.stringify(payload);
         const queryFn = sql.query ? sql.query.bind(sql) : sql;
+        await queryFn(`
+          CREATE TABLE IF NOT EXISTS quickfinsure_store (
+            key TEXT PRIMARY KEY,
+            value JSONB NOT NULL,
+            updated_at TIMESTAMPTZ DEFAULT NOW()
+          );
+        `);
         await queryFn(
           `INSERT INTO quickfinsure_store (key, value, updated_at) 
            VALUES ('main_store', $1::jsonb, NOW()) 
@@ -123,7 +179,21 @@ function createPortableStorage(storageFilePath: string): DatabaseAdapter {
 
     const dbUrl = process.env.DATABASE_URL || process.env.POSTGRES_URL;
 
-    // If Neon PostgreSQL is configured, pull fresh database snapshot on startup
+    // 1. Try reading from disk cache (which sync-neon.js init populated before next start)
+    if (fs.existsSync(storageFilePath)) {
+      try {
+        const raw = fs.readFileSync(storageFilePath, 'utf8');
+        let parsed = JSON.parse(raw);
+        if (parsed && parsed.default) parsed = parsed.default;
+        if (parsed && typeof parsed === 'object' && Array.isArray(parsed.users) && parsed.users.length > 0) {
+          cachedData = { ...defaultData, ...parsed };
+          hasHydratedFromNeon = true;
+          return cachedData;
+        }
+      } catch {}
+    }
+
+    // 2. If Neon PostgreSQL is configured, pull fresh database snapshot on startup
     if (dbUrl && !hasHydratedFromNeon) {
       hasHydratedFromNeon = true;
       try {
@@ -137,7 +207,8 @@ function createPortableStorage(storageFilePath: string): DatabaseAdapter {
             timeout: 10000,
           });
           if (res.stdout) {
-            const parsed = JSON.parse(res.stdout);
+            let parsed = JSON.parse(res.stdout);
+            if (parsed && parsed.default) parsed = parsed.default;
             if (parsed && typeof parsed === 'object' && Array.isArray(parsed.users) && parsed.users.length > 0) {
               cachedData = { ...defaultData, ...parsed };
               try {
@@ -152,21 +223,11 @@ function createPortableStorage(storageFilePath: string): DatabaseAdapter {
       }
     }
 
-    if (fs.existsSync(storageFilePath)) {
-      try {
-        const raw = fs.readFileSync(storageFilePath, 'utf8');
-        const parsed = JSON.parse(raw);
-        if (parsed && Array.isArray(parsed.users) && parsed.users.length > 0) {
-          cachedData = { ...defaultData, ...parsed };
-          return cachedData;
-        }
-      } catch {
-        // fallback
-      }
-    }
-
-    // Default to bundled initial seed snapshot
+    // 3. Fallback to bundled initial seed snapshot
     cachedData = { ...defaultData };
+    if (dbUrl) {
+      syncWithNeonAsync(cachedData);
+    }
     return cachedData;
   }
 
@@ -393,7 +454,7 @@ function createPortableStorage(storageFilePath: string): DatabaseAdapter {
 
           // Self-heal if users table is queried but currently empty
           if (tableName === 'users' && (!memoryData.users || memoryData.users.length === 0)) {
-            const seed = (initialSeedData as unknown as StorageData);
+            const seed = getSeedData();
             memoryData = {
               ...memoryData,
               users: seed.users || [],

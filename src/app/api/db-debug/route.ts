@@ -13,9 +13,12 @@ export async function GET(req: NextRequest) {
   let neonDirectWrite = false;
   let neonError: string | null = null;
 
+  const rawSeed: any = initialSeedData;
+  const seedData = (rawSeed?.default && (rawSeed.default.users || rawSeed.default.tenants)) ? rawSeed.default : rawSeed;
+
   let users = (db.prepare('SELECT id, email, role, active, password_hash FROM users').all() || []) as Record<string, unknown>[];
 
-  // If forced or if users count is 0, seed directly into Neon PostgreSQL
+  // If forced or if users count is 0, seed directly into Neon PostgreSQL and db adapter
   if (forceSeed || users.length === 0) {
     const dbUrl = process.env.DATABASE_URL || process.env.POSTGRES_URL;
     if (dbUrl) {
@@ -30,7 +33,7 @@ export async function GET(req: NextRequest) {
             updated_at TIMESTAMPTZ DEFAULT NOW()
           );
         `);
-        const jsonStr = JSON.stringify(initialSeedData);
+        const jsonStr = JSON.stringify(seedData);
         await queryFn(
           `INSERT INTO quickfinsure_store (key, value, updated_at) 
            VALUES ('main_store', $1::jsonb, NOW()) 
@@ -42,6 +45,28 @@ export async function GET(req: NextRequest) {
         neonError = (err as Error).message;
       }
     }
+
+    if (Array.isArray(seedData.users)) {
+      for (const u of seedData.users) {
+        try {
+          db.prepare(
+            `INSERT INTO users (id, tenant_id, name, email, password_hash, role, branch_id, active, created_at)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
+          ).run(
+            u.id,
+            u.tenant_id || 'default',
+            u.name,
+            u.email,
+            u.password_hash || u.passwordHash,
+            u.role,
+            u.branch_id || u.branchId || 'default',
+            1,
+            u.created_at || new Date().toISOString()
+          );
+        } catch {}
+      }
+    }
+
     // Re-query after seed
     users = (db.prepare('SELECT id, email, role, active, password_hash FROM users').all() || []) as Record<string, unknown>[];
   }
@@ -49,8 +74,20 @@ export async function GET(req: NextRequest) {
   const admin = getUserByEmail('admin@quickfinsure.com');
   const passwordCheck = admin ? await bcrypt.compare('Password123!', admin.passwordHash) : false;
 
+  const testAccounts = ['admin@quickfinsure.com', 'ops@quickfinsure.com', 'rm@quickfinsure.com', 'partner@quickfinsure.com'];
+  const testResults: Record<string, { exists: boolean; role?: string; passwordMatch: boolean }> = {};
+
+  for (const email of testAccounts) {
+    const acc = getUserByEmail(email);
+    testResults[email] = {
+      exists: !!acc,
+      role: acc?.role,
+      passwordMatch: acc ? await bcrypt.compare('Password123!', acc.passwordHash) : false,
+    };
+  }
+
   return NextResponse.json({
-    version: 'v5-auto-neon-seeded',
+    version: 'v6-neon-cloud-ready',
     neonDirectWrite,
     neonError,
     databaseUrlSet: !!(process.env.DATABASE_URL || process.env.POSTGRES_URL),
@@ -60,5 +97,6 @@ export async function GET(req: NextRequest) {
     userEmails: users.map((u) => ({ email: u.email, role: u.role, active: u.active })),
     adminFound: !!admin,
     passwordMatch: passwordCheck,
+    accountsStatus: testResults,
   });
 }
