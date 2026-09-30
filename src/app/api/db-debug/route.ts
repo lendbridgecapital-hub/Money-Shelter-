@@ -22,18 +22,20 @@ export async function GET(req: NextRequest) {
       try {
         const { neon } = require('@neondatabase/serverless');
         const sql = neon(dbUrl);
-        await sql(`
+        const queryFn = sql.query ? sql.query.bind(sql) : sql;
+        await queryFn(`
           CREATE TABLE IF NOT EXISTS quickfinsure_store (
             key TEXT PRIMARY KEY,
             value JSONB NOT NULL,
             updated_at TIMESTAMPTZ DEFAULT NOW()
           );
         `);
-        await sql(
+        const jsonStr = JSON.stringify(initialSeedData);
+        await queryFn(
           `INSERT INTO quickfinsure_store (key, value, updated_at) 
            VALUES ('main_store', $1::jsonb, NOW()) 
            ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, updated_at = NOW();`,
-          [JSON.stringify(initialSeedData)]
+          [jsonStr]
         );
         neonDirectWrite = true;
       } catch (err) {

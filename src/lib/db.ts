@@ -103,7 +103,8 @@ function createPortableStorage(storageFilePath: string): DatabaseAdapter {
         const { neon } = require('@neondatabase/serverless');
         const sql = neon(dbUrl);
         const jsonStr = JSON.stringify(data);
-        await sql(
+        const queryFn = sql.query ? sql.query.bind(sql) : sql;
+        await queryFn(
           `INSERT INTO quickfinsure_store (key, value, updated_at) 
            VALUES ('main_store', $1::jsonb, NOW()) 
            ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, updated_at = NOW();`,

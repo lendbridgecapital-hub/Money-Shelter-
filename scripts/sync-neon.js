@@ -22,6 +22,9 @@ async function getClient() {
     const sql = neon(dbUrl);
     return {
       query: async (queryText, params = []) => {
+        if (sql.query) {
+          return sql.query(queryText, params);
+        }
         return sql(queryText, params);
       },
       type: 'neon-serverless',
