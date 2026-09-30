@@ -87,25 +87,94 @@ function createPortableStorage(storageFilePath: string): DatabaseAdapter {
     required_documents: [],
   };
 
+  let hasHydratedFromNeon = false;
+  let neonPushTimer: NodeJS.Timeout | null = null;
+
+  function syncWithNeonAsync(data: StorageData) {
+    const dbUrl = process.env.DATABASE_URL || process.env.POSTGRES_URL;
+    if (!dbUrl) return;
+
+    if (neonPushTimer) clearTimeout(neonPushTimer);
+    neonPushTimer = setTimeout(async () => {
+      try {
+        const { neon } = require('@neondatabase/serverless');
+        const sql = neon(dbUrl);
+        const jsonStr = JSON.stringify(data);
+        await sql(
+          `INSERT INTO quickfinsure_store (key, value, updated_at) 
+           VALUES ('main_store', $1::jsonb, NOW()) 
+           ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, updated_at = NOW();`,
+          [jsonStr]
+        );
+      } catch (err) {
+        console.error('[db] Error pushing updates to Neon PostgreSQL:', (err as Error).message);
+      }
+    }, 60);
+  }
+
   function loadData(): StorageData {
+    const dbUrl = process.env.DATABASE_URL || process.env.POSTGRES_URL;
+
+    // If Neon PostgreSQL is configured, pull fresh database snapshot on startup
+    if (dbUrl && !hasHydratedFromNeon) {
+      try {
+        const helperPath = path.resolve(process.cwd(), 'scripts/sync-neon.js');
+        if (fs.existsSync(helperPath)) {
+          // eslint-disable-next-line @typescript-eslint/no-var-requires
+          const { spawnSync } = require('child_process');
+          const res = spawnSync(process.execPath, [helperPath, 'pull'], {
+            env: process.env,
+            encoding: 'utf8',
+            timeout: 10000,
+          });
+          if (res.stdout) {
+            const parsed = JSON.parse(res.stdout);
+            if (parsed && typeof parsed === 'object') {
+              hasHydratedFromNeon = true;
+              try {
+                fs.writeFileSync(storageFilePath, JSON.stringify(parsed, null, 2), 'utf8');
+              } catch {}
+              return { ...defaultData, ...parsed };
+            }
+          }
+        }
+      } catch (neonErr) {
+        console.warn('[db] Note: Initial Neon sync failed, falling back to local snapshot:', (neonErr as Error).message);
+      }
+    }
+
     if (fs.existsSync(storageFilePath)) {
       try {
         const raw = fs.readFileSync(storageFilePath, 'utf8');
         const parsed = JSON.parse(raw);
         return { ...defaultData, ...parsed };
       } catch {
-        return { ...defaultData };
+        // fallback
       }
     }
+
+    // Fallback to initial seed snapshot if exists
+    const initialDataPath = path.resolve(process.cwd(), 'data/initial-data.json');
+    if (fs.existsSync(initialDataPath)) {
+      try {
+        const raw = fs.readFileSync(initialDataPath, 'utf8');
+        const parsed = JSON.parse(raw);
+        return { ...defaultData, ...parsed };
+      } catch {
+        // fallback
+      }
+    }
+
     return { ...defaultData };
   }
 
   function saveData(data: StorageData) {
     try {
       fs.writeFileSync(storageFilePath, JSON.stringify(data, null, 2), 'utf8');
-    } catch (err) {
-      console.error('[db] Error persisting data:', err);
+    } catch {
+      // Local cache write might fail on read-only environments; Neon is the primary store
     }
+    syncWithNeonAsync(data);
   }
 
   let memoryData = loadData();
