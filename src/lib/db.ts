@@ -387,8 +387,24 @@ function createPortableStorage(storageFilePath: string): DatabaseAdapter {
         },
 
         all(...params: unknown[]) {
-          // Always read freshest data from disk
+          // Always read freshest data from disk / cache
           memoryData = loadData();
+
+          // Self-heal if users table is queried but currently empty
+          if (tableName === 'users' && (!memoryData.users || memoryData.users.length === 0)) {
+            const seed = (initialSeedData as unknown as StorageData);
+            memoryData = {
+              ...memoryData,
+              users: seed.users || [],
+              branches: memoryData.branches?.length ? memoryData.branches : (seed.branches || []),
+              tenants: memoryData.tenants?.length ? memoryData.tenants : (seed.tenants || []),
+              company_settings: memoryData.company_settings?.length ? memoryData.company_settings : (seed.company_settings || []),
+              banks: memoryData.banks?.length ? memoryData.banks : (seed.banks || []),
+              loan_applications: memoryData.loan_applications?.length ? memoryData.loan_applications : (seed.loan_applications || []),
+            };
+            saveData(memoryData);
+          }
+
           if (!tableName) return [];
           let rows = [...(memoryData[tableName] || [])];
 

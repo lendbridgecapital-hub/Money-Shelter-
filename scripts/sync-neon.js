@@ -257,6 +257,15 @@ async function initSchema(client) {
 }
 
 function loadInitialSeedData() {
+  try {
+    const directData = require('../data/initial-data.json');
+    if (directData && Array.isArray(directData.users) && directData.users.length > 0) {
+      return directData;
+    }
+  } catch (e) {
+    // fallback to path resolution
+  }
+
   const seedFiles = [
     path.resolve(process.cwd(), 'data/initial-data.json'),
     path.resolve(process.cwd(), 'data/app-portable.json'),
@@ -267,7 +276,7 @@ function loadInitialSeedData() {
       try {
         const raw = fs.readFileSync(file, 'utf8');
         const parsed = JSON.parse(raw);
-        if (parsed && typeof parsed === 'object') {
+        if (parsed && typeof parsed === 'object' && Array.isArray(parsed.users) && parsed.users.length > 0) {
           return parsed;
         }
       } catch (err) {
@@ -298,11 +307,11 @@ async function pullData(client) {
   await initSchema(client);
 
   const rows = await client.query("SELECT value FROM quickfinsure_store WHERE key = 'main_store' LIMIT 1;");
-  if (rows && rows.length > 0 && rows[0].value) {
+  if (rows && rows.length > 0 && rows[0].value && Array.isArray(rows[0].value.users) && rows[0].value.users.length > 0) {
     return rows[0].value;
   }
 
-  // If empty on Neon, populate with initial seed data
+  // If empty on Neon or has 0 users, populate with initial seed data
   const seed = loadInitialSeedData();
   await pushData(client, seed);
   return seed;
