@@ -1071,7 +1071,7 @@ export default function BankProductManager({
                                   %
                                 </span>
                               </div>
-                              <p className="text-[11px] text-slate-400 mt-0.5">Gross commission receivable by QuickFinSure</p>
+                              <p className="text-[11px] text-slate-400 mt-0.5">Gross commission receivable by Quickfinsure</p>
                             </div>
 
                             <div>
@@ -1100,7 +1100,7 @@ export default function BankProductManager({
                           {/* Net Margin indicator */}
                           {inlineForm.baseRate !== '' && inlineForm.partnerRate !== '' && (
                             <div className="p-2.5 rounded-lg bg-emerald-50/70 border border-emerald-200 flex items-center justify-between text-xs text-emerald-900">
-                              <span className="font-semibold">QuickFinSure Net Spread:</span>
+                              <span className="font-semibold">Quickfinsure Net Spread:</span>
                               <span className="font-mono font-bold">
                                 +{(Number(inlineForm.baseRate) - Number(inlineForm.partnerRate)).toFixed(2)}% margin
                               </span>
@@ -1544,7 +1544,7 @@ export default function BankProductManager({
                       </span>
                     </div>
                     <p className="text-[11px] text-slate-500 mt-1">
-                      Gross commission % receivable by QuickFinSure from the bank (e.g. ICICI pays 2%).
+                      Gross commission % receivable by Quickfinsure from the bank (e.g. ICICI pays 2%).
                     </p>
                   </div>
 
@@ -1569,7 +1569,7 @@ export default function BankProductManager({
                       </span>
                     </div>
                     <p className="text-[11px] text-slate-500 mt-1">
-                      Commission % paid out to the Channel Partner (e.g. QuickFinSure offers 1%).
+                      Commission % paid out to the Channel Partner (e.g. Quickfinsure offers 1%).
                     </p>
                   </div>
                 </div>
@@ -1582,7 +1582,7 @@ export default function BankProductManager({
                       : 'bg-amber-50 border-amber-200 text-amber-900'
                   }`}>
                     <div>
-                      <span className="font-bold">QuickFinSure Net Retained Margin:</span>
+                      <span className="font-bold">Quickfinsure Net Retained Margin:</span>
                       <p className="text-[11px] opacity-75 mt-0.5">
                         Bank Receivable ({Number(baseRate).toFixed(2)}%) − Partner Payout ({Number(partnerRate).toFixed(2)}%)
                       </p>

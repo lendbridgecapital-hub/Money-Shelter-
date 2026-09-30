@@ -71,7 +71,7 @@ export default function MobileAppHeader({
               // eslint-disable-next-line @next/next/no-img-element
               <img
                 src={logoUrl}
-                alt={companyName || 'QuickFinSure'}
+                alt={companyName || 'Quickfinsure'}
                 className="h-7 max-h-7.5 w-auto max-w-[150px] object-contain"
               />
             ) : (
@@ -80,7 +80,7 @@ export default function MobileAppHeader({
                   {companyName ? companyName.charAt(0).toUpperCase() : 'Q'}
                 </div>
                 <span className="font-extrabold text-slate-900 text-sm tracking-tight">
-                  {companyName || 'QuickFinSure'}
+                  {companyName || 'Quickfinsure'}
                 </span>
               </div>
             )}

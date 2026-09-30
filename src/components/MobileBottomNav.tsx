@@ -19,7 +19,7 @@ export default function MobileBottomNav({
   role,
   userId,
   userName = 'Operator',
-  companyName = 'QuickFinSure',
+  companyName = 'Quickfinsure',
   logoUrl,
   branchName,
 }: Props) {

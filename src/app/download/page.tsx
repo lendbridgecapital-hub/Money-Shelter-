@@ -16,7 +16,7 @@ export default function DownloadPage() {
         </span>
 
         <h1 className="text-2xl font-bold tracking-tight text-white mb-2">
-          QuickFinSure App
+          Quickfinsure App
         </h1>
         <p className="text-sm text-slate-400 mb-6">
           Direct real-time mobile app for advisors & operators with dual sync.
@@ -25,7 +25,7 @@ export default function DownloadPage() {
         {/* Download Button */}
         <a
           href="/QuickFinSure.apk"
-          download="QuickFinSure.apk"
+          download="Quickfinsure.apk"
           className="w-full inline-flex items-center justify-center gap-3 bg-gradient-to-r from-blue-600 to-sky-500 hover:from-blue-500 hover:to-sky-400 text-white font-semibold py-4 px-6 rounded-2xl shadow-xl shadow-sky-600/30 transition-all transform active:scale-98 text-base mb-6"
         >
           <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24">
@@ -45,7 +45,7 @@ export default function DownloadPage() {
           </div>
           <div className="flex gap-2.5 items-start">
             <span className="flex-shrink-0 w-5 h-5 rounded-full bg-blue-500/20 text-blue-400 font-bold flex items-center justify-center text-[10px]">2</span>
-            <span>If tapping the notification says <b>"Can't open file"</b>: Open your phone&apos;s <b>Files</b> or <b>Downloads</b> app, find <b>QuickFinSure.apk</b> and tap it.</span>
+            <span>If tapping the notification says <b>"Can't open file"</b>: Open your phone&apos;s <b>Files</b> or <b>Downloads</b> app, find <b>Quickfinsure.apk</b> and tap it.</span>
           </div>
           <div className="flex gap-2.5 items-start">
             <span className="flex-shrink-0 w-5 h-5 rounded-full bg-blue-500/20 text-blue-400 font-bold flex items-center justify-center text-[10px]">3</span>

@@ -25,7 +25,7 @@ interface Props {
 
 export default function PartnerOnboardingForm({
   branches,
-  companyName = 'QuickFinSure',
+  companyName = 'Quickfinsure',
   referralRm,
 }: Props) {
   // Stepper state: 1 = Profile, 2 = KYC & Docs, 3 = Agreement, 4 = OTP Confirmation, 5 = Success
@@ -168,7 +168,7 @@ export default function PartnerOnboardingForm({
     setIsVerifying(true);
     const agreementAuthorizedText = `SUB-DSA / REFERRAL PARTNER AGREEMENT
 Executed on: ${currentDateFormatted}
-First Party: QuickFinSure Solutions (Galore Tech IT Park, Bavdhan, Pune HQ)
+First Party: Quickfinsure Solutions (Galore Tech IT Park, Bavdhan, Pune HQ)
 Second Party (Referral Partner / Sub-DSA): ${fullName}
 Father's/Spouse's Name: ${fatherSpouseName}
 Registered Address: ${address}

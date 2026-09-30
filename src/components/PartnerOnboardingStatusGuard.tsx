@@ -13,7 +13,7 @@ interface Props {
 
 export default function PartnerOnboardingStatusGuard({
   partner,
-  companyName = 'QuickFinSure',
+  companyName = 'Quickfinsure',
 }: Props) {
   const router = useRouter();
   const [panFile, setPanFile] = useState<File | null>(null);

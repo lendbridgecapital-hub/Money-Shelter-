@@ -54,7 +54,7 @@ export default function LoginPage() {
         </div>
 
         <h2 className="mt-4 text-center text-2xl font-extrabold text-slate-900 tracking-tight">
-          QuickFinSure
+          Quickfinsure
         </h2>
         <p className="mt-1 text-center text-xs text-slate-500">
           Multi-Branch Loan Origination & Partner Platform

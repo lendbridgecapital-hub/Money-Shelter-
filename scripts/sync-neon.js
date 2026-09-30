@@ -1,5 +1,5 @@
 /**
- * QuickFinSure - Neon PostgreSQL Synchronization Engine
+ * Quickfinsure - Neon PostgreSQL Synchronization Engine
  * Handles bidirectional sync, table initialization, and snapshots for Neon.
  */
 
@@ -88,7 +88,7 @@ async function initSchema(client) {
     `CREATE TABLE IF NOT EXISTS company_settings (
       id TEXT PRIMARY KEY,
       tenant_id TEXT,
-      company_name TEXT NOT NULL DEFAULT 'QuickFinSure',
+      company_name TEXT NOT NULL DEFAULT 'Quickfinsure',
       tagline TEXT,
       logo_url TEXT,
       favicon_url TEXT,

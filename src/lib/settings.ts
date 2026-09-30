@@ -4,23 +4,23 @@ import type { CompanySettings } from '@/types/db';
 export const DEFAULT_SETTINGS: CompanySettings = {
   id: 'default',
   tenantId: 'default',
-  companyName: 'QuickFinSure',
+  companyName: 'Quickfinsure',
   tagline: 'Your Trusted Multi-Branch Loan Origination & Partner Platform',
   logoUrl: '',
   faviconUrl: '',
-  primaryColor: '#16a34a', // QuickFinSure Emerald Green Brand Theme
-  accentColor: '#1e293b',  // QuickFinSure Corporate Navy Accent
+  primaryColor: '#16a34a', // Quickfinsure Emerald Green Brand Theme
+  accentColor: '#1e293b',  // Quickfinsure Corporate Navy Accent
   officialEmail: 'contact@quickfinsure.com',
   supportPhone: '+91 98765 43210',
   websiteUrl: 'https://quickfinsure.com',
-  footerText: '© 2026 QuickFinSure. All rights reserved. Licensed DSA Partner.',
-  portalTitle: 'QuickFinSure — Loan Origination Portal',
+  footerText: '© 2026 Quickfinsure. All rights reserved. Licensed DSA Partner.',
+  portalTitle: 'Quickfinsure — Loan Origination Portal',
   smtpHost: '',
   smtpPort: 587,
   smtpSecure: false,
   smtpUser: '',
   smtpPassword: '',
-  smtpFromName: 'QuickFinSure Notifications',
+  smtpFromName: 'Quickfinsure Notifications',
 };
 
 export async function getCompanySettings(tenantId = 'default'): Promise<CompanySettings> {
@@ -79,12 +79,16 @@ export async function getCompanySettings(tenantId = 'default'): Promise<CompanyS
   }
 }
 
+function normalizeBrand(str: string): string {
+  return str.replace(/QuickFinSure/g, 'Quickfinsure');
+}
+
 function mapRowToSettings(row: Record<string, unknown>): CompanySettings {
   return {
     id: String(row.id || 'default'),
     tenantId: String(row.tenant_id || row.tenantId || 'default'),
-    companyName: String(row.company_name || row.companyName || DEFAULT_SETTINGS.companyName),
-    tagline: String(row.tagline || DEFAULT_SETTINGS.tagline),
+    companyName: normalizeBrand(String(row.company_name || row.companyName || DEFAULT_SETTINGS.companyName)),
+    tagline: normalizeBrand(String(row.tagline || DEFAULT_SETTINGS.tagline)),
     logoUrl: String(row.logo_url || row.logoUrl || ''),
     faviconUrl: String(row.favicon_url || row.faviconUrl || ''),
     primaryColor: String(row.primary_color || row.primaryColor || DEFAULT_SETTINGS.primaryColor),
@@ -92,13 +96,13 @@ function mapRowToSettings(row: Record<string, unknown>): CompanySettings {
     officialEmail: String(row.official_email || row.officialEmail || ''),
     supportPhone: String(row.support_phone || row.supportPhone || ''),
     websiteUrl: String(row.website_url || row.websiteUrl || ''),
-    footerText: String(row.footer_text || row.footerText || DEFAULT_SETTINGS.footerText),
-    portalTitle: String(row.portal_title || row.portalTitle || DEFAULT_SETTINGS.portalTitle),
+    footerText: normalizeBrand(String(row.footer_text || row.footerText || DEFAULT_SETTINGS.footerText)),
+    portalTitle: normalizeBrand(String(row.portal_title || row.portalTitle || DEFAULT_SETTINGS.portalTitle)),
     smtpHost: String(row.smtp_host || row.smtpHost || ''),
     smtpPort: Number(row.smtp_port || row.smtpPort || 587),
     smtpSecure: Boolean(row.smtp_secure || row.smtpSecure),
     smtpUser: String(row.smtp_user || row.smtpUser || ''),
     smtpPassword: String(row.smtp_password || row.smtpPassword || ''),
-    smtpFromName: String(row.smtp_from_name || row.smtpFromName || ''),
+    smtpFromName: normalizeBrand(String(row.smtp_from_name || row.smtpFromName || '')),
   };
 }

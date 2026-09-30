@@ -1,6 +1,6 @@
 {
-  "name": "QuickFinSure — Loan Origination & Partner Platform",
-  "short_name": "QuickFinSure",
+  "name": "Quickfinsure — Loan Origination & Partner Platform",
+  "short_name": "Quickfinsure",
   "description": "Enterprise Loan Origination, RM Management, and Partner Lending Network",
   "start_url": "/dashboard",
   "display": "standalone",

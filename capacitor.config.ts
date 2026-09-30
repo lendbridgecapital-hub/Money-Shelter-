@@ -2,7 +2,7 @@ import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
   appId: 'com.quickfinsure.app',
-  appName: 'QuickFinSure',
+  appName: 'Quickfinsure',
   webDir: 'public',
   server: {
     // Connects to live production deployment on Render with Neon PostgreSQL

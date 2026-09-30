@@ -42,7 +42,7 @@ export default function PartnerComplianceManager({ partners, currentUserRole, cu
   const shareViaWhatsApp = () => {
     const link = getOnboardingUrl();
     const text = encodeURIComponent(
-      `Hello! Register as an authorized Channel Partner with QuickFinSure using my direct onboarding link: ${link}`
+      `Hello! Register as an authorized Channel Partner with Quickfinsure using my direct onboarding link: ${link}`
     );
     window.open(`https://api.whatsapp.com/send?text=${text}`, '_blank');
   };

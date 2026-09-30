@@ -225,7 +225,7 @@ export default function MobileDrawer({
             <span>Sign Out Operator</span>
           </button>
           <p className="text-[10px] text-center text-slate-400 mt-2">
-            QuickFinSure Mobile Platform v1.0
+            Quickfinsure Mobile Platform v1.0
           </p>
         </div>
       </div>

@@ -1,4 +1,4 @@
-/* Seeds QuickFinSure as the single client organization with branches,
+/* Seeds Quickfinsure as the single client organization with branches,
  * staff users, banks, commissions, and sample loan requests across all flowchart stages.
  */
 import bcrypt from 'bcryptjs';
@@ -25,9 +25,9 @@ import { getCompanySettings } from '../src/lib/settings';
 import { createBankProduct, listBankProducts } from '../src/lib/repos/bankProductsRepo';
 
 async function main() {
-  console.log('Seeding QuickFinSure Platform Data…\n');
+  console.log('Seeding Quickfinsure Platform Data…\n');
 
-  // 1. Maintain single client organization: QuickFinSure ONLY
+  // 1. Maintain single client organization: Quickfinsure ONLY
   const existingTenants = listTenants();
   for (const t of existingTenants) {
     if (t.slug !== 'quickfinsure') {
@@ -43,25 +43,25 @@ async function main() {
   let quickFinSureTenant = listTenants().find((t) => t.slug === 'quickfinsure');
   if (!quickFinSureTenant) {
     quickFinSureTenant = createTenant({
-      name: 'QuickFinSure Solutions',
+      name: 'Quickfinsure Solutions',
       slug: 'quickfinsure',
       domain: 'apply.quickfinsure.com',
-      companyName: 'QuickFinSure',
+      companyName: 'Quickfinsure',
       tagline: 'Your Trusted Multi-Branch Loan Origination & Partner Platform',
       primaryColor: '#0284c7', // Sky Blue Theme
       accentColor: '#10b981',  // Emerald Green Accent
       officialEmail: 'contact@quickfinsure.com',
       supportPhone: '+91 98765 43210',
       websiteUrl: 'https://quickfinsure.com',
-      footerText: '© 2026 QuickFinSure. All rights reserved. Licensed DSA Partner.',
-      portalTitle: 'QuickFinSure — Loan Origination Portal',
+      footerText: '© 2026 Quickfinsure. All rights reserved. Licensed DSA Partner.',
+      portalTitle: 'Quickfinsure — Loan Origination Portal',
     });
-    console.log('✓ Maintained single client organization: QuickFinSure.');
+    console.log('✓ Maintained single client organization: Quickfinsure.');
   } else {
-    console.log('✓ QuickFinSure organization verified.');
+    console.log('✓ Quickfinsure organization verified.');
   }
 
-  // 2. Initialize / update system default Company Settings to QuickFinSure
+  // 2. Initialize / update system default Company Settings to Quickfinsure
   db.prepare(
     `UPDATE company_settings 
      SET company_name = ?, tagline = ?, primary_color = ?, accent_color = ?,
@@ -69,21 +69,21 @@ async function main() {
          portal_title = ?, updated_at = ?
      WHERE id = 'default' OR tenant_id = 'default'`
   ).run(
-    'QuickFinSure',
+    'Quickfinsure',
     'Your Trusted Multi-Branch Loan Origination & Partner Platform',
     '#0284c7',
     '#10b981',
     'contact@quickfinsure.com',
     '+91 98765 43210',
     'https://quickfinsure.com',
-    '© 2026 QuickFinSure. All rights reserved. Licensed DSA Partner.',
-    'QuickFinSure — Loan Origination Portal',
+    '© 2026 Quickfinsure. All rights reserved. Licensed DSA Partner.',
+    'Quickfinsure — Loan Origination Portal',
     new Date().toISOString()
   );
   await getCompanySettings('default');
-  console.log('✓ Updated system branding to QuickFinSure.');
+  console.log('✓ Updated system branding to Quickfinsure.');
 
-  // 3. Seed Branches for QuickFinSure
+  // 3. Seed Branches for Quickfinsure
   let branches = listBranches();
   if (branches.length === 0) {
     createBranch({
@@ -108,7 +108,7 @@ async function main() {
       phone: '+91 80 8000 3300',
     });
     branches = listBranches();
-    console.log(`✓ Created ${branches.length} QuickFinSure branches.`);
+    console.log(`✓ Created ${branches.length} Quickfinsure branches.`);
   }
 
   const hq = branches[0];
@@ -166,7 +166,7 @@ async function main() {
 
   const roleUsers = [
     {
-      name: 'QuickFinSure Admin',
+      name: 'Quickfinsure Admin',
       email: 'admin@quickfinsure.com',
       role: 'ADMIN' as const,
       branchId: hq.id,
@@ -295,7 +295,7 @@ async function main() {
     createBankProduct({
       productName: 'Home Loan',
       banks: ['HDFC Bank', 'ICICI Bank', 'State Bank of India', 'Kotak Mahindra Bank', 'Axis Bank', 'Bank of Baroda', 'Punjab National Bank', 'Tata Capital Housing Finance', 'Bajaj Housing Finance', 'LIC Housing Finance'],
-      baseRate: 2.0, // QuickFinSure receivable from bank (e.g. 2.0%)
+      baseRate: 2.0, // Quickfinsure receivable from bank (e.g. 2.0%)
       partnerRate: 1.2, // Payout to partner (e.g. 1.2%)
       notes: 'Prime residential home loans with fast 48-hr in-principle sanction.',
     });
@@ -303,7 +303,7 @@ async function main() {
     createBankProduct({
       productName: 'Personal Loan',
       banks: ['HDFC Bank', 'ICICI Bank', 'Axis Bank', 'Bajaj Finance', 'Tata Capital Financial Services', 'Kotak Mahindra Bank', 'IDFC FIRST Bank', 'Aditya Birla Finance'],
-      baseRate: 2.5, // QuickFinSure receivable (2.5%)
+      baseRate: 2.5, // Quickfinsure receivable (2.5%)
       partnerRate: 1.5, // Payout to partner (1.5%)
       notes: 'Salaried and self-employed personal loans up to ₹40 Lakhs.',
     });
@@ -311,7 +311,7 @@ async function main() {
     createBankProduct({
       productName: 'Business Loan',
       banks: ['ICICI Bank', 'HDFC Bank', 'Axis Bank', 'Bajaj Finance', 'L&T Finance', 'Piramal Capital & Housing Finance', 'Poonawalla Fincorp', 'Hero FinCorp'],
-      baseRate: 2.75, // QuickFinSure receivable (2.75%)
+      baseRate: 2.75, // Quickfinsure receivable (2.75%)
       partnerRate: 1.65, // Payout to partner (1.65%)
       notes: 'Unsecured business loans and MSME working capital facilities.',
     });
@@ -319,7 +319,7 @@ async function main() {
     createBankProduct({
       productName: 'Loan Against Property',
       banks: ['State Bank of India', 'HDFC Bank', 'ICICI Bank', 'Kotak Mahindra Bank', 'Bajaj Housing Finance', 'PNB Housing Finance', 'Tata Capital Housing Finance'],
-      baseRate: 1.8, // QuickFinSure receivable (1.8%)
+      baseRate: 1.8, // Quickfinsure receivable (1.8%)
       partnerRate: 1.0, // Payout to partner (1.0%)
       notes: 'Commercial & residential collateral loans up to ₹15 Crores.',
     });
@@ -327,7 +327,7 @@ async function main() {
     createBankProduct({
       productName: 'Balance Transfer',
       banks: ['State Bank of India', 'HDFC Bank', 'ICICI Bank', 'Bank of Baroda', 'Union Bank of India', 'Kotak Mahindra Bank'],
-      baseRate: 1.5, // QuickFinSure receivable (1.5%)
+      baseRate: 1.5, // Quickfinsure receivable (1.5%)
       partnerRate: 0.85, // Payout to partner (0.85%)
       notes: 'Zero prepayment penalty refinancing with top-up options.',
     });
@@ -335,7 +335,7 @@ async function main() {
     createBankProduct({
       productName: 'Education Loan',
       banks: ['State Bank of India', 'Bank of Baroda', 'HDFC Bank', 'Avanse Financial Services', 'InCred Financial Services', 'Auxilo Finserve'],
-      baseRate: 1.75, // QuickFinSure receivable (1.75%)
+      baseRate: 1.75, // Quickfinsure receivable (1.75%)
       partnerRate: 1.1, // Payout to partner (1.1%)
       notes: 'Domestic and international study loans with customized moratorium.',
     });
@@ -345,7 +345,7 @@ async function main() {
       createBankProduct({
         productName: 'Home Loan',
         banks: ['HDFC Bank', 'ICICI Bank', 'Kotak Mahindra Bank'],
-        baseRate: 2.2, // QuickFinSure receivable (2.2%)
+        baseRate: 2.2, // Quickfinsure receivable (2.2%)
         partnerRate: 1.5, // Dedicated Partner payout (1.5%)
         dedicatedPartnerId: partnerUser.id,
         dedicatedPartnerName: partnerUser.name,
@@ -623,7 +623,7 @@ async function main() {
   }
 
   console.log('\n========================================================================');
-  console.log('🎉 QuickFinSure Flowchart & Role-Based System Initialized!');
+  console.log('🎉 Quickfinsure Flowchart & Role-Based System Initialized!');
   console.log('========================================================================');
   console.log('  1. ADMIN:                admin@quickfinsure.com / Password123!');
   console.log('  2. OPERATIONS:           ops@quickfinsure.com / Password123!');

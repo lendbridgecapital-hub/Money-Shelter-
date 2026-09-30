@@ -1,8 +1,8 @@
-# QuickFinSure Android Mobile Application Guide
+# Quickfinsure Android Mobile Application Guide
 
 ## 📱 Overview
 
-The **QuickFinSure Android Mobile Application** is an exact native replica of the QuickFinSure Enterprise Platform, engineered with **bidirectional dual-communication**:
+The **Quickfinsure Android Mobile Application** is an exact native replica of the Quickfinsure Enterprise Platform, engineered with **bidirectional dual-communication**:
 - **Whatever an operator does in the mobile app** (e.g. advance loan stage, disburse a loan, create customer links, upload KYC documents, approve channel partners, configure bank products, create bulk RMs) is **instantly recorded in the central database**.
 - **Whatever an operator does in the web system** is **instantly reflected in the mobile app**.
 - Both the Web and Android apps share the same database (`data/app-portable.json`), authentication session, and server actions.
@@ -21,7 +21,7 @@ Because the development server is actively broadcasting across your local networ
    ```
 4. Log in with any operator account (Admin, Operations, Relationship Manager, or Channel Partner).
 5. Tap the Chrome menu (**⋮** three dots in the top right) and tap **"Install App"** (or **"Add to Home screen"**).
-6. **Done!** The QuickFinSure Android App icon will appear on your phone's home screen and app drawer.
+6. **Done!** The Quickfinsure Android App icon will appear on your phone's home screen and app drawer.
    - It launches in full-screen standalone mode without browser bars.
    - Features the mobile bottom navigation bar (`📊 Home`, `📁 Cases`, `🔗 New Lead`, `👥 Partners`, `🏦 Banks`).
    - Shows the live **🟢 Dual-Sync Connected** status banner.
@@ -33,7 +33,7 @@ Because the development server is actively broadcasting across your local networ
 The complete native Android project has been initialized in the `android/` directory:
 
 - **Package Name**: `com.quickfinsure.app`
-- **Application Name**: QuickFinSure
+- **Application Name**: Quickfinsure
 - **Permissions Configured**: Internet, Network State, Camera (for KYC document capture), External Storage.
 - **Cleartext Traffic**: Enabled (`android:usesCleartextTraffic="true"`) for local testing.
 
@@ -69,7 +69,7 @@ The complete native Android project has been initialized in the `android/` direc
 
 ## 🌐 Switching to Cloud / Production Server
 
-When you deploy your QuickFinSure server to a live cloud host (e.g. AWS, Render, VPS, or custom domain `https://app.quickfinsure.com`):
+When you deploy your Quickfinsure server to a live cloud host (e.g. AWS, Render, VPS, or custom domain `https://app.quickfinsure.com`):
 
 1. Open `capacitor.config.ts`.
 2. Update the `url` property:

@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
-  <title>QuickFinSure</title>
+  <title>Quickfinsure</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; }
     body { background-color: #0b1329; color: #ffffff; min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 24px; text-align: center; }
@@ -32,7 +32,7 @@
     <div class="logo-container">
       <span class="logo-icon">⚡</span>
     </div>
-    <span class="badge">QuickFinSure Mobile</span>
+    <span class="badge">Quickfinsure Mobile</span>
     <h1>Connecting...</h1>
     <p class="subtitle" id="subStatus">Linking with your desktop database in real-time</p>
 
@@ -97,7 +97,7 @@
         setStatus(true, "Connecting...", "Testing " + url + "...");
         const ok = await probeServer(url);
         if (ok) {
-          setStatus(false, "Connected!", "Opening QuickFinSure...", false);
+          setStatus(false, "Connected!", "Opening Quickfinsure...", false);
           localStorage.setItem("quickfinsure_server_url", url);
           setTimeout(() => window.location.replace(url), 200);
           return;
@@ -110,7 +110,7 @@
       setStatus(true, "Connecting...", "Connecting to " + url + "...");
       const ok = await probeServer(url);
       if (ok) {
-        setStatus(false, "Connected!", "Opening QuickFinSure...", false);
+        setStatus(false, "Connected!", "Opening Quickfinsure...", false);
         localStorage.setItem("quickfinsure_server_url", url);
         setTimeout(() => window.location.replace(url), 200);
       } else {

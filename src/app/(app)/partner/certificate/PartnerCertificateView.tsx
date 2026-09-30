@@ -12,7 +12,7 @@ interface Props {
 
 export default function PartnerCertificateView({
   partner,
-  companyName = 'QuickFinSure',
+  companyName = 'Quickfinsure',
 }: Props) {
   const issueDateFormatted = formatDate(partner.certificateIssuedAt || partner.approvedAt || partner.createdAt);
   const certNumber = partner.certificateNumber || `QFS-CERT-2026-${partner.id.slice(-4).toUpperCase()}`;
@@ -182,7 +182,7 @@ export default function PartnerCertificateView({
             </div>
             <div className="w-36 h-0.5 bg-slate-300 ml-auto mr-auto sm:mr-0" />
             <p className="text-[10px] font-bold text-slate-800 uppercase">Authorized Signatory</p>
-            <p className="text-[9px] text-slate-400">QuickFinSure Solutions Pvt Ltd</p>
+            <p className="text-[9px] text-slate-400">Quickfinsure Solutions Pvt Ltd</p>
           </div>
         </div>
       </div>

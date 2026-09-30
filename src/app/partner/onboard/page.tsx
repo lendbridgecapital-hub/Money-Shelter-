@@ -4,9 +4,9 @@ import { getUserById } from '@/lib/repos/usersRepo';
 import PartnerOnboardingForm from '@/components/PartnerOnboardingForm';
 
 export const metadata = {
-  title: 'Partner Onboarding — QuickFinSure Sub-DSA Registration',
+  title: 'Partner Onboarding — Quickfinsure Sub-DSA Registration',
   description:
-    'Join QuickFinSure as an authorized Channel Partner & Sub-DSA. Execute referral agreement digitally and receive your partner code.',
+    'Join Quickfinsure as an authorized Channel Partner & Sub-DSA. Execute referral agreement digitally and receive your partner code.',
 };
 
 export default async function PartnerOnboardPage({
@@ -46,7 +46,7 @@ export default async function PartnerOnboardPage({
     <div className="min-h-screen bg-slate-50">
       <PartnerOnboardingForm
         branches={branches}
-        companyName={settings.companyName || 'QuickFinSure'}
+        companyName={settings.companyName || 'Quickfinsure'}
         referralRm={referralRm}
       />
     </div>
