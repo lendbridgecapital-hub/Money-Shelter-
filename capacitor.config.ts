@@ -5,8 +5,8 @@ const config: CapacitorConfig = {
   appName: 'QuickFinSure',
   webDir: 'public',
   server: {
-    // Connects to local development server on current active Wi-Fi IP for live dual synchronization
-    url: 'http://192.168.1.8:3000',
+    // Connects to live production deployment on Render with Neon PostgreSQL
+    url: 'https://quicfinsure.onrender.com',
     cleartext: true,
     errorPath: 'index.html',
   },

@@ -54,7 +54,7 @@ export default function DownloadPage() {
         </div>
 
         <div className="mt-5 text-[11px] text-slate-500">
-          Connected to local server: <span className="font-mono text-slate-400">http://192.168.1.8:3000</span>
+          Live Cloud Production: <span className="font-mono text-sky-400">https://quicfinsure.onrender.com</span>
         </div>
       </div>
     </div>
