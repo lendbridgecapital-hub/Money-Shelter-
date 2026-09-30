@@ -29,7 +29,15 @@ export default function ProfileClient({ user, settings }: Props) {
   const [firmLogoPreview, setFirmLogoPreview] = useState<string | null>(user.firmLogoUrl || null);
 
   const cardPath = `/card/${user.id}`;
-  const cardUrl = typeof window !== 'undefined' ? `${window.location.origin}${cardPath}` : cardPath;
+  const getPublicBase = () => {
+    if (typeof window === 'undefined') return 'https://quicfinsure.onrender.com';
+    const origin = window.location.origin;
+    if (!origin || origin.includes('localhost') || origin.startsWith('capacitor:')) {
+      return 'https://quicfinsure.onrender.com';
+    }
+    return origin;
+  };
+  const cardUrl = `${getPublicBase()}${cardPath}`;
 
   function handlePhotoChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];

@@ -46,8 +46,13 @@ export async function createApplicationLinkAction(): Promise<CreateLinkResult> {
       changedById: user.id,
     });
 
-    const base = process.env.APP_BASE_URL || 'http://localhost:3000';
-    const url = `${base}/apply/${token}`;
+    const base =
+      process.env.APP_BASE_URL ||
+      process.env.RENDER_EXTERNAL_URL ||
+      process.env.NEXTAUTH_URL ||
+      'https://quicfinsure.onrender.com';
+    const cleanBase = base.replace(/\/$/, '');
+    const url = `${cleanBase}/apply/${token}`;
 
     revalidatePath('/branch/requests');
     return { ok: true, url, token };

@@ -7,7 +7,26 @@ import { LOAN_TYPE_LABELS, formatCurrencyINR } from '@/lib/format';
 
 export default async function ApplicationSuccessPage({ params }: { params: { token: string } }) {
   const application = getApplicationByToken(params.token);
-  if (!application) notFound();
+  if (!application) {
+    const defaultSettings = await getCompanySettings('default');
+    return (
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4 sm:p-6">
+        <div className="max-w-md w-full bg-white border border-slate-200 rounded-3xl p-8 text-center shadow-lg">
+          <h1 className="text-xl font-bold text-slate-900 mb-2">Application Record Not Found</h1>
+          <p className="text-xs text-slate-500 leading-relaxed mb-6">
+            We could not find the application associated with this link. If you already submitted your application, your advisor has received it.
+          </p>
+          <a
+            href="/"
+            className="inline-flex items-center justify-center w-full py-3 px-4 rounded-xl text-xs font-semibold text-white transition shadow-sm hover:opacity-95"
+            style={{ backgroundColor: defaultSettings.primaryColor }}
+          >
+            Go to {defaultSettings.companyName} Home
+          </a>
+        </div>
+      </div>
+    );
+  }
 
   const settings = await getCompanySettings(application.tenantId || 'default');
   const branch = getBranchById(application.branchId);

@@ -1,5 +1,5 @@
 import { notFound } from 'next/navigation';
-import { getUserById } from '@/lib/repos/usersRepo';
+import { getUserById, getPartnerByCode, getUserByEmail } from '@/lib/repos/usersRepo';
 import { getCompanySettings } from '@/lib/settings';
 import DigitalBusinessCardClient from './DigitalBusinessCardClient';
 
@@ -8,7 +8,8 @@ interface Props {
 }
 
 export async function generateMetadata({ params }: Props) {
-  const advisor = getUserById(params.id);
+  const cleanId = (params.id || '').trim();
+  const advisor = getUserById(cleanId) || getPartnerByCode(cleanId) || getUserByEmail(cleanId);
   const settings = await getCompanySettings();
   if (!advisor) return { title: 'Business Card' };
 
@@ -19,7 +20,8 @@ export async function generateMetadata({ params }: Props) {
 }
 
 export default async function DigitalBusinessCardPage({ params }: Props) {
-  const advisor = getUserById(params.id);
+  const cleanId = (params.id || '').trim();
+  const advisor = getUserById(cleanId) || getPartnerByCode(cleanId) || getUserByEmail(cleanId);
   if (!advisor || !advisor.active) {
     notFound();
   }

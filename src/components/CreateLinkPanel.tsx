@@ -29,9 +29,12 @@ export default function CreateLinkPanel({
       if (!res.ok) {
         setError(res.error || 'Could not generate application link.');
       } else if (res.url) {
-        // Use the current client origin so it works seamlessly on LAN, mobile, and custom domain
-        const origin = typeof window !== 'undefined' ? window.location.origin : '';
-        const finalUrl = res.token && origin ? `${origin}/apply/${res.token}` : res.url;
+        // Resolve public origin: never generate localhost or capacitor:// links for clients
+        const rawOrigin = typeof window !== 'undefined' ? window.location.origin : '';
+        const isLocal = !rawOrigin || rawOrigin.includes('localhost') || rawOrigin.startsWith('capacitor:');
+        const productionHost = 'https://quicfinsure.onrender.com';
+        const publicBase = isLocal ? productionHost : rawOrigin;
+        const finalUrl = res.token ? `${publicBase}/apply/${res.token}` : res.url;
         setGeneratedUrl(finalUrl);
         setToken(res.token || null);
       }

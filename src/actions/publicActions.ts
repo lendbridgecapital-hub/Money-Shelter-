@@ -101,7 +101,11 @@ export async function submitCustomerApplication(token: string, formData: FormDat
   // Fire off notification emails — failures here must never block the customer's submission.
   const settings = await getCompanySettings();
   const branch = getBranchById(application.branchId);
-  const base = process.env.APP_BASE_URL || 'http://localhost:3000';
+  const base =
+    process.env.APP_BASE_URL ||
+    process.env.RENDER_EXTERNAL_URL ||
+    (process.env.NEXTAUTH_URL && !process.env.NEXTAUTH_URL.includes('localhost') ? process.env.NEXTAUTH_URL : '') ||
+    'https://quicfinsure.onrender.com';
 
   const confirmation = customerConfirmationEmail({
     fullName,

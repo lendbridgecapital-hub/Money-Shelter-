@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useTransition } from 'react';
+import Link from 'next/link';
 import type { User, CompanySettings, LoanType } from '@/types/db';
 import { LOAN_TYPE_LABELS, formatCurrencyINR } from '@/lib/format';
 import { submitDigitalCardInquiryAction } from '@/actions/publicActions';
@@ -62,9 +63,19 @@ export default function DigitalBusinessCardClient({ advisor, companySettings }: 
     URL.revokeObjectURL(url);
   }
 
+  function getPublicCardUrl() {
+    if (typeof window === 'undefined') return `https://quicfinsure.onrender.com/card/${advisor.id}`;
+    const origin = window.location.origin;
+    if (!origin || origin.includes('localhost') || origin.startsWith('capacitor:')) {
+      return `https://quicfinsure.onrender.com/card/${advisor.id}`;
+    }
+    return `${origin}/card/${advisor.id}`;
+  }
+
   function handleCopyCardLink() {
     if (typeof window !== 'undefined') {
-      navigator.clipboard.writeText(window.location.href);
+      const url = getPublicCardUrl();
+      navigator.clipboard.writeText(url);
       setCopiedLink(true);
       setTimeout(() => setCopiedLink(false), 2500);
     }
@@ -72,7 +83,7 @@ export default function DigitalBusinessCardClient({ advisor, companySettings }: 
 
   function handleShareWhatsApp() {
     if (typeof window !== 'undefined') {
-      const cardUrl = window.location.href;
+      const cardUrl = getPublicCardUrl();
       const text = encodeURIComponent(
         `Hello! Here is the official Digital Visiting Card of ${advisor.name} (${advisor.firmName || companyName}). Click the link to view financial services, save contact details directly to your phone, or apply for a loan:\n\n${cardUrl}`
       );
@@ -111,8 +122,42 @@ export default function DigitalBusinessCardClient({ advisor, companySettings }: 
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900 py-6 sm:py-10 px-3 sm:px-4">
+    <div className="min-h-screen bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900 py-4 sm:py-8 px-3 sm:px-4">
       <div className="max-w-md mx-auto space-y-4">
+        {/* Top Sticky Navigation Bar (Provides 1-tap Return to App / Dashboard) */}
+        <div className="sticky top-2 z-50 bg-slate-900/90 backdrop-blur-md border border-white/15 px-3 py-2.5 rounded-2xl flex items-center justify-between shadow-xl">
+          <button
+            type="button"
+            onClick={() => {
+              if (typeof window !== 'undefined' && window.history.length > 1) {
+                window.history.back();
+              } else {
+                window.location.href = '/dashboard';
+              }
+            }}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 active:scale-95 text-white text-xs font-bold transition border border-white/10"
+          >
+            <svg className="w-3.5 h-3.5 stroke-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.4} d="M15 19l-7-7 7-7" />
+            </svg>
+            <span>Back</span>
+          </button>
+
+          <span className="text-[11px] font-bold text-slate-300 truncate max-w-[130px]">
+            {advisor.name}
+          </span>
+
+          <Link
+            href="/dashboard"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 active:scale-95 text-white text-xs font-bold transition shadow-xs"
+          >
+            <svg className="w-3.5 h-3.5 stroke-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.4} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+            </svg>
+            <span>Home</span>
+          </Link>
+        </div>
+
         {/* Main Digital Visiting Card Frame */}
         <div className="bg-gradient-to-br from-slate-900 via-slate-800 to-emerald-950 text-white rounded-3xl shadow-2xl border border-emerald-500/25 overflow-hidden">
           {/* Card Top Banner with Emerald Gradient */}
@@ -426,8 +471,21 @@ export default function DigitalBusinessCardClient({ advisor, companySettings }: 
         </div>
 
         {/* Brand Footer */}
-        <div className="text-center text-[11px] text-slate-400 pt-2 pb-4">
+        <div className="text-center text-[11px] text-slate-400 pt-2 pb-2">
           <p>Powered by <strong>{companyName}</strong> Loan Origination & Partner Platform</p>
+        </div>
+
+        {/* Bottom Return to Main Dashboard Action */}
+        <div className="text-center pb-6">
+          <Link
+            href="/dashboard"
+            className="inline-flex items-center justify-center gap-2 w-full py-3 rounded-2xl bg-white/10 hover:bg-white/15 border border-white/15 text-slate-200 hover:text-white font-bold text-xs active:scale-95 transition shadow-sm"
+          >
+            <svg className="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.4} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+            </svg>
+            <span>Return to Main Dashboard Screen</span>
+          </Link>
         </div>
       </div>
     </div>

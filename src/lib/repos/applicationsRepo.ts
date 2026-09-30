@@ -56,11 +56,57 @@ export function getApplicationById(id: string): LoanApplication | undefined {
 }
 
 export function getApplicationByToken(token: string): LoanApplication | undefined {
-  const row = db
-    .prepare('SELECT * FROM loan_applications WHERE token = ?')
-    .get(token) as Record<string, unknown> | undefined;
+  if (!token) return undefined;
+  const clean = String(token).trim();
+  let decoded = clean;
+  try {
+    decoded = decodeURIComponent(clean);
+  } catch {}
 
-  return row ? mapRowToApplication(row) : undefined;
+  // 1. Query by token
+  let row = db
+    .prepare('SELECT * FROM loan_applications WHERE token = ?')
+    .get(clean) as Record<string, unknown> | undefined;
+
+  // 2. Query by decoded token if different
+  if (!row && decoded !== clean) {
+    row = db
+      .prepare('SELECT * FROM loan_applications WHERE token = ?')
+      .get(decoded) as Record<string, unknown> | undefined;
+  }
+
+  // 3. Fallback: Query by application ID
+  if (!row) {
+    row = db
+      .prepare('SELECT * FROM loan_applications WHERE id = ?')
+      .get(clean) as Record<string, unknown> | undefined;
+  }
+
+  if (row) {
+    return mapRowToApplication(row);
+  }
+
+  // 4. Fallback: check portable database disk cache
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const fs = require('fs');
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const path = require('path');
+    const cachePath = path.resolve(process.cwd(), 'data/app-portable.json');
+    if (fs.existsSync(cachePath)) {
+      const raw = JSON.parse(fs.readFileSync(cachePath, 'utf8'));
+      const list = Array.isArray(raw.loan_applications) ? raw.loan_applications : [];
+      const match = list.find(
+        (a: Record<string, unknown>) =>
+          a.token === clean || a.token === decoded || a.id === clean || a.id === decoded
+      );
+      if (match) {
+        return mapRowToApplication(match);
+      }
+    }
+  } catch {}
+
+  return undefined;
 }
 
 export function recordCustomerSubmission(

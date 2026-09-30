@@ -77,7 +77,9 @@ export default function OperationalWorkflowPanel({
   const isPartner = currentUser.role === 'CHANNEL_PARTNER';
   const isRM = currentUser.role === 'RELATIONSHIP_MANAGER';
 
-  const origin = typeof window !== 'undefined' && window.location.origin ? window.location.origin : baseUrl;
+  const rawOrigin = typeof window !== 'undefined' && window.location.origin ? window.location.origin : (baseUrl || '');
+  const isLocal = !rawOrigin || rawOrigin.includes('localhost') || rawOrigin.startsWith('capacitor:');
+  const origin = isLocal ? 'https://quicfinsure.onrender.com' : rawOrigin;
   const applyUrl = `${origin}/apply/${application.token}`;
   const offerUrl = `${origin}/offer/${application.token}`;
 

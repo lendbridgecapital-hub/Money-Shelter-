@@ -6,7 +6,55 @@ import CustomerApplicationForm from '@/components/CustomerApplicationForm';
 
 export default async function CustomerApplyPage({ params }: { params: { token: string } }) {
   const application = getApplicationByToken(params.token);
-  if (!application) notFound();
+  if (!application) {
+    const defaultSettings = await getCompanySettings('default');
+    return (
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center p-6">
+        <div className="max-w-md w-full bg-white border border-slate-200 rounded-3xl p-8 text-center shadow-lg">
+          <div
+            className="w-16 h-16 rounded-2xl mx-auto flex items-center justify-center text-white text-3xl shadow-md mb-5"
+            style={{ backgroundColor: defaultSettings.primaryColor }}
+          >
+            !
+          </div>
+          <h1 className="text-xl font-bold text-slate-900 mb-2">Application Link Not Found or Expired</h1>
+          <p className="text-xs text-slate-500 leading-relaxed mb-6">
+            The link you accessed may have expired, or the unique security token might be incomplete. Please check the link shared by your advisor or ask them to generate a fresh link.
+          </p>
+
+          <div className="bg-slate-50 border border-slate-100 rounded-xl p-4 text-xs text-slate-600 text-left space-y-1.5 mb-6">
+            <p>
+              <strong>Portal:</strong> {defaultSettings.companyName}
+            </p>
+            {defaultSettings.officialEmail && (
+              <p>
+                <strong>Support Email:</strong>{' '}
+                <a href={`mailto:${defaultSettings.officialEmail}`} className="text-blue-600 hover:underline">
+                  {defaultSettings.officialEmail}
+                </a>
+              </p>
+            )}
+            {defaultSettings.supportPhone && (
+              <p>
+                <strong>Support Phone:</strong>{' '}
+                <a href={`tel:${defaultSettings.supportPhone}`} className="text-blue-600 hover:underline">
+                  {defaultSettings.supportPhone}
+                </a>
+              </p>
+            )}
+          </div>
+
+          <a
+            href="/"
+            className="inline-flex items-center justify-center w-full py-3 px-4 rounded-xl text-xs font-semibold text-white transition shadow-sm hover:opacity-95"
+            style={{ backgroundColor: defaultSettings.primaryColor }}
+          >
+            Go to {defaultSettings.companyName} Home
+          </a>
+        </div>
+      </div>
+    );
+  }
 
   const settings = await getCompanySettings(application.tenantId || 'default');
   const branch = getBranchById(application.branchId);
