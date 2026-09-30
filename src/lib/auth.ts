@@ -4,6 +4,8 @@ import { redirect } from 'next/navigation';
 import bcrypt from 'bcryptjs';
 import { getUserByEmail, getUserById } from '@/lib/repos/usersRepo';
 import type { Role, User } from '@/types/db';
+import initialSeedData from '../../data/initial-data.json';
+import { db } from '@/lib/db';
 
 if (!process.env.NEXTAUTH_URL) {
   process.env.NEXTAUTH_URL = process.env.RENDER_EXTERNAL_URL || 'https://quicfinsure.onrender.com';
@@ -30,9 +32,39 @@ export const authOptions: NextAuthOptions = {
 
         const email = credentials.email.trim().toLowerCase();
         console.log('[auth] Attempting login for:', email);
-        const user = getUserByEmail(email);
+        let user = getUserByEmail(email);
+
+        // Failsafe: if database is fresh or empty, restore account from initialSeedData
         if (!user) {
-          console.log('[auth] No user found for email:', email);
+          const seedUser = (initialSeedData.users as Array<Record<string, unknown>>).find(
+            (u) => String(u.email).toLowerCase() === email
+          );
+          if (seedUser) {
+            try {
+              db.prepare(
+                `INSERT INTO users (id, tenant_id, name, email, password_hash, role, branch_id, active, created_at)
+                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
+              ).run(
+                seedUser.id,
+                seedUser.tenant_id || 'default',
+                seedUser.name,
+                seedUser.email,
+                seedUser.password_hash || seedUser.passwordHash,
+                seedUser.role,
+                seedUser.branch_id || seedUser.branchId || 'default',
+                1,
+                new Date().toISOString()
+              );
+              user = getUserByEmail(email);
+              console.log('[auth] Restored user from initial seed dataset:', email);
+            } catch (err) {
+              console.warn('[auth] Could not auto-restore seed user:', err);
+            }
+          }
+        }
+
+        if (!user) {
+          console.warn('[auth] No user found for email:', email);
           return null;
         }
 
