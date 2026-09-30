@@ -1,5 +1,6 @@
 import fs from 'fs';
 import path from 'path';
+import initialSeedData from '../../data/initial-data.json';
 
 interface Statement {
   run(...params: unknown[]): { changes: number; lastInsertRowid: number | bigint };
@@ -85,8 +86,10 @@ function createPortableStorage(storageFilePath: string): DatabaseAdapter {
     operational_remarks: [],
     partner_notifications: [],
     required_documents: [],
+    ...(initialSeedData as unknown as Partial<StorageData>),
   };
 
+  let cachedData: StorageData = defaultData;
   let hasHydratedFromNeon = false;
   let neonPushTimer: NodeJS.Timeout | null = null;
 
@@ -113,10 +116,15 @@ function createPortableStorage(storageFilePath: string): DatabaseAdapter {
   }
 
   function loadData(): StorageData {
+    if (Array.isArray(cachedData.users) && cachedData.users.length > 0 && hasHydratedFromNeon) {
+      return cachedData;
+    }
+
     const dbUrl = process.env.DATABASE_URL || process.env.POSTGRES_URL;
 
     // If Neon PostgreSQL is configured, pull fresh database snapshot on startup
     if (dbUrl && !hasHydratedFromNeon) {
+      hasHydratedFromNeon = true;
       try {
         const helperPath = path.resolve(process.cwd(), 'scripts/sync-neon.js');
         if (fs.existsSync(helperPath)) {
@@ -129,17 +137,17 @@ function createPortableStorage(storageFilePath: string): DatabaseAdapter {
           });
           if (res.stdout) {
             const parsed = JSON.parse(res.stdout);
-            if (parsed && typeof parsed === 'object') {
-              hasHydratedFromNeon = true;
+            if (parsed && typeof parsed === 'object' && Array.isArray(parsed.users) && parsed.users.length > 0) {
+              cachedData = { ...defaultData, ...parsed };
               try {
-                fs.writeFileSync(storageFilePath, JSON.stringify(parsed, null, 2), 'utf8');
+                fs.writeFileSync(storageFilePath, JSON.stringify(cachedData, null, 2), 'utf8');
               } catch {}
-              return { ...defaultData, ...parsed };
+              return cachedData;
             }
           }
         }
       } catch (neonErr) {
-        console.warn('[db] Note: Initial Neon sync failed, falling back to local snapshot:', (neonErr as Error).message);
+        console.warn('[db] Note: Initial Neon sync failed, falling back to bundled snapshot:', (neonErr as Error).message);
       }
     }
 
@@ -147,28 +155,22 @@ function createPortableStorage(storageFilePath: string): DatabaseAdapter {
       try {
         const raw = fs.readFileSync(storageFilePath, 'utf8');
         const parsed = JSON.parse(raw);
-        return { ...defaultData, ...parsed };
+        if (parsed && Array.isArray(parsed.users) && parsed.users.length > 0) {
+          cachedData = { ...defaultData, ...parsed };
+          return cachedData;
+        }
       } catch {
         // fallback
       }
     }
 
-    // Fallback to initial seed snapshot if exists
-    const initialDataPath = path.resolve(process.cwd(), 'data/initial-data.json');
-    if (fs.existsSync(initialDataPath)) {
-      try {
-        const raw = fs.readFileSync(initialDataPath, 'utf8');
-        const parsed = JSON.parse(raw);
-        return { ...defaultData, ...parsed };
-      } catch {
-        // fallback
-      }
-    }
-
-    return { ...defaultData };
+    // Default to bundled initial seed snapshot
+    cachedData = { ...defaultData };
+    return cachedData;
   }
 
   function saveData(data: StorageData) {
+    cachedData = data;
     try {
       fs.writeFileSync(storageFilePath, JSON.stringify(data, null, 2), 'utf8');
     } catch {

@@ -5,6 +5,10 @@ import bcrypt from 'bcryptjs';
 import { getUserByEmail, getUserById } from '@/lib/repos/usersRepo';
 import type { Role, User } from '@/types/db';
 
+if (!process.env.NEXTAUTH_URL) {
+  process.env.NEXTAUTH_URL = process.env.RENDER_EXTERNAL_URL || 'https://quicfinsure.onrender.com';
+}
+
 export const authOptions: NextAuthOptions = {
   session: {
     strategy: 'jwt',
