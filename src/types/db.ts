@@ -321,3 +321,16 @@ export interface PipelineStats {
   disbursed: number;
   rejected: number;
 }
+
+export interface EmailLog {
+  id: string;
+  tenantId?: string;
+  toEmail: string;
+  subject: string;
+  bodyHtml: string;
+  status: 'SENT' | 'FAILED' | 'SMTP_NOT_CONFIGURED';
+  errorMessage?: string | null;
+  messageId?: string | null;
+  createdAt: string;
+}
+

@@ -2,7 +2,7 @@
 
 import React, { useState, useRef, useTransition } from 'react';
 import Link from 'next/link';
-import type { LoanApplication, LoanType } from '@/types/db';
+import type { LoanApplication, LoanType, ApplicationStatus } from '@/types/db';
 import { formatCurrencyINR, LOAN_TYPE_LABELS, formatDate } from '@/lib/format';
 import StatusBadge from '@/components/StatusBadge';
 import { submitDirectPartnerLoanAction, createApplicationLinkAction } from '@/actions/applicationActions';
@@ -169,6 +169,9 @@ export default function LoanOriginationHub({
     applicationId: string;
     token: string;
     url?: string;
+    status?: ApplicationStatus;
+    emailSent?: boolean;
+    customerEmail?: string;
   } | null>(null);
 
   // Reset entire form
@@ -282,6 +285,9 @@ export default function LoanOriginationHub({
             applicationId: res.applicationId,
             token: res.token || '',
             url: res.url,
+            status: res.status,
+            emailSent: res.emailSent,
+            customerEmail: email.trim() || undefined,
           });
         } else {
           setErrorMessage((res && res.error) || 'Failed to submit loan requirement. Your session may have expired. Please refresh or sign in again.');
@@ -296,21 +302,41 @@ export default function LoanOriginationHub({
     <div className="bg-white border border-slate-200/90 rounded-2xl shadow-xs overflow-hidden">
       {successData ? (
         /* Success Screen */
-        <div className="p-6 sm:p-8 text-center space-y-5 animate-in fade-in duration-300">
+        <div className="p-5 sm:p-8 text-center space-y-4 animate-in fade-in duration-300">
           <div className="w-16 h-16 rounded-3xl bg-emerald-100 text-emerald-600 flex items-center justify-center text-3xl mx-auto shadow-inner">
             ✓
           </div>
           <div>
             <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-bold mb-2">
               <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-              Staged to Link Shared Bucket
+              {successData.status === 'DOCUMENTS_IN' ? 'Stored in System — Documents In' : 'Stored in System — Lead Registered'}
             </div>
-            <h3 className="text-xl font-extrabold text-slate-900">Loan Requirement Submitted!</h3>
+            <h3 className="text-xl font-extrabold text-slate-900">Customer Request Registered!</h3>
             <p className="text-xs text-slate-500 mt-1 max-w-md mx-auto">
-              Your case has been registered under reference{' '}
-              <strong className="text-slate-800 font-mono">{successData.applicationId}</strong> and
-              placed in the <strong>Link Shared Bucket</strong>.
+              Your case has been registered under ID{' '}
+              <strong className="text-slate-800 font-mono">{successData.applicationId}</strong> and stored permanently on the Quickfinsure platform.
             </p>
+          </div>
+
+          {/* Mail & Database Status Card */}
+          <div className="max-w-md mx-auto p-3.5 rounded-2xl bg-emerald-50/70 border border-emerald-200/90 text-left space-y-2 text-xs">
+            <div className="flex items-center gap-2 font-bold text-emerald-950">
+              <span className="text-sm">🗄️</span>
+              <span>Main System & Database:</span>
+              <span className="ml-auto text-emerald-700 font-extrabold">✓ Stored & Synced</span>
+            </div>
+            <div className="flex items-center gap-2 font-bold text-emerald-950">
+              <span className="text-sm">📧</span>
+              <span>Mail & Notification System:</span>
+              <span className="ml-auto text-emerald-700 font-extrabold">
+                {successData.emailSent ? '✓ Dispatched via SMTP' : '✓ Stored in Outbox'}
+              </span>
+            </div>
+            {successData.customerEmail && (
+              <p className="text-[11px] text-slate-600 pt-1 border-t border-emerald-200/60">
+                Customer confirmation email directed to: <strong className="text-slate-800">{successData.customerEmail}</strong>
+              </p>
+            )}
           </div>
 
           {/* Quick Sharing Toolbar */}
@@ -361,10 +387,11 @@ export default function LoanOriginationHub({
 
           <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
             <Link
-              href="/branch/requests?status=LINK_SHARED"
-              className="px-4 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold transition shadow-xs"
+              href="/branch/requests"
+              className="px-4 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold transition shadow-xs flex items-center gap-1.5"
             >
-              Go to Link Shared Bucket ({totalApplicationsCount}) →
+              <span>📁</span>
+              <span>View in Loan Pipeline / Cases →</span>
             </Link>
             <button
               type="button"

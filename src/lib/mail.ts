@@ -1,6 +1,7 @@
 import nodemailer from 'nodemailer';
 import { getCompanySettings } from '@/lib/settings';
 import { formatCurrencyINR } from '@/lib/format';
+import { logEmail, updateEmailLog } from '@/lib/repos/emailRepo';
 
 export interface SendMailOptions {
   to: string;
@@ -20,27 +21,46 @@ export interface SendMailResult {
 export async function sendMail({ to, subject, html, from, tenantId }: SendMailOptions): Promise<SendMailResult> {
   const settings = await getCompanySettings(tenantId || 'default');
 
-  if (!settings.smtpHost || !settings.smtpUser) {
-    console.warn(`[mail] SMTP not configured. Notification not sent to: ${to}. Subject: "${subject}"`);
+  // Support database company settings with environment variable fallbacks
+  const smtpHost = settings.smtpHost || process.env.SMTP_HOST || process.env.EMAIL_SERVER_HOST || '';
+  const smtpPort = settings.smtpPort || Number(process.env.SMTP_PORT || process.env.EMAIL_SERVER_PORT || 587);
+  const smtpSecure = settings.smtpSecure ?? (process.env.SMTP_SECURE === 'true' || smtpPort === 465);
+  const smtpUser = settings.smtpUser || process.env.SMTP_USER || process.env.EMAIL_SERVER_USER || '';
+  const smtpPassword = settings.smtpPassword || process.env.SMTP_PASSWORD || process.env.SMTP_PASS || process.env.EMAIL_SERVER_PASSWORD || '';
+  const fromName = settings.smtpFromName || process.env.SMTP_FROM_NAME || settings.companyName || 'Quickfinsure';
+
+  // Always log the email into the system database first
+  const logEntry = logEmail({
+    tenantId: tenantId || 'default',
+    toEmail: to,
+    subject,
+    bodyHtml: html,
+    status: smtpHost && smtpUser ? 'SENT' : 'SMTP_NOT_CONFIGURED',
+  });
+
+  if (!smtpHost || !smtpUser) {
+    console.warn(
+      `[mail] SMTP not fully configured (Host: "${smtpHost}", User: "${smtpUser}"). Notification stored in system mail log for: ${to}. Subject: "${subject}"`
+    );
     return { sent: false, reason: 'SMTP_NOT_CONFIGURED' };
   }
 
   try {
     const transporter = nodemailer.createTransport({
-      host: settings.smtpHost,
-      port: settings.smtpPort || 587,
-      secure: Boolean(settings.smtpSecure),
+      host: smtpHost,
+      port: smtpPort,
+      secure: smtpSecure,
       auth: {
-        user: settings.smtpUser,
-        pass: settings.smtpPassword || '',
+        user: smtpUser,
+        pass: smtpPassword,
       },
     });
 
     const fromAddress =
       from ||
-      (settings.smtpFromName
-        ? `"${settings.smtpFromName}" <${settings.smtpUser}>`
-        : settings.smtpUser);
+      (fromName
+        ? `"${fromName}" <${smtpUser}>`
+        : smtpUser);
 
     const info = await transporter.sendMail({
       from: fromAddress,
@@ -49,12 +69,26 @@ export async function sendMail({ to, subject, html, from, tenantId }: SendMailOp
       html,
     });
 
+    updateEmailLog(logEntry.id, {
+      status: 'SENT',
+      messageId: info.messageId,
+    });
+
+    console.log(`[mail] Email dispatched successfully to ${to}. MessageId: ${info.messageId}`);
     return { sent: true, messageId: info.messageId };
   } catch (err) {
-    console.error('[mail] Failed to send email via SMTP:', err);
-    return { sent: false, reason: 'SEND_FAILED', error: (err as Error).message };
+    const errorMsg = (err as Error).message;
+    console.error('[mail] Failed to send email via SMTP:', errorMsg);
+
+    updateEmailLog(logEntry.id, {
+      status: 'FAILED',
+      errorMessage: errorMsg,
+    });
+
+    return { sent: false, reason: 'SEND_FAILED', error: errorMsg };
   }
 }
+
 
 export function customerConfirmationEmail({
   fullName,

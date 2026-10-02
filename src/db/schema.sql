@@ -253,3 +253,18 @@ CREATE INDEX IF NOT EXISTS idx_docs_app ON application_documents(application_id)
 CREATE INDEX IF NOT EXISTS idx_history_app ON status_history(application_id);
 CREATE INDEX IF NOT EXISTS idx_commissions_partner ON commissions(partner_id);
 CREATE INDEX IF NOT EXISTS idx_notifications_recipient ON partner_notifications(recipient_id);
+
+CREATE TABLE IF NOT EXISTS email_logs (
+  id TEXT PRIMARY KEY,
+  tenant_id TEXT DEFAULT 'default',
+  to_email TEXT NOT NULL,
+  subject TEXT NOT NULL,
+  body_html TEXT NOT NULL,
+  status TEXT NOT NULL DEFAULT 'SENT',
+  error_message TEXT,
+  message_id TEXT,
+  created_at TEXT NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_email_logs_tenant ON email_logs(tenant_id);
+CREATE INDEX IF NOT EXISTS idx_email_logs_to ON email_logs(to_email);

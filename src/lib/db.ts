@@ -12,6 +12,7 @@ export interface DatabaseAdapter {
   prepare(sql: string): Statement;
   exec(sql: string): void;
   close(): void;
+  flush?(): Promise<void>;
 }
 
 let instance: DatabaseAdapter | null = null;
@@ -98,6 +99,7 @@ function initDatabase(): DatabaseAdapter {
       'ALTER TABLE users ADD COLUMN city TEXT',
       'ALTER TABLE users ADD COLUMN is_blocked INTEGER DEFAULT 0',
       'ALTER TABLE users ADD COLUMN blocked_reason TEXT',
+      'CREATE TABLE IF NOT EXISTS email_logs (id TEXT PRIMARY KEY, tenant_id TEXT DEFAULT "default", to_email TEXT NOT NULL, subject TEXT NOT NULL, body_html TEXT NOT NULL, status TEXT NOT NULL DEFAULT "SENT", error_message TEXT, message_id TEXT, created_at TEXT NOT NULL)',
     ];
     for (const stmt of alterStatements) {
       try {
@@ -167,6 +169,7 @@ function createPortableStorage(storageFilePath: string): DatabaseAdapter {
     partner_notifications: Record<string, unknown>[];
     required_documents: Record<string, unknown>[];
     bank_products: Record<string, unknown>[];
+    email_logs: Record<string, unknown>[];
     [key: string]: Record<string, unknown>[];
   }
 
@@ -188,6 +191,7 @@ function createPortableStorage(storageFilePath: string): DatabaseAdapter {
       operational_remarks: seed?.operational_remarks || [],
       partner_notifications: seed?.partner_notifications || [],
       required_documents: seed?.required_documents || [],
+      email_logs: seed?.email_logs || [],
     };
   }
 
@@ -198,12 +202,13 @@ function createPortableStorage(storageFilePath: string): DatabaseAdapter {
   let lastDiskMtime = 0;
   const getDbUrl = () => process.env.DATABASE_URL || process.env.POSTGRES_URL;
 
-  function syncWithNeonAsync(data: StorageData) {
-    const dbUrl = getDbUrl();
-    if (!dbUrl) return;
+  let activeSyncPromise: Promise<void> | null = null;
 
-    // Execute immediately without setTimeout delay so server actions and requests persist
-    (async () => {
+  function syncWithNeon(data: StorageData): Promise<void> {
+    const dbUrl = getDbUrl();
+    if (!dbUrl) return Promise.resolve();
+
+    activeSyncPromise = (async () => {
       try {
         const { neon } = require('@neondatabase/serverless');
         const sql = neon(dbUrl);
@@ -230,7 +235,9 @@ function createPortableStorage(storageFilePath: string): DatabaseAdapter {
         console.error('[db] Error pushing updates to Neon PostgreSQL:', (err as Error).message);
       }
     })();
+    return activeSyncPromise;
   }
+
 
   function loadData(): StorageData {
     const dbUrl = getDbUrl();
@@ -289,7 +296,7 @@ function createPortableStorage(storageFilePath: string): DatabaseAdapter {
     // 3. Fallback to bundled initial seed snapshot
     cachedData = { ...defaultData };
     if (dbUrl) {
-      syncWithNeonAsync(cachedData);
+      syncWithNeon(cachedData);
     }
     return cachedData;
   }
@@ -302,7 +309,7 @@ function createPortableStorage(storageFilePath: string): DatabaseAdapter {
     } catch {
       // Local cache write might fail on read-only environments; Neon is the primary store
     }
-    syncWithNeonAsync(data);
+    syncWithNeon(data);
   }
 
   let memoryData = loadData();
@@ -389,6 +396,12 @@ function createPortableStorage(storageFilePath: string): DatabaseAdapter {
     },
     close() {
       saveData(memoryData);
+    },
+    flush(): Promise<void> {
+      if (activeSyncPromise) {
+        return activeSyncPromise;
+      }
+      return syncWithNeon(memoryData);
     },
     prepare(sql: string): Statement {
       const cleanSql = sql.replace(/\s+/g, ' ').trim();
@@ -575,3 +588,10 @@ export const db: DatabaseAdapter = (() => {
   }
   return instance;
 })();
+
+export async function syncDatabase(): Promise<void> {
+  if (instance && typeof instance.flush === 'function') {
+    await instance.flush();
+  }
+}
+

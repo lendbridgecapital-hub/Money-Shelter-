@@ -408,6 +408,7 @@ export function createDirectPartnerApplication(data: {
   existingEmi?: number;
   panNumber?: string;
   aadhaarNumber?: string;
+  status?: ApplicationStatus;
 }): LoanApplication {
   const user = getUserById(data.advisorId);
   const id = `app_${crypto.randomBytes(8).toString('hex')}`;
@@ -417,6 +418,7 @@ export function createDirectPartnerApplication(data: {
   const branchId = user?.branchId || 'default';
   const isPartner = user?.role === 'CHANNEL_PARTNER';
   const isRM = user?.role === 'RELATIONSHIP_MANAGER';
+  const status = data.status || 'DOCUMENTS_IN';
 
   db.prepare(
     `INSERT INTO loan_applications (
@@ -443,7 +445,7 @@ export function createDirectPartnerApplication(data: {
     data.existingEmi !== undefined && data.existingEmi !== null ? data.existingEmi : null,
     data.panNumber ? data.panNumber.trim().toUpperCase() : null,
     data.aadhaarNumber ? data.aadhaarNumber.trim().replace(/\s+/g, '') : null,
-    'LINK_SHARED',
+    status,
     now,
     now,
     now
@@ -453,3 +455,4 @@ export function createDirectPartnerApplication(data: {
   if (!created) throw new Error('Failed to create direct partner loan application');
   return created;
 }
+

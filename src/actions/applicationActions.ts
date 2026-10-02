@@ -6,9 +6,14 @@ import * as applicationsRepo from '@/lib/repos/applicationsRepo';
 import * as statusHistoryRepo from '@/lib/repos/statusHistoryRepo';
 import * as documentsRepo from '@/lib/repos/documentsRepo';
 import * as usersRepo from '@/lib/repos/usersRepo';
+import * as workflowRepo from '@/lib/repos/workflowRepo';
+import { getBranchById } from '@/lib/repos/branchesRepo';
+import { getCompanySettings } from '@/lib/settings';
+import { sendMail, customerConfirmationEmail, branchAlertEmail } from '@/lib/mail';
+import { syncDatabase } from '@/lib/db';
 import { saveUploadedFile } from '@/lib/uploads';
 import { generateApplicationToken } from '@/lib/tokens';
-import { LOAN_TYPE_LABELS } from '@/lib/format';
+import { LOAN_TYPE_LABELS, formatCurrencyINR } from '@/lib/format';
 import type { ApplicationStatus, LoanType } from '@/types/db';
 import type { ActionResult } from '@/actions/settingsActions';
 
@@ -149,6 +154,8 @@ export type SubmitDirectLoanResult = {
   applicationId?: string;
   token?: string;
   url?: string;
+  status?: ApplicationStatus;
+  emailSent?: boolean;
 };
 
 export async function submitDirectPartnerLoanAction(formData: FormData): Promise<SubmitDirectLoanResult> {
@@ -202,7 +209,13 @@ export async function submitDirectPartnerLoanAction(formData: FormData): Promise
       return { ok: false, error: 'Please enter a valid 12-digit Aadhaar number.' };
     }
 
-    // Direct submission lands strictly in LINK_SHARED bucket as requested
+    const panFile = formData.get('panFile');
+    const aadhaarFile = formData.get('aadhaarFile');
+    const hasUploadedDocs =
+      (panFile instanceof File && panFile.size > 0) || (aadhaarFile instanceof File && aadhaarFile.size > 0);
+    const initialStatus: ApplicationStatus = hasUploadedDocs ? 'DOCUMENTS_IN' : 'LINK_SHARED';
+
+    // Direct partner/agent loan origination
     const application = applicationsRepo.createDirectPartnerApplication({
       advisorId: user.id,
       fullName,
@@ -214,10 +227,10 @@ export async function submitDirectPartnerLoanAction(formData: FormData): Promise
       existingEmi,
       panNumber: panNumber || undefined,
       aadhaarNumber: aadhaarNumber || undefined,
+      status: initialStatus,
     });
 
     // Save PAN document if provided
-    const panFile = formData.get('panFile');
     if (panFile instanceof File && panFile.size > 0) {
       try {
         const savedPan = await saveUploadedFile(panFile, application.id);
@@ -233,7 +246,6 @@ export async function submitDirectPartnerLoanAction(formData: FormData): Promise
     }
 
     // Save Aadhaar document if provided
-    const aadhaarFile = formData.get('aadhaarFile');
     if (aadhaarFile instanceof File && aadhaarFile.size > 0) {
       try {
         const savedAadhaar = await saveUploadedFile(aadhaarFile, application.id);
@@ -248,13 +260,13 @@ export async function submitDirectPartnerLoanAction(formData: FormData): Promise
       }
     }
 
-    // Record status history in LINK_SHARED bucket
+    // Record status history
     statusHistoryRepo.addStatusHistory({
       applicationId: application.id,
-      status: 'LINK_SHARED',
-      note: `Requirement submitted by ${user.name} (${user.role}). PAN: ${panNumber || 'N/A'}, Aadhaar: ${
+      status: initialStatus,
+      note: `Customer loan request submitted by ${user.name} (${user.role}). PAN: ${panNumber || 'N/A'}, Aadhaar: ${
         aadhaarNumber || 'N/A'
-      }. Staged in Link Shared bucket.`,
+      }.${hasUploadedDocs ? ' Self-attested KYC documents attached.' : ' Staged in Link Shared bucket.'}`,
       changedById: user.id,
     });
 
@@ -266,6 +278,85 @@ export async function submitDirectPartnerLoanAction(formData: FormData): Promise
     const cleanBase = base.replace(/\/$/, '');
     const url = `${cleanBase}/apply/${application.token}`;
 
+    // MAIL SYSTEM DISPATCH: Send notification emails to branch and customer
+    let emailDispatched = false;
+    const settings = await getCompanySettings(user.tenantId || 'default');
+    const branch = getBranchById(application.branchId);
+
+    // 1. Branch Alert Email (Dispatched to Branch / Admin / Official Email)
+    const alertTo = branch?.email || settings.officialEmail || process.env.SMTP_TO_EMAIL || process.env.ADMIN_EMAIL;
+    if (alertTo) {
+      try {
+        const alert = branchAlertEmail({
+          fullName,
+          mobile,
+          email: email || 'Not provided',
+          loanType: LOAN_TYPE_LABELS[loanType] || loanType,
+          loanAmount,
+          monthlyIncome,
+          existingEmi,
+          branchName: branch?.name || 'Quickfinsure Head Office',
+          applicationUrl: `${cleanBase}/branch/requests/${application.id}`,
+        });
+        const sendRes = await sendMail({
+          to: alertTo,
+          ...alert,
+          tenantId: user.tenantId,
+        });
+        if (sendRes.sent) emailDispatched = true;
+      } catch (mailErr) {
+        console.warn('[DirectPartnerLoan] Branch alert email failed:', mailErr);
+      }
+    }
+
+    // 2. Customer Confirmation Email (Dispatched if applicant email provided)
+    if (email) {
+      try {
+        const confirmation = customerConfirmationEmail({
+          fullName,
+          companyName: settings.companyName,
+          loanType: LOAN_TYPE_LABELS[loanType] || loanType,
+          loanAmount,
+        });
+        const sendRes = await sendMail({
+          to: email,
+          ...confirmation,
+          tenantId: user.tenantId,
+        });
+        if (sendRes.sent) emailDispatched = true;
+      } catch (mailErr) {
+        console.warn('[DirectPartnerLoan] Customer confirmation email failed:', mailErr);
+      }
+    }
+
+    // IN-APP NOTIFICATIONS:
+    if (application.relationshipManagerId) {
+      try {
+        workflowRepo.createNotification({
+          recipientId: application.relationshipManagerId,
+          recipientRole: 'RELATIONSHIP_MANAGER',
+          applicationId: application.id,
+          title: `New Customer Lead: ${fullName}`,
+          message: `${user.name} submitted a new ${LOAN_TYPE_LABELS[loanType] || loanType} request for ${formatCurrencyINR(loanAmount)}.`,
+        });
+      } catch {}
+    }
+
+    if (application.channelPartnerId) {
+      try {
+        workflowRepo.createNotification({
+          recipientId: application.channelPartnerId,
+          recipientRole: 'CHANNEL_PARTNER',
+          applicationId: application.id,
+          title: `Customer Request Registered: ${fullName}`,
+          message: `Your ${LOAN_TYPE_LABELS[loanType] || loanType} application for ${fullName} (${formatCurrencyINR(loanAmount)}) is stored in the system.`,
+        });
+      } catch {}
+    }
+
+    // MAIN SYSTEM SYNC: Ensure database persistence is completed before returning
+    await syncDatabase();
+
     safeRevalidate('/dashboard');
     safeRevalidate('/branch/requests');
     safeRevalidate(`/branch/requests/${application.id}`);
@@ -275,6 +366,8 @@ export async function submitDirectPartnerLoanAction(formData: FormData): Promise
       applicationId: application.id,
       token: application.token,
       url,
+      status: initialStatus,
+      emailSent: emailDispatched,
     };
   } catch (err) {
     console.error('[submitDirectPartnerLoanAction] error:', err);

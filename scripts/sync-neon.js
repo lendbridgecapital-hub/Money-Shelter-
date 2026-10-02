@@ -296,8 +296,21 @@ async function initSchema(client) {
       reason TEXT NOT NULL,
       status TEXT NOT NULL DEFAULT 'PENDING',
       created_at TEXT NOT NULL
+    );`,
+
+    `CREATE TABLE IF NOT EXISTS email_logs (
+      id TEXT PRIMARY KEY,
+      tenant_id TEXT DEFAULT 'default',
+      to_email TEXT NOT NULL,
+      subject TEXT NOT NULL,
+      body_html TEXT NOT NULL,
+      status TEXT NOT NULL DEFAULT 'SENT',
+      error_message TEXT,
+      message_id TEXT,
+      created_at TEXT NOT NULL
     );`
   ];
+
 
   for (const q of schemaQueries) {
     try {
@@ -433,6 +446,7 @@ function loadInitialSeedData() {
     operational_remarks: [],
     partner_notifications: [],
     required_documents: [],
+    email_logs: [],
   };
 }
 
