@@ -64,14 +64,4 @@ android {
     }
 }
 
-tasks.register('cleanUnwantedAssets') {
-    doLast {
-        delete fileTree('src/main/assets/public/uploads')
-        delete file('src/main/assets/public/uploads')
-        delete fileTree('src/main/assets/public') {
-            include '*.apk'
-        }
-    }
-}
-preBuild.dependsOn cleanUnwantedAssets
 
