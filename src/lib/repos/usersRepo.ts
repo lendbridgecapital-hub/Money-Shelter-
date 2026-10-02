@@ -1,5 +1,6 @@
 import crypto from 'crypto';
 import { db } from '@/lib/db';
+import { saveBase64Document } from '@/lib/uploads';
 import type { User, Role, PartnerStatus } from '@/types/db';
 
 export function listUsers(tenantId = 'default'): User[] {
@@ -41,16 +42,59 @@ export function createUser(data: {
   branchId: string;
   tenantId?: string;
   phone?: string;
+  partnerCode?: string;
+  partnerStatus?: PartnerStatus;
+  assignedRmId?: string | null;
+  assignedRmName?: string | null;
+  panNumber?: string | null;
+  aadhaarNumber?: string | null;
+  commissionRate?: number;
 }): User {
   const id = `usr_${crypto.randomBytes(8).toString('hex')}`;
   const now = new Date().toISOString();
   const email = data.email.trim().toLowerCase();
   const tenantId = data.tenantId || 'default';
 
-  db.prepare(
-    `INSERT INTO users (id, tenant_id, name, email, password_hash, role, branch_id, phone, active, created_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
-  ).run(id, tenantId, data.name.trim(), email, data.passwordHash, data.role, data.branchId, data.phone || null, 1, now);
+  if (data.role === 'CHANNEL_PARTNER') {
+    const randomSuffix = Math.floor(1000 + Math.random() * 9000);
+    const partnerCode = data.partnerCode || `QFS-PRT-${randomSuffix}`;
+    const certNum = `QFS-CERT-2026-${randomSuffix}`;
+    const partnerStatus = data.partnerStatus || 'APPROVED';
+
+    db.prepare(
+      `INSERT INTO users (
+        id, tenant_id, name, email, password_hash, role, branch_id, phone,
+        partner_code, partner_status, pan_number, aadhaar_number, assigned_rm_id,
+        assigned_rm_name, certificate_number, certificate_issued_at, approved_at,
+        commission_rate, agreement_accepted, active, is_blocked, created_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, 1, 0, ?)`
+    ).run(
+      id,
+      tenantId,
+      data.name.trim(),
+      email,
+      data.passwordHash,
+      data.role,
+      data.branchId,
+      data.phone || null,
+      partnerCode,
+      partnerStatus,
+      data.panNumber ? data.panNumber.trim().toUpperCase() : null,
+      data.aadhaarNumber ? data.aadhaarNumber.trim() : null,
+      data.assignedRmId || null,
+      data.assignedRmName || null,
+      certNum,
+      now,
+      now,
+      data.commissionRate !== undefined ? data.commissionRate : null,
+      now
+    );
+  } else {
+    db.prepare(
+      `INSERT INTO users (id, tenant_id, name, email, password_hash, role, branch_id, phone, active, created_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, 1, ?)`
+    ).run(id, tenantId, data.name.trim(), email, data.passwordHash, data.role, data.branchId, data.phone || null, now);
+  }
 
   const created = getUserById(id);
   if (!created) {
@@ -194,9 +238,12 @@ export function rejectPartnerOnboarding(
 
 export function resubmitPartnerDocuments(
   partnerId: string,
-  panDocUrl?: string,
-  aadhaarDocUrl?: string
+  rawPanDocUrl?: string,
+  rawAadhaarDocUrl?: string
 ): User {
+  const panDocUrl = rawPanDocUrl ? saveBase64Document(rawPanDocUrl, 'partners', 'pan') : undefined;
+  const aadhaarDocUrl = rawAadhaarDocUrl ? saveBase64Document(rawAadhaarDocUrl, 'partners', 'aadhaar') : undefined;
+
   if (panDocUrl && aadhaarDocUrl) {
     db.prepare(
       `UPDATE users 
@@ -261,6 +308,10 @@ export function createPartnerOnboarding(data: {
   const randomSuffix = Math.floor(1000 + Math.random() * 9000);
   const partnerCode = `QFS-PRT-${randomSuffix}`;
 
+  // Persist base64 data URLs to disk files to avoid database bloat and payload limits
+  const cleanPanDocUrl = saveBase64Document(data.panDocumentUrl, 'partners', 'pan');
+  const cleanAadhaarDocUrl = saveBase64Document(data.aadhaarDocumentUrl, 'partners', 'aadhaar');
+
   db.prepare(
     `INSERT INTO users (
       id, tenant_id, name, email, password_hash, role, branch_id, phone,
@@ -281,9 +332,9 @@ export function createPartnerOnboarding(data: {
     data.fatherSpouseName.trim(),
     data.address.trim(),
     data.panNumber.trim().toUpperCase(),
-    data.panDocumentUrl || null,
+    cleanPanDocUrl || null,
     data.aadhaarNumber.trim(),
-    data.aadhaarDocumentUrl || null,
+    cleanAadhaarDocUrl || null,
     now,
     data.agreementAuthorizedText || null,
     data.assignedRmId || null,

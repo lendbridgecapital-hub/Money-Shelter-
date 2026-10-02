@@ -6,6 +6,7 @@ import type { LoanApplication, LoanType } from '@/types/db';
 import { formatCurrencyINR, LOAN_TYPE_LABELS, formatDate } from '@/lib/format';
 import StatusBadge from '@/components/StatusBadge';
 import { submitDirectPartnerLoanAction, createApplicationLinkAction } from '@/actions/applicationActions';
+import LoanCalculator, { CalculatorLoanType } from '@/components/LoanCalculator';
 
 interface LoanOriginationHubProps {
   recentApplications: LoanApplication[];
@@ -98,19 +99,41 @@ export default function LoanOriginationHub({
   const [selectedSubLoanType, setSelectedSubLoanType] = useState<LoanType>('BALANCE_TRANSFER');
   const [isOtherModalOpen, setIsOtherModalOpen] = useState(false);
 
-  // Mobile Application Tab State: 'CATEGORIES' (tiles only) vs 'FORM' (new tab opened for selected loan)
-  const [mobileTab, setMobileTab] = useState<'CATEGORIES' | 'FORM'>('CATEGORIES');
+  // Active Calculator Loan Type ('HOME_LOAN' | 'PERSONAL_LOAN')
+  const [calculatorType, setCalculatorType] = useState<CalculatorLoanType>('PERSONAL_LOAN');
+  const formRef = useRef<HTMLDivElement>(null);
+  const calculatorRef = useRef<HTMLDivElement>(null);
 
   const handleSelectCategory = (cat: PrimaryCategory) => {
     setPrimaryCategory(cat);
-    setMobileTab('FORM');
+    if (cat === 'HOME_LOAN' || cat === 'PERSONAL_LOAN') {
+      setCalculatorType(cat);
+    }
   };
 
   const handleSelectOtherSubOption = (subType: LoanType) => {
     setSelectedSubLoanType(subType);
     setPrimaryCategory('OTHER');
     setIsOtherModalOpen(false);
-    setMobileTab('FORM');
+  };
+
+  const handleCalculatorApply = (payload: {
+    loanType: CalculatorLoanType;
+    loanAmount: number;
+    tenureMonths: number;
+    emi: number;
+  }) => {
+    setPrimaryCategory(payload.loanType);
+    setCalculatorType(payload.loanType);
+    setLoanAmount(payload.loanAmount);
+    if (formRef.current) {
+      formRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
+
+  const handleCalculatorTypeChange = (type: CalculatorLoanType) => {
+    setCalculatorType(type);
+    setPrimaryCategory(type);
   };
 
   // Active Loan Type computed
@@ -158,7 +181,6 @@ export default function LoanOriginationHub({
     setAadhaarFile(null);
     setErrorMessage(null);
     setSuccessData(null);
-    setMobileTab('CATEGORIES');
     if (panInputRef.current) panInputRef.current.value = '';
     if (aadhaarInputRef.current) aadhaarInputRef.current.value = '';
   };
@@ -492,39 +514,62 @@ export default function LoanOriginationHub({
                   </button>
                   <button
                     type="button"
-                    onClick={() => setMobileTab('FORM')}
+                    onClick={() => formRef.current?.scrollIntoView({ behavior: 'smooth' })}
                     className="md:hidden px-2 py-0.5 rounded bg-emerald-600 text-white text-[10px] font-bold"
                   >
-                    Form →
+                    Form ↓
                   </button>
                 </div>
               </div>
             )}
 
-            {/* Mobile Prompt when Form is Closed */}
-            <div className="md:hidden mt-2 p-2 rounded-xl bg-slate-50 border border-slate-200/70 text-center">
-              <p className="text-[11px] text-slate-600 font-medium">
-                👆 Tap any loan category above to open the application form.
-              </p>
+            {/* Quick jump anchor links on mobile */}
+            <div className="md:hidden mt-2.5 flex items-center justify-between gap-1.5 p-1 bg-slate-100 rounded-xl border border-slate-200/70 text-xs">
+              <button
+                type="button"
+                onClick={() => calculatorRef.current?.scrollIntoView({ behavior: 'smooth' })}
+                className="flex-1 py-1.5 px-2 rounded-lg font-bold bg-white text-emerald-800 shadow-xs ring-1 ring-slate-200 text-center flex items-center justify-center gap-1"
+              >
+                <span>🧮</span>
+                <span>EMI Calculator</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => formRef.current?.scrollIntoView({ behavior: 'smooth' })}
+                className="flex-1 py-1.5 px-2 rounded-lg font-bold text-slate-700 hover:text-slate-900 bg-white/70 hover:bg-white text-center flex items-center justify-center gap-1"
+              >
+                <span>📝</span>
+                <span>Apply / Form ↓</span>
+              </button>
+            </div>
+
+            {/* 2. Home Loan & Personal Loan Calculator: Always visible directly below the loan products */}
+            <div ref={calculatorRef} className="mt-3">
+              <LoanCalculator
+                initialType={calculatorType}
+                onTypeChange={handleCalculatorTypeChange}
+                onApply={handleCalculatorApply}
+              />
             </div>
           </div>
 
-          {/* Section 2 (Share Link) & Section 3 (Form): Hidden on mobile until category is selected, always visible on desktop */}
-          <div className={mobileTab === 'CATEGORIES' ? 'hidden md:block space-y-4' : 'block space-y-4'}>
-            {/* Mobile Form Active Header with Close / Switch */}
+          {/* Section 2 (Share Link) & Section 3 (Form): Directly below the calculator */}
+          <div ref={formRef} className="space-y-4 pt-1">
+            {/* Mobile Form Active Header */}
             <div className="md:hidden flex items-center justify-between py-1.5 px-2.5 bg-slate-100 rounded-xl text-xs">
               <div className="flex items-center gap-1.5">
                 <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
                 <span className="text-[11px] font-extrabold text-slate-800">
-                  {LOAN_TYPE_LABELS[effectiveLoanType] || effectiveLoanType} Form
+                  {LOAN_TYPE_LABELS[effectiveLoanType] || effectiveLoanType} Application Form
                 </span>
               </div>
               <button
                 type="button"
-                onClick={() => setMobileTab('CATEGORIES')}
-                className="text-[10px] font-bold text-slate-600 hover:text-slate-900 bg-white px-2.5 py-1 rounded-lg border border-slate-200 shadow-2xs active:scale-95 transition"
+                onClick={() => calculatorRef.current?.scrollIntoView({ behavior: 'smooth' })}
+                className="text-[10px] font-bold text-emerald-700 hover:text-emerald-800 bg-white px-2 py-1 rounded-lg border border-emerald-200 shadow-2xs active:scale-95 transition flex items-center gap-1"
               >
-                Hide Form ✕
+                <span>🧮</span>
+                <span>Calculator ↑</span>
               </button>
             </div>
 

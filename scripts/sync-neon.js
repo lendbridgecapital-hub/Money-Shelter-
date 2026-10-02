@@ -128,7 +128,35 @@ async function initSchema(client) {
       password_hash TEXT NOT NULL,
       role TEXT NOT NULL,
       branch_id TEXT NOT NULL,
+      phone TEXT,
+      partner_code TEXT,
+      partner_status TEXT DEFAULT 'PENDING_APPROVAL',
+      father_spouse_name TEXT,
+      address TEXT,
+      pan_number TEXT,
+      pan_document_url TEXT,
+      aadhaar_number TEXT,
+      aadhaar_document_url TEXT,
+      agreement_accepted INTEGER DEFAULT 0,
+      agreement_signed_at TEXT,
+      agreement_authorized_text TEXT,
+      assigned_rm_id TEXT,
+      assigned_rm_name TEXT,
+      approved_at TEXT,
+      approved_by_id TEXT,
+      approved_by_name TEXT,
+      approval_remark TEXT,
+      certificate_number TEXT,
+      certificate_issued_at TEXT,
+      commission_rate REAL,
+      photo_url TEXT,
+      firm_logo_url TEXT,
+      firm_name TEXT,
+      bio TEXT,
+      city TEXT,
       active INTEGER NOT NULL DEFAULT 1,
+      is_blocked INTEGER NOT NULL DEFAULT 0,
+      blocked_reason TEXT,
       created_at TEXT NOT NULL
     );`,
 
@@ -256,6 +284,44 @@ async function initSchema(client) {
     } catch (err) {
       console.error('[neon-schema] Error creating table:', err.message);
     }
+  }
+
+  // Ensure all partner columns exist on users table in PostgreSQL
+  const userColumns = [
+    'phone TEXT',
+    "partner_code TEXT",
+    "partner_status TEXT DEFAULT 'PENDING_APPROVAL'",
+    "father_spouse_name TEXT",
+    "address TEXT",
+    "pan_number TEXT",
+    "pan_document_url TEXT",
+    "aadhaar_number TEXT",
+    "aadhaar_document_url TEXT",
+    "agreement_accepted INTEGER DEFAULT 0",
+    "agreement_signed_at TEXT",
+    "agreement_authorized_text TEXT",
+    "assigned_rm_id TEXT",
+    "assigned_rm_name TEXT",
+    "approved_at TEXT",
+    "approved_by_id TEXT",
+    "approved_by_name TEXT",
+    "approval_remark TEXT",
+    "certificate_number TEXT",
+    "certificate_issued_at TEXT",
+    "commission_rate REAL",
+    "photo_url TEXT",
+    "firm_logo_url TEXT",
+    "firm_name TEXT",
+    "bio TEXT",
+    "city TEXT",
+    "is_blocked INTEGER DEFAULT 0",
+    "blocked_reason TEXT"
+  ];
+
+  for (const col of userColumns) {
+    try {
+      await client.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS ${col};`);
+    } catch (_) {}
   }
 }
 

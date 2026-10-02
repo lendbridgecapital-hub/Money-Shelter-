@@ -25,6 +25,10 @@ export default function UserManager({
 
   const [roleFilter, setRoleFilter] = useState<string>('ALL');
   const [searchTerm, setSearchTerm] = useState('');
+  const [formRole, setFormRole] = useState<Role>('RELATIONSHIP_MANAGER');
+
+  // Relationship managers for assignment
+  const relationshipManagers = useMemo(() => users.filter((u) => u.role === 'RELATIONSHIP_MANAGER'), [users]);
 
   // Counts
   const rmCount = users.filter((u) => u.role === 'RELATIONSHIP_MANAGER').length;
@@ -409,15 +413,59 @@ export default function UserManager({
                 <label className="block text-xs font-semibold text-slate-700 mb-1">Platform Role *</label>
                 <select
                   name="role"
-                  defaultValue="RELATIONSHIP_MANAGER"
+                  value={formRole}
+                  onChange={(e) => setFormRole(e.target.value as Role)}
                   className="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white font-medium"
                 >
+                  <option value="CHANNEL_PARTNER">Channel Partner (Auto-Approved & Active)</option>
                   <option value="RELATIONSHIP_MANAGER">Relationship Manager (RM) - Channel Partner Portfolios</option>
                   <option value="OPERATIONS">Operations - Loan Underwriting & Banks</option>
                   <option value="CENTRAL_SUPPORT">Central Support - Partner Onboarding & Approvals</option>
                   <option value="ADMIN">Administrator - Full Organization Control</option>
                 </select>
               </div>
+
+              {formRole === 'CHANNEL_PARTNER' && (
+                <>
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 mb-1">Assigned Relationship Manager (RM)</label>
+                    <select
+                      name="assignedRmId"
+                      className="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white font-medium"
+                    >
+                      <option value="">No RM Assigned (Head Office Direct)</option>
+                      {relationshipManagers.map((rm) => (
+                        <option key={rm.id} value={rm.id}>
+                          {rm.name} ({rm.branchName || 'HQ'})
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-700 mb-1">PAN Number (Optional)</label>
+                      <input
+                        type="text"
+                        name="panNumber"
+                        placeholder="e.g. ABCDE1234F"
+                        maxLength={10}
+                        className="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 font-mono uppercase"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-700 mb-1">Aadhaar (Optional)</label>
+                      <input
+                        type="text"
+                        name="aadhaarNumber"
+                        placeholder="12 digits"
+                        maxLength={12}
+                        className="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 font-mono"
+                      />
+                    </div>
+                  </div>
+                </>
+              )}
 
               <div>
                 <label className="block text-xs font-semibold text-slate-700 mb-1">Assigned Branch *</label>

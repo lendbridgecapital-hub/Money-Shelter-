@@ -68,9 +68,37 @@ CREATE TABLE IF NOT EXISTS users (
   name TEXT NOT NULL,
   email TEXT NOT NULL,
   password_hash TEXT NOT NULL,
-  role TEXT NOT NULL CHECK(role IN ('SUPER_ADMIN', 'ADMIN', 'LOAN_MANAGER', 'OPERATION_EXECUTIVE')),
+  role TEXT NOT NULL CHECK(role IN ('SUPER_ADMIN', 'ADMIN', 'LOAN_MANAGER', 'OPERATION_EXECUTIVE', 'CENTRAL_SUPPORT', 'OPERATIONS', 'RELATIONSHIP_MANAGER', 'CHANNEL_PARTNER')),
   branch_id TEXT NOT NULL,
+  phone TEXT,
+  partner_code TEXT,
+  partner_status TEXT DEFAULT 'PENDING_APPROVAL',
+  father_spouse_name TEXT,
+  address TEXT,
+  pan_number TEXT,
+  pan_document_url TEXT,
+  aadhaar_number TEXT,
+  aadhaar_document_url TEXT,
+  agreement_accepted INTEGER DEFAULT 0,
+  agreement_signed_at TEXT,
+  agreement_authorized_text TEXT,
+  assigned_rm_id TEXT,
+  assigned_rm_name TEXT,
+  approved_at TEXT,
+  approved_by_id TEXT,
+  approved_by_name TEXT,
+  approval_remark TEXT,
+  certificate_number TEXT,
+  certificate_issued_at TEXT,
+  commission_rate REAL,
+  photo_url TEXT,
+  firm_logo_url TEXT,
+  firm_name TEXT,
+  bio TEXT,
+  city TEXT,
   active INTEGER NOT NULL DEFAULT 1,
+  is_blocked INTEGER NOT NULL DEFAULT 0,
+  blocked_reason TEXT,
   created_at TEXT NOT NULL
 );
 
@@ -114,11 +142,95 @@ CREATE TABLE IF NOT EXISTS status_history (
   changed_at TEXT NOT NULL
 );
 
+CREATE TABLE IF NOT EXISTS banks (
+  id TEXT PRIMARY KEY,
+  tenant_id TEXT DEFAULT 'default',
+  name TEXT NOT NULL,
+  code TEXT NOT NULL,
+  logo_url TEXT,
+  active INTEGER NOT NULL DEFAULT 1,
+  created_at TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS bank_products (
+  id TEXT PRIMARY KEY,
+  bank_id TEXT NOT NULL,
+  loan_type TEXT NOT NULL,
+  min_amount REAL NOT NULL,
+  max_amount REAL NOT NULL,
+  min_tenure_months INTEGER NOT NULL,
+  max_tenure_months INTEGER NOT NULL,
+  interest_rate_min REAL NOT NULL,
+  interest_rate_max REAL NOT NULL,
+  processing_fee_percent REAL NOT NULL,
+  description TEXT,
+  active INTEGER NOT NULL DEFAULT 1,
+  created_at TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS commissions (
+  id TEXT PRIMARY KEY,
+  tenant_id TEXT DEFAULT 'default',
+  application_id TEXT NOT NULL,
+  partner_id TEXT NOT NULL,
+  disbursed_amount REAL NOT NULL,
+  commission_rate REAL NOT NULL,
+  commission_amount REAL NOT NULL,
+  status TEXT NOT NULL DEFAULT 'PENDING',
+  created_at TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS clawbacks (
+  id TEXT PRIMARY KEY,
+  commission_id TEXT NOT NULL,
+  partner_id TEXT NOT NULL,
+  amount REAL NOT NULL,
+  reason TEXT NOT NULL,
+  status TEXT NOT NULL DEFAULT 'PENDING',
+  created_at TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS operational_remarks (
+  id TEXT PRIMARY KEY,
+  application_id TEXT NOT NULL,
+  author_id TEXT NOT NULL,
+  author_name TEXT NOT NULL,
+  author_role TEXT NOT NULL,
+  status_changed_to TEXT,
+  remark TEXT NOT NULL,
+  created_at TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS partner_notifications (
+  id TEXT PRIMARY KEY,
+  tenant_id TEXT DEFAULT 'default',
+  recipient_id TEXT NOT NULL,
+  recipient_role TEXT NOT NULL,
+  application_id TEXT NOT NULL,
+  title TEXT NOT NULL,
+  message TEXT NOT NULL,
+  read INTEGER NOT NULL DEFAULT 0,
+  created_at TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS required_documents (
+  id TEXT PRIMARY KEY,
+  application_id TEXT NOT NULL,
+  document_title TEXT NOT NULL,
+  status TEXT NOT NULL DEFAULT 'PENDING',
+  uploaded_file_url TEXT,
+  uploaded_at TEXT,
+  created_at TEXT NOT NULL
+);
+
 CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
 CREATE INDEX IF NOT EXISTS idx_users_tenant ON users(tenant_id);
+CREATE INDEX IF NOT EXISTS idx_users_partner_code ON users(partner_code);
 CREATE INDEX IF NOT EXISTS idx_branches_tenant ON branches(tenant_id);
 CREATE INDEX IF NOT EXISTS idx_apps_token ON loan_applications(token);
 CREATE INDEX IF NOT EXISTS idx_apps_branch ON loan_applications(branch_id);
 CREATE INDEX IF NOT EXISTS idx_apps_tenant ON loan_applications(tenant_id);
 CREATE INDEX IF NOT EXISTS idx_docs_app ON application_documents(application_id);
 CREATE INDEX IF NOT EXISTS idx_history_app ON status_history(application_id);
+CREATE INDEX IF NOT EXISTS idx_commissions_partner ON commissions(partner_id);
+CREATE INDEX IF NOT EXISTS idx_notifications_recipient ON partner_notifications(recipient_id);

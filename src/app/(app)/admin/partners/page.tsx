@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation';
 import { requireUser } from '@/lib/auth';
-import { listPartners, listPartnersByRm } from '@/lib/repos/usersRepo';
+import { listPartners, listPartnersByRm, listRelationshipManagers } from '@/lib/repos/usersRepo';
+import { listBranches } from '@/lib/repos/branchesRepo';
 import PartnerComplianceManager from './PartnerComplianceManager';
 
 export default async function PartnersPage() {
@@ -17,5 +18,16 @@ export default async function PartnersPage() {
       ? listPartnersByRm(user.id, user.tenantId || 'default')
       : listPartners(user.tenantId || 'default');
 
-  return <PartnerComplianceManager partners={partners} currentUserRole={user.role} currentUserId={user.id} />;
+  const branches = listBranches(user.tenantId || 'default');
+  const relationshipManagers = listRelationshipManagers(user.tenantId || 'default');
+
+  return (
+    <PartnerComplianceManager
+      partners={partners}
+      branches={branches}
+      relationshipManagers={relationshipManagers}
+      currentUserRole={user.role}
+      currentUserId={user.id}
+    />
+  );
 }

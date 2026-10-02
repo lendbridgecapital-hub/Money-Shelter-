@@ -23,6 +23,51 @@ interface Props {
   referralRm?: ReferralRm | null;
 }
 
+function compressAndReadDoc(file: File): Promise<string> {
+  return new Promise((resolve) => {
+    if (!file.type.startsWith('image/')) {
+      const reader = new FileReader();
+      reader.onload = () => resolve(String(reader.result || ''));
+      reader.onerror = () => resolve('');
+      reader.readAsDataURL(file);
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = () => {
+        let width = img.width;
+        let height = img.height;
+        const maxDim = 1200;
+        if (width > maxDim || height > maxDim) {
+          if (width > height) {
+            height = Math.round((height * maxDim) / width);
+            width = maxDim;
+          } else {
+            width = Math.round((width * maxDim) / height);
+            height = maxDim;
+          }
+        }
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+          ctx.drawImage(img, 0, 0, width, height);
+          resolve(canvas.toDataURL('image/jpeg', 0.8));
+        } else {
+          resolve(String(e.target?.result || ''));
+        }
+      };
+      img.onerror = () => resolve(String(e.target?.result || ''));
+      img.src = String(e.target?.result);
+    };
+    reader.onerror = () => resolve('');
+    reader.readAsDataURL(file);
+  });
+}
+
 export default function PartnerOnboardingForm({
   branches,
   companyName = 'Quickfinsure',
@@ -152,6 +197,7 @@ export default function PartnerOnboardingForm({
     }
 
     setDemoOtpHint(res.demoOtp || '123456');
+    setOtp(res.demoOtp || '123456');
     setCurrentStep(4);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -545,13 +591,12 @@ Compliance Undertaking: DPDP Act 2023 compliant, Zero-Cash Collection policy, no
                   <input
                     type="file"
                     accept=".pdf,.png,.jpg,.jpeg"
-                    onChange={(e) => {
+                    onChange={async (e) => {
                       const f = e.target.files?.[0] || null;
                       setPanFile(f);
                       if (f) {
-                        const reader = new FileReader();
-                        reader.onload = () => setPanDocUrl(String(reader.result));
-                        reader.readAsDataURL(f);
+                        const url = await compressAndReadDoc(f);
+                        setPanDocUrl(url);
                       } else {
                         setPanDocUrl('');
                       }
@@ -607,13 +652,12 @@ Compliance Undertaking: DPDP Act 2023 compliant, Zero-Cash Collection policy, no
                   <input
                     type="file"
                     accept=".pdf,.png,.jpg,.jpeg"
-                    onChange={(e) => {
+                    onChange={async (e) => {
                       const f = e.target.files?.[0] || null;
                       setAadhaarFile(f);
                       if (f) {
-                        const reader = new FileReader();
-                        reader.onload = () => setAadhaarDocUrl(String(reader.result));
-                        reader.readAsDataURL(f);
+                        const url = await compressAndReadDoc(f);
+                        setAadhaarDocUrl(url);
                       } else {
                         setAadhaarDocUrl('');
                       }

@@ -46,12 +46,43 @@ function initDatabase(): DatabaseAdapter {
       nativeDb.exec(schemaSql);
     }
 
-    try {
-      nativeDb.exec('ALTER TABLE loan_applications ADD COLUMN pan_number TEXT');
-    } catch {}
-    try {
-      nativeDb.exec('ALTER TABLE loan_applications ADD COLUMN aadhaar_number TEXT');
-    } catch {}
+    const alterStatements = [
+      'ALTER TABLE loan_applications ADD COLUMN pan_number TEXT',
+      'ALTER TABLE loan_applications ADD COLUMN aadhaar_number TEXT',
+      'ALTER TABLE users ADD COLUMN phone TEXT',
+      'ALTER TABLE users ADD COLUMN partner_code TEXT',
+      "ALTER TABLE users ADD COLUMN partner_status TEXT DEFAULT 'PENDING_APPROVAL'",
+      'ALTER TABLE users ADD COLUMN father_spouse_name TEXT',
+      'ALTER TABLE users ADD COLUMN address TEXT',
+      'ALTER TABLE users ADD COLUMN pan_number TEXT',
+      'ALTER TABLE users ADD COLUMN pan_document_url TEXT',
+      'ALTER TABLE users ADD COLUMN aadhaar_number TEXT',
+      'ALTER TABLE users ADD COLUMN aadhaar_document_url TEXT',
+      'ALTER TABLE users ADD COLUMN agreement_accepted INTEGER DEFAULT 0',
+      'ALTER TABLE users ADD COLUMN agreement_signed_at TEXT',
+      'ALTER TABLE users ADD COLUMN agreement_authorized_text TEXT',
+      'ALTER TABLE users ADD COLUMN assigned_rm_id TEXT',
+      'ALTER TABLE users ADD COLUMN assigned_rm_name TEXT',
+      'ALTER TABLE users ADD COLUMN approved_at TEXT',
+      'ALTER TABLE users ADD COLUMN approved_by_id TEXT',
+      'ALTER TABLE users ADD COLUMN approved_by_name TEXT',
+      'ALTER TABLE users ADD COLUMN approval_remark TEXT',
+      'ALTER TABLE users ADD COLUMN certificate_number TEXT',
+      'ALTER TABLE users ADD COLUMN certificate_issued_at TEXT',
+      'ALTER TABLE users ADD COLUMN commission_rate REAL',
+      'ALTER TABLE users ADD COLUMN photo_url TEXT',
+      'ALTER TABLE users ADD COLUMN firm_logo_url TEXT',
+      'ALTER TABLE users ADD COLUMN firm_name TEXT',
+      'ALTER TABLE users ADD COLUMN bio TEXT',
+      'ALTER TABLE users ADD COLUMN city TEXT',
+      'ALTER TABLE users ADD COLUMN is_blocked INTEGER DEFAULT 0',
+      'ALTER TABLE users ADD COLUMN blocked_reason TEXT',
+    ];
+    for (const stmt of alterStatements) {
+      try {
+        nativeDb.exec(stmt);
+      } catch {}
+    }
 
     // Auto-seed SQLite if users table is empty
     try {

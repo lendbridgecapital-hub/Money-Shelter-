@@ -30,13 +30,39 @@ export async function createUserAction(formData: FormData): Promise<ActionResult
     if (usersRepo.emailExists(email)) return { ok: false, error: 'A user with this email already exists.' };
 
     const passwordHash = await bcrypt.hash(password, 10);
-    usersRepo.createUser({ name, email, passwordHash, role, branchId, phone: phone || undefined });
+    const assignedRmId = formData.get('assignedRmId') ? String(formData.get('assignedRmId')) : undefined;
+    const panNumber = formData.get('panNumber') ? String(formData.get('panNumber')) : undefined;
+    const aadhaarNumber = formData.get('aadhaarNumber') ? String(formData.get('aadhaarNumber')) : undefined;
+    const commissionRate = formData.get('commissionRate') ? Number(formData.get('commissionRate')) : undefined;
+
+    let assignedRmName: string | undefined = undefined;
+    if (assignedRmId) {
+      const rms = usersRepo.listRelationshipManagers();
+      const matched = rms.find((r) => r.id === assignedRmId);
+      if (matched) assignedRmName = matched.name;
+    }
+
+    usersRepo.createUser({
+      name,
+      email,
+      passwordHash,
+      role,
+      branchId,
+      phone: phone || undefined,
+      partnerStatus: role === 'CHANNEL_PARTNER' ? 'APPROVED' : undefined,
+      assignedRmId,
+      assignedRmName,
+      panNumber,
+      aadhaarNumber,
+      commissionRate,
+    });
 
     revalidatePath('/admin/users');
+    revalidatePath('/admin/partners');
     revalidatePath('/admin/partner-requests');
-    return { ok: true, message: `User "${name}" created.` };
+    return { ok: true, message: `${role === 'CHANNEL_PARTNER' ? 'Channel Partner' : 'User'} "${name}" created.` };
   } catch (err) {
-    return { ok: false, error: err instanceof Error && err.message === 'FORBIDDEN' ? 'You do not have permission to do this.' : 'Something went wrong.' };
+    return { ok: false, error: err instanceof Error && err.message === 'FORBIDDEN' ? 'You do not have permission to do this.' : (err instanceof Error ? err.message : 'Something went wrong.') };
   }
 }
 
