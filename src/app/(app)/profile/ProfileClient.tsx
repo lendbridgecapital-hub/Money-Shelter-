@@ -74,11 +74,15 @@ export default function ProfileClient({ user, settings }: Props) {
     const formData = new FormData(e.currentTarget);
 
     startTransition(async () => {
-      const res = await updateUserProfileAction(formData);
-      if (!res.ok) {
-        setErrorMsg(res.error || 'Failed to update profile.');
-      } else {
-        setSuccessMsg(res.message || 'Profile updated successfully!');
+      try {
+        const res = await updateUserProfileAction(formData);
+        if (!res || !res.ok) {
+          setErrorMsg((res && res.error) || 'Failed to update profile. Your session may have expired.');
+        } else {
+          setSuccessMsg(res.message || 'Profile updated successfully!');
+        }
+      } catch (err) {
+        setErrorMsg((err as Error).message || 'Server error updating profile.');
       }
     });
   }

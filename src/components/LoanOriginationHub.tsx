@@ -191,15 +191,15 @@ export default function LoanOriginationHub({
     setCopiedLink(false);
     try {
       const res = await createApplicationLinkAction(effectiveLoanType);
-      if (res.ok && res.url) {
+      if (res && res.ok && res.url) {
         setActiveShareUrl(res.url);
         setShowShareModal(true);
       } else {
-        const err = !res.ok ? res.error : 'Unable to generate link. Please verify account permissions.';
-        alert(err || 'Unable to generate link.');
+        const err = (res && !res.ok ? res.error : null) || 'Unable to generate link. Your session may have expired. Please refresh or sign in again.';
+        alert(err);
       }
-    } catch {
-      alert('Error communicating with server. Please try again.');
+    } catch (e) {
+      alert((e as Error)?.message || 'Error communicating with server. Please try again.');
     } finally {
       setShareLinkLoading(false);
     }
@@ -271,14 +271,14 @@ export default function LoanOriginationHub({
     startSubmitTransition(async () => {
       try {
         const res = await submitDirectPartnerLoanAction(formData);
-        if (res.ok && res.applicationId) {
+        if (res && res.ok && res.applicationId) {
           setSuccessData({
             applicationId: res.applicationId,
             token: res.token || '',
             url: res.url,
           });
         } else {
-          setErrorMessage(res.error || 'Failed to submit loan requirement. Please try again.');
+          setErrorMessage((res && res.error) || 'Failed to submit loan requirement. Your session may have expired. Please refresh or sign in again.');
         }
       } catch (err) {
         setErrorMessage((err as Error).message || 'Server error while originating application.');

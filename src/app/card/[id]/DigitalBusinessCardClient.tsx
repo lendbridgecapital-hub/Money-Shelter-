@@ -107,16 +107,20 @@ export default function DigitalBusinessCardClient({ advisor, companySettings }: 
     formData.append('notes', notes);
 
     startTransition(async () => {
-      const res = await submitDigitalCardInquiryAction(formData);
-      if (!res.ok) {
-        setErrorMessage(res.error || 'Failed to submit inquiry.');
-      } else {
-        setSuccessMessage(res.message || 'Inquiry submitted successfully!');
-        setFullName('');
-        setMobile('');
-        setEmail('');
-        setLoanAmount('');
-        setNotes('');
+      try {
+        const res = await submitDigitalCardInquiryAction(formData);
+        if (!res || !res.ok) {
+          setErrorMessage((res && res.error) || 'Failed to submit inquiry. Please try again.');
+        } else {
+          setSuccessMessage(res.message || 'Inquiry submitted successfully!');
+          setFullName('');
+          setMobile('');
+          setEmail('');
+          setLoanAmount('');
+          setNotes('');
+        }
+      } catch (err) {
+        setErrorMessage((err as Error).message || 'Server error submitting inquiry.');
       }
     });
   }

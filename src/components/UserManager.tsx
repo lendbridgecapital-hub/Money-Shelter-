@@ -64,13 +64,17 @@ export default function UserManager({
     const formData = new FormData(e.currentTarget);
 
     startTransition(async () => {
-      const res = await createUserAction(formData);
-      if (res.ok) {
-        setMessage(res.message || 'User created successfully.');
-        setModalOpen(false);
-        router.refresh();
-      } else {
-        setError(res.error || 'Failed to create user.');
+      try {
+        const res = await createUserAction(formData);
+        if (res && res.ok) {
+          setMessage(res.message || 'User created successfully.');
+          setModalOpen(false);
+          router.refresh();
+        } else {
+          setError((res && res.error) || 'Failed to create user.');
+        }
+      } catch (err) {
+        setError((err as Error).message || 'Server error creating user.');
       }
     });
   };
@@ -79,25 +83,37 @@ export default function UserManager({
     setError(null);
     setMessage(null);
     startTransition(async () => {
-      const res = await setUserActiveAction(id, !current);
-      if (!res.ok) setError(res.error || 'Could not update user status.');
-      router.refresh();
+      try {
+        const res = await setUserActiveAction(id, !current);
+        if (!res || !res.ok) setError((res && res.error) || 'Could not update user status.');
+        router.refresh();
+      } catch (err) {
+        setError((err as Error).message || 'Server error updating user status.');
+      }
     });
   };
 
   const handleRoleChange = (id: string, newRole: Role, branchId: string) => {
     startTransition(async () => {
-      const res = await updateUserRoleBranchAction(id, newRole, branchId);
-      if (!res.ok) setError(res.error || 'Could not update role.');
-      router.refresh();
+      try {
+        const res = await updateUserRoleBranchAction(id, newRole, branchId);
+        if (!res || !res.ok) setError((res && res.error) || 'Could not update role.');
+        router.refresh();
+      } catch (err) {
+        setError((err as Error).message || 'Server error updating role.');
+      }
     });
   };
 
   const handleBranchChange = (id: string, role: Role, newBranchId: string) => {
     startTransition(async () => {
-      const res = await updateUserRoleBranchAction(id, role, newBranchId);
-      if (!res.ok) setError(res.error || 'Could not update branch.');
-      router.refresh();
+      try {
+        const res = await updateUserRoleBranchAction(id, role, newBranchId);
+        if (!res || !res.ok) setError((res && res.error) || 'Could not update branch.');
+        router.refresh();
+      } catch (err) {
+        setError((err as Error).message || 'Server error updating branch.');
+      }
     });
   };
 

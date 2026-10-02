@@ -119,19 +119,50 @@ export async function auth() {
 
 export async function requireUser(): Promise<User & { branchName: string }> {
   const session = await auth();
-  if (!session?.user?.id) {
+  if (!session?.user?.id && !session?.user?.email) {
     redirect('/login');
   }
 
-  const user = getUserById(session.user.id);
+  let user = session?.user?.id ? getUserById(session.user.id) : undefined;
+  if (!user && session?.user?.email) {
+    user = getUserByEmail(session.user.email);
+  }
   if (!user || !user.active) {
     redirect('/login');
   }
 
   return {
     ...user,
-    branchName: user.branchName || session.user.branchName || 'Head Office',
+    branchName: user.branchName || session?.user?.branchName || 'Head Office',
   };
+}
+
+/**
+ * Safe authentication getter for Server Actions.
+ * Returns null instead of calling Next.js redirect() to prevent client RPC undefined returns.
+ */
+export async function getAuthenticatedUser(): Promise<(User & { branchName: string }) | null> {
+  try {
+    const session = await auth();
+    if (!session?.user?.id && !session?.user?.email) {
+      return null;
+    }
+
+    let user = session?.user?.id ? getUserById(session.user.id) : undefined;
+    if (!user && session?.user?.email) {
+      user = getUserByEmail(session.user.email);
+    }
+    if (!user || !user.active) {
+      return null;
+    }
+
+    return {
+      ...user,
+      branchName: user.branchName || session?.user?.branchName || 'Head Office',
+    };
+  } catch {
+    return null;
+  }
 }
 
 export async function requireRole(...allowedRoles: Role[]): Promise<User & { branchName: string }> {

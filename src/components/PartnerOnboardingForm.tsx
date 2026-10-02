@@ -191,8 +191,8 @@ export default function PartnerOnboardingForm({
     });
     setIsSendingOtp(false);
 
-    if (!res.ok) {
-      setError(res.error || 'Failed to dispatch verification OTP. Please try again.');
+    if (!res || !res.ok) {
+      setError((res && res.error) || 'Failed to dispatch verification OTP. Please try again.');
       return;
     }
 
@@ -243,8 +243,8 @@ Compliance Undertaking: DPDP Act 2023 compliant, Zero-Cash Collection policy, no
     });
     setIsVerifying(false);
 
-    if (!res.ok) {
-      setError(res.error || 'OTP verification failed. Please check the code and try again.');
+    if (!res || !res.ok) {
+      setError((res && res.error) || 'OTP verification failed. Please check the code and try again.');
       return;
     }
 

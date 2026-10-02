@@ -25,18 +25,22 @@ export default function CreateLinkPanel({
     setCopied(false);
 
     startTransition(async () => {
-      const res = await createApplicationLinkAction();
-      if (!res.ok) {
-        setError(res.error || 'Could not generate application link.');
-      } else if (res.url) {
-        // Resolve public origin: never generate localhost or capacitor:// links for clients
-        const rawOrigin = typeof window !== 'undefined' ? window.location.origin : '';
-        const isLocal = !rawOrigin || rawOrigin.includes('localhost') || rawOrigin.startsWith('capacitor:');
-        const productionHost = 'https://quicfinsure.onrender.com';
-        const publicBase = isLocal ? productionHost : rawOrigin;
-        const finalUrl = res.token ? `${publicBase}/apply/${res.token}` : res.url;
-        setGeneratedUrl(finalUrl);
-        setToken(res.token || null);
+      try {
+        const res = await createApplicationLinkAction();
+        if (!res || !res.ok) {
+          setError((res && res.error) || 'Could not generate application link. Your session may have expired. Please refresh or log in.');
+        } else if (res.url) {
+          // Resolve public origin: never generate localhost or capacitor:// links for clients
+          const rawOrigin = typeof window !== 'undefined' ? window.location.origin : '';
+          const isLocal = !rawOrigin || rawOrigin.includes('localhost') || rawOrigin.startsWith('capacitor:');
+          const productionHost = 'https://quicfinsure.onrender.com';
+          const publicBase = isLocal ? productionHost : rawOrigin;
+          const finalUrl = res.token ? `${publicBase}/apply/${res.token}` : res.url;
+          setGeneratedUrl(finalUrl);
+          setToken(res.token || null);
+        }
+      } catch (err) {
+        setError((err as Error).message || 'Server error generating application link. Please try again.');
       }
     });
   };

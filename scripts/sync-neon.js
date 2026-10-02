@@ -166,12 +166,31 @@ async function initSchema(client) {
       token TEXT UNIQUE NOT NULL,
       branch_id TEXT NOT NULL,
       created_by_id TEXT NOT NULL,
+      channel_partner_id TEXT,
+      channel_partner_name TEXT,
+      relationship_manager_id TEXT,
+      relationship_manager_name TEXT,
       status TEXT NOT NULL DEFAULT 'LINK_SHARED',
       full_name TEXT,
       mobile TEXT,
       email TEXT,
       loan_type TEXT,
       loan_amount REAL,
+      pan_number TEXT,
+      aadhaar_number TEXT,
+      bank_id TEXT,
+      bank_name TEXT,
+      sent_to_bank_at TEXT,
+      approved_amount REAL,
+      interest_rate REAL,
+      tenure_months INTEGER,
+      approved_at TEXT,
+      customer_accepted_at TEXT,
+      acceptance_letter_ref TEXT,
+      disbursed_amount REAL,
+      disbursed_at TEXT,
+      commission_amount REAL,
+      commission_status TEXT,
       created_at TEXT NOT NULL,
       submitted_at TEXT,
       updated_at TEXT
@@ -321,6 +340,37 @@ async function initSchema(client) {
   for (const col of userColumns) {
     try {
       await client.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS ${col};`);
+    } catch (_) {}
+  }
+
+  // Ensure all loan application columns exist in PostgreSQL
+  const loanApplicationColumns = [
+    'channel_partner_id TEXT',
+    'channel_partner_name TEXT',
+    'relationship_manager_id TEXT',
+    'relationship_manager_name TEXT',
+    'pan_number TEXT',
+    'aadhaar_number TEXT',
+    'bank_id TEXT',
+    'bank_name TEXT',
+    'sent_to_bank_at TEXT',
+    'approved_amount REAL',
+    'interest_rate REAL',
+    'tenure_months INTEGER',
+    'approved_at TEXT',
+    'customer_accepted_at TEXT',
+    'acceptance_letter_ref TEXT',
+    'disbursed_amount REAL',
+    'disbursed_at TEXT',
+    'commission_amount REAL',
+    'commission_status TEXT',
+    'submitted_at TEXT',
+    'updated_at TEXT'
+  ];
+
+  for (const col of loanApplicationColumns) {
+    try {
+      await client.query(`ALTER TABLE loan_applications ADD COLUMN IF NOT EXISTS ${col};`);
     } catch (_) {}
   }
 }

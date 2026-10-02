@@ -50,8 +50,8 @@ export default function OfferClient({ application, token, settings }: Props) {
     setError(null);
     try {
       const res = await customerAcceptOfferAction(token, confirmName.trim());
-      if (!res.ok) {
-        setError(res.error || 'Failed to accept loan offer.');
+      if (!res || !res.ok) {
+        setError((res && res.error) || 'Failed to accept loan offer.');
       } else {
         setIsAccepted(true);
         if (res.acceptanceRef) {

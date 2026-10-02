@@ -1,7 +1,7 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { requireUser } from '@/lib/auth';
+import { getAuthenticatedUser } from '@/lib/auth';
 import * as applicationsRepo from '@/lib/repos/applicationsRepo';
 import * as statusHistoryRepo from '@/lib/repos/statusHistoryRepo';
 import * as documentsRepo from '@/lib/repos/documentsRepo';
@@ -12,11 +12,25 @@ import { LOAN_TYPE_LABELS } from '@/lib/format';
 import type { ApplicationStatus, LoanType } from '@/types/db';
 import type { ActionResult } from '@/actions/settingsActions';
 
+function safeRevalidate(path: string) {
+  try {
+    revalidatePath(path);
+  } catch (err) {
+    console.warn(`[safeRevalidate] Warning revalidating ${path}:`, err);
+  }
+}
+
 export type CreateLinkResult = ActionResult & { url?: string; token?: string };
 
 export async function createApplicationLinkAction(loanType?: LoanType): Promise<CreateLinkResult> {
   try {
-    const user = await requireUser();
+    const user = await getAuthenticatedUser();
+    if (!user) {
+      return {
+        ok: false,
+        error: 'Your session has expired. Please log in again to generate loan links.',
+      };
+    }
 
     if (user.isBlocked) {
       return {
@@ -31,13 +45,13 @@ export async function createApplicationLinkAction(loanType?: LoanType): Promise<
 
     const application = applicationsRepo.createApplicationLink({
       token,
-      branchId: user.branchId,
+      branchId: user.branchId || 'default',
       createdById: user.id,
       channelPartnerId: isPartner ? user.id : undefined,
       channelPartnerName: isPartner ? user.name : undefined,
       relationshipManagerId: isPartner ? (user.assignedRmId || null) : isRM ? user.id : null,
       relationshipManagerName: isPartner ? (user.assignedRmName || null) : isRM ? user.name : null,
-      tenantId: user.tenantId,
+      tenantId: user.tenantId || 'default',
     });
 
     statusHistoryRepo.addStatusHistory({
@@ -57,11 +71,15 @@ export async function createApplicationLinkAction(loanType?: LoanType): Promise<
     const cleanBase = base.replace(/\/$/, '');
     const url = `${cleanBase}/apply/${token}${loanType ? `?loanType=${loanType}` : ''}`;
 
-    revalidatePath('/dashboard');
-    revalidatePath('/branch/requests');
+    safeRevalidate('/dashboard');
+    safeRevalidate('/branch/requests');
     return { ok: true, url, token };
-  } catch {
-    return { ok: false, error: 'Could not generate a link. Please try again.' };
+  } catch (err) {
+    console.error('[createApplicationLinkAction] error:', err);
+    return {
+      ok: false,
+      error: (err as Error).message || 'Could not generate a link. Please try again.',
+    };
   }
 }
 
@@ -82,7 +100,10 @@ export async function updateApplicationStatusAction(
   note?: string
 ): Promise<ActionResult> {
   try {
-    const user = await requireUser();
+    const user = await getAuthenticatedUser();
+    if (!user) {
+      return { ok: false, error: 'Your session has expired. Please sign in again.' };
+    }
     const application = applicationsRepo.getApplicationById(applicationId);
     if (!application) return { ok: false, error: 'Application not found.' };
     if (user.role === 'CHANNEL_PARTNER') {
@@ -112,12 +133,13 @@ export async function updateApplicationStatusAction(
     applicationsRepo.updateApplicationStatus(applicationId, status);
     statusHistoryRepo.addStatusHistory({ applicationId, status, note: note || null, changedById: user.id });
 
-    revalidatePath('/dashboard');
-    revalidatePath('/branch/requests');
-    revalidatePath(`/branch/requests/${applicationId}`);
+    safeRevalidate('/dashboard');
+    safeRevalidate('/branch/requests');
+    safeRevalidate(`/branch/requests/${applicationId}`);
     return { ok: true, message: 'Status updated.' };
-  } catch {
-    return { ok: false, error: 'Could not update status. Please try again.' };
+  } catch (err) {
+    console.error('[updateApplicationStatusAction] error:', err);
+    return { ok: false, error: (err as Error).message || 'Could not update status. Please try again.' };
   }
 }
 
@@ -131,7 +153,13 @@ export type SubmitDirectLoanResult = {
 
 export async function submitDirectPartnerLoanAction(formData: FormData): Promise<SubmitDirectLoanResult> {
   try {
-    const user = await requireUser();
+    const user = await getAuthenticatedUser();
+    if (!user) {
+      return {
+        ok: false,
+        error: 'Your session has expired. Please log in again to submit loan requirements.',
+      };
+    }
 
     if (user.isBlocked) {
       return {
@@ -232,9 +260,9 @@ export async function submitDirectPartnerLoanAction(formData: FormData): Promise
     const cleanBase = base.replace(/\/$/, '');
     const url = `${cleanBase}/apply/${application.token}`;
 
-    revalidatePath('/dashboard');
-    revalidatePath('/branch/requests');
-    revalidatePath(`/branch/requests/${application.id}`);
+    safeRevalidate('/dashboard');
+    safeRevalidate('/branch/requests');
+    safeRevalidate(`/branch/requests/${application.id}`);
 
     return {
       ok: true,
