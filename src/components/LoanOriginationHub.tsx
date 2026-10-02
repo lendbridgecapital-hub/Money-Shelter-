@@ -93,9 +93,6 @@ export default function LoanOriginationHub({
   partnerName,
   partnerRole,
 }: LoanOriginationHubProps) {
-  // Navigation tab: Origination vs Recent Cases
-  const [activeTab, setActiveTab] = useState<'ORIGINATE' | 'RECENT_CASES'>('ORIGINATE');
-
   // Category State
   const [primaryCategory, setPrimaryCategory] = useState<PrimaryCategory>('PERSONAL_LOAN');
   const [selectedSubLoanType, setSelectedSubLoanType] = useState<LoanType>('BALANCE_TRANSFER');
@@ -269,178 +266,7 @@ export default function LoanOriginationHub({
 
   return (
     <div className="bg-white border border-slate-200/90 rounded-2xl shadow-xs overflow-hidden">
-      {/* Top Header & Mode Navigation */}
-      <div className="px-4 py-3 border-b border-slate-100 flex flex-wrap items-center justify-between gap-3 bg-gradient-to-r from-slate-50 via-white to-emerald-50/40">
-        <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-xl bg-emerald-600 text-white flex items-center justify-center font-bold text-sm shadow-xs">
-            🚀
-          </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <h2 className="text-sm font-bold text-slate-900 tracking-tight">Loan Origination Hub</h2>
-              <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">
-                Staged to Link Shared
-              </span>
-            </div>
-            <p className="text-[11px] text-slate-500">
-              Originate customer loan files or share instant self-apply links
-            </p>
-          </div>
-        </div>
-
-        {/* View Switcher Tabs */}
-        <div className="flex items-center p-0.5 bg-slate-100 rounded-xl border border-slate-200/80 text-xs">
-          <button
-            type="button"
-            onClick={() => setActiveTab('ORIGINATE')}
-            className={`px-3 py-1.5 rounded-lg font-bold transition flex items-center gap-1.5 ${
-              activeTab === 'ORIGINATE'
-                ? 'bg-white text-emerald-800 shadow-2xs'
-                : 'text-slate-600 hover:text-slate-900'
-            }`}
-          >
-            <span>✍️</span>
-            <span>Originate Case</span>
-          </button>
-          <button
-            type="button"
-            onClick={() => setActiveTab('RECENT_CASES')}
-            className={`px-3 py-1.5 rounded-lg font-bold transition flex items-center gap-1.5 ${
-              activeTab === 'RECENT_CASES'
-                ? 'bg-white text-emerald-800 shadow-2xs'
-                : 'text-slate-600 hover:text-slate-900'
-            }`}
-          >
-            <span>📋</span>
-            <span>Recent Cases ({totalApplicationsCount})</span>
-          </button>
-        </div>
-      </div>
-
-      {activeTab === 'RECENT_CASES' ? (
-        /* View Recent Cases Table / Cards */
-        <div className="p-3">
-          <div className="flex items-center justify-between pb-2 mb-2 border-b border-slate-100">
-            <span className="text-xs font-bold text-slate-700">Latest Active Cases</span>
-            <Link
-              href="/branch/requests"
-              className="text-xs font-bold text-emerald-700 hover:text-emerald-900 transition flex items-center gap-0.5"
-            >
-              <span>View Full Pipeline ({totalApplicationsCount})</span>
-              <span>→</span>
-            </Link>
-          </div>
-
-          {recentApplications.length === 0 ? (
-            <div className="py-8 text-center">
-              <p className="text-xs font-bold text-slate-700">No active applications found</p>
-              <p className="text-[11px] text-slate-400 mt-1">
-                Select a loan type above to originate your first case.
-              </p>
-            </div>
-          ) : (
-            <>
-              {/* Mobile View */}
-              <div className="block md:hidden space-y-2">
-                {recentApplications.map((app) => (
-                  <Link
-                    key={app.id}
-                    href={`/branch/requests/${app.id}`}
-                    className="block p-3 rounded-xl bg-slate-50 border border-slate-200/80 active:bg-slate-100 transition shadow-2xs"
-                  >
-                    <div className="flex items-start justify-between gap-2 mb-1.5">
-                      <div className="flex items-center gap-2">
-                        <div className="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-800 font-bold flex items-center justify-center text-xs">
-                          {app.fullName ? app.fullName.charAt(0).toUpperCase() : 'C'}
-                        </div>
-                        <div className="min-w-0">
-                          <p className="font-bold text-slate-900 text-xs truncate leading-tight">
-                            {app.fullName || app.token}
-                          </p>
-                          <p className="text-[10px] text-slate-400 font-mono mt-0.5">
-                            {app.mobile || app.email || 'Awaiting Details'}
-                          </p>
-                        </div>
-                      </div>
-                      <StatusBadge status={app.status} size="sm" />
-                    </div>
-
-                    <div className="flex items-center justify-between pt-1 border-t border-slate-200/60 text-xs">
-                      <div>
-                        <span className="font-extrabold text-slate-900 text-sm">
-                          {app.loanAmount || app.approvedAmount
-                            ? formatCurrencyINR(app.approvedAmount || app.loanAmount)
-                            : '—'}
-                        </span>
-                        <span className="text-[10px] text-slate-500 ml-1.5">
-                          {app.loanType ? LOAN_TYPE_LABELS[app.loanType] : 'General'}
-                        </span>
-                      </div>
-                      <span className="text-[11px] font-bold text-emerald-700 flex items-center gap-0.5">
-                        Open →
-                      </span>
-                    </div>
-                  </Link>
-                ))}
-              </div>
-
-              {/* Desktop Table */}
-              <div className="hidden md:block overflow-x-auto w-full">
-                <table className="w-full text-left">
-                  <thead>
-                    <tr className="bg-slate-50 text-[10px] uppercase font-bold text-slate-400 border-b border-slate-100">
-                      <th className="px-3 py-1.5">Borrower</th>
-                      <th className="px-3 py-1.5">Loan & Amount</th>
-                      <th className="px-3 py-1.5">Flowchart Stage</th>
-                      <th className="px-3 py-1.5">Date</th>
-                      <th className="px-3 py-1.5 text-right">Action</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100 text-xs">
-                    {recentApplications.map((app) => (
-                      <tr key={app.id} className="hover:bg-slate-50/60 transition-colors">
-                        <td className="px-3 py-2">
-                          <p className="font-bold text-slate-900 leading-tight truncate max-w-[150px]">
-                            {app.fullName || 'Unnamed Applicant'}
-                          </p>
-                          <p className="text-[10px] text-slate-400 font-mono">
-                            {app.mobile || app.email || 'Awaiting Details'}
-                          </p>
-                        </td>
-                        <td className="px-3 py-2">
-                          <p className="font-semibold text-slate-800 leading-tight">
-                            {app.loanAmount || app.approvedAmount
-                              ? formatCurrencyINR(app.approvedAmount || app.loanAmount)
-                              : '—'}
-                          </p>
-                          <p className="text-[10px] text-slate-500 truncate max-w-[140px]">
-                            {app.loanType ? LOAN_TYPE_LABELS[app.loanType] : 'General Loan'}
-                          </p>
-                        </td>
-                        <td className="px-3 py-2">
-                          <StatusBadge status={app.status} size="sm" />
-                        </td>
-                        <td className="px-3 py-2 text-[10px] text-slate-500 whitespace-nowrap">
-                          {formatDate(app.createdAt)}
-                        </td>
-                        <td className="px-3 py-2 text-right whitespace-nowrap">
-                          <Link
-                            href={`/branch/requests/${app.id}`}
-                            className="text-[11px] font-semibold text-emerald-700 hover:text-emerald-900 bg-emerald-50 hover:bg-emerald-100 px-2.5 py-1 rounded-lg transition-colors inline-flex items-center gap-0.5"
-                          >
-                            <span>Case File</span>
-                            <span>→</span>
-                          </Link>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </>
-          )}
-        </div>
-      ) : successData ? (
+      {successData ? (
         /* Success Screen */
         <div className="p-6 sm:p-8 text-center space-y-5 animate-in fade-in duration-300">
           <div className="w-16 h-16 rounded-3xl bg-emerald-100 text-emerald-600 flex items-center justify-center text-3xl mx-auto shadow-inner">
@@ -523,166 +349,160 @@ export default function LoanOriginationHub({
         </div>
       ) : (
         /* Origination Hub Form */
-        <div className="p-3 sm:p-5 space-y-5">
-          {/* 1. Loan Category Selection Grid (Only visible initially on mobile; always visible on desktop) */}
-          <div className={mobileTab === 'FORM' ? 'hidden md:block' : 'block'}>
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-xs font-extrabold uppercase tracking-wider text-slate-600">
+        <div className="p-2.5 sm:p-4 space-y-3.5 sm:space-y-4">
+          {/* 1. Compact Loan Category Tabs (All 4 visible in 1 frame) */}
+          <div>
+            <div className="flex items-center justify-between mb-1.5">
+              <span className="text-[11px] sm:text-xs font-extrabold uppercase tracking-wider text-slate-600">
                 1. Select Loan Category
               </span>
-              <span className="text-[11px] text-emerald-700 font-semibold">
+              <span className="text-[10px] sm:text-[11px] text-emerald-700 font-semibold truncate max-w-[170px]">
                 Active: {LOAN_TYPE_LABELS[effectiveLoanType] || effectiveLoanType}
               </span>
             </div>
 
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+            {/* 4 Loan Option Tabs: Compact, 1 Frame, grid-cols-4 */}
+            <div className="grid grid-cols-4 gap-1.5 sm:gap-2">
               {/* Personal Loan */}
               <button
                 type="button"
                 onClick={() => handleSelectCategory('PERSONAL_LOAN')}
-                className={`relative p-3 rounded-2xl border text-left transition flex flex-col justify-between ${
+                className={`relative p-1.5 sm:p-2 rounded-xl sm:rounded-2xl border text-center transition flex flex-col items-center justify-center min-h-[58px] sm:min-h-[66px] active:scale-95 ${
                   primaryCategory === 'PERSONAL_LOAN'
-                    ? 'border-emerald-600 bg-emerald-50/80 ring-2 ring-emerald-500/20 shadow-xs'
-                    : 'border-slate-200 hover:border-slate-300 bg-white hover:bg-slate-50/70'
+                    ? 'border-emerald-600 bg-emerald-50/90 text-emerald-950 ring-2 ring-emerald-500/30 shadow-xs font-bold'
+                    : 'border-slate-200/90 hover:border-slate-300 bg-white hover:bg-slate-50 text-slate-700'
                 }`}
               >
-                <div className="flex items-start justify-between">
-                  <div className="w-8 h-8 rounded-xl bg-blue-100 text-blue-700 flex items-center justify-center text-base">
-                    👤
-                  </div>
-                  {primaryCategory === 'PERSONAL_LOAN' ? (
-                    <span className="w-2.5 h-2.5 rounded-full bg-emerald-600"></span>
-                  ) : (
-                    <span className="md:hidden text-[10px] font-bold text-emerald-600">Open →</span>
-                  )}
+                {primaryCategory === 'PERSONAL_LOAN' && (
+                  <span className="absolute top-1 right-1 w-1.5 h-1.5 rounded-full bg-emerald-600"></span>
+                )}
+                <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-lg bg-blue-100/90 text-blue-700 flex items-center justify-center text-xs sm:text-sm mb-0.5 shrink-0">
+                  👤
                 </div>
-                <div className="mt-2.5">
-                  <p className="text-xs font-bold text-slate-900 leading-tight">Personal Loan</p>
-                  <p className="text-[10px] text-slate-400 mt-0.5">Instant Approval</p>
-                </div>
+                <p className="text-[10px] sm:text-xs font-bold leading-tight truncate w-full">
+                  <span className="sm:hidden">Personal</span>
+                  <span className="hidden sm:inline">Personal Loan</span>
+                </p>
+                <span className="text-[8px] sm:text-[9px] text-slate-400 font-medium leading-none mt-0.5 truncate block">
+                  Loan
+                </span>
               </button>
 
               {/* Home Loan */}
               <button
                 type="button"
                 onClick={() => handleSelectCategory('HOME_LOAN')}
-                className={`relative p-3 rounded-2xl border text-left transition flex flex-col justify-between ${
+                className={`relative p-1.5 sm:p-2 rounded-xl sm:rounded-2xl border text-center transition flex flex-col items-center justify-center min-h-[58px] sm:min-h-[66px] active:scale-95 ${
                   primaryCategory === 'HOME_LOAN'
-                    ? 'border-emerald-600 bg-emerald-50/80 ring-2 ring-emerald-500/20 shadow-xs'
-                    : 'border-slate-200 hover:border-slate-300 bg-white hover:bg-slate-50/70'
+                    ? 'border-emerald-600 bg-emerald-50/90 text-emerald-950 ring-2 ring-emerald-500/30 shadow-xs font-bold'
+                    : 'border-slate-200/90 hover:border-slate-300 bg-white hover:bg-slate-50 text-slate-700'
                 }`}
               >
-                <div className="flex items-start justify-between">
-                  <div className="w-8 h-8 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center text-base">
-                    🏠
-                  </div>
-                  {primaryCategory === 'HOME_LOAN' ? (
-                    <span className="w-2.5 h-2.5 rounded-full bg-emerald-600"></span>
-                  ) : (
-                    <span className="md:hidden text-[10px] font-bold text-emerald-600">Open →</span>
-                  )}
+                {primaryCategory === 'HOME_LOAN' && (
+                  <span className="absolute top-1 right-1 w-1.5 h-1.5 rounded-full bg-emerald-600"></span>
+                )}
+                <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-lg bg-emerald-100/90 text-emerald-700 flex items-center justify-center text-xs sm:text-sm mb-0.5 shrink-0">
+                  🏠
                 </div>
-                <div className="mt-2.5">
-                  <p className="text-xs font-bold text-slate-900 leading-tight">Home Loan</p>
-                  <p className="text-[10px] text-slate-400 mt-0.5">Lowest ROI</p>
-                </div>
+                <p className="text-[10px] sm:text-xs font-bold leading-tight truncate w-full">
+                  <span className="sm:hidden">Home</span>
+                  <span className="hidden sm:inline">Home Loan</span>
+                </p>
+                <span className="text-[8px] sm:text-[9px] text-slate-400 font-medium leading-none mt-0.5 truncate block">
+                  Loan
+                </span>
               </button>
 
               {/* Business Loan */}
               <button
                 type="button"
                 onClick={() => handleSelectCategory('BUSINESS_LOAN')}
-                className={`relative p-3 rounded-2xl border text-left transition flex flex-col justify-between ${
+                className={`relative p-1.5 sm:p-2 rounded-xl sm:rounded-2xl border text-center transition flex flex-col items-center justify-center min-h-[58px] sm:min-h-[66px] active:scale-95 ${
                   primaryCategory === 'BUSINESS_LOAN'
-                    ? 'border-emerald-600 bg-emerald-50/80 ring-2 ring-emerald-500/20 shadow-xs'
-                    : 'border-slate-200 hover:border-slate-300 bg-white hover:bg-slate-50/70'
+                    ? 'border-emerald-600 bg-emerald-50/90 text-emerald-950 ring-2 ring-emerald-500/30 shadow-xs font-bold'
+                    : 'border-slate-200/90 hover:border-slate-300 bg-white hover:bg-slate-50 text-slate-700'
                 }`}
               >
-                <div className="flex items-start justify-between">
-                  <div className="w-8 h-8 rounded-xl bg-amber-100 text-amber-700 flex items-center justify-center text-base">
-                    🏢
-                  </div>
-                  {primaryCategory === 'BUSINESS_LOAN' ? (
-                    <span className="w-2.5 h-2.5 rounded-full bg-emerald-600"></span>
-                  ) : (
-                    <span className="md:hidden text-[10px] font-bold text-emerald-600">Open →</span>
-                  )}
+                {primaryCategory === 'BUSINESS_LOAN' && (
+                  <span className="absolute top-1 right-1 w-1.5 h-1.5 rounded-full bg-emerald-600"></span>
+                )}
+                <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-lg bg-amber-100/90 text-amber-700 flex items-center justify-center text-xs sm:text-sm mb-0.5 shrink-0">
+                  🏢
                 </div>
-                <div className="mt-2.5">
-                  <p className="text-xs font-bold text-slate-900 leading-tight">Business Loan</p>
-                  <p className="text-[10px] text-slate-400 mt-0.5">High Ticket Funding</p>
-                </div>
+                <p className="text-[10px] sm:text-xs font-bold leading-tight truncate w-full">
+                  <span className="sm:hidden">Business</span>
+                  <span className="hidden sm:inline">Business Loan</span>
+                </p>
+                <span className="text-[8px] sm:text-[9px] text-slate-400 font-medium leading-none mt-0.5 truncate block">
+                  Loan
+                </span>
               </button>
 
-              {/* Other Loans (Triggers Sub-Option Popup / Drawer) */}
+              {/* Other Loans */}
               <button
                 type="button"
                 onClick={() => {
                   setPrimaryCategory('OTHER');
                   setIsOtherModalOpen(true);
                 }}
-                className={`relative p-3 rounded-2xl border text-left transition flex flex-col justify-between ${
+                className={`relative p-1.5 sm:p-2 rounded-xl sm:rounded-2xl border text-center transition flex flex-col items-center justify-center min-h-[58px] sm:min-h-[66px] active:scale-95 ${
                   primaryCategory === 'OTHER'
-                    ? 'border-emerald-600 bg-emerald-50/80 ring-2 ring-emerald-500/20 shadow-xs'
-                    : 'border-slate-200 hover:border-slate-300 bg-white hover:bg-slate-50/70'
+                    ? 'border-emerald-600 bg-emerald-50/90 text-emerald-950 ring-2 ring-emerald-500/30 shadow-xs font-bold'
+                    : 'border-slate-200/90 hover:border-slate-300 bg-white hover:bg-slate-50 text-slate-700'
                 }`}
               >
-                <div className="flex items-start justify-between">
-                  <div className="w-8 h-8 rounded-xl bg-purple-100 text-purple-700 flex items-center justify-center text-base">
-                    ✨
-                  </div>
-                  <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-purple-100 text-purple-800">
-                    {primaryCategory === 'OTHER' ? 'Selected' : 'Options'}
-                  </span>
+                {primaryCategory === 'OTHER' && (
+                  <span className="absolute top-1 right-1 w-1.5 h-1.5 rounded-full bg-emerald-600"></span>
+                )}
+                <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-lg bg-purple-100/90 text-purple-700 flex items-center justify-center text-xs sm:text-sm mb-0.5 shrink-0">
+                  ✨
                 </div>
-                <div className="mt-2.5">
-                  <p className="text-xs font-bold text-slate-900 leading-tight">
-                    {primaryCategory === 'OTHER'
-                      ? LOAN_TYPE_LABELS[selectedSubLoanType] || 'Other Loans'
-                      : 'Other Loans'}
-                  </p>
-                  <p className="text-[10px] text-emerald-700 font-semibold mt-0.5">
-                    {primaryCategory === 'OTHER' ? 'Click to change ▾' : 'BT, Gold, Edu ▾'}
-                  </p>
-                </div>
+                <p className="text-[10px] sm:text-xs font-bold leading-tight truncate w-full">
+                  {primaryCategory === 'OTHER' ? (
+                    <span>{LOAN_TYPE_LABELS[selectedSubLoanType] || 'Other'}</span>
+                  ) : (
+                    <>
+                      <span className="sm:hidden">Other</span>
+                      <span className="hidden sm:inline">Other Loans</span>
+                    </>
+                  )}
+                </p>
+                <span className="text-[8px] sm:text-[9px] text-purple-700 font-semibold leading-none mt-0.5 truncate block">
+                  {primaryCategory === 'OTHER' ? 'Change ▾' : 'BT, Gold ▾'}
+                </span>
               </button>
             </div>
 
             {/* Sub-Selection indicator badge when Other is active */}
             {primaryCategory === 'OTHER' && (
-              <div className="mt-2 p-2.5 rounded-xl bg-purple-50/70 border border-purple-200/80 flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <span className="text-sm">📌</span>
-                  <div>
-                    <span className="text-[11px] font-bold text-purple-900">
-                      Selected Category: {LOAN_TYPE_LABELS[selectedSubLoanType]}
-                    </span>
-                    <p className="text-[10px] text-purple-700">
-                      {OTHER_SUB_OPTIONS.find((s) => s.type === selectedSubLoanType)?.subtitle}
-                    </p>
-                  </div>
+              <div className="mt-1.5 px-2.5 py-1 rounded-lg bg-purple-50/80 border border-purple-200/80 flex items-center justify-between text-xs">
+                <div className="flex items-center gap-1.5 truncate">
+                  <span className="text-xs">📌</span>
+                  <span className="text-[11px] font-bold text-purple-900 truncate">
+                    Selected: {LOAN_TYPE_LABELS[selectedSubLoanType]}
+                  </span>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1.5 shrink-0">
                   <button
                     type="button"
                     onClick={() => setIsOtherModalOpen(true)}
-                    className="px-2.5 py-1 rounded-lg bg-white border border-purple-200 text-purple-700 text-xs font-bold hover:bg-purple-100 transition shadow-2xs"
+                    className="px-2 py-0.5 rounded bg-white border border-purple-200 text-purple-700 text-[10px] font-bold hover:bg-purple-100 transition shadow-2xs"
                   >
                     Change ▾
                   </button>
                   <button
                     type="button"
                     onClick={() => setMobileTab('FORM')}
-                    className="md:hidden px-2.5 py-1 rounded-lg bg-emerald-600 text-white text-xs font-bold hover:bg-emerald-500 transition shadow-2xs"
+                    className="md:hidden px-2 py-0.5 rounded bg-emerald-600 text-white text-[10px] font-bold"
                   >
-                    Open Form →
+                    Form →
                   </button>
                 </div>
               </div>
             )}
 
-            {/* Mobile Guidance Prompt */}
-            <div className="md:hidden mt-3 p-2.5 rounded-xl bg-slate-50 border border-slate-200/70 text-center">
+            {/* Mobile Prompt when Form is Closed */}
+            <div className="md:hidden mt-2 p-2 rounded-xl bg-slate-50 border border-slate-200/70 text-center">
               <p className="text-[11px] text-slate-600 font-medium">
                 👆 Tap any loan category above to open the application form.
               </p>
@@ -691,38 +511,21 @@ export default function LoanOriginationHub({
 
           {/* Section 2 (Share Link) & Section 3 (Form): Hidden on mobile until category is selected, always visible on desktop */}
           <div className={mobileTab === 'CATEGORIES' ? 'hidden md:block space-y-4' : 'block space-y-4'}>
-            {/* Mobile Dedicated Form Top Header Bar */}
-            <div className="md:hidden flex items-center justify-between pb-3 border-b border-slate-200 bg-slate-50/70 -mx-3 -mt-3 p-3 rounded-t-2xl">
+            {/* Mobile Form Active Header with Close / Switch */}
+            <div className="md:hidden flex items-center justify-between py-1.5 px-2.5 bg-slate-100 rounded-xl text-xs">
+              <div className="flex items-center gap-1.5">
+                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                <span className="text-[11px] font-extrabold text-slate-800">
+                  {LOAN_TYPE_LABELS[effectiveLoanType] || effectiveLoanType} Form
+                </span>
+              </div>
               <button
                 type="button"
                 onClick={() => setMobileTab('CATEGORIES')}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white border border-slate-200 text-slate-800 text-xs font-bold shadow-2xs active:scale-95 transition"
+                className="text-[10px] font-bold text-slate-600 hover:text-slate-900 bg-white px-2.5 py-1 rounded-lg border border-slate-200 shadow-2xs active:scale-95 transition"
               >
-                <span>←</span>
-                <span>Loan Options</span>
+                Hide Form ✕
               </button>
-              <div className="flex items-center gap-1.5">
-                <span className="px-2.5 py-1 rounded-xl bg-emerald-100 text-emerald-900 text-xs font-extrabold border border-emerald-200">
-                  {LOAN_TYPE_LABELS[effectiveLoanType] || effectiveLoanType}
-                </span>
-                {primaryCategory === 'OTHER' ? (
-                  <button
-                    type="button"
-                    onClick={() => setIsOtherModalOpen(true)}
-                    className="px-2 py-1 rounded-lg bg-purple-100 hover:bg-purple-200 text-purple-800 text-[11px] font-bold"
-                  >
-                    Change ▾
-                  </button>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={() => setMobileTab('CATEGORIES')}
-                    className="px-2 py-1 rounded-lg bg-slate-200/80 hover:bg-slate-300 text-slate-700 text-[11px] font-semibold"
-                  >
-                    Switch
-                  </button>
-                )}
-              </div>
             </div>
 
             {/* 2. Partner Action Mode & Share Link Option for Selected Loan Type */}
