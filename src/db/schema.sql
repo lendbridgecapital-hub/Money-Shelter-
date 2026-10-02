@@ -86,6 +86,8 @@ CREATE TABLE IF NOT EXISTS loan_applications (
   email TEXT,
   loan_type TEXT,
   loan_amount REAL,
+  pan_number TEXT,
+  aadhaar_number TEXT,
   created_at TEXT NOT NULL,
   submitted_at TEXT,
   updated_at TEXT

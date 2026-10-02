@@ -13,6 +13,7 @@ import {
   getSupportOperationalReport,
   getPartnerPersonalReport,
 } from '@/lib/repos/reportsRepo';
+import LoanOriginationHub from '@/components/LoanOriginationHub';
 
 export default async function DashboardPage() {
   const sessionUser = await requireUser();
@@ -185,143 +186,14 @@ export default async function DashboardPage() {
 
       {/* 5. Main Workspace */}
       <div className={`grid grid-cols-1 ${hasSideColumn ? 'lg:grid-cols-12' : ''} gap-2`}>
-        {/* Left Column: Recent Applications & Active Cases */}
-        <div className={`${hasSideColumn ? 'lg:col-span-8' : 'w-full'} bg-white border border-slate-200/90 rounded-xl shadow-2xs overflow-hidden flex flex-col justify-between`}>
-          <div>
-            <div className="px-3 py-1.5 border-b border-slate-100 flex items-center justify-between bg-slate-50/60">
-              <div className="flex items-center gap-1.5">
-                <span className="text-xs">📋</span>
-                <h3 className="text-xs font-bold uppercase tracking-wider text-slate-800">
-                  Recent Loan Applications
-                </h3>
-                <span className="text-[10px] text-slate-400 hidden sm:inline">
-                  • Active customer loan files
-                </span>
-              </div>
-              <Link
-                href="/branch/requests"
-                className="text-xs font-bold text-emerald-700 hover:text-emerald-900 transition-colors"
-              >
-                View All ({stats.total}) →
-              </Link>
-            </div>
-
-            {recentApplications.length === 0 ? (
-              <div className="p-4 text-center">
-                <p className="text-xs font-semibold text-slate-700">No active applications yet</p>
-                <p className="text-[10px] text-slate-400 mt-0.5 mb-1.5">
-                  Generate a custom link to receive borrower files.
-                </p>
-                <Link
-                  href="/branch/create-link"
-                  className="inline-flex items-center gap-1 px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold rounded-lg shadow-2xs transition"
-                >
-                  <span>🔗</span>
-                  <span>Create Link</span>
-                </Link>
-              </div>
-            ) : (
-              <>
-                {/* Mobile Recent Applications List (Visible on mobile, hidden on desktop) */}
-                <div className="block md:hidden p-2 space-y-2">
-                  {recentApplications.map((app) => (
-                    <Link
-                      key={app.id}
-                      href={`/branch/requests/${app.id}`}
-                      className="block p-3 rounded-xl bg-slate-50 border border-slate-200/80 active:bg-slate-100 transition shadow-2xs"
-                    >
-                      <div className="flex items-start justify-between gap-2 mb-1.5">
-                        <div className="flex items-center gap-2">
-                          <div className="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-800 font-bold flex items-center justify-center text-xs">
-                            {app.fullName ? app.fullName.charAt(0).toUpperCase() : 'C'}
-                          </div>
-                          <div className="min-w-0">
-                            <p className="font-bold text-slate-900 text-xs truncate leading-tight">
-                              {app.fullName || app.token}
-                            </p>
-                            <p className="text-[10px] text-slate-400 font-mono mt-0.5">
-                              {app.mobile || app.email || 'Awaiting Details'}
-                            </p>
-                          </div>
-                        </div>
-                        <StatusBadge status={app.status} size="sm" />
-                      </div>
-
-                      <div className="flex items-center justify-between pt-1 border-t border-slate-200/60 text-xs">
-                        <div>
-                          <span className="font-extrabold text-slate-900 text-sm">
-                            {app.loanAmount || app.approvedAmount
-                              ? formatCurrencyINR(app.approvedAmount || app.loanAmount)
-                              : '—'}
-                          </span>
-                          <span className="text-[10px] text-slate-500 ml-1.5">
-                            {app.loanType ? LOAN_TYPE_LABELS[app.loanType] : 'General'}
-                          </span>
-                        </div>
-                        <span className="text-[11px] font-bold text-emerald-700 flex items-center gap-0.5">
-                          Open →
-                        </span>
-                      </div>
-                    </Link>
-                  ))}
-                </div>
-
-                {/* Desktop Recent Applications Table (Hidden on mobile, visible on desktop) */}
-                <div className="hidden md:block overflow-x-auto w-full">
-                  <table className="w-full text-left">
-                    <thead>
-                      <tr className="bg-slate-50/70 text-[10px] uppercase font-bold text-slate-400 border-b border-slate-100">
-                        <th className="px-3 py-1">Borrower</th>
-                        <th className="px-3 py-1">Loan & Amount</th>
-                        <th className="px-3 py-1">Flowchart Stage</th>
-                        <th className="px-3 py-1">Date</th>
-                        <th className="px-3 py-1 text-right">Action</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-100 text-xs">
-                      {recentApplications.map((app) => (
-                        <tr key={app.id} className="hover:bg-slate-50/60 transition-colors">
-                          <td className="px-3 py-1.5">
-                            <p className="font-bold text-slate-900 leading-tight truncate max-w-[130px]">
-                              {app.fullName || 'Unnamed Applicant'}
-                            </p>
-                            <p className="text-[10px] text-slate-400 font-mono">
-                              {app.mobile || app.email || 'Awaiting Details'}
-                            </p>
-                          </td>
-                          <td className="px-3 py-1.5">
-                            <p className="font-semibold text-slate-800 leading-tight">
-                              {app.loanAmount || app.approvedAmount
-                                ? formatCurrencyINR(app.approvedAmount || app.loanAmount)
-                                : '—'}
-                            </p>
-                            <p className="text-[10px] text-slate-500 truncate max-w-[120px]">
-                              {app.loanType ? LOAN_TYPE_LABELS[app.loanType] : 'General Loan'}
-                            </p>
-                          </td>
-                          <td className="px-3 py-1.5">
-                            <StatusBadge status={app.status} size="sm" />
-                          </td>
-                          <td className="px-3 py-1.5 text-[10px] text-slate-500 whitespace-nowrap">
-                            {formatDate(app.createdAt)}
-                          </td>
-                          <td className="px-3 py-1.5 text-right whitespace-nowrap">
-                            <Link
-                              href={`/branch/requests/${app.id}`}
-                              className="text-[11px] font-semibold text-emerald-700 hover:text-emerald-900 bg-emerald-50 hover:bg-emerald-100 px-2 py-0.5 rounded transition-colors inline-flex items-center gap-0.5"
-                            >
-                              <span>Case File</span>
-                              <span>→</span>
-                            </Link>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </>
-            )}
-          </div>
+        {/* Left Column: Loan Origination Hub & Active Cases */}
+        <div className={hasSideColumn ? 'lg:col-span-8' : 'w-full'}>
+          <LoanOriginationHub
+            recentApplications={recentApplications}
+            totalApplicationsCount={stats.total}
+            partnerName={user.name}
+            partnerRole={user.role}
+          />
         </div>
 
         {/* Right Column: Branch / Partner Overview (4 cols) */}

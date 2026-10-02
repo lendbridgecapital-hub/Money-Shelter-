@@ -320,6 +320,8 @@ function mapRowToApplication(row: Record<string, unknown>): LoanApplication {
     email: row.email ? String(row.email) : null,
     loanType: (row.loan_type || row.loanType) as LoanType | null,
     loanAmount: row.loan_amount || row.loanAmount ? Number(row.loan_amount || row.loanAmount) : null,
+    panNumber: row.pan_number || row.panNumber ? String(row.pan_number || row.panNumber) : null,
+    aadhaarNumber: row.aadhaar_number || row.aadhaarNumber ? String(row.aadhaar_number || row.aadhaarNumber) : null,
     bankId: row.bank_id || row.bankId ? String(row.bank_id || row.bankId) : null,
     bankName: row.bank_name || row.bankName ? String(row.bank_name || row.bankName) : null,
     sentToBankAt: row.sent_to_bank_at || row.sentToBankAt ? String(row.sent_to_bank_at || row.sentToBankAt) : null,
@@ -386,5 +388,58 @@ export function createInquiryFromCard(data: {
 
   const created = getApplicationById(id);
   if (!created) throw new Error('Failed to create card inquiry');
+  return created;
+}
+
+export function createDirectPartnerApplication(data: {
+  advisorId: string;
+  fullName: string;
+  mobile: string;
+  email?: string;
+  loanType: LoanType;
+  loanAmount: number;
+  panNumber?: string;
+  aadhaarNumber?: string;
+}): LoanApplication {
+  const user = getUserById(data.advisorId);
+  const id = `app_${crypto.randomBytes(8).toString('hex')}`;
+  const token = generateApplicationToken();
+  const now = new Date().toISOString();
+  const tenantId = user?.tenantId || 'default';
+  const branchId = user?.branchId || 'default';
+  const isPartner = user?.role === 'CHANNEL_PARTNER';
+  const isRM = user?.role === 'RELATIONSHIP_MANAGER';
+
+  db.prepare(
+    `INSERT INTO loan_applications (
+      id, tenant_id, token, branch_id, created_by_id, channel_partner_id, channel_partner_name,
+      relationship_manager_id, relationship_manager_name, full_name, mobile, email,
+      loan_type, loan_amount, pan_number, aadhaar_number, status, submitted_at, created_at, updated_at
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+  ).run(
+    id,
+    tenantId,
+    token,
+    branchId,
+    data.advisorId,
+    isPartner ? user.id : (user?.role === 'ADMIN' ? 'PARTNER_DIRECT' : undefined),
+    isPartner ? user.name : (user?.name || 'Partner'),
+    isRM ? user.id : (user?.assignedRmId || null),
+    isRM ? user.name : (user?.assignedRmName || null),
+    data.fullName.trim(),
+    data.mobile.trim(),
+    data.email ? data.email.trim().toLowerCase() : null,
+    data.loanType,
+    data.loanAmount || 0,
+    data.panNumber ? data.panNumber.trim().toUpperCase() : null,
+    data.aadhaarNumber ? data.aadhaarNumber.trim().replace(/\s+/g, '') : null,
+    'LINK_SHARED',
+    now,
+    now,
+    now
+  );
+
+  const created = getApplicationById(id);
+  if (!created) throw new Error('Failed to create direct partner loan application');
   return created;
 }

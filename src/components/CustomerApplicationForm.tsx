@@ -3,15 +3,16 @@
 import React, { useState, useTransition } from 'react';
 import { submitCustomerApplication } from '@/actions/publicActions';
 import { DOCUMENT_GROUPS, RESIDENCE_PROOF_OPTIONS } from '@/lib/documentChecklist';
-import type { CompanySettings, Branch } from '@/types/db';
+import type { CompanySettings, Branch, LoanType } from '@/types/db';
 
 interface CustomerApplicationFormProps {
   token: string;
   settings: CompanySettings;
   branch?: Branch | null;
+  initialLoanType?: LoanType;
 }
 
-export default function CustomerApplicationForm({ token, settings, branch }: CustomerApplicationFormProps) {
+export default function CustomerApplicationForm({ token, settings, branch, initialLoanType }: CustomerApplicationFormProps) {
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [residenceProofType, setResidenceProofType] = useState('');
@@ -117,12 +118,13 @@ export default function CustomerApplicationForm({ token, settings, branch }: Cus
             <select
               name="loanType"
               required
-              defaultValue="HOME_LOAN"
+              defaultValue={initialLoanType || 'HOME_LOAN'}
               className="w-full px-4 py-2.5 text-sm border border-slate-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               <option value="HOME_LOAN">Home Loan</option>
               <option value="PERSONAL_LOAN">Personal Loan</option>
               <option value="BUSINESS_LOAN">Business Loan</option>
+              <option value="BALANCE_TRANSFER">Balance Transfer</option>
               <option value="LOAN_AGAINST_PROPERTY">Loan Against Property (LAP)</option>
               <option value="EDUCATION_LOAN">Education Loan</option>
               <option value="GOLD_LOAN">Gold Loan</option>

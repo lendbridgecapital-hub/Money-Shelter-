@@ -126,6 +126,8 @@ export default async function RequestDetailPage({ params }: { params: { id: stri
               <Field label="Full Name" value={application.fullName} />
               <Field label="Mobile" value={application.mobile} />
               <Field label="Email" value={application.email} />
+              {application.panNumber && <Field label="PAN Card Number" value={application.panNumber} />}
+              {application.aadhaarNumber && <Field label="Aadhaar Number" value={application.aadhaarNumber} />}
               <Field label="Loan Type" value={application.loanType ? LOAN_TYPE_LABELS[application.loanType] : null} />
               <Field label="Requested Loan Amount" value={application.loanAmount ? formatCurrencyINR(application.loanAmount) : null} />
               <Field label="Submitted On" value={application.submittedAt ? formatDateTime(application.submittedAt) : null} />

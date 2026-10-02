@@ -42,6 +42,7 @@ export const LOAN_TYPE_LABELS: Record<LoanType, string> = {
   LOAN_AGAINST_PROPERTY: 'Loan Against Property (LAP)',
   EDUCATION_LOAN: 'Education Loan',
   GOLD_LOAN: 'Gold Loan',
+  BALANCE_TRANSFER: 'Balance Transfer',
   OTHERS: 'Other / Custom Loan',
 };
 

@@ -28,6 +28,7 @@ export type LoanType =
   | 'LOAN_AGAINST_PROPERTY'
   | 'EDUCATION_LOAN'
   | 'GOLD_LOAN'
+  | 'BALANCE_TRANSFER'
   | 'OTHERS';
 
 export type DocumentCategory =
@@ -256,6 +257,8 @@ export interface LoanApplication {
   email?: string | null;
   loanType?: LoanType | null;
   loanAmount?: number | null;
+  panNumber?: string | null;
+  aadhaarNumber?: string | null;
   
   // Bank Workflow fields
   bankId?: string | null;

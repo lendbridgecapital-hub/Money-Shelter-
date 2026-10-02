@@ -5,8 +5,15 @@ import { getCompanySettings } from '@/lib/settings';
 import { listRequiredDocuments } from '@/lib/repos/workflowRepo';
 import CustomerApplicationForm from '@/components/CustomerApplicationForm';
 import CustomerRequiredDocsUploader from '@/components/CustomerRequiredDocsUploader';
+import type { LoanType } from '@/types/db';
 
-export default async function CustomerApplyPage({ params }: { params: { token: string } }) {
+export default async function CustomerApplyPage({
+  params,
+  searchParams,
+}: {
+  params: { token: string };
+  searchParams?: { loanType?: string };
+}) {
   const application = getApplicationByToken(params.token);
   if (!application) {
     const defaultSettings = await getCompanySettings('default');
@@ -259,7 +266,12 @@ export default async function CustomerApplyPage({ params }: { params: { token: s
 
       {/* Main Customer Form */}
       <main className="max-w-4xl mx-auto px-4 sm:px-6">
-        <CustomerApplicationForm token={params.token} settings={settings} branch={branch} />
+        <CustomerApplicationForm
+          token={params.token}
+          settings={settings}
+          branch={branch}
+          initialLoanType={searchParams?.loanType as LoanType | undefined}
+        />
       </main>
 
       {/* Branded Footer */}

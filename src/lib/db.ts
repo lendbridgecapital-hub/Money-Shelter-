@@ -46,6 +46,13 @@ function initDatabase(): DatabaseAdapter {
       nativeDb.exec(schemaSql);
     }
 
+    try {
+      nativeDb.exec('ALTER TABLE loan_applications ADD COLUMN pan_number TEXT');
+    } catch {}
+    try {
+      nativeDb.exec('ALTER TABLE loan_applications ADD COLUMN aadhaar_number TEXT');
+    } catch {}
+
     // Auto-seed SQLite if users table is empty
     try {
       const row = nativeDb.prepare('SELECT COUNT(*) as c FROM users').get() as { c: number } | undefined;
