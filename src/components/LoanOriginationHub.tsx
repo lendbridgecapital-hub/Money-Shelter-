@@ -101,6 +101,21 @@ export default function LoanOriginationHub({
   const [selectedSubLoanType, setSelectedSubLoanType] = useState<LoanType>('BALANCE_TRANSFER');
   const [isOtherModalOpen, setIsOtherModalOpen] = useState(false);
 
+  // Mobile Application Tab State: 'CATEGORIES' (tiles only) vs 'FORM' (new tab opened for selected loan)
+  const [mobileTab, setMobileTab] = useState<'CATEGORIES' | 'FORM'>('CATEGORIES');
+
+  const handleSelectCategory = (cat: PrimaryCategory) => {
+    setPrimaryCategory(cat);
+    setMobileTab('FORM');
+  };
+
+  const handleSelectOtherSubOption = (subType: LoanType) => {
+    setSelectedSubLoanType(subType);
+    setPrimaryCategory('OTHER');
+    setIsOtherModalOpen(false);
+    setMobileTab('FORM');
+  };
+
   // Active Loan Type computed
   const effectiveLoanType: LoanType =
     primaryCategory === 'OTHER' ? selectedSubLoanType : primaryCategory;
@@ -146,6 +161,7 @@ export default function LoanOriginationHub({
     setAadhaarFile(null);
     setErrorMessage(null);
     setSuccessData(null);
+    setMobileTab('CATEGORIES');
     if (panInputRef.current) panInputRef.current.value = '';
     if (aadhaarInputRef.current) aadhaarInputRef.current.value = '';
   };
@@ -508,8 +524,8 @@ export default function LoanOriginationHub({
       ) : (
         /* Origination Hub Form */
         <div className="p-3 sm:p-5 space-y-5">
-          {/* 1. Loan Category Selection Grid */}
-          <div>
+          {/* 1. Loan Category Selection Grid (Only visible initially on mobile; always visible on desktop) */}
+          <div className={mobileTab === 'FORM' ? 'hidden md:block' : 'block'}>
             <div className="flex items-center justify-between mb-2">
               <span className="text-xs font-extrabold uppercase tracking-wider text-slate-600">
                 1. Select Loan Category
@@ -523,7 +539,7 @@ export default function LoanOriginationHub({
               {/* Personal Loan */}
               <button
                 type="button"
-                onClick={() => setPrimaryCategory('PERSONAL_LOAN')}
+                onClick={() => handleSelectCategory('PERSONAL_LOAN')}
                 className={`relative p-3 rounded-2xl border text-left transition flex flex-col justify-between ${
                   primaryCategory === 'PERSONAL_LOAN'
                     ? 'border-emerald-600 bg-emerald-50/80 ring-2 ring-emerald-500/20 shadow-xs'
@@ -534,8 +550,10 @@ export default function LoanOriginationHub({
                   <div className="w-8 h-8 rounded-xl bg-blue-100 text-blue-700 flex items-center justify-center text-base">
                     👤
                   </div>
-                  {primaryCategory === 'PERSONAL_LOAN' && (
+                  {primaryCategory === 'PERSONAL_LOAN' ? (
                     <span className="w-2.5 h-2.5 rounded-full bg-emerald-600"></span>
+                  ) : (
+                    <span className="md:hidden text-[10px] font-bold text-emerald-600">Open →</span>
                   )}
                 </div>
                 <div className="mt-2.5">
@@ -547,7 +565,7 @@ export default function LoanOriginationHub({
               {/* Home Loan */}
               <button
                 type="button"
-                onClick={() => setPrimaryCategory('HOME_LOAN')}
+                onClick={() => handleSelectCategory('HOME_LOAN')}
                 className={`relative p-3 rounded-2xl border text-left transition flex flex-col justify-between ${
                   primaryCategory === 'HOME_LOAN'
                     ? 'border-emerald-600 bg-emerald-50/80 ring-2 ring-emerald-500/20 shadow-xs'
@@ -558,8 +576,10 @@ export default function LoanOriginationHub({
                   <div className="w-8 h-8 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center text-base">
                     🏠
                   </div>
-                  {primaryCategory === 'HOME_LOAN' && (
+                  {primaryCategory === 'HOME_LOAN' ? (
                     <span className="w-2.5 h-2.5 rounded-full bg-emerald-600"></span>
+                  ) : (
+                    <span className="md:hidden text-[10px] font-bold text-emerald-600">Open →</span>
                   )}
                 </div>
                 <div className="mt-2.5">
@@ -571,7 +591,7 @@ export default function LoanOriginationHub({
               {/* Business Loan */}
               <button
                 type="button"
-                onClick={() => setPrimaryCategory('BUSINESS_LOAN')}
+                onClick={() => handleSelectCategory('BUSINESS_LOAN')}
                 className={`relative p-3 rounded-2xl border text-left transition flex flex-col justify-between ${
                   primaryCategory === 'BUSINESS_LOAN'
                     ? 'border-emerald-600 bg-emerald-50/80 ring-2 ring-emerald-500/20 shadow-xs'
@@ -582,8 +602,10 @@ export default function LoanOriginationHub({
                   <div className="w-8 h-8 rounded-xl bg-amber-100 text-amber-700 flex items-center justify-center text-base">
                     🏢
                   </div>
-                  {primaryCategory === 'BUSINESS_LOAN' && (
+                  {primaryCategory === 'BUSINESS_LOAN' ? (
                     <span className="w-2.5 h-2.5 rounded-full bg-emerald-600"></span>
+                  ) : (
+                    <span className="md:hidden text-[10px] font-bold text-emerald-600">Open →</span>
                   )}
                 </div>
                 <div className="mt-2.5">
@@ -640,19 +662,71 @@ export default function LoanOriginationHub({
                     </p>
                   </div>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => setIsOtherModalOpen(true)}
-                  className="px-2.5 py-1 rounded-lg bg-white border border-purple-200 text-purple-700 text-xs font-bold hover:bg-purple-100 transition shadow-2xs"
-                >
-                  Change ▾
-                </button>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setIsOtherModalOpen(true)}
+                    className="px-2.5 py-1 rounded-lg bg-white border border-purple-200 text-purple-700 text-xs font-bold hover:bg-purple-100 transition shadow-2xs"
+                  >
+                    Change ▾
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setMobileTab('FORM')}
+                    className="md:hidden px-2.5 py-1 rounded-lg bg-emerald-600 text-white text-xs font-bold hover:bg-emerald-500 transition shadow-2xs"
+                  >
+                    Open Form →
+                  </button>
+                </div>
               </div>
             )}
+
+            {/* Mobile Guidance Prompt */}
+            <div className="md:hidden mt-3 p-2.5 rounded-xl bg-slate-50 border border-slate-200/70 text-center">
+              <p className="text-[11px] text-slate-600 font-medium">
+                👆 Tap any loan category above to open the application form.
+              </p>
+            </div>
           </div>
 
-          {/* 2. Partner Action Mode & Share Link Option for Selected Loan Type */}
-          <div className="p-3 rounded-2xl bg-gradient-to-r from-slate-900 via-slate-800 to-emerald-950 text-white flex flex-wrap items-center justify-between gap-3 shadow-sm">
+          {/* Section 2 (Share Link) & Section 3 (Form): Hidden on mobile until category is selected, always visible on desktop */}
+          <div className={mobileTab === 'CATEGORIES' ? 'hidden md:block space-y-4' : 'block space-y-4'}>
+            {/* Mobile Dedicated Form Top Header Bar */}
+            <div className="md:hidden flex items-center justify-between pb-3 border-b border-slate-200 bg-slate-50/70 -mx-3 -mt-3 p-3 rounded-t-2xl">
+              <button
+                type="button"
+                onClick={() => setMobileTab('CATEGORIES')}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white border border-slate-200 text-slate-800 text-xs font-bold shadow-2xs active:scale-95 transition"
+              >
+                <span>←</span>
+                <span>Loan Options</span>
+              </button>
+              <div className="flex items-center gap-1.5">
+                <span className="px-2.5 py-1 rounded-xl bg-emerald-100 text-emerald-900 text-xs font-extrabold border border-emerald-200">
+                  {LOAN_TYPE_LABELS[effectiveLoanType] || effectiveLoanType}
+                </span>
+                {primaryCategory === 'OTHER' ? (
+                  <button
+                    type="button"
+                    onClick={() => setIsOtherModalOpen(true)}
+                    className="px-2 py-1 rounded-lg bg-purple-100 hover:bg-purple-200 text-purple-800 text-[11px] font-bold"
+                  >
+                    Change ▾
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => setMobileTab('CATEGORIES')}
+                    className="px-2 py-1 rounded-lg bg-slate-200/80 hover:bg-slate-300 text-slate-700 text-[11px] font-semibold"
+                  >
+                    Switch
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* 2. Partner Action Mode & Share Link Option for Selected Loan Type */}
+            <div className="p-3 rounded-2xl bg-gradient-to-r from-slate-900 via-slate-800 to-emerald-950 text-white flex flex-wrap items-center justify-between gap-3 shadow-sm">
             <div className="min-w-0">
               <div className="flex items-center gap-1.5">
                 <span className="text-xs">🔗</span>
@@ -989,6 +1063,7 @@ export default function LoanOriginationHub({
               </div>
             </div>
           </form>
+          </div>
         </div>
       )}
 
@@ -1021,11 +1096,7 @@ export default function LoanOriginationHub({
                   <button
                     key={sub.type}
                     type="button"
-                    onClick={() => {
-                      setSelectedSubLoanType(sub.type);
-                      setPrimaryCategory('OTHER');
-                      setIsOtherModalOpen(false);
-                    }}
+                    onClick={() => handleSelectOtherSubOption(sub.type)}
                     className={`w-full p-3 rounded-2xl border text-left transition flex items-center justify-between gap-3 ${
                       isSelected
                         ? 'border-emerald-600 bg-emerald-50/80 ring-2 ring-emerald-500/20 shadow-xs'
