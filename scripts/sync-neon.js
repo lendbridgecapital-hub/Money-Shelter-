@@ -176,6 +176,8 @@ async function initSchema(client) {
       email TEXT,
       loan_type TEXT,
       loan_amount REAL,
+      monthly_income REAL,
+      existing_emi REAL,
       pan_number TEXT,
       aadhaar_number TEXT,
       bank_id TEXT,
@@ -365,7 +367,9 @@ async function initSchema(client) {
     'commission_amount REAL',
     'commission_status TEXT',
     'submitted_at TEXT',
-    'updated_at TEXT'
+    'updated_at TEXT',
+    'monthly_income REAL',
+    'existing_emi REAL'
   ];
 
   for (const col of loanApplicationColumns) {

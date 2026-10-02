@@ -146,6 +146,42 @@ export default function CustomerApplicationForm({ token, settings, branch, initi
               className="w-full px-4 py-2.5 text-sm border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
+
+          <div>
+            <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+              Monthly Net Income (in INR ₹)
+            </label>
+            <div className="relative">
+              <span className="absolute left-3.5 top-2.5 text-xs font-bold text-slate-400">₹</span>
+              <input
+                type="number"
+                name="monthlyIncome"
+                min={0}
+                step={1000}
+                placeholder="e.g. 75000"
+                className="w-full pl-8 pr-4 py-2.5 text-sm border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            <p className="text-[11px] text-slate-400 mt-1">Net take-home salary or monthly business income</p>
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+              Other Existing Monthly EMI (in INR ₹)
+            </label>
+            <div className="relative">
+              <span className="absolute left-3.5 top-2.5 text-xs font-bold text-slate-400">₹</span>
+              <input
+                type="number"
+                name="existingEmi"
+                min={0}
+                step={500}
+                placeholder="e.g. 15000 (or 0 if none)"
+                className="w-full pl-8 pr-4 py-2.5 text-sm border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            <p className="text-[11px] text-slate-400 mt-1">Total ongoing monthly EMI across all active loans</p>
+          </div>
         </div>
       </section>
 

@@ -257,6 +257,8 @@ export interface LoanApplication {
   email?: string | null;
   loanType?: LoanType | null;
   loanAmount?: number | null;
+  monthlyIncome?: number | null;
+  existingEmi?: number | null;
   panNumber?: string | null;
   aadhaarNumber?: string | null;
   

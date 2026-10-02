@@ -92,6 +92,8 @@ export function branchAlertEmail({
   email,
   loanType,
   loanAmount,
+  monthlyIncome,
+  existingEmi,
   branchName,
   applicationUrl,
 }: {
@@ -100,6 +102,8 @@ export function branchAlertEmail({
   email: string;
   loanType: string;
   loanAmount: number;
+  monthlyIncome?: number;
+  existingEmi?: number;
   branchName: string;
   applicationUrl: string;
 }): { subject: string; html: string } {
@@ -115,7 +119,9 @@ export function branchAlertEmail({
           <p style="margin: 4px 0;"><strong>Email:</strong> ${email}</p>
           <p style="margin: 4px 0;"><strong>Branch:</strong> ${branchName}</p>
           <p style="margin: 4px 0;"><strong>Loan Product:</strong> ${loanType}</p>
-          <p style="margin: 4px 0;"><strong>Amount:</strong> ${formatCurrencyINR(loanAmount)}</p>
+          <p style="margin: 4px 0;"><strong>Requested Amount:</strong> ${formatCurrencyINR(loanAmount)}</p>
+          ${monthlyIncome ? `<p style="margin: 4px 0;"><strong>Monthly Net Income:</strong> ${formatCurrencyINR(monthlyIncome)}</p>` : ''}
+          ${existingEmi !== undefined && existingEmi !== null ? `<p style="margin: 4px 0;"><strong>Existing EMI(s):</strong> ${formatCurrencyINR(existingEmi)}</p>` : ''}
         </div>
         <p style="margin: 24px 0;">
           <a href="${applicationUrl}" style="background-color: #1e40af; color: #ffffff; padding: 12px 20px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">

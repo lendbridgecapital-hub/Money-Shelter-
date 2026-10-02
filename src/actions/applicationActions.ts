@@ -175,6 +175,10 @@ export async function submitDirectPartnerLoanAction(formData: FormData): Promise
     const email = String(formData.get('email') || '').trim();
     const loanType = String(formData.get('loanType') || '').trim() as LoanType;
     const loanAmount = Number(formData.get('loanAmount') || 0);
+    const rawMonthlyIncome = formData.get('monthlyIncome');
+    const monthlyIncome = rawMonthlyIncome !== null && rawMonthlyIncome !== '' ? Number(rawMonthlyIncome) : undefined;
+    const rawExistingEmi = formData.get('existingEmi');
+    const existingEmi = rawExistingEmi !== null && rawExistingEmi !== '' ? Number(rawExistingEmi) : undefined;
     const panNumber = String(formData.get('panNumber') || '').trim().toUpperCase();
     const aadhaarNumber = String(formData.get('aadhaarNumber') || '').trim().replace(/\s+/g, '');
 
@@ -206,6 +210,8 @@ export async function submitDirectPartnerLoanAction(formData: FormData): Promise
       email: email || undefined,
       loanType,
       loanAmount,
+      monthlyIncome,
+      existingEmi,
       panNumber: panNumber || undefined,
       aadhaarNumber: aadhaarNumber || undefined,
     });

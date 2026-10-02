@@ -117,12 +117,14 @@ export function recordCustomerSubmission(
     email: string;
     loanType: LoanType;
     loanAmount: number;
+    monthlyIncome?: number;
+    existingEmi?: number;
   }
 ): void {
   const now = new Date().toISOString();
   db.prepare(
     `UPDATE loan_applications
-     SET full_name = ?, mobile = ?, email = ?, loan_type = ?, loan_amount = ?, status = ?, submitted_at = ?, updated_at = ?
+     SET full_name = ?, mobile = ?, email = ?, loan_type = ?, loan_amount = ?, monthly_income = ?, existing_emi = ?, status = ?, submitted_at = ?, updated_at = ?
      WHERE id = ?`
   ).run(
     data.fullName.trim(),
@@ -130,6 +132,8 @@ export function recordCustomerSubmission(
     data.email.trim().toLowerCase(),
     data.loanType,
     data.loanAmount,
+    data.monthlyIncome || null,
+    data.existingEmi !== undefined && data.existingEmi !== null ? data.existingEmi : null,
     'DOCUMENTS_IN',
     now,
     now,
@@ -320,6 +324,8 @@ function mapRowToApplication(row: Record<string, unknown>): LoanApplication {
     email: row.email ? String(row.email) : null,
     loanType: (row.loan_type || row.loanType) as LoanType | null,
     loanAmount: row.loan_amount || row.loanAmount ? Number(row.loan_amount || row.loanAmount) : null,
+    monthlyIncome: row.monthly_income || row.monthlyIncome ? Number(row.monthly_income || row.monthlyIncome) : null,
+    existingEmi: row.existing_emi !== undefined && row.existing_emi !== null ? Number(row.existing_emi) : (row.existingEmi !== undefined && row.existingEmi !== null ? Number(row.existingEmi) : null),
     panNumber: row.pan_number || row.panNumber ? String(row.pan_number || row.panNumber) : null,
     aadhaarNumber: row.aadhaar_number || row.aadhaarNumber ? String(row.aadhaar_number || row.aadhaarNumber) : null,
     bankId: row.bank_id || row.bankId ? String(row.bank_id || row.bankId) : null,
@@ -398,6 +404,8 @@ export function createDirectPartnerApplication(data: {
   email?: string;
   loanType: LoanType;
   loanAmount: number;
+  monthlyIncome?: number;
+  existingEmi?: number;
   panNumber?: string;
   aadhaarNumber?: string;
 }): LoanApplication {
@@ -414,8 +422,8 @@ export function createDirectPartnerApplication(data: {
     `INSERT INTO loan_applications (
       id, tenant_id, token, branch_id, created_by_id, channel_partner_id, channel_partner_name,
       relationship_manager_id, relationship_manager_name, full_name, mobile, email,
-      loan_type, loan_amount, pan_number, aadhaar_number, status, submitted_at, created_at, updated_at
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+      loan_type, loan_amount, monthly_income, existing_emi, pan_number, aadhaar_number, status, submitted_at, created_at, updated_at
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
   ).run(
     id,
     tenantId,
@@ -431,6 +439,8 @@ export function createDirectPartnerApplication(data: {
     data.email ? data.email.trim().toLowerCase() : null,
     data.loanType,
     data.loanAmount || 0,
+    data.monthlyIncome || null,
+    data.existingEmi !== undefined && data.existingEmi !== null ? data.existingEmi : null,
     data.panNumber ? data.panNumber.trim().toUpperCase() : null,
     data.aadhaarNumber ? data.aadhaarNumber.trim().replace(/\s+/g, '') : null,
     'LINK_SHARED',

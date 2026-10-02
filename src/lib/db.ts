@@ -68,6 +68,8 @@ function initDatabase(): DatabaseAdapter {
       'ALTER TABLE loan_applications ADD COLUMN commission_status TEXT',
       'ALTER TABLE loan_applications ADD COLUMN submitted_at TEXT',
       'ALTER TABLE loan_applications ADD COLUMN updated_at TEXT',
+      'ALTER TABLE loan_applications ADD COLUMN monthly_income REAL',
+      'ALTER TABLE loan_applications ADD COLUMN existing_emi REAL',
       'ALTER TABLE users ADD COLUMN phone TEXT',
       'ALTER TABLE users ADD COLUMN partner_code TEXT',
       "ALTER TABLE users ADD COLUMN partner_status TEXT DEFAULT 'PENDING_APPROVAL'",

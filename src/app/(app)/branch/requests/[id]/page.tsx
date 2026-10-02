@@ -130,6 +130,12 @@ export default async function RequestDetailPage({ params }: { params: { id: stri
               {application.aadhaarNumber && <Field label="Aadhaar Number" value={application.aadhaarNumber} />}
               <Field label="Loan Type" value={application.loanType ? LOAN_TYPE_LABELS[application.loanType] : null} />
               <Field label="Requested Loan Amount" value={application.loanAmount ? formatCurrencyINR(application.loanAmount) : null} />
+              {application.monthlyIncome && (
+                <Field label="Monthly Net Income" value={formatCurrencyINR(application.monthlyIncome)} />
+              )}
+              {application.existingEmi !== undefined && application.existingEmi !== null && (
+                <Field label="Existing Monthly EMI(s)" value={formatCurrencyINR(application.existingEmi)} />
+              )}
               <Field label="Submitted On" value={application.submittedAt ? formatDateTime(application.submittedAt) : null} />
               <Field label="Channel Partner" value={application.channelPartnerName || application.createdByName} />
               <Field label="Lending Bank" value={application.bankName} />

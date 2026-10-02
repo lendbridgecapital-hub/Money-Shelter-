@@ -47,6 +47,10 @@ export async function submitCustomerApplication(token: string, formData: FormDat
   const email = String(formData.get('email') || '').trim().toLowerCase();
   const loanType = String(formData.get('loanType') || '') as LoanType;
   const loanAmount = Number(formData.get('loanAmount') || 0);
+  const rawMonthlyIncome = formData.get('monthlyIncome');
+  const monthlyIncome = rawMonthlyIncome !== null && rawMonthlyIncome !== '' ? Number(rawMonthlyIncome) : undefined;
+  const rawExistingEmi = formData.get('existingEmi');
+  const existingEmi = rawExistingEmi !== null && rawExistingEmi !== '' ? Number(rawExistingEmi) : undefined;
   const attested = formData.get('selfAttested') === 'on';
 
   if (!fullName) return { ok: false, error: 'Full name is required.' };
@@ -74,7 +78,15 @@ export async function submitCustomerApplication(token: string, formData: FormDat
   }
 
   // Persist the basic details + status transition first.
-  applicationsRepo.recordCustomerSubmission(application.id, { fullName, mobile, email, loanType, loanAmount });
+  applicationsRepo.recordCustomerSubmission(application.id, {
+    fullName,
+    mobile,
+    email,
+    loanType,
+    loanAmount,
+    monthlyIncome,
+    existingEmi,
+  });
 
   // Save every uploaded document.
   for (const group of DOCUMENT_GROUPS) {
@@ -125,6 +137,8 @@ export async function submitCustomerApplication(token: string, formData: FormDat
       email,
       loanType: LOAN_TYPE_LABELS[loanType],
       loanAmount,
+      monthlyIncome,
+      existingEmi,
       branchName: branch?.name || 'Unknown branch',
       applicationUrl: `${base}/branch/requests/${application.id}`,
     });

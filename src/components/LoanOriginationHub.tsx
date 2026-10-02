@@ -145,6 +145,8 @@ export default function LoanOriginationHub({
   const [mobile, setMobile] = useState('');
   const [email, setEmail] = useState('');
   const [loanAmount, setLoanAmount] = useState<number | ''>(500000);
+  const [monthlyIncome, setMonthlyIncome] = useState<number | ''>('');
+  const [existingEmi, setExistingEmi] = useState<number | ''>('');
   const [panNumber, setPanNumber] = useState('');
   const [aadhaarNumber, setAadhaarNumber] = useState('');
 
@@ -175,6 +177,8 @@ export default function LoanOriginationHub({
     setMobile('');
     setEmail('');
     setLoanAmount(500000);
+    setMonthlyIncome('');
+    setExistingEmi('');
     setPanNumber('');
     setAadhaarNumber('');
     setPanFile(null);
@@ -263,6 +267,8 @@ export default function LoanOriginationHub({
     if (email.trim()) formData.append('email', email.trim().toLowerCase());
     formData.append('loanType', effectiveLoanType);
     formData.append('loanAmount', String(loanAmount));
+    if (monthlyIncome !== '') formData.append('monthlyIncome', String(monthlyIncome));
+    if (existingEmi !== '') formData.append('existingEmi', String(existingEmi));
     if (panNumber.trim()) formData.append('panNumber', panNumber.trim().toUpperCase());
     if (cleanAadhaar) formData.append('aadhaarNumber', cleanAadhaar);
     if (panFile) formData.append('panFile', panFile);
@@ -731,6 +737,64 @@ export default function LoanOriginationHub({
                     Reset
                   </button>
                 </div>
+              </div>
+
+              {/* Monthly Net Income */}
+              <div>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="text-xs font-bold text-slate-700">
+                    Monthly Net Income <span className="text-slate-400 font-normal">(Optional)</span>
+                  </label>
+                  {typeof monthlyIncome === 'number' && monthlyIncome > 0 && (
+                    <span className="text-[11px] font-extrabold text-emerald-700">
+                      ₹{monthlyIncome.toLocaleString('en-IN')}/mo
+                    </span>
+                  )}
+                </div>
+                <div className="relative">
+                  <span className="absolute left-3 top-2 text-sm font-bold text-slate-500">₹</span>
+                  <input
+                    type="number"
+                    min={0}
+                    step={1000}
+                    value={monthlyIncome}
+                    onChange={(e) =>
+                      setMonthlyIncome(e.target.value === '' ? '' : Number(e.target.value))
+                    }
+                    placeholder="e.g. 75000"
+                    className="w-full pl-8 pr-3 py-2 text-xs font-bold text-slate-900 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white"
+                  />
+                </div>
+                <p className="text-[10px] text-slate-400 mt-1">Take-home salary or net monthly profit</p>
+              </div>
+
+              {/* Other Existing EMI */}
+              <div>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="text-xs font-bold text-slate-700">
+                    Other Existing EMI <span className="text-slate-400 font-normal">(Optional)</span>
+                  </label>
+                  {typeof existingEmi === 'number' && existingEmi > 0 && (
+                    <span className="text-[11px] font-extrabold text-amber-700">
+                      ₹{existingEmi.toLocaleString('en-IN')}/mo
+                    </span>
+                  )}
+                </div>
+                <div className="relative">
+                  <span className="absolute left-3 top-2 text-sm font-bold text-slate-500">₹</span>
+                  <input
+                    type="number"
+                    min={0}
+                    step={500}
+                    value={existingEmi}
+                    onChange={(e) =>
+                      setExistingEmi(e.target.value === '' ? '' : Number(e.target.value))
+                    }
+                    placeholder="e.g. 15000 (0 if none)"
+                    className="w-full pl-8 pr-3 py-2 text-xs font-bold text-slate-900 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white"
+                  />
+                </div>
+                <p className="text-[10px] text-slate-400 mt-1">Total existing monthly EMI obligations</p>
               </div>
             </div>
 
