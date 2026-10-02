@@ -25,7 +25,6 @@ android/build/
 android/local.properties
 android/captures/
 *.apk
-!public/QuickFinSure.apk
 *.ap_
 *.aab
 
