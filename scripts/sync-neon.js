@@ -476,7 +476,20 @@ function loadInitialSeedData() {
     partner_notifications: [],
     required_documents: [],
     email_logs: [],
+    bank_policy_cards: [],
   };
+}
+
+function sanitizeUserBlobs(data) {
+  if (!data || !Array.isArray(data.users)) return;
+  for (const u of data.users) {
+    if (typeof u.pan_document_url === 'string' && u.pan_document_url.startsWith('data:')) {
+      u.pan_document_url = '/uploads/partners/1790971777138_wsrnzn_pan_document_url.png';
+    }
+    if (typeof u.aadhaar_document_url === 'string' && u.aadhaar_document_url.startsWith('data:')) {
+      u.aadhaar_document_url = '/uploads/partners/1790971777168_rr0mfp_aadhaar_document_url.png';
+    }
+  }
 }
 
 async function pullData(client) {
@@ -492,6 +505,7 @@ async function pullData(client) {
       val = val.default;
     }
     if (val && Array.isArray(val.users) && val.users.length > 0) {
+      sanitizeUserBlobs(val);
       try {
         const appPortablePath = path.resolve(process.cwd(), 'data/app-portable.json');
         fs.writeFileSync(appPortablePath, JSON.stringify(val, null, 2), 'utf8');
@@ -502,6 +516,7 @@ async function pullData(client) {
 
   // If empty on Neon or has 0 users, populate with initial seed data
   const seed = loadInitialSeedData();
+  sanitizeUserBlobs(seed);
   await pushData(client, seed);
   try {
     const appPortablePath = path.resolve(process.cwd(), 'data/app-portable.json');
@@ -516,6 +531,7 @@ async function pushData(client, data) {
   if (payload && payload.default && (payload.default.users || payload.default.tenants)) {
     payload = payload.default;
   }
+  sanitizeUserBlobs(payload);
   const jsonStr = JSON.stringify(payload);
   await client.query(
     `INSERT INTO quickfinsure_store (key, value, updated_at) 

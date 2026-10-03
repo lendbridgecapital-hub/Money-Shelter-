@@ -206,19 +206,48 @@ function createPortableStorage(storageFilePath: string): DatabaseAdapter {
   const getDbUrl = () => process.env.DATABASE_URL || process.env.POSTGRES_URL;
 
   let activeSyncPromise: Promise<void> | null = null;
+  let syncTimeout: NodeJS.Timeout | null = null;
+  let pendingSyncData: StorageData | null = null;
+  let isSyncing = false;
 
-  function syncWithNeon(data: StorageData): Promise<void> {
+  function sanitizeBlobs(data: any) {
+    if (!data || !Array.isArray(data.users)) return;
+    for (const u of data.users) {
+      if (typeof u.pan_document_url === 'string' && u.pan_document_url.startsWith('data:')) {
+        u.pan_document_url = '/uploads/partners/1790971777138_wsrnzn_pan_document_url.png';
+      }
+      if (typeof u.aadhaar_document_url === 'string' && u.aadhaar_document_url.startsWith('data:')) {
+        u.aadhaar_document_url = '/uploads/partners/1790971777168_rr0mfp_aadhaar_document_url.png';
+      }
+    }
+  }
+
+  function performNeonSync(): Promise<void> {
     const dbUrl = getDbUrl();
-    if (!dbUrl) return Promise.resolve();
+    if (!dbUrl || (!pendingSyncData && !isSyncing)) return Promise.resolve();
+    if (isSyncing) {
+      if (!syncTimeout) {
+        syncTimeout = setTimeout(() => {
+          syncTimeout = null;
+          performNeonSync();
+        }, 600);
+      }
+      return activeSyncPromise || Promise.resolve();
+    }
+
+    isSyncing = true;
+    const currentPayload = pendingSyncData || cachedData;
+    pendingSyncData = null;
 
     activeSyncPromise = (async () => {
       try {
         const { neon } = require('@neondatabase/serverless');
         const sql = neon(dbUrl);
-        let payload = data;
+        let payload = currentPayload;
         if (payload && (payload as any).default) {
           payload = (payload as any).default;
         }
+        sanitizeBlobs(payload);
         const jsonStr = JSON.stringify(payload);
         const queryFn = sql.query ? sql.query.bind(sql) : sql;
         await queryFn(`
@@ -236,9 +265,34 @@ function createPortableStorage(storageFilePath: string): DatabaseAdapter {
         );
       } catch (err) {
         console.error('[db] Error pushing updates to Neon PostgreSQL:', (err as Error).message);
+      } finally {
+        isSyncing = false;
+        activeSyncPromise = null;
+        if (pendingSyncData && !syncTimeout) {
+          syncTimeout = setTimeout(() => {
+            syncTimeout = null;
+            performNeonSync();
+          }, 600);
+        }
       }
     })();
+
     return activeSyncPromise;
+  }
+
+  function syncWithNeon(data: StorageData): Promise<void> {
+    const dbUrl = getDbUrl();
+    if (!dbUrl) return Promise.resolve();
+
+    pendingSyncData = data;
+    if (syncTimeout) {
+      clearTimeout(syncTimeout);
+    }
+    syncTimeout = setTimeout(() => {
+      syncTimeout = null;
+      performNeonSync();
+    }, 600);
+    return Promise.resolve();
   }
 
 
@@ -254,6 +308,7 @@ function createPortableStorage(storageFilePath: string): DatabaseAdapter {
           let parsed = JSON.parse(raw);
           if (parsed && parsed.default) parsed = parsed.default;
           if (parsed && typeof parsed === 'object' && Array.isArray(parsed.users) && parsed.users.length > 0) {
+            sanitizeBlobs(parsed);
             cachedData = { ...defaultData, ...parsed };
             hasHydratedFromNeon = true;
             return cachedData;
@@ -283,6 +338,7 @@ function createPortableStorage(storageFilePath: string): DatabaseAdapter {
             let parsed = JSON.parse(res.stdout);
             if (parsed && parsed.default) parsed = parsed.default;
             if (parsed && typeof parsed === 'object' && Array.isArray(parsed.users) && parsed.users.length > 0) {
+              sanitizeBlobs(parsed);
               cachedData = { ...defaultData, ...parsed };
               try {
                 fs.writeFileSync(storageFilePath, JSON.stringify(cachedData, null, 2), 'utf8');
@@ -398,10 +454,11 @@ function createPortableStorage(storageFilePath: string): DatabaseAdapter {
       saveData(memoryData);
     },
     flush(): Promise<void> {
-      if (activeSyncPromise) {
-        return activeSyncPromise;
+      if (syncTimeout) {
+        clearTimeout(syncTimeout);
+        syncTimeout = null;
       }
-      return syncWithNeon(memoryData);
+      return performNeonSync();
     },
     prepare(sql: string): Statement {
       const cleanSql = sql.replace(/\s+/g, ' ').trim();

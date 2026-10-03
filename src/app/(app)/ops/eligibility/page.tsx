@@ -17,9 +17,6 @@ export default async function OpsEligibilityPage() {
   let cards: BankPolicyCard[] = [];
   try {
     cards = listBankPolicyCards(tenantId, undefined, true) || [];
-    if (!cards || cards.length === 0) {
-      cards = listBankPolicyCards('default', undefined, true) || [];
-    }
   } catch (err) {
     console.error('[OpsEligibilityPage] Error fetching cards:', err);
     cards = [];

@@ -12,11 +12,11 @@ export function listBankPolicyCards(
   try {
     if (loanType) {
       rows = db
-        .prepare('SELECT * FROM bank_policy_cards WHERE tenant_id = ? AND loan_type = ? ORDER BY priority_weight DESC, base_interest_rate ASC, created_at DESC')
+        .prepare('SELECT * FROM bank_policy_cards WHERE (tenant_id = ? OR tenant_id = \'default\') AND loan_type = ? ORDER BY priority_weight DESC, base_interest_rate ASC, created_at DESC')
         .all(tenantId, loanType) as Record<string, unknown>[];
     } else {
       rows = db
-        .prepare('SELECT * FROM bank_policy_cards WHERE tenant_id = ? ORDER BY priority_weight DESC, base_interest_rate ASC, created_at DESC')
+        .prepare('SELECT * FROM bank_policy_cards WHERE (tenant_id = ? OR tenant_id = \'default\') ORDER BY priority_weight DESC, base_interest_rate ASC, created_at DESC')
         .all(tenantId) as Record<string, unknown>[];
     }
   } catch {
@@ -25,31 +25,16 @@ export function listBankPolicyCards(
 
   // Self-heal with initial default policies if table is empty
   if (rows.length === 0) {
-    seedDefaultBankPolicyCards(tenantId);
+    seedDefaultBankPolicyCards('default');
     try {
       if (loanType) {
         rows = db
-          .prepare('SELECT * FROM bank_policy_cards WHERE tenant_id = ? AND loan_type = ? ORDER BY priority_weight DESC, base_interest_rate ASC, created_at DESC')
+          .prepare('SELECT * FROM bank_policy_cards WHERE (tenant_id = ? OR tenant_id = \'default\') AND loan_type = ? ORDER BY priority_weight DESC, base_interest_rate ASC, created_at DESC')
           .all(tenantId, loanType) as Record<string, unknown>[];
       } else {
         rows = db
-          .prepare('SELECT * FROM bank_policy_cards WHERE tenant_id = ? ORDER BY priority_weight DESC, base_interest_rate ASC, created_at DESC')
+          .prepare('SELECT * FROM bank_policy_cards WHERE (tenant_id = ? OR tenant_id = \'default\') ORDER BY priority_weight DESC, base_interest_rate ASC, created_at DESC')
           .all(tenantId) as Record<string, unknown>[];
-      }
-    } catch {}
-  }
-
-  // Fallback to 'default' tenant if specific tenant has no cards
-  if (rows.length === 0 && tenantId !== 'default') {
-    try {
-      if (loanType) {
-        rows = db
-          .prepare('SELECT * FROM bank_policy_cards WHERE tenant_id = ? AND loan_type = ? ORDER BY priority_weight DESC, base_interest_rate ASC, created_at DESC')
-          .all('default', loanType) as Record<string, unknown>[];
-      } else {
-        rows = db
-          .prepare('SELECT * FROM bank_policy_cards WHERE tenant_id = ? ORDER BY priority_weight DESC, base_interest_rate ASC, created_at DESC')
-          .all('default') as Record<string, unknown>[];
       }
     } catch {}
   }
@@ -384,6 +369,13 @@ function mapRowToCard(row: Record<string, unknown>): BankPolicyCard {
  * Seeds default production bank policy cards across major Indian financial institutions
  */
 export function seedDefaultBankPolicyCards(tenantId = 'default'): void {
+  try {
+    const existing = db.prepare('SELECT COUNT(*) as count FROM bank_policy_cards').get() as { count: number } | undefined;
+    if (existing && Number(existing.count) > 0) {
+      return;
+    }
+  } catch {}
+
   const seedPolicies = [
     // 1. HDFC Bank - Home Loan
     {
