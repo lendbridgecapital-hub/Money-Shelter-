@@ -218,6 +218,7 @@ export async function submitDirectPartnerLoanAction(formData: FormData): Promise
     // Direct partner/agent loan origination
     const application = applicationsRepo.createDirectPartnerApplication({
       advisorId: user.id,
+      advisor: user,
       fullName,
       mobile,
       email: email || undefined,

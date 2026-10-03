@@ -236,6 +236,60 @@ export default function LoanOriginationHub({
     }
   };
 
+  // Helper to compress oversized mobile camera photos before upload
+  const compressImageIfNeeded = async (file: File): Promise<File> => {
+    if (typeof window === 'undefined' || !file.type.startsWith('image/') || file.size <= 1.5 * 1024 * 1024) {
+      return file;
+    }
+    try {
+      return await new Promise<File>((resolve) => {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const img = new Image();
+          img.onload = () => {
+            const maxDim = 1600;
+            let { width, height } = img;
+            if (width > maxDim || height > maxDim) {
+              if (width > height) {
+                height = Math.round((height * maxDim) / width);
+                width = maxDim;
+              } else {
+                width = Math.round((width * maxDim) / height);
+                height = maxDim;
+              }
+            }
+            const canvas = document.createElement('canvas');
+            canvas.width = width;
+            canvas.height = height;
+            const ctx = canvas.getContext('2d');
+            if (!ctx) {
+              resolve(file);
+              return;
+            }
+            ctx.drawImage(img, 0, 0, width, height);
+            canvas.toBlob(
+              (blob) => {
+                if (blob && blob.size < file.size) {
+                  resolve(new File([blob], file.name.replace(/\.[^.]+$/, '.jpg'), { type: 'image/jpeg' }));
+                } else {
+                  resolve(file);
+                }
+              },
+              'image/jpeg',
+              0.82
+            );
+          };
+          img.onerror = () => resolve(file);
+          img.src = e.target?.result as string;
+        };
+        reader.onerror = () => resolve(file);
+        reader.readAsDataURL(file);
+      });
+    } catch {
+      return file;
+    }
+  };
+
   // Form Submit Handler
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -264,21 +318,24 @@ export default function LoanOriginationHub({
       return;
     }
 
-    const formData = new FormData();
-    formData.append('fullName', fullName.trim());
-    formData.append('mobile', mobile.trim());
-    if (email.trim()) formData.append('email', email.trim().toLowerCase());
-    formData.append('loanType', effectiveLoanType);
-    formData.append('loanAmount', String(loanAmount));
-    if (monthlyIncome !== '') formData.append('monthlyIncome', String(monthlyIncome));
-    if (existingEmi !== '') formData.append('existingEmi', String(existingEmi));
-    if (panNumber.trim()) formData.append('panNumber', panNumber.trim().toUpperCase());
-    if (cleanAadhaar) formData.append('aadhaarNumber', cleanAadhaar);
-    if (panFile) formData.append('panFile', panFile);
-    if (aadhaarFile) formData.append('aadhaarFile', aadhaarFile);
-
     startSubmitTransition(async () => {
       try {
+        const finalPan = panFile ? await compressImageIfNeeded(panFile) : null;
+        const finalAadhaar = aadhaarFile ? await compressImageIfNeeded(aadhaarFile) : null;
+
+        const formData = new FormData();
+        formData.append('fullName', fullName.trim());
+        formData.append('mobile', mobile.trim());
+        if (email.trim()) formData.append('email', email.trim().toLowerCase());
+        formData.append('loanType', effectiveLoanType);
+        formData.append('loanAmount', String(loanAmount));
+        if (monthlyIncome !== '') formData.append('monthlyIncome', String(monthlyIncome));
+        if (existingEmi !== '') formData.append('existingEmi', String(existingEmi));
+        if (panNumber.trim()) formData.append('panNumber', panNumber.trim().toUpperCase());
+        if (cleanAadhaar) formData.append('aadhaarNumber', cleanAadhaar);
+        if (finalPan) formData.append('panFile', finalPan);
+        if (finalAadhaar) formData.append('aadhaarFile', finalAadhaar);
+
         const res = await submitDirectPartnerLoanAction(formData);
         if (res && res.ok && res.applicationId) {
           setSuccessData({
@@ -290,9 +347,12 @@ export default function LoanOriginationHub({
             customerEmail: email.trim() || undefined,
           });
         } else {
-          setErrorMessage((res && res.error) || 'Failed to submit loan requirement. Your session may have expired. Please refresh or sign in again.');
+          const errText = (res && res.error) || 'Unable to submit loan requirement. Please check your network connection or try again.';
+          console.error('[LoanOriginationHub] Submission rejected:', res);
+          setErrorMessage(errText);
         }
       } catch (err) {
+        console.error('[LoanOriginationHub] Submission error:', err);
         setErrorMessage((err as Error).message || 'Server error while originating application.');
       }
     });

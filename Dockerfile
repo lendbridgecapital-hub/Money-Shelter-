@@ -34,6 +34,8 @@ COPY --from=builder /app/public ./public
 COPY --from=builder /app/.next/standalone ./
 COPY --from=builder /app/.next/static ./.next/static
 COPY --from=builder /app/src/db/schema.sql ./src/db/schema.sql
+COPY --from=builder /app/scripts ./scripts
+COPY --from=builder /app/data ./data
 
 # Data (SQLite file) and uploaded documents must live on a persistent
 # volume — mount both in production or every redeploy wipes them.

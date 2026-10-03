@@ -295,9 +295,6 @@ function createPortableStorage(storageFilePath: string): DatabaseAdapter {
 
     // 3. Fallback to bundled initial seed snapshot
     cachedData = { ...defaultData };
-    if (dbUrl) {
-      syncWithNeon(cachedData);
-    }
     return cachedData;
   }
 

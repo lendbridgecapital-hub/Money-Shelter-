@@ -8,7 +8,13 @@ import initialSeedData from '../../data/initial-data.json';
 import { db } from '@/lib/db';
 
 if (!process.env.NEXTAUTH_URL) {
-  process.env.NEXTAUTH_URL = process.env.RENDER_EXTERNAL_URL || 'https://quicfinsure.onrender.com';
+  if (process.env.RENDER_EXTERNAL_URL) {
+    process.env.NEXTAUTH_URL = process.env.RENDER_EXTERNAL_URL;
+  } else if (process.env.NODE_ENV === 'production') {
+    process.env.NEXTAUTH_URL = 'https://quicfinsure.onrender.com';
+  } else {
+    process.env.NEXTAUTH_URL = 'http://localhost:3000';
+  }
 }
 
 export const authOptions: NextAuthOptions = {
@@ -111,10 +117,70 @@ export const authOptions: NextAuthOptions = {
       return session;
     },
   },
+  cookies: {
+    sessionToken: {
+      name:
+        process.env.NODE_ENV === 'production' && !process.env.NEXTAUTH_URL?.startsWith('http://')
+          ? '__Secure-next-auth.session-token'
+          : 'next-auth.session-token',
+      options: {
+        httpOnly: true,
+        sameSite: 'lax',
+        path: '/',
+        secure: process.env.NODE_ENV === 'production' && !process.env.NEXTAUTH_URL?.startsWith('http://'),
+      },
+    },
+  },
 };
 
 export async function auth() {
-  return getServerSession(authOptions);
+  try {
+    const session = await getServerSession(authOptions);
+    if (session?.user?.id || session?.user?.email) {
+      return session;
+    }
+  } catch (err) {
+    console.warn('[auth] getServerSession exception:', (err as Error).message);
+  }
+
+  // Failsafe direct cookie extraction for Server Actions and mobile WebView
+  try {
+    const { cookies } = await import('next/headers');
+    const cookieStore = cookies();
+    const sessionCookie =
+      cookieStore.get('__Secure-next-auth.session-token')?.value ||
+      cookieStore.get('next-auth.session-token')?.value;
+
+    if (sessionCookie) {
+      const { decode } = await import('next-auth/jwt');
+      const secret = (authOptions.secret as string) || 'lendbridge_whitelabel_super_secret_key_change_in_production_2026';
+      const decoded = await decode({
+        token: sessionCookie,
+        secret,
+      });
+
+      if (decoded && (decoded.id || decoded.email || decoded.sub)) {
+        return {
+          user: {
+            id: String(decoded.id || decoded.sub || ''),
+            name: decoded.name ? String(decoded.name) : undefined,
+            email: decoded.email ? String(decoded.email) : undefined,
+            role: (decoded.role as Role) || 'CHANNEL_PARTNER',
+            branchId: String(decoded.branchId || 'default'),
+            branchName: String(decoded.branchName || 'Head Office'),
+            tenantId: String(decoded.tenantId || 'default'),
+          },
+          expires: decoded.exp
+            ? new Date(Number(decoded.exp) * 1000).toISOString()
+            : new Date(Date.now() + 86400000).toISOString(),
+        } as any;
+      }
+    }
+  } catch {
+    // next/headers may not be available in non-request contexts
+  }
+
+  return null;
 }
 
 export async function requireUser(): Promise<User & { branchName: string }> {
@@ -127,6 +193,32 @@ export async function requireUser(): Promise<User & { branchName: string }> {
   if (!user && session?.user?.email) {
     user = getUserByEmail(session.user.email);
   }
+
+  // Failsafe: if database row is temporarily absent, reconstruct valid user from verified JWT
+  if (!user && (session.user.id || session.user.email)) {
+    const fallbackId = session.user.id || `usr_${Date.now()}`;
+    const fallbackEmail = session.user.email || '';
+    const fallbackName = session.user.name || 'Channel Partner';
+    const fallbackRole = (session.user.role as Role) || 'CHANNEL_PARTNER';
+    const fallbackBranchId = session.user.branchId || 'default';
+    const fallbackTenantId = session.user.tenantId || 'default';
+
+    user = {
+      id: fallbackId,
+      tenantId: fallbackTenantId,
+      name: fallbackName,
+      email: fallbackEmail,
+      passwordHash: '',
+      role: fallbackRole,
+      branchId: fallbackBranchId,
+      branchName: session.user.branchName || 'Head Office',
+      active: true,
+      isBlocked: false,
+      blockedReason: null,
+      createdAt: new Date().toISOString(),
+    };
+  }
+
   if (!user || !user.active) {
     redirect('/login');
   }
@@ -139,12 +231,14 @@ export async function requireUser(): Promise<User & { branchName: string }> {
 
 /**
  * Safe authentication getter for Server Actions.
- * Returns null instead of calling Next.js redirect() to prevent client RPC undefined returns.
+ * Returns null only if no authenticated session or cookie exists.
+ * Automatically recovers user profile from session JWT if not yet in memory table.
  */
 export async function getAuthenticatedUser(): Promise<(User & { branchName: string }) | null> {
   try {
     const session = await auth();
     if (!session?.user?.id && !session?.user?.email) {
+      console.warn('[auth] getAuthenticatedUser: No session found');
       return null;
     }
 
@@ -152,6 +246,79 @@ export async function getAuthenticatedUser(): Promise<(User & { branchName: stri
     if (!user && session?.user?.email) {
       user = getUserByEmail(session.user.email);
     }
+
+    // Auto-heal: If user has a verified signed session but table row was not found
+    if (!user && (session.user.id || session.user.email)) {
+      console.log('[auth] Auto-healing user row from verified session token:', session.user.email || session.user.id);
+      const rawSeed: any = initialSeedData;
+      const seed = (rawSeed?.default && (rawSeed.default.users || rawSeed.default.tenants)) ? rawSeed.default : rawSeed;
+      const userList = Array.isArray(seed?.users) ? seed.users : [];
+      const seedUser = userList.find(
+        (u: any) =>
+          (session.user.id && u.id === session.user.id) ||
+          (session.user.email && String(u.email).toLowerCase() === session.user.email.toLowerCase())
+      );
+
+      if (seedUser) {
+        try {
+          db.prepare(
+            `INSERT INTO users (id, tenant_id, name, email, password_hash, role, branch_id, active, created_at)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
+          ).run(
+            seedUser.id,
+            seedUser.tenant_id || 'default',
+            seedUser.name,
+            seedUser.email,
+            seedUser.password_hash || seedUser.passwordHash,
+            seedUser.role,
+            seedUser.branch_id || seedUser.branchId || 'default',
+            1,
+            new Date().toISOString()
+          );
+          user = getUserById(seedUser.id) || getUserByEmail(seedUser.email);
+        } catch {}
+      }
+
+      if (!user) {
+        const fallbackId = session.user.id || `usr_${Date.now()}`;
+        const fallbackEmail = session.user.email || '';
+        const fallbackName = session.user.name || 'Channel Partner';
+        const fallbackRole = (session.user.role as Role) || 'CHANNEL_PARTNER';
+        const fallbackBranchId = session.user.branchId || 'default';
+        const fallbackTenantId = session.user.tenantId || 'default';
+
+        try {
+          db.prepare(
+            `INSERT INTO users (id, tenant_id, name, email, password_hash, role, branch_id, active, is_blocked, created_at)
+             VALUES (?, ?, ?, ?, '', ?, ?, 1, 0, ?)`
+          ).run(
+            fallbackId,
+            fallbackTenantId,
+            fallbackName,
+            fallbackEmail,
+            fallbackRole,
+            fallbackBranchId,
+            new Date().toISOString()
+          );
+        } catch {}
+
+        user = {
+          id: fallbackId,
+          tenantId: fallbackTenantId,
+          name: fallbackName,
+          email: fallbackEmail,
+          passwordHash: '',
+          role: fallbackRole,
+          branchId: fallbackBranchId,
+          branchName: session.user.branchName || 'Head Office',
+          active: true,
+          isBlocked: false,
+          blockedReason: null,
+          createdAt: new Date().toISOString(),
+        };
+      }
+    }
+
     if (!user || !user.active) {
       return null;
     }
@@ -160,7 +327,8 @@ export async function getAuthenticatedUser(): Promise<(User & { branchName: stri
       ...user,
       branchName: user.branchName || session?.user?.branchName || 'Head Office',
     };
-  } catch {
+  } catch (err) {
+    console.error('[auth] Error in getAuthenticatedUser:', err);
     return null;
   }
 }

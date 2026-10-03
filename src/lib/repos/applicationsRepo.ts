@@ -399,6 +399,7 @@ export function createInquiryFromCard(data: {
 
 export function createDirectPartnerApplication(data: {
   advisorId: string;
+  advisor?: User;
   fullName: string;
   mobile: string;
   email?: string;
@@ -410,7 +411,7 @@ export function createDirectPartnerApplication(data: {
   aadhaarNumber?: string;
   status?: ApplicationStatus;
 }): LoanApplication {
-  const user = getUserById(data.advisorId);
+  const user = data.advisor || getUserById(data.advisorId);
   const id = `app_${crypto.randomBytes(8).toString('hex')}`;
   const token = generateApplicationToken();
   const now = new Date().toISOString();
@@ -432,10 +433,10 @@ export function createDirectPartnerApplication(data: {
     token,
     branchId,
     data.advisorId,
-    isPartner ? user.id : (user?.role === 'ADMIN' ? 'PARTNER_DIRECT' : undefined),
-    isPartner ? user.name : (user?.name || 'Partner'),
-    isRM ? user.id : (user?.assignedRmId || null),
-    isRM ? user.name : (user?.assignedRmName || null),
+    isPartner ? user?.id : (user?.role === 'ADMIN' ? 'PARTNER_DIRECT' : undefined),
+    isPartner ? user?.name : (user?.name || 'Partner'),
+    isRM ? user?.id : (user?.assignedRmId || null),
+    isRM ? user?.name : (user?.assignedRmName || null),
     data.fullName.trim(),
     data.mobile.trim(),
     data.email ? data.email.trim().toLowerCase() : null,
