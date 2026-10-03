@@ -86,8 +86,18 @@ export async function GET(req: NextRequest) {
     };
   }
 
+  let applications: Record<string, unknown>[] = [];
+  try {
+    applications = (db.prepare('SELECT id, full_name, mobile, loan_type, loan_amount, status, created_at FROM loan_applications ORDER BY created_at DESC').all() || []) as Record<string, unknown>[];
+  } catch {}
+
+  let emailLogs: Record<string, unknown>[] = [];
+  try {
+    emailLogs = (db.prepare('SELECT id, to_email, subject, status, created_at FROM email_logs ORDER BY created_at DESC').all() || []) as Record<string, unknown>[];
+  } catch {}
+
   return NextResponse.json({
-    version: 'v6-neon-cloud-ready',
+    version: 'v7-db-audit',
     neonDirectWrite,
     neonError,
     databaseUrlSet: !!(process.env.DATABASE_URL || process.env.POSTGRES_URL),
@@ -98,5 +108,9 @@ export async function GET(req: NextRequest) {
     adminFound: !!admin,
     passwordMatch: passwordCheck,
     accountsStatus: testResults,
+    totalApplications: applications.length,
+    applications: applications.slice(0, 10),
+    totalEmailLogs: emailLogs.length,
+    recentEmails: emailLogs.slice(0, 5),
   });
 }
