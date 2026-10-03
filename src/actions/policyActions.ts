@@ -166,7 +166,13 @@ export async function evaluateCustomerEligibilityAction(
   rankBy: RankingCriterion = 'LOWEST_RATE'
 ): Promise<{ ok: boolean; error?: string; summary?: RecommendationSummary }> {
   try {
-    const user = await requireRole('ADMIN', 'OPERATIONS', 'CENTRAL_SUPPORT', 'RELATIONSHIP_MANAGER');
+    const user = await requireRole(
+      'ADMIN',
+      'OPERATIONS',
+      'CENTRAL_SUPPORT',
+      'RELATIONSHIP_MANAGER',
+      'CHANNEL_PARTNER'
+    );
     const tenantId = user.tenantId || 'default';
 
     if (!input.loanType) {
@@ -203,7 +209,13 @@ export async function attachRecommendationToApplicationAction(
   result: PolicyEvaluationResult
 ): Promise<{ ok: boolean; error?: string }> {
   try {
-    const user = await requireRole('ADMIN', 'OPERATIONS', 'CENTRAL_SUPPORT', 'RELATIONSHIP_MANAGER');
+    const user = await requireRole(
+      'ADMIN',
+      'OPERATIONS',
+      'CENTRAL_SUPPORT',
+      'RELATIONSHIP_MANAGER',
+      'CHANNEL_PARTNER'
+    );
     const app = getApplicationById(applicationId);
     if (!app) {
       return { ok: false, error: 'Application not found.' };

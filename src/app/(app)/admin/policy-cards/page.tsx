@@ -1,5 +1,7 @@
-import { requireRole } from '@/lib/auth';
+import { redirect } from 'next/navigation';
+import { requireUser } from '@/lib/auth';
 import { listBankPolicyCards, listDynamicCriteriaDefs } from '@/lib/repos/policyCardsRepo';
+import type { BankPolicyCard, DynamicCriteriaFieldDef } from '@/types/policy';
 import PolicyCardManager from './PolicyCardManager';
 
 export const metadata = {
@@ -8,9 +10,29 @@ export const metadata = {
 };
 
 export default async function AdminPolicyCardsPage() {
-  const user = await requireRole('ADMIN');
-  const cards = listBankPolicyCards(user.tenantId || 'default');
-  const dynamicDefs = listDynamicCriteriaDefs(user.tenantId || 'default');
+  const user = await requireUser();
+  if (user.role !== 'ADMIN') {
+    redirect('/dashboard');
+  }
+
+  const tenantId = user?.tenantId || 'default';
+  let cards: BankPolicyCard[] = [];
+  try {
+    cards = listBankPolicyCards(tenantId) || [];
+    if (!cards || cards.length === 0) {
+      cards = listBankPolicyCards('default') || [];
+    }
+  } catch (err) {
+    console.error('[AdminPolicyCardsPage] Error fetching cards:', err);
+    cards = [];
+  }
+
+  let dynamicDefs: DynamicCriteriaFieldDef[] = [];
+  try {
+    dynamicDefs = listDynamicCriteriaDefs(tenantId) || [];
+  } catch {
+    dynamicDefs = [];
+  }
 
   return (
     <div className="space-y-4">
@@ -34,7 +56,7 @@ export default async function AdminPolicyCardsPage() {
         </div>
       </div>
 
-      <PolicyCardManager initialCards={cards} dynamicDefs={dynamicDefs} />
+      <PolicyCardManager initialCards={cards || []} dynamicDefs={dynamicDefs || []} />
     </div>
   );
 }

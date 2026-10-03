@@ -39,6 +39,21 @@ export function listBankPolicyCards(
     } catch {}
   }
 
+  // Fallback to 'default' tenant if specific tenant has no cards
+  if (rows.length === 0 && tenantId !== 'default') {
+    try {
+      if (loanType) {
+        rows = db
+          .prepare('SELECT * FROM bank_policy_cards WHERE tenant_id = ? AND loan_type = ? ORDER BY priority_weight DESC, base_interest_rate ASC, created_at DESC')
+          .all('default', loanType) as Record<string, unknown>[];
+      } else {
+        rows = db
+          .prepare('SELECT * FROM bank_policy_cards WHERE tenant_id = ? ORDER BY priority_weight DESC, base_interest_rate ASC, created_at DESC')
+          .all('default') as Record<string, unknown>[];
+      }
+    } catch {}
+  }
+
   const cards = rows.map(mapRowToCard);
   if (onlyActive) {
     return cards.filter((c) => c.active);

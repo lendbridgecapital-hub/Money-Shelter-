@@ -38,8 +38,8 @@ const ALL_LOAN_TYPES: { type: LoanType; label: string; icon: string }[] = [
 ];
 
 export default function EligibilityCalculatorClient({
-  availableCards,
-  activeApplications,
+  availableCards = [],
+  activeApplications = [],
 }: EligibilityCalculatorClientProps) {
   // Input State
   const [customerName, setCustomerName] = useState('');
@@ -75,13 +75,14 @@ export default function EligibilityCalculatorClient({
 
   // Quick fill from existing lead
   const handleSelectLead = (appId: string) => {
-    const app = activeApplications.find((a) => a.id === appId);
+    if (!activeApplications || activeApplications.length === 0) return;
+    const app = activeApplications.find((a) => a && a.id === appId);
     if (!app) return;
-    setCustomerName(app.fullName);
+    setCustomerName(app.fullName || '');
     if (app.loanType) setLoanType(app.loanType);
-    if (app.loanAmount) setRequestedAmount(app.loanAmount);
-    if (app.monthlyIncome) setMonthlyIncome(app.monthlyIncome);
-    if (app.existingEmi !== undefined) setExistingEmi(app.existingEmi);
+    if (app.loanAmount) setRequestedAmount(Number(app.loanAmount));
+    if (app.monthlyIncome) setMonthlyIncome(Number(app.monthlyIncome));
+    if (app.existingEmi !== undefined && app.existingEmi !== null) setExistingEmi(Number(app.existingEmi));
   };
 
   // Run evaluation
@@ -175,7 +176,7 @@ export default function EligibilityCalculatorClient({
                 <span>📋</span>
                 <span>Applicant Financial Profile</span>
               </h2>
-              {activeApplications.length > 0 && (
+              {activeApplications && activeApplications.length > 0 && (
                 <div className="relative">
                   <select
                     onChange={(e) => handleSelectLead(e.target.value)}
@@ -185,7 +186,7 @@ export default function EligibilityCalculatorClient({
                     <option value="" disabled>
                       ⚡ Autofill from Active Lead...
                     </option>
-                    {activeApplications.map((app) => (
+                    {(activeApplications || []).map((app) => (
                       <option key={app.id} value={app.id}>
                         {app.fullName} ({formatCurrencyINR(app.loanAmount)})
                       </option>
@@ -672,7 +673,7 @@ export default function EligibilityCalculatorClient({
                           </div>
 
                           {/* Action Button: Assign or Share */}
-                          {res.isEligible && activeApplications.length > 0 && (
+                          {res.isEligible && activeApplications && activeApplications.length > 0 && (
                             <button
                               type="button"
                               onClick={() => {
@@ -712,7 +713,7 @@ export default function EligibilityCalculatorClient({
                 Fill out the customer financial profile on the left and click &ldquo;Find Eligible Banks & Rates&rdquo; to execute the automated policy rules engine.
               </p>
               <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-100 text-slate-600 text-xs font-bold border border-slate-200">
-                <span>{availableCards.length} Institutional Bank Cards Active</span>
+                <span>{(availableCards?.length || 0)} Institutional Bank Cards Active</span>
               </div>
             </div>
           )}
@@ -753,7 +754,7 @@ export default function EligibilityCalculatorClient({
                 onChange={(e) => setSelectedAppId(e.target.value)}
                 className="w-full p-2.5 rounded-xl border border-slate-200 text-xs font-bold bg-white"
               >
-                {activeApplications.map((app) => (
+                {(activeApplications || []).map((app) => (
                   <option key={app.id} value={app.id}>
                     {app.fullName} ({app.id}) — {formatCurrencyINR(app.loanAmount)}
                   </option>

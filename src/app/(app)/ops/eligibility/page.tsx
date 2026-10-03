@@ -1,19 +1,57 @@
-import { requireRole } from '@/lib/auth';
+import { requireUser } from '@/lib/auth';
 import { listBankPolicyCards } from '@/lib/repos/policyCardsRepo';
 import { listApplicationsByRole } from '@/lib/repos/applicationsRepo';
+import type { BankPolicyCard } from '@/types/policy';
+import type { LoanType } from '@/types/db';
 import EligibilityCalculatorClient from './EligibilityCalculatorClient';
 
 export const metadata = {
-  title: 'Customer Loan Eligibility & Bank Recommendation | Quickfinsure Ops',
+  title: 'Customer Loan Eligibility & Bank Recommendation | Quickfinsure',
   description: 'AI-assisted matchmaking engine evaluating customer CIBIL, FOIR, and income against active bank policies.',
 };
 
 export default async function OpsEligibilityPage() {
-  const user = await requireRole('ADMIN', 'OPERATIONS', 'CENTRAL_SUPPORT', 'RELATIONSHIP_MANAGER');
-  const cards = listBankPolicyCards(user.tenantId || 'default', undefined, true);
-  const activeApplications = listApplicationsByRole(user).filter(
-    (a) => a.status === 'DOCUMENTS_IN' || a.status === 'LINK_SHARED' || a.status === 'DOCUMENTS_REQUIRED'
-  );
+  const user = await requireUser();
+  const tenantId = user?.tenantId || 'default';
+
+  let cards: BankPolicyCard[] = [];
+  try {
+    cards = listBankPolicyCards(tenantId, undefined, true) || [];
+    if (!cards || cards.length === 0) {
+      cards = listBankPolicyCards('default', undefined, true) || [];
+    }
+  } catch (err) {
+    console.error('[OpsEligibilityPage] Error fetching cards:', err);
+    cards = [];
+  }
+
+  let activeApplicationsList: Array<{
+    id: string;
+    fullName: string;
+    mobile: string;
+    loanType: LoanType;
+    loanAmount: number;
+    monthlyIncome: number;
+    existingEmi: number;
+  }> = [];
+
+  try {
+    const rawApps = listApplicationsByRole(user) || [];
+    activeApplicationsList = (rawApps || [])
+      .filter((a) => a && (a.status === 'DOCUMENTS_IN' || a.status === 'LINK_SHARED' || a.status === 'DOCUMENTS_REQUIRED'))
+      .map((a) => ({
+        id: String(a?.id || ''),
+        fullName: String(a?.fullName || 'Unnamed Applicant'),
+        mobile: String(a?.mobile || ''),
+        loanType: (a?.loanType as LoanType) || 'HOME_LOAN',
+        loanAmount: Number(a?.loanAmount || 0),
+        monthlyIncome: Number(a?.monthlyIncome || 0),
+        existingEmi: Number(a?.existingEmi || 0),
+      }));
+  } catch (err) {
+    console.error('[OpsEligibilityPage] Error fetching applications:', err);
+    activeApplicationsList = [];
+  }
 
   return (
     <div className="space-y-4">
@@ -38,16 +76,8 @@ export default async function OpsEligibilityPage() {
       </div>
 
       <EligibilityCalculatorClient
-        availableCards={cards}
-        activeApplications={activeApplications.map((a) => ({
-          id: a.id,
-          fullName: a.fullName || 'Unnamed Applicant',
-          mobile: a.mobile || '',
-          loanType: a.loanType || 'HOME_LOAN',
-          loanAmount: a.loanAmount || 0,
-          monthlyIncome: a.monthlyIncome || 0,
-          existingEmi: a.existingEmi || 0,
-        }))}
+        availableCards={cards || []}
+        activeApplications={activeApplicationsList || []}
       />
     </div>
   );

@@ -59,11 +59,8 @@ export const STATUS_LABELS: Record<ApplicationStatus, string> = {
 
 export function formatCurrencyINR(amount: number | null | undefined): string {
   if (amount === null || amount === undefined || isNaN(amount)) return '₹0';
-  return new Intl.NumberFormat('en-IN', {
-    style: 'currency',
-    currency: 'INR',
-    maximumFractionDigits: 0,
-  }).format(amount);
+  const val = Math.round(Number(amount));
+  return '₹' + val.toLocaleString('en-IN');
 }
 
 export function formatDateTime(dateInput: string | Date | null | undefined): string {
