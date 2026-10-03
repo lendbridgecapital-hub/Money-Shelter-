@@ -45,6 +45,29 @@ export function calculateMaxAffordableLoan(
 }
 
 /**
+ * Auto-resolves FOIR (Fixed Obligation to Income Ratio) cap based on Net Monthly Salary slab:
+ * - 📉 Under ₹50,000: 50%
+ * - below ₹75,000 (₹50,000 to < ₹75,000): 60%
+ * - above ₹75,000 (₹75,000 to < ₹1,00,000): 65%
+ * - ₹1,00,000 and above: 70%
+ */
+export function getSalarySlabFoirCap(monthlyIncome: number): number {
+  const inc = Number(monthlyIncome || 0);
+  if (inc < 50000) return 50;
+  if (inc < 75000) return 60;
+  if (inc < 100000) return 65;
+  return 70;
+}
+
+export function getSalarySlabDescription(monthlyIncome: number): string {
+  const inc = Number(monthlyIncome || 0);
+  if (inc < 50000) return 'Under ₹50,000 slab (50% FOIR Cap)';
+  if (inc < 75000) return 'Below ₹75,000 slab (60% FOIR Cap)';
+  if (inc < 100000) return 'Above ₹75,000 slab (65% FOIR Cap)';
+  return '₹1,00,000 & above slab (70% FOIR Cap)';
+}
+
+/**
  * Finds the applicable interest rate and custom FOIR cap from the bank's tiered rate matrix.
  */
 export function mapApplicableRateAndFoir(
@@ -191,7 +214,7 @@ export function evaluateCustomerAgainstCard(
   }
 
   // 6. Interest Rate Mapping & Tier Resolution
-  const { mappedRate, maxFoirPct: effectiveMaxFoir, tierDescription } = mapApplicableRateAndFoir(
+  const { mappedRate, tierDescription } = mapApplicableRateAndFoir(
     card,
     cibil,
     requestedAmount
@@ -201,6 +224,15 @@ export function evaluateCustomerAgainstCard(
   }
 
   // 7. FOIR (Fixed Obligation to Income Ratio) & Loan Affordability Computation
+  // Auto-set FOIR cap based on applicant Net Monthly Salary slab:
+  // - 📉 Under ₹50,000: 50%
+  // - below 75000: 60%
+  // - above 75000: 65%
+  // - 100000 and above: 70%
+  const effectiveMaxFoir = getSalarySlabFoirCap(income);
+  passReasons.push(
+    `Permissible FOIR auto-set to ${effectiveMaxFoir}% (${getSalarySlabDescription(income)}).`
+  );
   const existingEmi = Number(input.existingEmi || 0);
   const maxTotalAllowedObligation = (income * effectiveMaxFoir) / 100;
   const maxAvailableMonthlyEmi = Math.max(0, maxTotalAllowedObligation - existingEmi);

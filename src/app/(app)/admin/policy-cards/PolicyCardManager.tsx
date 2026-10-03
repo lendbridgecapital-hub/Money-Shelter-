@@ -4,6 +4,7 @@ import React, { useState, useTransition } from 'react';
 import type { BankPolicyCard, DynamicCriteriaFieldDef, RateMatrixTier, EmploymentType } from '@/types/policy';
 import type { LoanType } from '@/types/db';
 import { LOAN_TYPE_LABELS, formatCurrencyINR } from '@/lib/format';
+import { getSalarySlabFoirCap } from '@/lib/policyEngine';
 import {
   saveBankPolicyCardAction,
   deleteBankPolicyCardAction,
@@ -53,7 +54,7 @@ export default function PolicyCardManager({ initialCards, dynamicDefs }: PolicyC
   const [minCibil, setMinCibil] = useState<number>(700);
   const [maxCibil, setMaxCibil] = useState<number>(900);
   const [minMonthlyIncome, setMinMonthlyIncome] = useState<number>(30000);
-  const [maxFoirPct, setMaxFoirPct] = useState<number>(55);
+  const [maxFoirPct, setMaxFoirPct] = useState<number>(50);
   const [allowedIncomeTypes, setAllowedIncomeTypes] = useState<EmploymentType[]>(['SALARIED']);
   const [minTenureMonths, setMinTenureMonths] = useState<number>(12);
   const [maxTenureMonths, setMaxTenureMonths] = useState<number>(240);
@@ -89,7 +90,7 @@ export default function PolicyCardManager({ initialCards, dynamicDefs }: PolicyC
     setMinCibil(700);
     setMaxCibil(900);
     setMinMonthlyIncome(30000);
-    setMaxFoirPct(55);
+    setMaxFoirPct(50);
     setAllowedIncomeTypes(['SALARIED']);
     setMinTenureMonths(12);
     setMaxTenureMonths(240);
@@ -692,19 +693,31 @@ export default function PolicyCardManager({ initialCards, dynamicDefs }: PolicyC
                       />
                     </div>
                     <div>
-                      <label className="font-bold text-slate-700 block mb-1">Min Monthly Income (₹) *</label>
+                      <div className="flex items-center justify-between mb-1">
+                        <label className="font-bold text-slate-700 block">Min Monthly Income (₹) *</label>
+                        <span className="text-[10px] text-emerald-700 font-bold bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200">
+                          Slab: {getSalarySlabFoirCap(minMonthlyIncome)}% FOIR
+                        </span>
+                      </div>
                       <input
                         type="number"
                         required
                         min={5000}
                         step={1000}
                         value={minMonthlyIncome}
-                        onChange={(e) => setMinMonthlyIncome(Number(e.target.value))}
+                        onChange={(e) => {
+                          const val = Number(e.target.value);
+                          setMinMonthlyIncome(val);
+                          setMaxFoirPct(getSalarySlabFoirCap(val));
+                        }}
                         className="w-full p-2 rounded-xl border border-slate-200 focus:ring-2 focus:ring-emerald-500 font-mono font-bold"
                       />
                     </div>
                     <div>
-                      <label className="font-bold text-slate-700 block mb-1">Max FOIR Ratio (%) *</label>
+                      <div className="flex items-center justify-between mb-1">
+                        <label className="font-bold text-slate-700 block">Max FOIR Ratio (%) *</label>
+                        <span className="text-[10px] text-slate-400">Total EMIs/Income</span>
+                      </div>
                       <input
                         type="number"
                         required
@@ -715,7 +728,45 @@ export default function PolicyCardManager({ initialCards, dynamicDefs }: PolicyC
                         onChange={(e) => setMaxFoirPct(Number(e.target.value))}
                         className="w-full p-2 rounded-xl border border-slate-200 focus:ring-2 focus:ring-emerald-500 font-mono font-bold"
                       />
-                      <span className="text-[10px] text-slate-400">Total EMIs/Income cap</span>
+                      {/* Auto-set quick preset pills */}
+                      <div className="flex flex-wrap gap-1 mt-1.5">
+                        <button
+                          type="button"
+                          onClick={() => setMaxFoirPct(50)}
+                          className={`px-1.5 py-0.5 rounded text-[10px] font-bold border transition ${
+                            maxFoirPct === 50 ? 'bg-emerald-600 text-white border-emerald-600 shadow-2xs' : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'
+                          }`}
+                        >
+                          &lt; ₹50k (50%)
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setMaxFoirPct(60)}
+                          className={`px-1.5 py-0.5 rounded text-[10px] font-bold border transition ${
+                            maxFoirPct === 60 ? 'bg-emerald-600 text-white border-emerald-600 shadow-2xs' : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'
+                          }`}
+                        >
+                          below 75k (60%)
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setMaxFoirPct(65)}
+                          className={`px-1.5 py-0.5 rounded text-[10px] font-bold border transition ${
+                            maxFoirPct === 65 ? 'bg-emerald-600 text-white border-emerald-600 shadow-2xs' : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'
+                          }`}
+                        >
+                          above 75k (65%)
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setMaxFoirPct(70)}
+                          className={`px-1.5 py-0.5 rounded text-[10px] font-bold border transition ${
+                            maxFoirPct === 70 ? 'bg-emerald-600 text-white border-emerald-600 shadow-2xs' : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'
+                          }`}
+                        >
+                          100k+ (70%)
+                        </button>
+                      </div>
                     </div>
                   </div>
 

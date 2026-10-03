@@ -11,6 +11,7 @@ import type {
 } from '@/types/policy';
 import type { LoanType } from '@/types/db';
 import { LOAN_TYPE_LABELS, formatCurrencyINR } from '@/lib/format';
+import { getSalarySlabFoirCap } from '@/lib/policyEngine';
 import { evaluateCustomerEligibilityAction, attachRecommendationToApplicationAction } from '@/actions/policyActions';
 
 interface ActiveAppSummary {
@@ -143,8 +144,15 @@ export default function EligibilityCalculatorClient({
     });
   };
 
-  // Current FOIR indicator
+  // Current FOIR indicator & Auto-Set FOIR Cap by Salary Slab:
+  // Under ₹50,000 -> 50%
+  // below 75000 -> 60%
+  // above 75000 -> 65%
+  // 100000 and above -> 70%
+  const autoFoirCap = getSalarySlabFoirCap(monthlyIncome);
   const currentFoir = monthlyIncome > 0 ? ((existingEmi / monthlyIncome) * 100).toFixed(1) : '0';
+  const maxAllowedObligations = (monthlyIncome * autoFoirCap) / 100;
+  const availableEmiHeadroom = Math.max(0, maxAllowedObligations - existingEmi);
 
   return (
     <div className="space-y-4">
@@ -296,6 +304,12 @@ export default function EligibilityCalculatorClient({
                   onChange={(e) => setMonthlyIncome(Number(e.target.value))}
                   className="w-full p-2.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-indigo-500 font-mono font-bold"
                 />
+                <div className="mt-1 flex items-center justify-between text-[10px]">
+                  <span className="text-slate-500 font-medium">Auto FOIR Cap:</span>
+                  <span className="px-1.5 py-0.5 rounded font-black bg-indigo-50 border border-indigo-200 text-indigo-700">
+                    {autoFoirCap}% ({monthlyIncome < 50000 ? '< ₹50k' : monthlyIncome < 75000 ? '< ₹75k' : monthlyIncome < 100000 ? '≥ ₹75k' : '≥ ₹100k'})
+                  </span>
+                </div>
               </div>
               <div>
                 <label className="font-bold text-slate-700 block mb-1">Existing Monthly EMIs (₹)</label>
@@ -306,23 +320,108 @@ export default function EligibilityCalculatorClient({
                   onChange={(e) => setExistingEmi(Number(e.target.value))}
                   className="w-full p-2.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-indigo-500 font-mono font-bold"
                 />
+                <div className="mt-1 flex items-center justify-between text-[10px]">
+                  <span className="text-slate-500 font-medium">Available Headroom:</span>
+                  <span className={`font-mono font-bold ${availableEmiHeadroom > 0 ? 'text-emerald-700' : 'text-rose-600'}`}>
+                    ₹{Math.round(availableEmiHeadroom).toLocaleString('en-IN')}/mo
+                  </span>
+                </div>
               </div>
             </div>
 
-            {/* FOIR Meter Preview */}
-            <div className="p-2.5 rounded-xl bg-slate-100/80 border border-slate-200 flex items-center justify-between text-xs">
-              <span className="text-slate-500 font-medium">Pre-Application FOIR Obligation:</span>
-              <span
-                className={`font-mono font-black text-xs ${
-                  Number(currentFoir) > 55
-                    ? 'text-rose-600'
-                    : Number(currentFoir) > 40
-                    ? 'text-amber-600'
-                    : 'text-emerald-700'
-                }`}
-              >
-                {currentFoir}% {Number(currentFoir) > 50 ? '(Heavy EMI Load)' : '(Healthy)'}
-              </span>
+            {/* FOIR Affordability Analysis & Salary Slab Matrix */}
+            <div className="p-3 rounded-2xl bg-slate-50 border border-slate-200 space-y-2.5">
+              <div className="flex items-center justify-between text-xs">
+                <span className="text-slate-700 font-bold flex items-center gap-1.5">
+                  <span>📊</span>
+                  <span>FOIR Affordability Analysis</span>
+                </span>
+                <span className="px-2 py-0.5 rounded-full text-[11px] font-extrabold bg-indigo-100 text-indigo-900 border border-indigo-200">
+                  Auto FOIR Cap: {autoFoirCap}%
+                </span>
+              </div>
+
+              {/* Progress bar */}
+              <div className="space-y-1">
+                <div className="flex justify-between text-[11px]">
+                  <span className="text-slate-500">
+                    Existing EMIs: ₹{existingEmi.toLocaleString('en-IN')} ({currentFoir}%)
+                  </span>
+                  <span className="font-bold text-slate-700">
+                    Max Permitted: {autoFoirCap}% (₹{Math.round(maxAllowedObligations).toLocaleString('en-IN')})
+                  </span>
+                </div>
+                <div className="w-full bg-slate-200 rounded-full h-2 overflow-hidden flex">
+                  <div
+                    className={`h-2 transition-all ${
+                      Number(currentFoir) > autoFoirCap
+                        ? 'bg-rose-500'
+                        : Number(currentFoir) > autoFoirCap - 15
+                        ? 'bg-amber-500'
+                        : 'bg-emerald-500'
+                    }`}
+                    style={{ width: `${Math.min(100, (Number(currentFoir) / autoFoirCap) * 100)}%` }}
+                  />
+                </div>
+              </div>
+
+              {/* Salary Slab Reference Grid */}
+              <div className="pt-2 border-t border-slate-200/80">
+                <div className="flex items-center justify-between mb-1.5">
+                  <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                    Salary Slab FOIR Grid (Net Monthly)
+                  </span>
+                  <span className="text-[10px] text-indigo-600 font-semibold">
+                    Current: {autoFoirCap}% Cap
+                  </span>
+                </div>
+                <div className="grid grid-cols-4 gap-1.5 text-[10px] text-center font-mono">
+                  <div
+                    onClick={() => setMonthlyIncome(45000)}
+                    className={`p-1.5 rounded-xl border cursor-pointer transition ${
+                      monthlyIncome < 50000
+                        ? 'bg-indigo-600 text-white border-indigo-600 shadow-xs font-bold ring-2 ring-indigo-200'
+                        : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
+                    }`}
+                  >
+                    <span className="block text-[9px] opacity-80">&lt; ₹50,000</span>
+                    <strong className="text-xs">50%</strong>
+                  </div>
+                  <div
+                    onClick={() => setMonthlyIncome(60000)}
+                    className={`p-1.5 rounded-xl border cursor-pointer transition ${
+                      monthlyIncome >= 50000 && monthlyIncome < 75000
+                        ? 'bg-indigo-600 text-white border-indigo-600 shadow-xs font-bold ring-2 ring-indigo-200'
+                        : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
+                    }`}
+                  >
+                    <span className="block text-[9px] opacity-80">below 75k</span>
+                    <strong className="text-xs">60%</strong>
+                  </div>
+                  <div
+                    onClick={() => setMonthlyIncome(85000)}
+                    className={`p-1.5 rounded-xl border cursor-pointer transition ${
+                      monthlyIncome >= 75000 && monthlyIncome < 100000
+                        ? 'bg-indigo-600 text-white border-indigo-600 shadow-xs font-bold ring-2 ring-indigo-200'
+                        : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
+                    }`}
+                  >
+                    <span className="block text-[9px] opacity-80">above 75k</span>
+                    <strong className="text-xs">65%</strong>
+                  </div>
+                  <div
+                    onClick={() => setMonthlyIncome(120000)}
+                    className={`p-1.5 rounded-xl border cursor-pointer transition ${
+                      monthlyIncome >= 100000
+                        ? 'bg-indigo-600 text-white border-indigo-600 shadow-xs font-bold ring-2 ring-indigo-200'
+                        : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
+                    }`}
+                  >
+                    <span className="block text-[9px] opacity-80">&ge; 100k</span>
+                    <strong className="text-xs">70%</strong>
+                  </div>
+                </div>
+              </div>
             </div>
 
             {/* Requested Loan Amount & Tenure */}
