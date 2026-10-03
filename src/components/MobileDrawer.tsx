@@ -64,6 +64,12 @@ export default function MobileDrawer({
       show: true,
     },
     {
+      label: 'Loan Eligibility Match',
+      href: '/ops/eligibility',
+      icon: '⚡',
+      show: isAdmin || isOps || isSupport || isRM,
+    },
+    {
       label: isPartner ? 'Apply / Share Form' : 'Generate Customer Link',
       href: '/branch/create-link',
       icon: '🔗',
@@ -98,6 +104,12 @@ export default function MobileDrawer({
       href: '/admin/banks',
       icon: '🏦',
       show: isAdmin || isOps || isPartner,
+    },
+    {
+      label: 'Bank Policy Cards',
+      href: '/admin/policy-cards',
+      icon: '💳',
+      show: isAdmin,
     },
     {
       label: 'User & RM Management',

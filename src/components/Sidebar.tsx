@@ -148,6 +148,12 @@ export default function Sidebar({
       show: true,
     },
     {
+      label: 'Loan Eligibility Match',
+      href: '/ops/eligibility',
+      icon: '⚡',
+      show: isAdmin || isOps || isSupport || isRM,
+    },
+    {
       label: 'Create Custom Link',
       href: '/branch/create-link',
       icon: '🔗',
@@ -167,6 +173,12 @@ export default function Sidebar({
 
   // Role-specific operational & management links
   const managementItems = [
+    {
+      label: 'Bank Policy Cards',
+      href: '/admin/policy-cards',
+      icon: '💳',
+      show: isAdmin,
+    },
     {
       label: 'Branches',
       href: '/admin/branches',

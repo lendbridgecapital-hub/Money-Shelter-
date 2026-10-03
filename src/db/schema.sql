@@ -268,3 +268,35 @@ CREATE TABLE IF NOT EXISTS email_logs (
 
 CREATE INDEX IF NOT EXISTS idx_email_logs_tenant ON email_logs(tenant_id);
 CREATE INDEX IF NOT EXISTS idx_email_logs_to ON email_logs(to_email);
+
+CREATE TABLE IF NOT EXISTS bank_policy_cards (
+  id TEXT PRIMARY KEY,
+  tenant_id TEXT DEFAULT 'default',
+  bank_name TEXT NOT NULL,
+  bank_code TEXT NOT NULL,
+  logo_url TEXT,
+  loan_type TEXT NOT NULL,
+  min_cibil INTEGER NOT NULL DEFAULT 650,
+  max_cibil INTEGER NOT NULL DEFAULT 900,
+  min_monthly_income REAL NOT NULL DEFAULT 25000,
+  max_foir_pct REAL NOT NULL DEFAULT 55,
+  allowed_income_types TEXT NOT NULL DEFAULT '["SALARIED"]',
+  min_tenure_months INTEGER NOT NULL DEFAULT 12,
+  max_tenure_months INTEGER NOT NULL DEFAULT 240,
+  min_loan_amount REAL NOT NULL DEFAULT 100000,
+  max_loan_amount REAL NOT NULL DEFAULT 50000000,
+  base_interest_rate REAL NOT NULL DEFAULT 8.5,
+  processing_fee_pct REAL NOT NULL DEFAULT 0.5,
+  processing_fee_flat REAL,
+  rate_matrix TEXT NOT NULL DEFAULT '[]',
+  dynamic_criteria TEXT NOT NULL DEFAULT '{}',
+  tat_days INTEGER DEFAULT 3,
+  special_features TEXT DEFAULT '[]',
+  active INTEGER NOT NULL DEFAULT 1,
+  priority_weight INTEGER DEFAULT 0,
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_bpc_tenant_loan ON bank_policy_cards(tenant_id, loan_type);
+

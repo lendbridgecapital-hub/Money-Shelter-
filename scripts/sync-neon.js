@@ -308,6 +308,35 @@ async function initSchema(client) {
       error_message TEXT,
       message_id TEXT,
       created_at TEXT NOT NULL
+    );`,
+
+    `CREATE TABLE IF NOT EXISTS bank_policy_cards (
+      id TEXT PRIMARY KEY,
+      tenant_id TEXT DEFAULT 'default',
+      bank_name TEXT NOT NULL,
+      bank_code TEXT NOT NULL,
+      logo_url TEXT,
+      loan_type TEXT NOT NULL,
+      min_cibil INTEGER NOT NULL DEFAULT 650,
+      max_cibil INTEGER NOT NULL DEFAULT 900,
+      min_monthly_income REAL NOT NULL DEFAULT 25000,
+      max_foir_pct REAL NOT NULL DEFAULT 55,
+      allowed_income_types TEXT NOT NULL DEFAULT '["SALARIED"]',
+      min_tenure_months INTEGER NOT NULL DEFAULT 12,
+      max_tenure_months INTEGER NOT NULL DEFAULT 240,
+      min_loan_amount REAL NOT NULL DEFAULT 100000,
+      max_loan_amount REAL NOT NULL DEFAULT 50000000,
+      base_interest_rate REAL NOT NULL DEFAULT 8.5,
+      processing_fee_pct REAL NOT NULL DEFAULT 0.5,
+      processing_fee_flat REAL,
+      rate_matrix JSONB DEFAULT '[]'::jsonb,
+      dynamic_criteria JSONB DEFAULT '{}'::jsonb,
+      tat_days INTEGER DEFAULT 3,
+      special_features JSONB DEFAULT '[]'::jsonb,
+      active INTEGER NOT NULL DEFAULT 1,
+      priority_weight INTEGER DEFAULT 0,
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL
     );`
   ];
 
