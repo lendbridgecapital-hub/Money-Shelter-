@@ -5,6 +5,7 @@ import { revalidatePath } from 'next/cache';
 import { requireUser, requireRole } from '@/lib/auth';
 import {
   emailExists,
+  getUserById,
   createUser,
   createPartnerOnboarding,
   listRelationshipManagers,
@@ -12,6 +13,7 @@ import {
   requestPartnerDocUpdate,
   rejectPartnerOnboarding,
   resubmitPartnerDocuments,
+  updatePartnerCommissionRate,
 } from '@/lib/repos/usersRepo';
 import { listBranches } from '@/lib/repos/branchesRepo';
 import { createNotification } from '@/lib/repos/workflowRepo';
@@ -268,8 +270,9 @@ export async function directAdminOnboardPartnerAction(payload: {
   assignedRmId?: string | null;
   panNumber?: string | null;
   aadhaarNumber?: string | null;
-  commissionRate?: number;
+  commissionRate?: number | null;
   role?: 'SUB_DSA' | 'CHANNEL_PARTNER';
+  partnerStatus?: 'APPROVED' | 'PENDING_APPROVAL';
 }): Promise<{ ok: boolean; message?: string; error?: string; partner?: User }> {
   try {
     const sessionUser = await requireUser();
@@ -283,6 +286,8 @@ export async function directAdminOnboardPartnerAction(payload: {
     const password = payload.password || 'Quickfin@123';
     const branchId = payload.branchId;
     const isSubDsa = payload.role === 'SUB_DSA';
+    const partnerStatus = payload.partnerStatus || 'APPROVED';
+    const isPending = partnerStatus === 'PENDING_APPROVAL';
 
     if (!fullName) return { ok: false, error: 'Partner full name is required.' };
     if (!email || !/^\S+@\S+\.\S+$/.test(email)) return { ok: false, error: 'A valid email address is required.' };
@@ -318,12 +323,15 @@ export async function directAdminOnboardPartnerAction(payload: {
       role: isSubDsa ? 'SUB_DSA' : 'CHANNEL_PARTNER',
       branchId,
       partnerCode,
-      partnerStatus: 'APPROVED',
+      partnerStatus,
       assignedRmId,
       assignedRmName,
       panNumber: payload.panNumber ? payload.panNumber.trim().toUpperCase() : null,
       aadhaarNumber: payload.aadhaarNumber ? payload.aadhaarNumber.trim() : null,
-      commissionRate: payload.commissionRate !== undefined ? Number(payload.commissionRate) : undefined,
+      commissionRate:
+        payload.commissionRate !== undefined && payload.commissionRate !== null && !isNaN(Number(payload.commissionRate))
+          ? Number(payload.commissionRate)
+          : undefined,
     });
 
     if (assignedRmId && assignedRmId !== sessionUser.id) {
@@ -332,8 +340,8 @@ export async function directAdminOnboardPartnerAction(payload: {
           recipientId: assignedRmId,
           recipientRole: 'RELATIONSHIP_MANAGER',
           applicationId: 'partner-onboarding',
-          title: 'New Channel Partner Assigned! 🤝',
-          message: `${fullName} (${partnerCode}) has been onboarded and assigned to your portfolio.`,
+          title: isSubDsa ? 'New Sub-DSA Assigned! 🏢' : 'New Channel Partner Assigned! 🤝',
+          message: `${fullName} (${partnerCode}) has been registered (${isPending ? 'Pending Review' : 'Approved'}) and assigned to your portfolio.`,
         });
       } catch {}
     }
@@ -346,7 +354,9 @@ export async function directAdminOnboardPartnerAction(payload: {
 
     return {
       ok: true,
-      message: `Partner "${fullName}" onboarded successfully with Partner Code: ${partnerCode}.`,
+      message: isPending
+        ? `${isSubDsa ? 'Sub-DSA' : 'Partner'} "${fullName}" registered and landed in Partner Onboarding Approvals bucket (Pending Review).`
+        : `${isSubDsa ? 'Sub-DSA' : 'Partner'} "${fullName}" onboarded and approved successfully with Partner Code: ${partnerCode}.`,
       partner: created,
     };
   } catch (err) {
@@ -366,6 +376,7 @@ export async function approvePartnerAction(payload: {
   partnerId: string;
   assignedRmId: string;
   remark?: string;
+  commissionRate?: number | null;
 }): Promise<{ ok: boolean; message?: string; error?: string }> {
   try {
     const sessionUser = await requireUser();
@@ -386,29 +397,72 @@ export async function approvePartnerAction(payload: {
       payload.assignedRmId,
       assignedRmName,
       { id: sessionUser.id, name: sessionUser.name },
-      payload.remark
+      payload.remark,
+      payload.commissionRate
     );
 
+    const isSubDsa = updated.role === 'SUB_DSA';
     createNotification({
       recipientId: updated.id,
-      recipientRole: 'CHANNEL_PARTNER',
+      recipientRole: isSubDsa ? 'SUB_DSA' : 'CHANNEL_PARTNER',
       applicationId: 'partner-onboarding',
-      title: 'Partner Application Approved!',
-      message: `Your Channel Partner application has been approved by Central Support. Your assigned Relationship Manager is ${assignedRmName}. You can now create customer links and view your Certificate of Association.`,
+      title: isSubDsa ? 'Sub-DSA Application Approved! 🏢' : 'Partner Application Approved! 🤝',
+      message: `Your ${isSubDsa ? 'Sub-DSA Master' : 'Channel Partner'} application has been approved by Central Support. Your assigned Relationship Manager is ${assignedRmName}. You can now create customer links and view your Certificate of Association.`,
     });
 
     safeRevalidate('/admin/partner-requests');
     safeRevalidate('/admin/partners');
     safeRevalidate('/branch/requests');
+    safeRevalidate('/dashboard');
 
     await syncDatabase();
 
     return {
       ok: true,
-      message: `Partner ${updated.name} approved successfully! Assigned to RM ${assignedRmName}. Certificate ${updated.certificateNumber} issued.`,
+      message: `${isSubDsa ? 'Sub-DSA' : 'Partner'} ${updated.name} approved successfully! Assigned to RM ${assignedRmName}. Certificate ${updated.certificateNumber} issued.`,
     };
   } catch (err) {
     return { ok: false, error: err instanceof Error ? err.message : 'Failed to approve partner.' };
+  }
+}
+
+export async function updatePartnerCommissionRateAction(payload: {
+  partnerId: string;
+  commissionRate: number | null;
+}): Promise<{ ok: boolean; message?: string; error?: string }> {
+  try {
+    const sessionUser = await requireUser();
+    if (sessionUser.role !== 'ADMIN' && sessionUser.role !== 'CENTRAL_SUPPORT') {
+      return { ok: false, error: 'Only Administrators and Central Support can configure partner commission rates.' };
+    }
+
+    const partner = getUserById(payload.partnerId);
+    if (!partner) {
+      return { ok: false, error: 'Partner not found.' };
+    }
+
+    const rate =
+      payload.commissionRate !== null && payload.commissionRate !== undefined && !isNaN(Number(payload.commissionRate))
+        ? Number(Number(payload.commissionRate).toFixed(2))
+        : null;
+
+    updatePartnerCommissionRate(payload.partnerId, rate);
+
+    safeRevalidate('/admin/partners');
+    safeRevalidate('/admin/partner-requests');
+    safeRevalidate('/admin/commissions');
+
+    await syncDatabase();
+
+    return {
+      ok: true,
+      message:
+        rate !== null
+          ? `Commission rate for ${partner.name} set to ${rate}%.`
+          : `Commission rate for ${partner.name} reset to Standard Bank Product Slab.`,
+    };
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : 'Failed to update commission rate.' };
   }
 }
 

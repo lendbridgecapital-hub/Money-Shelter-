@@ -140,7 +140,7 @@ export default function PartnerCertificateView({
 
             <div>
               <span className="text-[10px] text-slate-400 uppercase font-bold block">Registered Branch</span>
-              <strong className="text-slate-900 text-xs truncate block">{partner.branchName || 'Pune HQ'}</strong>
+              <strong className="text-slate-900 text-xs truncate block">{partner.branchName || 'Operating Branch Office'}</strong>
             </div>
 
             <div>

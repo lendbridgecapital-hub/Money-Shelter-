@@ -118,8 +118,9 @@ export function setUserBlocked(id: string, isBlocked: boolean, reason?: string |
   );
 }
 
-export function updatePartnerCommissionRate(id: string, rate: number): void {
-  db.prepare('UPDATE users SET commission_rate = ? WHERE id = ?').run(rate, id);
+export function updatePartnerCommissionRate(id: string, rate: number | null): void {
+  const val = rate !== null && rate !== undefined && !isNaN(Number(rate)) ? Number(rate) : null;
+  db.prepare('UPDATE users SET commission_rate = ? WHERE id = ?').run(val, id);
 }
 
 export function updateUserRoleAndBranch(id: string, role: Role, branchId: string): void {
@@ -175,7 +176,7 @@ export function listRelationshipManagers(tenantId = 'default'): User[] {
 }
 
 export function listPartnerRequests(status?: PartnerStatus, tenantId = 'default'): User[] {
-  const partners = listPartners(tenantId);
+  const partners = listAllNetworkPartners(tenantId);
   if (!status) return partners;
   return partners.filter((p) => (p.partnerStatus || 'APPROVED') === status);
 }
@@ -185,11 +186,21 @@ export function approvePartnerOnboarding(
   assignedRmId: string,
   assignedRmName: string,
   approvedBy: { id: string; name: string },
-  remark?: string
+  remark?: string,
+  commissionRate?: number | null
 ): User {
   const now = new Date().toISOString();
+  const existing = getUserById(partnerId);
+  const isSubDsa = existing?.role === 'SUB_DSA';
   const certSuffix = Math.floor(1000 + Math.random() * 9000);
-  const certNum = `QFS-CERT-2026-${certSuffix}`;
+  const certNum = isSubDsa ? `QFS-SUB-CERT-2026-${certSuffix}` : `QFS-CERT-2026-${certSuffix}`;
+
+  const commRate =
+    commissionRate !== undefined && commissionRate !== null && !isNaN(Number(commissionRate))
+      ? Number(commissionRate)
+      : existing?.commissionRate !== undefined && existing?.commissionRate !== null
+      ? existing.commissionRate
+      : null;
 
   db.prepare(
     `UPDATE users 
@@ -201,7 +212,8 @@ export function approvePartnerOnboarding(
          approved_at = ?,
          certificate_number = ?,
          certificate_issued_at = ?,
-         approval_remark = ?
+         approval_remark = ?,
+         commission_rate = ?
      WHERE id = ?`
   ).run(
     assignedRmId,
@@ -212,6 +224,7 @@ export function approvePartnerOnboarding(
     certNum,
     now,
     remark || 'Application approved by Central Support.',
+    commRate,
     partnerId
   );
 
@@ -381,6 +394,17 @@ function mapRowToUser(row: Record<string, unknown>): User {
   const partnerStatus: PartnerStatus | undefined =
     role === 'CHANNEL_PARTNER' || role === 'SUB_DSA' ? rawStatus || 'APPROVED' : undefined;
 
+  const branchId = String(row.branch_id || row.branchId || '');
+  let branchName = row.branch_name || row.branchName ? String(row.branch_name || row.branchName) : undefined;
+  if (!branchName && branchId) {
+    try {
+      const bRow = db.prepare('SELECT name FROM branches WHERE id = ?').get(branchId) as { name?: string } | undefined;
+      if (bRow && bRow.name) {
+        branchName = String(bRow.name);
+      }
+    } catch {}
+  }
+
   return {
     id: String(row.id),
     tenantId: String(row.tenant_id || row.tenantId || 'default'),
@@ -388,8 +412,8 @@ function mapRowToUser(row: Record<string, unknown>): User {
     email: String(row.email),
     passwordHash: String(row.password_hash || row.passwordHash || ''),
     role,
-    branchId: String(row.branch_id || row.branchId),
-    branchName: row.branch_name || row.branchName ? String(row.branch_name || row.branchName) : undefined,
+    branchId,
+    branchName,
     active: row.active !== 0 && row.active !== false && row.active !== '0',
     isBlocked: Boolean(row.is_blocked === 1 || row.is_blocked === true || row.isBlocked === true),
     blockedReason: row.blocked_reason || row.blockedReason ? String(row.blocked_reason || row.blockedReason) : null,

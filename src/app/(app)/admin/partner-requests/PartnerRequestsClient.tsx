@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import type { User, Role, PartnerStatus } from '@/types/db';
+import type { User, Role, PartnerStatus, Branch } from '@/types/db';
 import { PARTNER_STATUS_LABELS, formatDate, formatDateTime } from '@/lib/format';
 import {
   approvePartnerAction,
@@ -14,6 +14,7 @@ import {
 interface Props {
   initialPartners: User[];
   relationshipManagers: User[];
+  branches?: Branch[];
   currentUserRole: Role;
   currentUserName: string;
 }
@@ -21,6 +22,7 @@ interface Props {
 export default function PartnerRequestsClient({
   initialPartners,
   relationshipManagers,
+  branches = [],
   currentUserRole,
   currentUserName,
 }: Props) {
@@ -28,11 +30,13 @@ export default function PartnerRequestsClient({
 
   // State
   const [selectedStatus, setSelectedStatus] = useState<PartnerStatus | 'ALL'>('PENDING_APPROVAL');
+  const [selectedRoleFilter, setSelectedRoleFilter] = useState<'ALL' | 'SUB_DSA' | 'CHANNEL_PARTNER'>('ALL');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedPartner, setSelectedPartner] = useState<User | null>(null);
 
   // Review modal form states
   const [assignedRmId, setAssignedRmId] = useState<string>('');
+  const [commissionRateInput, setCommissionRateInput] = useState<string>('');
   const [reviewRemark, setReviewRemark] = useState('');
   const [actionType, setActionType] = useState<'APPROVE' | 'REQUEST_DOCS' | 'REJECT' | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -45,6 +49,8 @@ export default function PartnerRequestsClient({
   const filteredPartners = initialPartners.filter((p) => {
     const status = p.partnerStatus || 'APPROVED';
     if (selectedStatus !== 'ALL' && status !== selectedStatus) return false;
+    if (selectedRoleFilter === 'SUB_DSA' && p.role !== 'SUB_DSA') return false;
+    if (selectedRoleFilter === 'CHANNEL_PARTNER' && p.role !== 'CHANNEL_PARTNER') return false;
 
     if (!searchQuery.trim()) return true;
     const q = searchQuery.toLowerCase();
@@ -61,10 +67,13 @@ export default function PartnerRequestsClient({
   const countDocsReq = initialPartners.filter((p) => p.partnerStatus === 'DOCUMENTS_REQUIRED').length;
   const countApproved = initialPartners.filter((p) => (p.partnerStatus || 'APPROVED') === 'APPROVED').length;
   const countRejected = initialPartners.filter((p) => p.partnerStatus === 'REJECTED').length;
+  const countSubDsas = initialPartners.filter((p) => p.role === 'SUB_DSA').length;
+  const countAgents = initialPartners.filter((p) => p.role === 'CHANNEL_PARTNER').length;
 
   const openReviewModal = (partner: User) => {
     setSelectedPartner(partner);
     setAssignedRmId(partner.assignedRmId || (relationshipManagers[0] ? relationshipManagers[0].id : ''));
+    setCommissionRateInput(partner.commissionRate !== undefined && partner.commissionRate !== null ? String(partner.commissionRate) : '');
     setReviewRemark('');
     setActionType(null);
     setFeedback(null);
@@ -91,6 +100,7 @@ export default function PartnerRequestsClient({
       partnerId: selectedPartner.id,
       assignedRmId,
       remark: reviewRemark.trim() || 'Verified and approved by Central Support.',
+      commissionRate: commissionRateInput.trim() ? Number(commissionRateInput) : null,
     });
 
     setIsSubmitting(false);
@@ -266,12 +276,45 @@ export default function PartnerRequestsClient({
                 : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
             }`}
           >
-            All Requests ({initialPartners.length})
+            All Statuses ({initialPartners.length})
           </button>
         </div>
 
-        {/* Search Input */}
-        <div className="relative w-full sm:w-64">
+        {/* Role Filter Pills & Search Input */}
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="flex items-center gap-1 bg-slate-100 p-0.5 rounded-lg border border-slate-200/80">
+            <button
+              type="button"
+              onClick={() => setSelectedRoleFilter('ALL')}
+              className={`px-2 py-1 rounded-md text-[11px] font-bold transition ${
+                selectedRoleFilter === 'ALL' ? 'bg-white text-slate-900 shadow-2xs' : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              All Roles
+            </button>
+            <button
+              type="button"
+              onClick={() => setSelectedRoleFilter('SUB_DSA')}
+              className={`px-2 py-1 rounded-md text-[11px] font-bold transition flex items-center gap-1 ${
+                selectedRoleFilter === 'SUB_DSA' ? 'bg-indigo-600 text-white shadow-2xs' : 'text-indigo-700 hover:bg-indigo-50'
+              }`}
+            >
+              <span>🏢 Sub-DSAs</span>
+              <span className="px-1 py-0.2 rounded-full text-[9px] bg-black/20 font-mono">{countSubDsas}</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setSelectedRoleFilter('CHANNEL_PARTNER')}
+              className={`px-2 py-1 rounded-md text-[11px] font-bold transition flex items-center gap-1 ${
+                selectedRoleFilter === 'CHANNEL_PARTNER' ? 'bg-emerald-600 text-white shadow-2xs' : 'text-emerald-700 hover:bg-emerald-50'
+              }`}
+            >
+              <span>👤 Partners</span>
+              <span className="px-1 py-0.2 rounded-full text-[9px] bg-black/20 font-mono">{countAgents}</span>
+            </button>
+          </div>
+
+          <div className="relative w-full sm:w-56">
           <input
             type="text"
             placeholder="Search partner, phone, PAN…"
@@ -284,6 +327,7 @@ export default function PartnerRequestsClient({
           </span>
         </div>
       </div>
+    </div>
 
       {/* Main Table View */}
       <div className="bg-white border border-slate-200/90 rounded-2xl shadow-2xs overflow-hidden">
@@ -320,21 +364,48 @@ export default function PartnerRequestsClient({
                       {/* Name & Contact */}
                       <td className="px-3.5 py-2.5">
                         <div className="flex items-center gap-2">
-                          <div className="w-7 h-7 rounded-lg bg-emerald-100 text-emerald-800 font-extrabold text-xs flex items-center justify-center shrink-0">
-                            {partner.name.charAt(0).toUpperCase()}
+                          <div
+                            className={`w-8 h-8 rounded-lg font-black text-xs flex items-center justify-center shrink-0 shadow-2xs ${
+                              partner.role === 'SUB_DSA'
+                                ? 'bg-indigo-100 text-indigo-800 border border-indigo-300'
+                                : 'bg-emerald-100 text-emerald-800 border border-emerald-300'
+                            }`}
+                          >
+                            {partner.role === 'SUB_DSA' ? '🏢' : partner.name.charAt(0).toUpperCase()}
                           </div>
                           <div>
-                            <p className="font-bold text-slate-900 leading-tight">
-                              {partner.name}
-                            </p>
-                            <p className="text-[10px] text-slate-500 font-mono">
+                            <div className="flex items-center gap-1.5 flex-wrap">
+                              <p className="font-bold text-slate-900 leading-tight">
+                                {partner.name}
+                              </p>
+                              <span
+                                className={`text-[9px] font-bold px-1.5 py-0.2 rounded border ${
+                                  partner.role === 'SUB_DSA'
+                                    ? 'bg-indigo-50 text-indigo-800 border-indigo-200'
+                                    : 'bg-emerald-50 text-emerald-800 border-emerald-200'
+                                }`}
+                              >
+                                {partner.role === 'SUB_DSA' ? '🏢 Sub-DSA' : '👤 Partner'}
+                              </span>
+                            </div>
+                            <p className="text-[10px] text-slate-500 font-mono mt-0.5">
                               {partner.phone || 'No Phone'} • {partner.email}
                             </p>
-                            {partner.partnerCode && (
-                              <span className="text-[9px] font-mono font-bold text-emerald-800 bg-emerald-50 px-1 rounded border border-emerald-200/60">
-                                {partner.partnerCode}
+                            <div className="flex items-center gap-1.5 mt-1 flex-wrap">
+                              {partner.partnerCode && (
+                                <span className="text-[9px] font-mono font-bold text-emerald-800 bg-emerald-50 px-1 rounded border border-emerald-200/60">
+                                  {partner.partnerCode}
+                                </span>
+                              )}
+                              <span className="text-[9px] text-slate-600 bg-slate-100 px-1.5 py-0.2 rounded font-medium">
+                                📍 {partner.branchName || (branches.find((b) => b.id === partner.branchId)?.name) || 'Head Office'}
                               </span>
-                            )}
+                              {partner.commissionRate !== undefined && partner.commissionRate !== null && (
+                                <span className="text-[9px] font-bold text-purple-700 bg-purple-50 px-1.5 py-0.2 rounded border border-purple-200">
+                                  Rate: {partner.commissionRate}%
+                                </span>
+                              )}
+                            </div>
                           </div>
                         </div>
                       </td>
@@ -493,7 +564,29 @@ export default function PartnerRequestsClient({
                   </div>
                   <div>
                     <span className="text-slate-400 block text-[10px] uppercase font-semibold">Operating Branch</span>
-                    <strong className="text-slate-900">{selectedPartner.branchName || 'Head Office Pune'}</strong>
+                    <strong className="text-slate-900">
+                      {selectedPartner.branchName || (branches.find((b) => b.id === selectedPartner.branchId)?.name) || 'Head Office'}
+                    </strong>
+                  </div>
+                  <div>
+                    <span className="text-slate-400 block text-[10px] uppercase font-semibold">Network Role</span>
+                    <span
+                      className={`inline-block font-bold text-xs px-2 py-0.5 rounded border ${
+                        selectedPartner.role === 'SUB_DSA'
+                          ? 'bg-indigo-100 text-indigo-900 border-indigo-200'
+                          : 'bg-emerald-50 text-emerald-900 border-emerald-200'
+                      }`}
+                    >
+                      {selectedPartner.role === 'SUB_DSA' ? '🏢 Sub-DSA Master Partner' : '👤 Channel Partner'}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-slate-400 block text-[10px] uppercase font-semibold">Current Commission Rate</span>
+                    <strong className="text-emerald-700 font-mono text-xs">
+                      {selectedPartner.commissionRate !== undefined && selectedPartner.commissionRate !== null
+                        ? `${selectedPartner.commissionRate}%`
+                        : 'Standard Bank Slab'}
+                    </strong>
                   </div>
                   <div>
                     <span className="text-slate-400 block text-[10px] uppercase font-semibold">Mobile Phone</span>
@@ -654,6 +747,30 @@ export default function PartnerRequestsClient({
                   </select>
                   <span className="text-[10px] text-slate-500 mt-0.5 block">
                     This RM will be officially appointed to manage this partner&apos;s cases, bank queries, and approvals.
+                  </span>
+                </div>
+
+                {/* 4B. Commission Rate Configuration */}
+                <div className="bg-slate-50 border border-slate-200/80 rounded-xl p-3.5 space-y-2">
+                  <label className="text-[11px] font-bold text-slate-800 uppercase tracking-wide flex items-center gap-1.5">
+                    <span>💰</span>
+                    <span>Agreed Commission Rate (%)</span>
+                  </label>
+                  <div className="relative">
+                    <input
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      max="100"
+                      placeholder="e.g. 1.50 (Leave empty to use system product defaults)"
+                      value={commissionRateInput}
+                      onChange={(e) => setCommissionRateInput(e.target.value)}
+                      className="w-full px-3 py-2 border border-slate-200 rounded-lg text-xs bg-white focus:ring-2 focus:ring-emerald-500 focus:outline-none pr-8"
+                    />
+                    <span className="absolute right-3 top-2 text-xs font-bold text-slate-400">%</span>
+                  </div>
+                  <span className="text-[10px] text-slate-500 block">
+                    Configures standard payout commission rate for loans disbursed through this partner.
                   </span>
                 </div>
 

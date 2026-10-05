@@ -7,6 +7,7 @@ import { blockPartnerAction } from '@/actions/workflowActions';
 import {
   directAdminOnboardPartnerAction,
   approvePartnerAction,
+  updatePartnerCommissionRateAction,
 } from '@/actions/partnerOnboardingActions';
 import { formatDate } from '@/lib/format';
 
@@ -71,6 +72,15 @@ export default function PartnerComplianceManager({
   const [panNumber, setPanNumber] = useState('');
   const [aadhaarNumber, setAadhaarNumber] = useState('');
   const [password, setPassword] = useState('Quickfin@123');
+  const [onboardStatus, setOnboardStatus] = useState<'PENDING_APPROVAL' | 'APPROVED'>('PENDING_APPROVAL');
+  const [onboardCommissionRate, setOnboardCommissionRate] = useState<string>('');
+
+  // Set Commission Modal State
+  const [editingCommissionPartner, setEditingCommissionPartner] = useState<User | null>(null);
+  const [editCommissionInput, setEditCommissionInput] = useState<string>('');
+  const [commissionModalLoading, setCommissionModalLoading] = useState(false);
+  const [commissionModalError, setCommissionModalError] = useState<string | null>(null);
+  const [commissionModalSuccess, setCommissionModalSuccess] = useState<string | null>(null);
 
   const getOnboardingUrl = () => {
     const origin = typeof window !== 'undefined' ? window.location.origin : '';
@@ -164,6 +174,8 @@ export default function PartnerComplianceManager({
       panNumber: panNumber ? panNumber.toUpperCase() : null,
       aadhaarNumber: aadhaarNumber || null,
       role: selectedOnboardRole,
+      partnerStatus: onboardStatus,
+      commissionRate: onboardCommissionRate.trim() ? Number(onboardCommissionRate) : null,
     });
     setOnboardLoading(false);
 
@@ -177,10 +189,55 @@ export default function PartnerComplianceManager({
         setMobile('');
         setPanNumber('');
         setAadhaarNumber('');
+        setOnboardCommissionRate('');
+        setOnboardStatus('PENDING_APPROVAL');
         router.refresh();
       }, 1200);
     } else {
       setOnboardError(res.error || 'Failed to onboard partner.');
+    }
+  }
+
+  function openCommissionModal(partner: User) {
+    setEditingCommissionPartner(partner);
+    setEditCommissionInput(
+      partner.commissionRate !== undefined && partner.commissionRate !== null
+        ? String(partner.commissionRate)
+        : ''
+    );
+    setCommissionModalError(null);
+    setCommissionModalSuccess(null);
+  }
+
+  async function handleSaveCommissionRate(e: React.FormEvent) {
+    e.preventDefault();
+    if (!editingCommissionPartner) return;
+    setCommissionModalLoading(true);
+    setCommissionModalError(null);
+    setCommissionModalSuccess(null);
+
+    const rate = editCommissionInput.trim() ? Number(editCommissionInput) : null;
+    if (rate !== null && (isNaN(rate) || rate < 0 || rate > 100)) {
+      setCommissionModalError('Please enter a valid commission rate percentage between 0 and 100.');
+      setCommissionModalLoading(false);
+      return;
+    }
+
+    const res = await updatePartnerCommissionRateAction({
+      partnerId: editingCommissionPartner.id,
+      commissionRate: rate,
+    });
+
+    setCommissionModalLoading(false);
+    if (res.ok) {
+      setCommissionModalSuccess(res.message || 'Commission rate updated successfully!');
+      setTimeout(() => {
+        setEditingCommissionPartner(null);
+        setCommissionModalSuccess(null);
+        router.refresh();
+      }, 1000);
+    } else {
+      setCommissionModalError(res.error || 'Failed to update commission rate.');
     }
   }
 
@@ -400,7 +457,9 @@ export default function PartnerComplianceManager({
                           )}
                         </td>
                         <td className="px-4 py-3.5 text-xs text-slate-600">
-                          <p className="font-medium text-slate-800">{p.branchName || 'Head Office'}</p>
+                          <p className="font-medium text-slate-800">
+                            {branches.find((b) => b.id === p.branchId)?.name || p.branchName || 'Head Office'}
+                          </p>
                           <p className="text-[11px] text-slate-400 mt-0.5">
                             RM: {p.assignedRmName || 'Not Assigned'}
                           </p>
@@ -408,8 +467,24 @@ export default function PartnerComplianceManager({
                         <td className="px-4 py-3.5 text-xs text-slate-600 font-mono">
                           {p.phone || '—'}
                         </td>
-                        <td className="px-4 py-3.5 text-xs font-bold text-emerald-700">
-                          {p.commissionRate !== undefined ? `${p.commissionRate}%` : 'Standard Bank Slab'}
+                        <td className="px-4 py-3.5 text-xs">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="font-bold text-emerald-700">
+                              {p.commissionRate !== undefined && p.commissionRate !== null
+                                ? `${p.commissionRate}%`
+                                : 'Standard Slab'}
+                            </span>
+                            {(isAdmin || isSupport) && (
+                              <button
+                                type="button"
+                                onClick={() => openCommissionModal(p)}
+                                className="px-1.5 py-0.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-[10px] font-semibold rounded border border-slate-200 transition inline-flex items-center gap-1"
+                                title="Set / Edit Partner Commission Percentage"
+                              >
+                                <span>✏️ Set Rate</span>
+                              </button>
+                            )}
+                          </div>
                         </td>
                       <td className="px-4 py-3.5">
                         {isBlocked ? (
@@ -679,8 +754,61 @@ export default function PartnerComplianceManager({
                 </div>
               </div>
 
-              <div className="p-3 bg-emerald-50/60 border border-emerald-200 rounded-xl text-[11px] text-emerald-800">
-                ⚡ <strong>Instant Setup:</strong> Official Reference Code (e.g. {selectedOnboardRole === 'SUB_DSA' ? 'QFS-SUB-XXXX' : 'QFS-PRT-XXXX'}) is generated immediately. The partner can log in and originate loans right away.
+              <div className="grid sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">
+                    Standard Commission Rate (%) (Optional)
+                  </label>
+                  <div className="relative">
+                    <input
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      max="100"
+                      placeholder="e.g. 1.50 (Leave blank for default)"
+                      value={onboardCommissionRate}
+                      onChange={(e) => setOnboardCommissionRate(e.target.value)}
+                      className="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 font-mono pr-7"
+                    />
+                    <span className="absolute right-3 top-2 text-xs font-bold text-slate-400">%</span>
+                  </div>
+                  <span className="text-[10px] text-slate-400 mt-0.5 block">
+                    Agreed payout percentage for disbursed loan cases.
+                  </span>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">
+                    Onboarding Routing / Approval Status <span className="text-rose-500">*</span>
+                  </label>
+                  <select
+                    value={onboardStatus}
+                    onChange={(e) => setOnboardStatus(e.target.value as 'PENDING_APPROVAL' | 'APPROVED')}
+                    className="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500 font-medium"
+                  >
+                    <option value="PENDING_APPROVAL">
+                      ⏳ Send to Partner Requests / Approval Bucket (Pending Verification)
+                    </option>
+                    <option value="APPROVED">
+                      ⚡ Direct Instant Approval (Active Immediately in Directory)
+                    </option>
+                  </select>
+                  <span className="text-[10px] text-slate-400 mt-0.5 block">
+                    Choose whether this partner lands in review queue or activates directly.
+                  </span>
+                </div>
+              </div>
+
+              <div className={`p-3 rounded-xl text-[11px] border ${
+                onboardStatus === 'PENDING_APPROVAL'
+                  ? 'bg-amber-50/70 border-amber-200 text-amber-900'
+                  : 'bg-emerald-50/60 border-emerald-200 text-emerald-800'
+              }`}>
+                {onboardStatus === 'PENDING_APPROVAL' ? (
+                  <>⏳ <strong>Review Pipeline:</strong> Partner will be registered and placed in the <strong>Partner Onboarding Approvals</strong> bucket. Central Support / Admin can verify KYC and assign an RM before issuing credentials.</>
+                ) : (
+                  <>⚡ <strong>Instant Setup:</strong> Official Reference Code (e.g. {selectedOnboardRole === 'SUB_DSA' ? 'QFS-SUB-XXXX' : 'QFS-PRT-XXXX'}) is generated immediately. The partner can log in and originate loans right away.</>
+                )}
               </div>
 
               <div className="flex justify-end gap-2 pt-2 border-t border-slate-100">
@@ -694,10 +822,133 @@ export default function PartnerComplianceManager({
                 <button
                   type="submit"
                   disabled={onboardLoading}
-                  className="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-lg shadow-sm transition disabled:opacity-50 inline-flex items-center gap-1.5"
+                  className={`px-5 py-2 text-white text-xs font-bold rounded-lg shadow-sm transition disabled:opacity-50 inline-flex items-center gap-1.5 ${
+                    onboardStatus === 'PENDING_APPROVAL'
+                      ? 'bg-amber-600 hover:bg-amber-700'
+                      : 'bg-emerald-600 hover:bg-emerald-700'
+                  }`}
                 >
-                  {onboardLoading ? 'Onboarding…' : '✓ Create & Approve Partner'}
+                  {onboardLoading
+                    ? 'Submitting…'
+                    : onboardStatus === 'PENDING_APPROVAL'
+                    ? '⏳ Register & Send to Approval Bucket'
+                    : '✓ Create & Approve Partner'}
                 </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Set Partner Commission Rate Modal */}
+      {editingCommissionPartner && (
+        <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4">
+            <div className="flex justify-between items-center border-b border-slate-100 pb-3">
+              <div className="flex items-center gap-2.5">
+                <div className="w-10 h-10 rounded-xl bg-emerald-600 text-white flex items-center justify-center text-xl font-bold shadow-xs">
+                  💰
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-slate-900">Configure Commission Rate</h3>
+                  <p className="text-xs text-slate-500">
+                    {editingCommissionPartner.name} • {editingCommissionPartner.partnerCode || 'No Code'}
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setEditingCommissionPartner(null)}
+                className="text-slate-400 hover:text-slate-600 font-bold"
+              >
+                ✕
+              </button>
+            </div>
+
+            {commissionModalError && (
+              <div className="p-3 bg-rose-50 border border-rose-200 text-rose-800 text-xs rounded-lg">
+                {commissionModalError}
+              </div>
+            )}
+
+            {commissionModalSuccess && (
+              <div className="p-3 bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs rounded-lg">
+                {commissionModalSuccess}
+              </div>
+            )}
+
+            <form onSubmit={handleSaveCommissionRate} className="space-y-4">
+              <div className="p-3.5 bg-slate-50 border border-slate-200 rounded-xl text-xs space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-slate-500">Network Role:</span>
+                  <span className="font-bold text-slate-800">
+                    {editingCommissionPartner.role === 'SUB_DSA' ? '🏢 Sub-DSA Master Partner' : '👤 Channel Partner'}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-slate-500">Operating Branch:</span>
+                  <span className="font-semibold text-slate-800">
+                    {branches.find((b) => b.id === editingCommissionPartner.branchId)?.name || editingCommissionPartner.branchName || 'Head Office'}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-slate-500">Current Payout Slab:</span>
+                  <span className="font-bold text-emerald-700">
+                    {editingCommissionPartner.commissionRate !== undefined && editingCommissionPartner.commissionRate !== null
+                      ? `${editingCommissionPartner.commissionRate}%`
+                      : 'Standard Product Slab (Default)'}
+                  </span>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  Agreed Commission Percentage (%)
+                </label>
+                <div className="relative">
+                  <input
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    max="100"
+                    placeholder="e.g. 1.50 (Leave blank to use default bank slab)"
+                    value={editCommissionInput}
+                    onChange={(e) => setEditCommissionInput(e.target.value)}
+                    className="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 font-mono pr-8"
+                  />
+                  <span className="absolute right-3 top-2 text-xs font-bold text-slate-400">%</span>
+                </div>
+                <p className="text-[11px] text-slate-500 mt-1 leading-relaxed">
+                  {editingCommissionPartner.role === 'SUB_DSA'
+                    ? 'Sets the primary commission for direct loans closed by this Sub-DSA. (Override commissions on team downline volume are separately configured in Admin Commission Settings).'
+                    : 'Sets the standard commission percentage earned by this Channel Partner for all closed loan files.'}
+                </p>
+              </div>
+
+              <div className="flex justify-between items-center pt-3 border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={() => setEditCommissionInput('')}
+                  className="text-xs text-slate-500 hover:text-slate-700 underline"
+                >
+                  Reset to Standard Slab
+                </button>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setEditingCommissionPartner(null)}
+                    className="px-4 py-2 border border-slate-200 hover:bg-slate-50 text-slate-600 text-xs font-semibold rounded-lg transition"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={commissionModalLoading}
+                    className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-lg shadow-sm transition disabled:opacity-50 inline-flex items-center gap-1.5"
+                  >
+                    {commissionModalLoading ? 'Saving…' : '✓ Save Commission'}
+                  </button>
+                </div>
               </div>
             </form>
           </div>
