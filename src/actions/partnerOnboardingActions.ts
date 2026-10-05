@@ -15,6 +15,7 @@ import {
 } from '@/lib/repos/usersRepo';
 import { listBranches } from '@/lib/repos/branchesRepo';
 import { createNotification } from '@/lib/repos/workflowRepo';
+import { syncDatabase } from '@/lib/db';
 import type { User } from '@/types/db';
 
 // Ephemeral in-memory OTP store for onboarding verification
@@ -214,6 +215,8 @@ export async function completePartnerOnboardingAction(payload: {
     safeRevalidate('/admin/partners');
     safeRevalidate('/admin/users');
 
+    await syncDatabase();
+
     return {
       ok: true,
       partnerCode: createdPartner.partnerCode,
@@ -316,6 +319,8 @@ export async function directAdminOnboardPartnerAction(payload: {
     safeRevalidate('/admin/users');
     safeRevalidate('/admin/partner-requests');
 
+    await syncDatabase();
+
     return {
       ok: true,
       message: `Partner "${fullName}" onboarded successfully with Partner Code: ${partnerCode}.`,
@@ -372,6 +377,9 @@ export async function approvePartnerAction(payload: {
     safeRevalidate('/admin/partner-requests');
     safeRevalidate('/admin/partners');
     safeRevalidate('/branch/requests');
+
+    await syncDatabase();
+
     return {
       ok: true,
       message: `Partner ${updated.name} approved successfully! Assigned to RM ${assignedRmName}. Certificate ${updated.certificateNumber} issued.`,
@@ -411,6 +419,9 @@ export async function requestPartnerDocsAction(payload: {
 
     safeRevalidate('/admin/partner-requests');
     safeRevalidate('/admin/partners');
+
+    await syncDatabase();
+
     return {
       ok: true,
       message: `Update request sent to ${updated.name}. Status updated to Documents Required.`,
@@ -450,6 +461,9 @@ export async function rejectPartnerAction(payload: {
 
     safeRevalidate('/admin/partner-requests');
     safeRevalidate('/admin/partners');
+
+    await syncDatabase();
+
     return {
       ok: true,
       message: `Partner application for ${updated.name} has been rejected.`,
@@ -482,6 +496,9 @@ export async function resubmitPartnerDocsAction(payload: {
     safeRevalidate('/branch/create-link');
     safeRevalidate('/dashboard');
     safeRevalidate('/admin/partner-requests');
+
+    await syncDatabase();
+
     return {
       ok: true,
       message: 'Updated documents submitted successfully. Central Support will review your application.',

@@ -193,6 +193,8 @@ export default async function DashboardPage() {
             totalApplicationsCount={stats.total}
             partnerName={user.name}
             partnerRole={user.role}
+            userId={user.id}
+            userEmail={user.email}
           />
         </div>
 

@@ -495,6 +495,7 @@ function sanitizeUserBlobs(data) {
 async function pullData(client) {
   await initSchema(client);
 
+  let currentVal = null;
   const rows = await client.query("SELECT value FROM quickfinsure_store WHERE key = 'main_store' LIMIT 1;");
   if (rows && rows.length > 0 && rows[0].value) {
     let val = rows[0].value;
@@ -505,24 +506,72 @@ async function pullData(client) {
       val = val.default;
     }
     if (val && Array.isArray(val.users) && val.users.length > 0) {
-      sanitizeUserBlobs(val);
-      try {
-        const appPortablePath = path.resolve(process.cwd(), 'data/app-portable.json');
-        fs.writeFileSync(appPortablePath, JSON.stringify(val, null, 2), 'utf8');
-      } catch {}
-      return val;
+      currentVal = val;
     }
   }
 
-  // If empty on Neon or has 0 users, populate with initial seed data
   const seed = loadInitialSeedData();
-  sanitizeUserBlobs(seed);
-  await pushData(client, seed);
+  let merged = currentVal ? { ...seed, ...currentVal } : seed;
+  let didMergeNew = !currentVal;
+
+  if (currentVal) {
+    // 1. Merge seed loan applications not yet in Neon (e.g. newly added seed or recovered records like Tejashree Jadhav)
+    if (Array.isArray(seed.loan_applications) && Array.isArray(merged.loan_applications)) {
+      const existingAppIds = new Set(merged.loan_applications.map((a) => a.id));
+      for (const app of seed.loan_applications) {
+        if (!existingAppIds.has(app.id)) {
+          merged.loan_applications.unshift(app);
+          didMergeNew = true;
+        }
+      }
+    }
+
+    // 2. Merge seed status history
+    if (Array.isArray(seed.status_history) && Array.isArray(merged.status_history)) {
+      const existingShIds = new Set(merged.status_history.map((s) => s.id));
+      for (const sh of seed.status_history) {
+        if (!existingShIds.has(sh.id)) {
+          merged.status_history.push(sh);
+          didMergeNew = true;
+        }
+      }
+    }
+
+    // 3. Merge seed documents
+    if (Array.isArray(seed.application_documents) && Array.isArray(merged.application_documents)) {
+      const existingDocIds = new Set(merged.application_documents.map((d) => d.id));
+      for (const doc of seed.application_documents) {
+        if (!existingDocIds.has(doc.id)) {
+          merged.application_documents.push(doc);
+          didMergeNew = true;
+        }
+      }
+    }
+
+    // 4. Merge bank policy cards
+    if (Array.isArray(seed.bank_policy_cards) && Array.isArray(merged.bank_policy_cards)) {
+      const existingCardIds = new Set(merged.bank_policy_cards.map((c) => c.id));
+      for (const card of seed.bank_policy_cards) {
+        if (!existingCardIds.has(card.id)) {
+          merged.bank_policy_cards.push(card);
+          didMergeNew = true;
+        }
+      }
+    }
+  }
+
+  sanitizeUserBlobs(merged);
+
+  if (didMergeNew) {
+    await pushData(client, merged);
+  }
+
   try {
     const appPortablePath = path.resolve(process.cwd(), 'data/app-portable.json');
-    fs.writeFileSync(appPortablePath, JSON.stringify(seed, null, 2), 'utf8');
+    fs.writeFileSync(appPortablePath, JSON.stringify(merged, null, 2), 'utf8');
   } catch {}
-  return seed;
+
+  return merged;
 }
 
 async function pushData(client, data) {

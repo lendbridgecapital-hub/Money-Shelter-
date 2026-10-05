@@ -10,6 +10,7 @@ import * as banksRepo from '@/lib/repos/banksRepo';
 import * as commissionsRepo from '@/lib/repos/commissionsRepo';
 import * as usersRepo from '@/lib/repos/usersRepo';
 import * as documentsRepo from '@/lib/repos/documentsRepo';
+import { syncDatabase } from '@/lib/db';
 import { saveUploadedFile, MAX_FILE_SIZE } from '@/lib/uploads';
 import type { ApplicationStatus, Bank, Role } from '@/types/db';
 import type { ActionResult } from '@/actions/settingsActions';
@@ -80,6 +81,9 @@ export async function sendToBankAction(
     revalidatePath('/dashboard');
     revalidatePath('/branch/requests');
     revalidatePath(`/branch/requests/${applicationId}`);
+
+    await syncDatabase();
+
     return { ok: true, message: `Successfully forwarded loan file to ${bank.name}.` };
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : 'Failed to send details to bank.';
@@ -192,6 +196,9 @@ export async function submitRemarkAction(
     revalidatePath('/dashboard');
     revalidatePath('/branch/requests');
     revalidatePath(`/branch/requests/${applicationId}`);
+
+    await syncDatabase();
+
     return { ok: true, message: 'Operational remark recorded and notifications dispatched.' };
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : 'Failed to submit remark.';
@@ -325,6 +332,9 @@ export async function uploadRequiredDocumentFileAction(
     if (application.token) {
       revalidatePath(`/apply/${application.token}`);
     }
+
+    await syncDatabase();
+
     return {
       ok: true,
       message: `Document "${docLabel}" uploaded successfully and submitted for review.`,
@@ -405,6 +415,9 @@ export async function partnerUploadRequiredDocAction(
     revalidatePath('/dashboard');
     revalidatePath('/branch/requests');
     revalidatePath(`/branch/requests/${applicationId}`);
+
+    await syncDatabase();
+
     return { ok: true, message: 'Document uploaded successfully.' };
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : 'Failed to upload document.';
@@ -500,6 +513,9 @@ export async function approveCaseAction(
     if (application.token) {
       revalidatePath(`/offer/${application.token}`);
     }
+
+    await syncDatabase();
+
     return { ok: true, message: 'Case approved. Sanction offer link generated for customer acceptance.' };
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : 'Failed to approve case.';
@@ -559,6 +575,9 @@ export async function customerAcceptOfferAction(
     revalidatePath('/branch/requests');
     revalidatePath(`/branch/requests/${updated.id}`);
     revalidatePath(`/offer/${token}`);
+
+    await syncDatabase();
+
     return { ok: true, message: 'Offer accepted successfully!', acceptanceRef };
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : 'Failed to accept loan offer.';
@@ -651,6 +670,9 @@ export async function disburseCaseAction(
     revalidatePath('/dashboard');
     revalidatePath('/branch/requests');
     revalidatePath(`/branch/requests/${applicationId}`);
+
+    await syncDatabase();
+
     return { ok: true, message: `Disbursement recorded successfully. Partner commission ₹${commissionAmount.toLocaleString('en-IN')} logged.` };
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : 'Failed to record disbursement.';
@@ -677,6 +699,7 @@ export async function blockPartnerAction(
 
     usersRepo.setUserBlocked(partnerId, isBlocked, reason);
     revalidatePath('/admin/partners');
+    await syncDatabase();
     return {
       ok: true,
       message: isBlocked ? `Partner ${partner.name} has been blocked.` : `Partner ${partner.name} has been unblocked.`,
@@ -730,6 +753,7 @@ export async function recordClawbackAction(
 
     revalidatePath('/admin/partners');
     revalidatePath('/admin/commissions');
+    await syncDatabase();
     return { ok: true, message: `Clawback of ₹${amount.toLocaleString('en-IN')} recorded against ${partner.name}.` };
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : 'Failed to record clawback.';
@@ -771,6 +795,7 @@ export async function saveBankAction(data: {
     }
 
     revalidatePath('/admin/banks');
+    await syncDatabase();
     return { ok: true, message: 'Bank details saved.' };
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : 'Failed to save bank.';
@@ -787,6 +812,7 @@ export async function deleteBankAction(id: string): Promise<ActionResult> {
 
     banksRepo.deleteBank(id);
     revalidatePath('/admin/banks');
+    await syncDatabase();
     return { ok: true, message: 'Bank removed.' };
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : 'Failed to delete bank.';

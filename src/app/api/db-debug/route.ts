@@ -9,9 +9,19 @@ export const dynamic = 'force-dynamic';
 export async function GET(req: NextRequest) {
   const url = new URL(req.url);
   const forceSeed = url.searchParams.get('seed') === 'true';
+  const forceSync = url.searchParams.get('sync') === 'true';
 
   let neonDirectWrite = false;
   let neonError: string | null = null;
+
+  if (forceSync && typeof (db as any).flush === 'function') {
+    try {
+      await (db as any).flush();
+      neonDirectWrite = true;
+    } catch (err) {
+      neonError = (err as Error).message;
+    }
+  }
 
   const rawSeed: any = initialSeedData;
   const seedData = (rawSeed?.default && (rawSeed.default.users || rawSeed.default.tenants)) ? rawSeed.default : rawSeed;

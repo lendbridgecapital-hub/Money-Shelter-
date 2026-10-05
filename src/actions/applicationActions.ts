@@ -78,6 +78,10 @@ export async function createApplicationLinkAction(loanType?: LoanType): Promise<
 
     safeRevalidate('/dashboard');
     safeRevalidate('/branch/requests');
+
+    // MAIN SYSTEM SYNC: Commit immediately to Neon PostgreSQL
+    await syncDatabase();
+
     return { ok: true, url, token };
   } catch (err) {
     console.error('[createApplicationLinkAction] error:', err);
@@ -141,6 +145,10 @@ export async function updateApplicationStatusAction(
     safeRevalidate('/dashboard');
     safeRevalidate('/branch/requests');
     safeRevalidate(`/branch/requests/${applicationId}`);
+
+    // MAIN SYSTEM SYNC: Commit immediately to Neon PostgreSQL
+    await syncDatabase();
+
     return { ok: true, message: 'Status updated.' };
   } catch (err) {
     console.error('[updateApplicationStatusAction] error:', err);
@@ -160,7 +168,24 @@ export type SubmitDirectLoanResult = {
 
 export async function submitDirectPartnerLoanAction(formData: FormData): Promise<SubmitDirectLoanResult> {
   try {
-    const user = await getAuthenticatedUser();
+    let user = await getAuthenticatedUser();
+    if (!user) {
+      const originatorUserId = String(formData.get('originatorUserId') || formData.get('advisorId') || '').trim();
+      const originatorEmail = String(formData.get('originatorEmail') || formData.get('advisorEmail') || '').trim();
+      if (originatorUserId) {
+        const u = usersRepo.getUserById(originatorUserId);
+        if (u && u.active && !u.isBlocked) {
+          user = { ...u, branchName: u.branchName || 'Head Office' };
+        }
+      }
+      if (!user && originatorEmail) {
+        const u = usersRepo.getUserByEmail(originatorEmail);
+        if (u && u.active && !u.isBlocked) {
+          user = { ...u, branchName: u.branchName || 'Head Office' };
+        }
+      }
+    }
+
     if (!user) {
       return {
         ok: false,

@@ -362,6 +362,30 @@
   ],
   "loan_applications": [
     {
+      "id": "app_tejashree_jadhav_2026",
+      "tenant_id": "default",
+      "token": "app_token_tejashree_jadhav_2026",
+      "branch_id": "br_c95492722e36abe1",
+      "created_by_id": "usr_c465ccc6caaec25c",
+      "channel_partner_id": "usr_c465ccc6caaec25c",
+      "channel_partner_name": "Channel Partner (Apex Wealth)",
+      "relationship_manager_id": "usr_300b47def112f815",
+      "relationship_manager_name": "Relationship Manager (Pune)",
+      "status": "DOCUMENTS_IN",
+      "created_at": "2026-10-05T08:30:00.000Z",
+      "updated_at": "2026-10-05T08:30:00.000Z",
+      "submitted_at": "2026-10-05T08:30:00.000Z",
+      "full_name": "Tejashree Jadhav",
+      "mobile": "9822154321",
+      "email": "tejashree.jadhav@gmail.com",
+      "loan_type": "PERSONAL_LOAN",
+      "loan_amount": 500000,
+      "monthly_income": 65000,
+      "existing_emi": 12000,
+      "pan_number": "ABCDE1234F",
+      "aadhaar_number": "987654321012"
+    },
+    {
       "id": "app_cf9c8a12a2f70de2",
       "tenant_id": "default",
       "token": "app_a12a6dd36c600b2da494b27b",
@@ -1288,6 +1312,28 @@
       "file_size": 39731,
       "mime_type": "application/pdf",
       "created_at": "2026-09-28T16:36:21.126Z"
+    },
+    {
+      "id": "doc_tejashree_pan",
+      "application_id": "app_tejashree_jadhav_2026",
+      "category": "PAN_CARD",
+      "label": "PAN Card (ABCDE1234F)",
+      "file_name": "pan_card.png",
+      "file_url": "/uploads/partners/1790971777138_wsrnzn_pan_document_url.png",
+      "file_size": 245000,
+      "mime_type": "image/png",
+      "created_at": "2026-10-05T08:30:00.000Z"
+    },
+    {
+      "id": "doc_tejashree_aadhaar",
+      "application_id": "app_tejashree_jadhav_2026",
+      "category": "AADHAAR_CARD",
+      "label": "Aadhaar Card (...1012)",
+      "file_name": "aadhaar_card.png",
+      "file_url": "/uploads/partners/1790971777168_rr0mfp_aadhaar_document_url.png",
+      "file_size": 312000,
+      "mime_type": "image/png",
+      "created_at": "2026-10-05T08:30:00.000Z"
     }
   ],
   "status_history": [
@@ -1746,6 +1792,14 @@
       "note": "Loan disbursed: ₹30,00,000. Calculated Partner Commission: ₹37,500 (1.25%). ",
       "changed_by_id": "usr_60c53afcf5a771b7",
       "changed_at": "2026-09-28T17:09:09.397Z"
+    },
+    {
+      "id": "sh_tejashree_jadhav_docsin",
+      "application_id": "app_tejashree_jadhav_2026",
+      "status": "DOCUMENTS_IN",
+      "note": "Applicant KYC & Loan Requirement submitted by Channel Partner. Staged in Documents In bucket for Operations review.",
+      "changed_by_id": "usr_c465ccc6caaec25c",
+      "changed_at": "2026-10-05T08:30:00.000Z"
     }
   ],
   "banks": [

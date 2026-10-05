@@ -207,7 +207,7 @@ function createPortableStorage(storageFilePath: string): DatabaseAdapter {
 
   let activeSyncPromise: Promise<void> | null = null;
   let syncTimeout: NodeJS.Timeout | null = null;
-  let pendingSyncData: StorageData | null = null;
+  let isDirty = false;
   let isSyncing = false;
 
   function sanitizeBlobs(data: any) {
@@ -222,76 +222,119 @@ function createPortableStorage(storageFilePath: string): DatabaseAdapter {
     }
   }
 
-  function performNeonSync(): Promise<void> {
+  async function performNeonSync(immediate = false): Promise<void> {
     const dbUrl = getDbUrl();
-    if (!dbUrl || (!pendingSyncData && !isSyncing)) return Promise.resolve();
-    if (isSyncing) {
-      if (!syncTimeout) {
-        syncTimeout = setTimeout(() => {
-          syncTimeout = null;
-          performNeonSync();
-        }, 600);
-      }
+    if (!dbUrl) return Promise.resolve();
+
+    if (!isDirty && !immediate) {
       return activeSyncPromise || Promise.resolve();
     }
 
+    if (isSyncing) {
+      if (activeSyncPromise) {
+        try {
+          await activeSyncPromise;
+        } catch {}
+      }
+      if (!isDirty && !immediate) {
+        return Promise.resolve();
+      }
+    }
+
     isSyncing = true;
-    const currentPayload = pendingSyncData || cachedData;
-    pendingSyncData = null;
+    isDirty = false;
+    const currentPayload = { ...cachedData };
 
     activeSyncPromise = (async () => {
       try {
-        const { neon } = require('@neondatabase/serverless');
-        const sql = neon(dbUrl);
         let payload = currentPayload;
         if (payload && (payload as any).default) {
           payload = (payload as any).default;
         }
         sanitizeBlobs(payload);
         const jsonStr = JSON.stringify(payload);
-        const queryFn = sql.query ? sql.query.bind(sql) : sql;
-        await queryFn(`
-          CREATE TABLE IF NOT EXISTS quickfinsure_store (
-            key TEXT PRIMARY KEY,
-            value JSONB NOT NULL,
-            updated_at TIMESTAMPTZ DEFAULT NOW()
+
+        let querySuccess = false;
+
+        // 1. Try @neondatabase/serverless first
+        try {
+          const { neon } = require('@neondatabase/serverless');
+          const sql = neon(dbUrl);
+          const queryFn = sql.query ? sql.query.bind(sql) : sql;
+          await queryFn(`
+            CREATE TABLE IF NOT EXISTS quickfinsure_store (
+              key TEXT PRIMARY KEY,
+              value JSONB NOT NULL,
+              updated_at TIMESTAMPTZ DEFAULT NOW()
+            );
+          `);
+          await queryFn(
+            `INSERT INTO quickfinsure_store (key, value, updated_at) 
+             VALUES ('main_store', $1::jsonb, NOW()) 
+             ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, updated_at = NOW();`,
+            [jsonStr]
           );
-        `);
-        await queryFn(
-          `INSERT INTO quickfinsure_store (key, value, updated_at) 
-           VALUES ('main_store', $1::jsonb, NOW()) 
-           ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, updated_at = NOW();`,
-          [jsonStr]
-        );
+          querySuccess = true;
+        } catch (neonErr) {
+          console.warn('[db] neon-serverless push failed, attempting pg pool fallback:', (neonErr as Error).message);
+        }
+
+        // 2. Fallback to standard pg client
+        if (!querySuccess) {
+          const { Pool } = require('pg');
+          const pool = new Pool({
+            connectionString: dbUrl,
+            ssl: { rejectUnauthorized: false },
+          });
+          try {
+            await pool.query(`
+              CREATE TABLE IF NOT EXISTS quickfinsure_store (
+                key TEXT PRIMARY KEY,
+                value JSONB NOT NULL,
+                updated_at TIMESTAMPTZ DEFAULT NOW()
+              );
+            `);
+            await pool.query(
+              `INSERT INTO quickfinsure_store (key, value, updated_at) 
+               VALUES ('main_store', $1::jsonb, NOW()) 
+               ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, updated_at = NOW();`,
+              [jsonStr]
+            );
+            querySuccess = true;
+          } finally {
+            await pool.end().catch(() => {});
+          }
+        }
+
+        if (querySuccess) {
+          console.log(
+            `[db] ✓ Persisted state directly to Neon PostgreSQL: ${payload.loan_applications?.length || 0} applications, ${payload.users?.length || 0} users at ${new Date().toISOString()}`
+          );
+        }
       } catch (err) {
         console.error('[db] Error pushing updates to Neon PostgreSQL:', (err as Error).message);
+        isDirty = true; // Retry on subsequent mutations
       } finally {
         isSyncing = false;
         activeSyncPromise = null;
-        if (pendingSyncData && !syncTimeout) {
-          syncTimeout = setTimeout(() => {
-            syncTimeout = null;
-            performNeonSync();
-          }, 600);
-        }
       }
     })();
 
     return activeSyncPromise;
   }
 
-  function syncWithNeon(data: StorageData): Promise<void> {
+  function syncWithNeon(): Promise<void> {
     const dbUrl = getDbUrl();
     if (!dbUrl) return Promise.resolve();
 
-    pendingSyncData = data;
+    isDirty = true;
     if (syncTimeout) {
       clearTimeout(syncTimeout);
     }
     syncTimeout = setTimeout(() => {
       syncTimeout = null;
-      performNeonSync();
-    }, 600);
+      performNeonSync(false);
+    }, 200);
     return Promise.resolve();
   }
 
@@ -365,7 +408,7 @@ function createPortableStorage(storageFilePath: string): DatabaseAdapter {
     } catch {
       // Local cache write might fail on read-only environments; Neon is the primary store
     }
-    syncWithNeon(data);
+    syncWithNeon();
   }
 
   let memoryData = loadData();
@@ -458,7 +501,7 @@ function createPortableStorage(storageFilePath: string): DatabaseAdapter {
         clearTimeout(syncTimeout);
         syncTimeout = null;
       }
-      return performNeonSync();
+      return performNeonSync(true);
     },
     prepare(sql: string): Statement {
       const cleanSql = sql.replace(/\s+/g, ' ').trim();

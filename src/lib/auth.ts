@@ -147,9 +147,37 @@ export async function auth() {
   try {
     const { cookies } = await import('next/headers');
     const cookieStore = cookies();
-    const sessionCookie =
+    const allCookies = cookieStore.getAll();
+
+    let sessionCookie =
       cookieStore.get('__Secure-next-auth.session-token')?.value ||
-      cookieStore.get('next-auth.session-token')?.value;
+      cookieStore.get('next-auth.session-token')?.value ||
+      cookieStore.get('authjs.session-token')?.value;
+
+    if (!sessionCookie) {
+      // Reassemble chunked cookies (__Secure-next-auth.session-token.0, .1, etc.)
+      const secureChunks = allCookies
+        .filter((c) => c.name.startsWith('__Secure-next-auth.session-token.'))
+        .sort((a, b) => {
+          const ai = parseInt(a.name.split('.').pop() || '0', 10);
+          const bi = parseInt(b.name.split('.').pop() || '0', 10);
+          return ai - bi;
+        });
+      if (secureChunks.length > 0) {
+        sessionCookie = secureChunks.map((c) => c.value).join('');
+      } else {
+        const standardChunks = allCookies
+          .filter((c) => c.name.startsWith('next-auth.session-token.'))
+          .sort((a, b) => {
+            const ai = parseInt(a.name.split('.').pop() || '0', 10);
+            const bi = parseInt(b.name.split('.').pop() || '0', 10);
+            return ai - bi;
+          });
+        if (standardChunks.length > 0) {
+          sessionCookie = standardChunks.map((c) => c.value).join('');
+        }
+      }
+    }
 
     if (sessionCookie) {
       const { decode } = await import('next-auth/jwt');

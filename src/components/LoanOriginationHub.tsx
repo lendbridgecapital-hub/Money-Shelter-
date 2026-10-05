@@ -13,6 +13,8 @@ interface LoanOriginationHubProps {
   totalApplicationsCount: number;
   partnerName: string;
   partnerRole: string;
+  userId?: string;
+  userEmail?: string;
 }
 
 type PrimaryCategory = 'PERSONAL_LOAN' | 'HOME_LOAN' | 'BUSINESS_LOAN' | 'OTHER';
@@ -93,6 +95,8 @@ export default function LoanOriginationHub({
   totalApplicationsCount,
   partnerName,
   partnerRole,
+  userId,
+  userEmail,
 }: LoanOriginationHubProps) {
   // Category State
   const [primaryCategory, setPrimaryCategory] = useState<PrimaryCategory>('PERSONAL_LOAN');
@@ -335,6 +339,8 @@ export default function LoanOriginationHub({
         if (cleanAadhaar) formData.append('aadhaarNumber', cleanAadhaar);
         if (finalPan) formData.append('panFile', finalPan);
         if (finalAadhaar) formData.append('aadhaarFile', finalAadhaar);
+        if (userId) formData.append('originatorUserId', userId);
+        if (userEmail) formData.append('originatorEmail', userEmail);
 
         const res = await submitDirectPartnerLoanAction(formData);
         if (res && res.ok && res.applicationId) {

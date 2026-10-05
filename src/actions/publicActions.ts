@@ -12,6 +12,7 @@ import { revalidatePath } from 'next/cache';
 import { generateApplicationToken } from '@/lib/tokens';
 import * as usersRepo from '@/lib/repos/usersRepo';
 import * as workflowRepo from '@/lib/repos/workflowRepo';
+import { syncDatabase } from '@/lib/db';
 import { DOCUMENT_GROUPS } from '@/lib/documentChecklist';
 import { LOAN_TYPE_LABELS } from '@/lib/format';
 import type { LoanType } from '@/types/db';
@@ -149,6 +150,9 @@ export async function submitCustomerApplication(token: string, formData: FormDat
   revalidatePath('/branch/requests');
   revalidatePath(`/branch/requests/${application.id}`);
 
+  // MAIN SYSTEM SYNC: Flush customer submission and docs directly to Neon PostgreSQL
+  await syncDatabase();
+
   redirect(`/apply/${token}/success`);
 }
 
@@ -193,6 +197,9 @@ export async function submitDigitalCardInquiryAction(formData: FormData): Promis
 
     revalidatePath('/branch/requests');
     revalidatePath('/dashboard');
+
+    // MAIN SYSTEM SYNC: Flush inquiry lead directly to Neon PostgreSQL
+    await syncDatabase();
 
     return {
       ok: true,
@@ -292,6 +299,9 @@ export async function uploadCustomerRequiredDocumentAction(
     revalidatePath('/branch/requests');
     revalidatePath(`/branch/requests/${application.id}`);
     revalidatePath(`/apply/${token}`);
+
+    // MAIN SYSTEM SYNC: Flush uploaded document records directly to Neon PostgreSQL
+    await syncDatabase();
 
     return {
       ok: true,
