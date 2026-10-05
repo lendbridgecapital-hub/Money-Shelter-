@@ -1,10 +1,12 @@
 import Link from 'next/link';
 import { getApplicationByToken } from '@/lib/repos/applicationsRepo';
 import { getBranchById } from '@/lib/repos/branchesRepo';
+import { getUserById } from '@/lib/repos/usersRepo';
 import { getCompanySettings } from '@/lib/settings';
 import { listRequiredDocuments } from '@/lib/repos/workflowRepo';
 import CustomerApplicationForm from '@/components/CustomerApplicationForm';
 import CustomerRequiredDocsUploader from '@/components/CustomerRequiredDocsUploader';
+import ExitFormButton from '@/components/ExitFormButton';
 import type { LoanType } from '@/types/db';
 
 export default async function CustomerApplyPage({
@@ -53,13 +55,20 @@ export default async function CustomerApplyPage({
             )}
           </div>
 
-          <Link
-            href="/dashboard"
-            className="inline-flex items-center justify-center w-full py-3 px-4 rounded-xl text-xs font-semibold text-white transition shadow-sm hover:opacity-95"
-            style={{ backgroundColor: defaultSettings.primaryColor }}
-          >
-            Go to {defaultSettings.companyName} Home Dashboard
-          </Link>
+          <div className="space-y-3">
+            <p className="text-xs text-slate-600 font-semibold">
+              Please contact your financial advisor to receive a valid application link.
+            </p>
+            {defaultSettings.supportPhone && (
+              <a
+                href={`tel:${defaultSettings.supportPhone}`}
+                className="inline-flex items-center justify-center w-full py-3 px-4 rounded-xl text-xs font-bold text-white transition shadow-sm bg-emerald-600 hover:bg-emerald-700"
+              >
+                📞 Call Support: {defaultSettings.supportPhone}
+              </a>
+            )}
+            <ExitFormButton label="Exit Form / Close Tab ✕" variant="outline" />
+          </div>
         </div>
       </div>
     );
@@ -73,23 +82,13 @@ export default async function CustomerApplyPage({
     const requiredDocs = listRequiredDocuments(application.id);
     return (
       <div className="min-h-screen bg-slate-50/70 pb-16">
-        {/* Safe Area Aware Header with Home & Exit Navigation */}
+        {/* Safe Area Aware Header with Clean Exit Navigation */}
         <header
           className="bg-white border-b border-slate-200/80 sticky top-0 z-30 shadow-xs"
           style={{ paddingTop: 'max(env(safe-area-inset-top, 0px), 24px)' }}
         >
           <div className="max-w-4xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <Link
-                href="/dashboard"
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white text-xs font-bold transition shadow-xs"
-                title="Return to Home Dashboard"
-              >
-                <svg className="w-3.5 h-3.5 stroke-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.4} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-                </svg>
-                <span>Home</span>
-              </Link>
               {settings.logoUrl ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={settings.logoUrl} alt={settings.companyName} className="h-8 max-w-[130px] object-contain" />
@@ -107,12 +106,7 @@ export default async function CustomerApplyPage({
             </div>
 
             <div className="flex items-center gap-2">
-              <Link
-                href={`/branch/requests/${application.id}`}
-                className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold active:scale-95 transition border border-slate-200"
-              >
-                <span>Exit Preview ✕</span>
-              </Link>
+              <ExitFormButton label="Exit Form ✕" variant="header" />
             </div>
           </div>
         </header>
@@ -134,8 +128,17 @@ export default async function CustomerApplyPage({
     );
   }
 
-  // If already submitted and not DOCUMENTS_REQUIRED, inform gracefully with Home button
+  // If already submitted and not DOCUMENTS_REQUIRED, inform gracefully
   if (application.status !== 'LINK_SHARED') {
+    const advisor = application.channelPartnerId
+      ? getUserById(application.channelPartnerId)
+      : application.createdById
+      ? getUserById(application.createdById)
+      : undefined;
+    const advisorName = advisor?.name || application.channelPartnerName || application.createdByName || 'Your Financial Advisor';
+    const advisorPhone = advisor?.phone || branch?.phone || settings.supportPhone;
+    const cleanPhone = advisorPhone ? advisorPhone.replace(/[^0-9]/g, '').slice(-10) : '';
+
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center p-6">
         <div className="max-w-md w-full bg-white border border-slate-200 rounded-3xl p-8 text-center shadow-lg">
@@ -148,41 +151,70 @@ export default async function CustomerApplyPage({
           <h1 className="text-xl font-bold text-slate-900 mb-2">Application Already Submitted</h1>
           <p className="text-xs text-slate-500 leading-relaxed mb-6">
             Your application and KYC documents have already been received and are currently under verification with your designated advisor{' '}
-            <strong>{application.channelPartnerName || application.createdByName || 'Loan Consultant'}</strong>. This single-use link has expired.
+            <strong>{advisorName}</strong>.
           </p>
 
-          <div className="bg-slate-50 border border-slate-100 rounded-xl p-4 text-xs text-slate-600 text-left space-y-1.5 mb-6">
+          <div className="bg-slate-50 border border-slate-100 rounded-xl p-4 text-xs text-slate-600 text-left space-y-1.5 mb-5">
             <p>
               <strong>Applicant:</strong> {application.fullName || 'Registered Applicant'}
             </p>
             <p>
-              <strong>Assigned Advisor:</strong> {application.channelPartnerName || application.createdByName || 'Direct Desk'}
+              <strong>Assigned Advisor:</strong> {advisorName}
             </p>
+            {advisor?.firmName && (
+              <p>
+                <strong>Firm / Desk:</strong> {advisor.firmName}
+              </p>
+            )}
             {branch?.name && (
               <p>
                 <strong>Branch:</strong> {branch.name}
               </p>
             )}
-            {branch?.phone && (
+            {advisorPhone && (
               <p>
-                <strong>Contact:</strong> {branch.phone}
+                <strong>Contact Phone:</strong> {advisorPhone}
               </p>
             )}
-            {branch?.email && (
+            {advisor?.email && (
               <p>
-                <strong>Email:</strong> {branch.email}
+                <strong>Email:</strong> {advisor.email}
               </p>
             )}
           </div>
 
-          <div className="space-y-2">
-            <Link
-              href="/dashboard"
-              className="inline-flex items-center justify-center w-full py-3 px-4 rounded-xl text-xs font-bold text-white transition shadow-sm bg-emerald-600 hover:bg-emerald-700"
-            >
-              Return to Home Dashboard
-            </Link>
+          {/* Please Call Your Financial Advisor Box */}
+          <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-4 text-left space-y-2.5 mb-5">
+            <div className="flex items-center gap-1.5 text-xs font-bold text-emerald-950">
+              <span>📞</span>
+              <span>Please call your financial advisor</span>
+            </div>
+            <p className="text-xs text-slate-600 leading-relaxed">
+              Please contact your advisor directly to track your document verification and loan sanction status.
+            </p>
+            {cleanPhone && (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
+                <a
+                  href={`tel:+91${cleanPhone}`}
+                  className="inline-flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-xl text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 active:scale-95 transition shadow-xs"
+                >
+                  <span>📞 Call: +91 {cleanPhone}</span>
+                </a>
+                <a
+                  href={`https://wa.me/91${cleanPhone}?text=${encodeURIComponent(
+                    `Hello ${advisorName}, I have submitted my loan application (Ref: ${application.token}). Please share the status.`
+                  )}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-xl text-xs font-bold text-white bg-teal-600 hover:bg-teal-700 active:scale-95 transition shadow-xs"
+                >
+                  <span>💬 WhatsApp</span>
+                </a>
+              </div>
+            )}
           </div>
+
+          <ExitFormButton label="Exit Form / Close Tab ✕" variant="outline" />
         </div>
       </div>
     );
@@ -190,25 +222,13 @@ export default async function CustomerApplyPage({
 
   return (
     <div className="min-h-screen bg-slate-50/70 pb-16">
-      {/* Brand Header with Safe Area and Home Navigation */}
+      {/* Brand Header with Safe Area and Clean Exit Navigation */}
       <header
         className="bg-white border-b border-slate-200/80 sticky top-0 z-30 shadow-xs"
         style={{ paddingTop: 'max(env(safe-area-inset-top, 0px), 24px)' }}
       >
         <div className="max-w-4xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            {/* Direct Home Navigation for Previews */}
-            <Link
-              href="/dashboard"
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white text-xs font-bold transition shadow-xs"
-              title="Return to Home Dashboard"
-            >
-              <svg className="w-3.5 h-3.5 stroke-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.4} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-              </svg>
-              <span>Home</span>
-            </Link>
-
             {settings.logoUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img src={settings.logoUrl} alt={settings.companyName} className="h-8 max-w-[130px] object-contain" />
@@ -220,7 +240,7 @@ export default async function CustomerApplyPage({
                 {settings.companyName.charAt(0)}
               </div>
             )}
-            <div className="hidden sm:block">
+            <div>
               <h1 className="font-bold text-slate-900 text-sm sm:text-base leading-tight">
                 {settings.companyName}
               </h1>
@@ -231,12 +251,7 @@ export default async function CustomerApplyPage({
           </div>
 
           <div className="flex items-center gap-2">
-            <Link
-              href="/dashboard"
-              className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold active:scale-95 transition border border-slate-200"
-            >
-              <span>Exit Preview ✕</span>
-            </Link>
+            <ExitFormButton label="Exit Form ✕" variant="header" />
             <div className="hidden md:flex items-center gap-2 text-xs font-semibold text-emerald-700 bg-emerald-50 px-3 py-1.5 rounded-full border border-emerald-200">
               <span>🔒</span>
               <span>256-Bit SSL Encrypted</span>
