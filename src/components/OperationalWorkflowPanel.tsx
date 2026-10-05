@@ -500,8 +500,8 @@ export default function OperationalWorkflowPanel({
             <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3">Flowchart Action Controls</h4>
 
             <div className="flex flex-wrap gap-2.5">
-              {/* Operations & Admin: Loan Eligibility Match */}
-              {isOpsOrAdmin && (
+              {/* Operations & Admin: Loan Eligibility Match (Only in Documents In bucket) */}
+              {isOpsOrAdmin && application.status === 'DOCUMENTS_IN' && (
                 <button
                   type="button"
                   onClick={() => setShowEligibilityModal(true)}

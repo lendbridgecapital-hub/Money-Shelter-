@@ -264,19 +264,21 @@ export default function RequestTable({ applications, showBranchColumn = false }:
                 </div>
 
                 <div className="flex items-center gap-2 shrink-0">
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      setEligibilityApp(app);
-                    }}
-                    className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 font-bold text-xs shadow-2xs active:scale-95 transition"
-                    title="Find Eligible Banks & Rates"
-                  >
-                    <span>⚡</span>
-                    <span>Match</span>
-                  </button>
+                  {app.status === 'DOCUMENTS_IN' && (
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        setEligibilityApp(app);
+                      }}
+                      className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 font-bold text-xs shadow-2xs active:scale-95 transition"
+                      title="Find Eligible Banks & Rates"
+                    >
+                      <span>⚡</span>
+                      <span>Match</span>
+                    </button>
+                  )}
                   <span className="font-bold text-emerald-700 text-xs flex items-center gap-0.5">
                     Case File →
                   </span>
@@ -355,15 +357,17 @@ export default function RequestTable({ applications, showBranchColumn = false }:
                     {formatDate(app.createdAt)}
                   </td>
                   <td className="px-4 py-3.5 text-right whitespace-nowrap">
-                    <button
-                      type="button"
-                      onClick={() => setEligibilityApp(app)}
-                      className="inline-flex items-center gap-1 text-xs font-bold text-indigo-700 hover:text-indigo-800 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200/90 px-2.5 py-1.5 rounded-lg transition-colors mr-2 shadow-2xs active:scale-95"
-                      title="Run Loan Eligibility Match & Find Rates"
-                    >
-                      <span>⚡</span>
-                      <span>Eligibility Match</span>
-                    </button>
+                    {app.status === 'DOCUMENTS_IN' && (
+                      <button
+                        type="button"
+                        onClick={() => setEligibilityApp(app)}
+                        className="inline-flex items-center gap-1 text-xs font-bold text-indigo-700 hover:text-indigo-800 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200/90 px-2.5 py-1.5 rounded-lg transition-colors mr-2 shadow-2xs active:scale-95"
+                        title="Run Loan Eligibility Match & Find Rates"
+                      >
+                        <span>⚡</span>
+                        <span>Eligibility Match</span>
+                      </button>
+                    )}
                     <Link
                       href={`/branch/requests/${app.id}`}
                       className="inline-flex items-center text-xs font-semibold text-emerald-700 hover:text-emerald-800 bg-emerald-50 hover:bg-emerald-100 px-3 py-1.5 rounded-md transition-colors"

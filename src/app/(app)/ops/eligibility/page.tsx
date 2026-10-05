@@ -35,7 +35,7 @@ export default async function OpsEligibilityPage() {
   try {
     const rawApps = listApplicationsByRole(user) || [];
     activeApplicationsList = (rawApps || [])
-      .filter((a) => a && (a.status === 'DOCUMENTS_IN' || a.status === 'LINK_SHARED' || a.status === 'DOCUMENTS_REQUIRED'))
+      .filter((a) => a && a.status === 'DOCUMENTS_IN')
       .map((a) => ({
         id: String(a?.id || ''),
         fullName: String(a?.fullName || 'Unnamed Applicant'),
