@@ -8,6 +8,11 @@ export function listBankPolicyCards(
   loanType?: LoanType,
   onlyActive = false
 ): BankPolicyCard[] {
+  // Ensure personal loan policy cards support up to 7 years (84 months)
+  try {
+    db.prepare("UPDATE bank_policy_cards SET max_tenure_months = 84 WHERE loan_type = 'PERSONAL_LOAN' AND max_tenure_months = 60").run();
+  } catch {}
+
   let rows: Record<string, unknown>[] = [];
   try {
     if (loanType) {
@@ -455,14 +460,14 @@ export function seedDefaultBankPolicyCards(tenantId = 'default'): void {
       maxFoirPct: 50,
       allowedIncomeTypes: ['SALARIED'] as EmploymentType[],
       minTenureMonths: 12,
-      maxTenureMonths: 60,
+      maxTenureMonths: 84,
       minLoanAmount: 50000,
       maxLoanAmount: 4000000,
       baseInterestRate: 10.75,
       processingFeePct: 1.50,
       tatDays: 1,
       priorityWeight: 8,
-      specialFeatures: ['Disbursal within 24 Hours', 'Completely Paperless E-KYC', 'Flexible 12-60m Tenure'],
+      specialFeatures: ['Disbursal within 24 Hours', 'Completely Paperless E-KYC', 'Flexible 12-84m Tenure (Up to 7 Yrs)'],
       rateMatrix: [
         { cibilMin: 780, cibilMax: 900, interestRate: 10.50, maxFoirPct: 55, description: 'Top Corporate Tier' },
         { cibilMin: 740, cibilMax: 779, interestRate: 11.25, maxFoirPct: 50, description: 'Standard Salaried Tier' },
@@ -488,14 +493,14 @@ export function seedDefaultBankPolicyCards(tenantId = 'default'): void {
       maxFoirPct: 55,
       allowedIncomeTypes: ['SALARIED', 'SELF_EMPLOYED_PROFESSIONAL'] as EmploymentType[],
       minTenureMonths: 12,
-      maxTenureMonths: 60,
+      maxTenureMonths: 84,
       minLoanAmount: 50000,
       maxLoanAmount: 3500000,
       baseInterestRate: 10.99,
       processingFeePct: 1.75,
       tatDays: 2,
       priorityWeight: 7,
-      specialFeatures: ['Quick Approval for Cat A/B Corporates', 'Part-Payment Option Available', 'Doorstep Assistance'],
+      specialFeatures: ['Quick Approval for Cat A/B Corporates', 'Part-Payment Option Available', 'Flexible Tenure up to 7 Years'],
       rateMatrix: [
         { cibilMin: 750, cibilMax: 900, interestRate: 10.75, maxFoirPct: 55, description: 'Prime Personal Loan' },
         { cibilMin: 700, cibilMax: 749, interestRate: 11.75, maxFoirPct: 50, description: 'Standard Personal Loan' },

@@ -3,6 +3,7 @@
 import React, { useState, useTransition } from 'react';
 import { submitCustomerApplication } from '@/actions/publicActions';
 import { DOCUMENT_GROUPS, RESIDENCE_PROOF_OPTIONS } from '@/lib/documentChecklist';
+import { getMaxTenureYearsForLoanType } from '@/lib/policyEngine';
 import type { CompanySettings, Branch, LoanType } from '@/types/db';
 
 interface CustomerApplicationFormProps {
@@ -16,6 +17,11 @@ export default function CustomerApplicationForm({ token, settings, branch, initi
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [residenceProofType, setResidenceProofType] = useState('');
+  const [selectedLoanType, setSelectedLoanType] = useState<string>(initialLoanType || 'HOME_LOAN');
+  const [tenureYears, setTenureYears] = useState<number | ''>(
+    initialLoanType === 'PERSONAL_LOAN' ? 5 : 20
+  );
+  const maxAllowedTenureYears = getMaxTenureYearsForLoanType(selectedLoanType);
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -118,7 +124,15 @@ export default function CustomerApplicationForm({ token, settings, branch, initi
             <select
               name="loanType"
               required
-              defaultValue={initialLoanType || 'HOME_LOAN'}
+              value={selectedLoanType}
+              onChange={(e) => {
+                const newType = e.target.value;
+                setSelectedLoanType(newType);
+                const maxAllowed = getMaxTenureYearsForLoanType(newType);
+                if (tenureYears !== '' && Number(tenureYears) > maxAllowed) {
+                  setTenureYears(maxAllowed);
+                }
+              }}
               className="w-full px-4 py-2.5 text-sm border border-slate-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               <option value="HOME_LOAN">Home Loan</option>
@@ -145,6 +159,39 @@ export default function CustomerApplicationForm({ token, settings, branch, initi
               placeholder="e.g. 2500000"
               className="w-full px-4 py-2.5 text-sm border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+              Loan Tenure Required (in Years) <span className="text-rose-500">*</span>
+              <span className="text-[11px] text-slate-400 font-normal ml-1">
+                ({selectedLoanType === 'HOME_LOAN' ? 'Max 30 years' : selectedLoanType === 'PERSONAL_LOAN' ? 'Max 7 years' : `Max ${maxAllowedTenureYears} years`})
+              </span>
+            </label>
+            <input
+              type="number"
+              name="tenureYears"
+              required
+              min={1}
+              max={maxAllowedTenureYears}
+              value={tenureYears}
+              onChange={(e) => {
+                const val = e.target.value;
+                if (val === '') {
+                  setTenureYears('');
+                } else {
+                  const num = Math.min(maxAllowedTenureYears, Math.max(1, Number(val)));
+                  setTenureYears(num);
+                }
+              }}
+              placeholder={selectedLoanType === 'HOME_LOAN' ? 'e.g. 20' : 'e.g. 5'}
+              className="w-full px-4 py-2.5 text-sm border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono"
+            />
+            {tenureYears && Number(tenureYears) > 0 && (
+              <p className="text-[11px] text-slate-400 mt-1">
+                Equivalent to {Number(tenureYears) * 12} monthly installments
+              </p>
+            )}
           </div>
 
           <div>

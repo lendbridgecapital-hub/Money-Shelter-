@@ -10,7 +10,12 @@ import type {
   EmploymentType,
 } from '@/types/policy';
 import { LOAN_TYPE_LABELS, formatCurrencyINR } from '@/lib/format';
-import { getSalarySlabFoirCap, getSalarySlabDescription } from '@/lib/policyEngine';
+import {
+  getSalarySlabFoirCap,
+  getSalarySlabDescription,
+  getMaxTenureYearsForLoanType,
+  getDefaultTenureYearsForLoanType,
+} from '@/lib/policyEngine';
 import {
   evaluateCustomerEligibilityAction,
   attachRecommendationToApplicationAction,
@@ -53,12 +58,15 @@ export default function LoanEligibilityMatchModal({
   // Initialize or update fields whenever a new application is passed
   useEffect(() => {
     if (application) {
-      setLoanType(application.loanType || 'HOME_LOAN');
+      const initialType = application.loanType || 'HOME_LOAN';
+      setLoanType(initialType);
       setRequestedAmount(Number(application.loanAmount || 1000000));
       setMonthlyIncome(Number(application.monthlyIncome || 50000));
       setExistingEmi(Number(application.existingEmi || 0));
-      const years = application.tenureMonths ? Math.round(application.tenureMonths / 12) : 20;
-      setRequestedTenureYears(Math.max(1, years));
+      const maxYears = getMaxTenureYearsForLoanType(initialType);
+      const defaultYears = getDefaultTenureYearsForLoanType(initialType);
+      const years = application.tenureMonths ? Math.round(application.tenureMonths / 12) : defaultYears;
+      setRequestedTenureYears(Math.min(maxYears, Math.max(1, years)));
       setCibilScore(750); // Default prime score, ready for quick evaluation or adjustment
       setSummary(null);
       setErrorMessage(null);
@@ -68,6 +76,8 @@ export default function LoanEligibilityMatchModal({
   }, [application]);
 
   if (!isOpen || !application) return null;
+
+  const maxAllowedTenureYears = getMaxTenureYearsForLoanType(loanType);
 
   // Auto-calculated FOIR Cap based on Net Monthly Salary Slab
   const autoFoirCap = getSalarySlabFoirCap(monthlyIncome);
@@ -319,7 +329,14 @@ export default function LoanEligibilityMatchModal({
                   <label className="text-[11px] font-bold text-slate-700 block mb-1">Loan Product</label>
                   <select
                     value={loanType}
-                    onChange={(e) => setLoanType(e.target.value as LoanType)}
+                    onChange={(e) => {
+                      const newType = e.target.value as LoanType;
+                      setLoanType(newType);
+                      const maxAllowed = getMaxTenureYearsForLoanType(newType);
+                      if (requestedTenureYears > maxAllowed) {
+                        setRequestedTenureYears(maxAllowed);
+                      }
+                    }}
                     className="w-full p-2 text-xs rounded-xl border border-slate-200 bg-white font-semibold"
                   >
                     <option value="HOME_LOAN">Home Loan</option>
@@ -359,15 +376,24 @@ export default function LoanEligibilityMatchModal({
                   />
                 </div>
                 <div>
-                  <label className="text-[11px] font-bold text-slate-700 block mb-1">Tenure (Years)</label>
+                  <label className="text-[11px] font-bold text-slate-700 block mb-1">
+                    Tenure (Years)
+                    <span className="text-[10px] text-slate-500 font-normal ml-1">
+                      ({loanType === 'HOME_LOAN' ? 'Max 30 yrs' : loanType === 'PERSONAL_LOAN' ? 'Max 7 yrs' : `Max ${maxAllowedTenureYears} yrs`})
+                    </span>
+                  </label>
                   <input
                     type="number"
                     min={1}
-                    max={30}
+                    max={maxAllowedTenureYears}
                     value={requestedTenureYears}
-                    onChange={(e) => setRequestedTenureYears(Number(e.target.value))}
+                    onChange={(e) => {
+                      const val = Number(e.target.value);
+                      setRequestedTenureYears(Math.min(maxAllowedTenureYears, Math.max(1, val)));
+                    }}
                     className="w-full p-2 text-xs rounded-xl border border-slate-200 bg-white font-mono font-bold"
                   />
+                  <span className="text-[10px] text-slate-400 mt-0.5 block">{requestedTenureYears * 12} Months</span>
                 </div>
                 <div>
                   <label className="text-[11px] font-bold text-slate-700 block mb-1">Employment Type</label>
@@ -550,11 +576,11 @@ export default function LoanEligibilityMatchModal({
                           <span className="text-[10px] text-slate-400 block">{res.tenureMonths} Months</span>
                         </div>
                         <div>
-                          <span className="text-[10px] text-slate-400 uppercase font-bold block">FOIR Cap</span>
+                          <span className="text-[10px] text-slate-400 uppercase font-bold block">FOIR Status</span>
                           <strong className={`font-black text-base ${res.actualFoirPct > res.maxPermissibleFoirPct ? 'text-amber-700' : 'text-slate-900'}`}>
                             {res.actualFoirPct}%
                           </strong>
-                          <span className="text-[10px] text-slate-400 block">Max Slab: {res.maxPermissibleFoirPct}%</span>
+                          <span className="text-[10px] text-slate-500 block">Bank Cap: {res.maxPermissibleFoirPct}%</span>
                         </div>
                       </div>
 

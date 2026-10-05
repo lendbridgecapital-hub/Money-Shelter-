@@ -68,6 +68,41 @@ export function getSalarySlabDescription(monthlyIncome: number): string {
 }
 
 /**
+ * Resolves maximum permissible tenure in years based on loan type:
+ * - Home Loan: Max 30 years (360 months)
+ * - Personal Loan (PL): Max 7 years (84 months)
+ * - Business Loan: Max 7 years (84 months)
+ * - Loan Against Property (LAP): Max 20 years (240 months)
+ * - Education Loan: Max 15 years (180 months)
+ * - Gold Loan: Max 5 years (60 months)
+ * - Default: Max 30 years
+ */
+export function getMaxTenureYearsForLoanType(loanType?: string | null): number {
+  if (!loanType) return 30;
+  const lt = loanType.toUpperCase().trim();
+  if (lt === 'HOME_LOAN' || lt === 'HOME') return 30;
+  if (lt === 'PERSONAL_LOAN' || lt === 'PERSONAL' || lt === 'PL') return 7;
+  if (lt === 'BUSINESS_LOAN' || lt === 'BUSINESS' || lt === 'BL') return 7;
+  if (lt === 'LOAN_AGAINST_PROPERTY' || lt === 'LAP') return 20;
+  if (lt === 'EDUCATION_LOAN' || lt === 'EDUCATION') return 15;
+  if (lt === 'GOLD_LOAN' || lt === 'GOLD') return 5;
+  if (lt === 'BALANCE_TRANSFER' || lt === 'BT') return 30;
+  return 30;
+}
+
+export function getDefaultTenureYearsForLoanType(loanType?: string | null): number {
+  const max = getMaxTenureYearsForLoanType(loanType);
+  if (!loanType) return 20;
+  const lt = loanType.toUpperCase().trim();
+  if (lt === 'HOME_LOAN' || lt === 'HOME') return 20;
+  if (lt === 'PERSONAL_LOAN' || lt === 'PERSONAL' || lt === 'PL') return 5;
+  if (lt === 'BUSINESS_LOAN' || lt === 'BUSINESS' || lt === 'BL') return 3;
+  if (lt === 'LOAN_AGAINST_PROPERTY' || lt === 'LAP') return 15;
+  if (lt === 'EDUCATION_LOAN' || lt === 'EDUCATION') return 7;
+  return Math.min(5, max);
+}
+
+/**
  * Finds the applicable interest rate and custom FOIR cap from the bank's tiered rate matrix.
  */
 export function mapApplicableRateAndFoir(
@@ -214,7 +249,7 @@ export function evaluateCustomerAgainstCard(
   }
 
   // 6. Interest Rate Mapping & Tier Resolution
-  const { mappedRate, tierDescription } = mapApplicableRateAndFoir(
+  const { mappedRate, maxFoirPct: mappedFoir, tierDescription } = mapApplicableRateAndFoir(
     card,
     cibil,
     requestedAmount
@@ -224,15 +259,21 @@ export function evaluateCustomerAgainstCard(
   }
 
   // 7. FOIR (Fixed Obligation to Income Ratio) & Loan Affordability Computation
-  // Auto-set FOIR cap based on applicant Net Monthly Salary slab:
-  // - 📉 Under ₹50,000: 50%
-  // - below 75000: 60%
-  // - above 75000: 65%
-  // - 100000 and above: 70%
-  const effectiveMaxFoir = getSalarySlabFoirCap(income);
-  passReasons.push(
-    `Permissible FOIR auto-set to ${effectiveMaxFoir}% (${getSalarySlabDescription(income)}).`
-  );
+  // Priority:
+  // 1. Bank Policy Card specific FOIR (Tier maxFoirPct or Card maxFoirPct configured by admin)
+  // 2. Default applicant Salary Slab FOIR Cap (Under ₹50k: 50%, <₹75k: 60%, >₹75k: 65%, >=₹100k: 70%)
+  const cardFoirCap = Number(mappedFoir || card.maxFoirPct || 0);
+  const effectiveMaxFoir = cardFoirCap > 0 ? cardFoirCap : getSalarySlabFoirCap(income);
+
+  if (cardFoirCap > 0) {
+    passReasons.push(
+      `Permissible FOIR set to ${effectiveMaxFoir}% as configured on ${card.bankName} policy card.`
+    );
+  } else {
+    passReasons.push(
+      `Permissible FOIR auto-set to ${effectiveMaxFoir}% (${getSalarySlabDescription(income)}).`
+    );
+  }
   const existingEmi = Number(input.existingEmi || 0);
   const maxTotalAllowedObligation = (income * effectiveMaxFoir) / 100;
   const maxAvailableMonthlyEmi = Math.max(0, maxTotalAllowedObligation - existingEmi);

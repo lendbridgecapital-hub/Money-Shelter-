@@ -7,6 +7,7 @@ import { formatCurrencyINR, LOAN_TYPE_LABELS, formatDate } from '@/lib/format';
 import StatusBadge from '@/components/StatusBadge';
 import { submitDirectPartnerLoanAction, createApplicationLinkAction } from '@/actions/applicationActions';
 import LoanCalculator, { CalculatorLoanType } from '@/components/LoanCalculator';
+import { getMaxTenureYearsForLoanType, getDefaultTenureYearsForLoanType } from '@/lib/policyEngine';
 
 interface LoanOriginationHubProps {
   recentApplications: LoanApplication[];
@@ -130,6 +131,9 @@ export default function LoanOriginationHub({
     setPrimaryCategory(payload.loanType);
     setCalculatorType(payload.loanType);
     setLoanAmount(payload.loanAmount);
+    if (payload.tenureMonths) {
+      setTenureYears(Math.round(payload.tenureMonths / 12));
+    }
     if (formRef.current) {
       formRef.current.scrollIntoView({ behavior: 'smooth' });
     }
@@ -143,12 +147,16 @@ export default function LoanOriginationHub({
   // Active Loan Type computed
   const effectiveLoanType: LoanType =
     primaryCategory === 'OTHER' ? selectedSubLoanType : primaryCategory;
+  const maxAllowedTenureYears = getMaxTenureYearsForLoanType(effectiveLoanType);
 
   // Form Field States
   const [fullName, setFullName] = useState('');
   const [mobile, setMobile] = useState('');
   const [email, setEmail] = useState('');
   const [loanAmount, setLoanAmount] = useState<number | ''>(500000);
+  const [tenureYears, setTenureYears] = useState<number | ''>(
+    effectiveLoanType === 'HOME_LOAN' ? 20 : 5
+  );
   const [monthlyIncome, setMonthlyIncome] = useState<number | ''>('');
   const [existingEmi, setExistingEmi] = useState<number | ''>('');
   const [panNumber, setPanNumber] = useState('');
@@ -184,6 +192,7 @@ export default function LoanOriginationHub({
     setMobile('');
     setEmail('');
     setLoanAmount(500000);
+    setTenureYears(effectiveLoanType === 'HOME_LOAN' ? 20 : 5);
     setMonthlyIncome('');
     setExistingEmi('');
     setPanNumber('');
@@ -333,6 +342,7 @@ export default function LoanOriginationHub({
         if (email.trim()) formData.append('email', email.trim().toLowerCase());
         formData.append('loanType', effectiveLoanType);
         formData.append('loanAmount', String(loanAmount));
+        if (tenureYears !== '') formData.append('tenureYears', String(tenureYears));
         if (monthlyIncome !== '') formData.append('monthlyIncome', String(monthlyIncome));
         if (existingEmi !== '') formData.append('existingEmi', String(existingEmi));
         if (panNumber.trim()) formData.append('panNumber', panNumber.trim().toUpperCase());
@@ -829,6 +839,45 @@ export default function LoanOriginationHub({
                   >
                     Reset
                   </button>
+                </div>
+              </div>
+
+              {/* Required Loan Tenure */}
+              <div>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="text-xs font-bold text-slate-700">
+                    Required Loan Tenure (Years) <span className="text-rose-500">*</span>
+                  </label>
+                  <span className="text-[10px] text-slate-500 font-semibold">
+                    {effectiveLoanType === 'HOME_LOAN' ? 'Max 30 yrs' : effectiveLoanType === 'PERSONAL_LOAN' ? 'Max 7 yrs' : `Max ${maxAllowedTenureYears} yrs`}
+                  </span>
+                </div>
+                <div className="relative">
+                  <span className="absolute left-3 top-2.5 text-slate-400 text-xs">⏳</span>
+                  <input
+                    type="number"
+                    required
+                    min={1}
+                    max={maxAllowedTenureYears}
+                    value={tenureYears}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      if (val === '') {
+                        setTenureYears('');
+                      } else {
+                        const num = Math.min(maxAllowedTenureYears, Math.max(1, Number(val)));
+                        setTenureYears(num);
+                      }
+                    }}
+                    placeholder={effectiveLoanType === 'HOME_LOAN' ? 'e.g. 20' : 'e.g. 5'}
+                    className="w-full pl-8 pr-3 py-2 text-xs font-bold text-slate-900 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white"
+                  />
+                </div>
+                <div className="flex items-center justify-between mt-1 text-[10px] text-slate-400">
+                  <span>{tenureYears ? `${Number(tenureYears) * 12} Months` : 'Tenure in months'}</span>
+                  <span className="text-emerald-700 font-semibold">
+                    {effectiveLoanType === 'HOME_LOAN' ? 'Home: up to 30 yrs' : 'PL: up to 7 yrs'}
+                  </span>
                 </div>
               </div>
 

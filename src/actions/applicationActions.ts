@@ -211,6 +211,13 @@ export async function submitDirectPartnerLoanAction(formData: FormData): Promise
     const monthlyIncome = rawMonthlyIncome !== null && rawMonthlyIncome !== '' ? Number(rawMonthlyIncome) : undefined;
     const rawExistingEmi = formData.get('existingEmi');
     const existingEmi = rawExistingEmi !== null && rawExistingEmi !== '' ? Number(rawExistingEmi) : undefined;
+    const rawTenureYears = formData.get('tenureYears');
+    const rawTenureMonths = formData.get('tenureMonths');
+    const tenureMonths = rawTenureYears
+      ? Number(rawTenureYears) * 12
+      : rawTenureMonths
+      ? Number(rawTenureMonths)
+      : undefined;
     const panNumber = String(formData.get('panNumber') || '').trim().toUpperCase();
     const aadhaarNumber = String(formData.get('aadhaarNumber') || '').trim().replace(/\s+/g, '');
 
@@ -251,6 +258,7 @@ export async function submitDirectPartnerLoanAction(formData: FormData): Promise
       loanAmount,
       monthlyIncome,
       existingEmi,
+      tenureMonths,
       panNumber: panNumber || undefined,
       aadhaarNumber: aadhaarNumber || undefined,
       status: initialStatus,

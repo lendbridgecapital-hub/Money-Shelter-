@@ -4,6 +4,7 @@ import { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import type { LoanApplication, LoanType } from '@/types/db';
 import { LOAN_TYPE_LABELS } from '@/lib/format';
+import { getMaxTenureYearsForLoanType } from '@/lib/policyEngine';
 import { editCustomerInformationAction } from '@/actions/workflowActions';
 
 interface EditCustomerInfoModalProps {
@@ -38,6 +39,9 @@ export default function EditCustomerInfoModal({
   const [existingEmi, setExistingEmi] = useState<string>(
     application.existingEmi !== null && application.existingEmi !== undefined ? String(application.existingEmi) : ''
   );
+  const [tenureYears, setTenureYears] = useState<string>(
+    application.tenureMonths ? String(Math.round(application.tenureMonths / 12)) : ''
+  );
   const [panNumber, setPanNumber] = useState(application.panNumber || '');
   const [aadhaarNumber, setAadhaarNumber] = useState(application.aadhaarNumber || '');
 
@@ -45,6 +49,8 @@ export default function EditCustomerInfoModal({
   const [remark, setRemark] = useState('');
 
   if (!isOpen) return null;
+
+  const maxAllowedTenureYears = getMaxTenureYearsForLoanType(loanType);
 
   // Calculate modified fields count
   const modifiedCount = [
@@ -55,6 +61,7 @@ export default function EditCustomerInfoModal({
     Number(loanAmount || 0) !== Number(application.loanAmount || 0),
     Number(monthlyIncome || 0) !== Number(application.monthlyIncome || 0),
     Number(existingEmi || 0) !== Number(application.existingEmi || 0),
+    (tenureYears ? Number(tenureYears) * 12 : null) !== (application.tenureMonths || null),
     panNumber.trim().toUpperCase() !== (application.panNumber || '').trim().toUpperCase(),
     aadhaarNumber.trim().replace(/\s+/g, '') !== (application.aadhaarNumber || '').trim().replace(/\s+/g, ''),
   ].filter(Boolean).length;
@@ -92,6 +99,12 @@ export default function EditCustomerInfoModal({
       return;
     }
 
+    const parsedTenureYears = tenureYears ? Number(tenureYears) : null;
+    if (parsedTenureYears !== null && parsedTenureYears > maxAllowedTenureYears) {
+      setError(`Tenure for ${LOAN_TYPE_LABELS[loanType] || loanType} cannot exceed ${maxAllowedTenureYears} years.`);
+      return;
+    }
+
     startTransition(async () => {
       const res = await editCustomerInformationAction(application.id, {
         fullName: fullName.trim(),
@@ -101,6 +114,7 @@ export default function EditCustomerInfoModal({
         loanAmount: parsedAmount,
         monthlyIncome: monthlyIncome ? Number(monthlyIncome) : null,
         existingEmi: existingEmi !== '' ? Number(existingEmi) : null,
+        tenureMonths: parsedTenureYears ? parsedTenureYears * 12 : null,
         panNumber: panNumber.trim() ? panNumber.trim().toUpperCase() : null,
         aadhaarNumber: aadhaarNumber.trim() ? aadhaarNumber.trim().replace(/\s+/g, '') : null,
         remark: remark.trim(),
@@ -281,7 +295,14 @@ export default function EditCustomerInfoModal({
                 </label>
                 <select
                   value={loanType}
-                  onChange={(e) => setLoanType(e.target.value as LoanType)}
+                  onChange={(e) => {
+                    const newType = e.target.value as LoanType;
+                    setLoanType(newType);
+                    const maxAllowed = getMaxTenureYearsForLoanType(newType);
+                    if (tenureYears && Number(tenureYears) > maxAllowed) {
+                      setTenureYears(String(maxAllowed));
+                    }
+                  }}
                   className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm text-slate-900 focus:bg-white focus:ring-2 focus:ring-amber-500 focus:outline-none transition font-medium"
                 >
                   {(Object.keys(LOAN_TYPE_LABELS) as LoanType[]).map((type) => (
@@ -306,6 +327,35 @@ export default function EditCustomerInfoModal({
                   placeholder="e.g. 500000"
                   className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm text-slate-900 focus:bg-white focus:ring-2 focus:ring-amber-500 focus:outline-none transition font-semibold"
                 />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  Tenure (Years)
+                  <span className="text-[10px] text-slate-500 font-normal ml-1">
+                    ({loanType === 'HOME_LOAN' ? 'Max 30 yrs' : loanType === 'PERSONAL_LOAN' ? 'Max 7 yrs' : `Max ${maxAllowedTenureYears} yrs`})
+                  </span>
+                </label>
+                <input
+                  type="number"
+                  min={1}
+                  max={maxAllowedTenureYears}
+                  value={tenureYears}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    if (val === '') {
+                      setTenureYears('');
+                    } else {
+                      const num = Math.min(maxAllowedTenureYears, Math.max(1, Number(val)));
+                      setTenureYears(String(num));
+                    }
+                  }}
+                  placeholder={loanType === 'HOME_LOAN' ? 'e.g. 20' : 'e.g. 5'}
+                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm text-slate-900 focus:bg-white focus:ring-2 focus:ring-amber-500 focus:outline-none transition font-mono"
+                />
+                {tenureYears && Number(tenureYears) > 0 && (
+                  <span className="text-[10px] text-slate-400 mt-0.5 block">{Number(tenureYears) * 12} Months</span>
+                )}
               </div>
 
               <div>

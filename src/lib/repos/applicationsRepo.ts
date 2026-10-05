@@ -119,12 +119,13 @@ export function recordCustomerSubmission(
     loanAmount: number;
     monthlyIncome?: number;
     existingEmi?: number;
+    tenureMonths?: number;
   }
 ): void {
   const now = new Date().toISOString();
   db.prepare(
     `UPDATE loan_applications
-     SET full_name = ?, mobile = ?, email = ?, loan_type = ?, loan_amount = ?, monthly_income = ?, existing_emi = ?, status = ?, submitted_at = ?, updated_at = ?
+     SET full_name = ?, mobile = ?, email = ?, loan_type = ?, loan_amount = ?, monthly_income = ?, existing_emi = ?, tenure_months = COALESCE(?, tenure_months), status = ?, submitted_at = ?, updated_at = ?
      WHERE id = ?`
   ).run(
     data.fullName.trim(),
@@ -134,6 +135,7 @@ export function recordCustomerSubmission(
     data.loanAmount,
     data.monthlyIncome || null,
     data.existingEmi !== undefined && data.existingEmi !== null ? data.existingEmi : null,
+    data.tenureMonths || null,
     'DOCUMENTS_IN',
     now,
     now,
@@ -156,6 +158,7 @@ export function updateApplicationCustomerInfo(
     loanAmount: number;
     monthlyIncome?: number | null;
     existingEmi?: number | null;
+    tenureMonths?: number | null;
     panNumber?: string | null;
     aadhaarNumber?: string | null;
   }
@@ -164,7 +167,7 @@ export function updateApplicationCustomerInfo(
   db.prepare(
     `UPDATE loan_applications
      SET full_name = ?, mobile = ?, email = ?, loan_type = ?, loan_amount = ?,
-         monthly_income = ?, existing_emi = ?, pan_number = ?, aadhaar_number = ?,
+         monthly_income = ?, existing_emi = ?, tenure_months = ?, pan_number = ?, aadhaar_number = ?,
          updated_at = ?
      WHERE id = ?`
   ).run(
@@ -175,6 +178,7 @@ export function updateApplicationCustomerInfo(
     Number(data.loanAmount) || 0,
     data.monthlyIncome !== undefined && data.monthlyIncome !== null ? Number(data.monthlyIncome) : null,
     data.existingEmi !== undefined && data.existingEmi !== null ? Number(data.existingEmi) : null,
+    data.tenureMonths !== undefined && data.tenureMonths !== null ? Number(data.tenureMonths) : null,
     data.panNumber ? data.panNumber.trim().toUpperCase() : null,
     data.aadhaarNumber ? data.aadhaarNumber.trim().replace(/\s+/g, '') : null,
     now,
@@ -449,6 +453,7 @@ export function createDirectPartnerApplication(data: {
   loanAmount: number;
   monthlyIncome?: number;
   existingEmi?: number;
+  tenureMonths?: number;
   panNumber?: string;
   aadhaarNumber?: string;
   status?: ApplicationStatus;
@@ -467,8 +472,8 @@ export function createDirectPartnerApplication(data: {
     `INSERT INTO loan_applications (
       id, tenant_id, token, branch_id, created_by_id, channel_partner_id, channel_partner_name,
       relationship_manager_id, relationship_manager_name, full_name, mobile, email,
-      loan_type, loan_amount, monthly_income, existing_emi, pan_number, aadhaar_number, status, submitted_at, created_at, updated_at
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+      loan_type, loan_amount, monthly_income, existing_emi, tenure_months, pan_number, aadhaar_number, status, submitted_at, created_at, updated_at
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
   ).run(
     id,
     tenantId,
@@ -486,6 +491,7 @@ export function createDirectPartnerApplication(data: {
     data.loanAmount || 0,
     data.monthlyIncome || null,
     data.existingEmi !== undefined && data.existingEmi !== null ? data.existingEmi : null,
+    data.tenureMonths || null,
     data.panNumber ? data.panNumber.trim().toUpperCase() : null,
     data.aadhaarNumber ? data.aadhaarNumber.trim().replace(/\s+/g, '') : null,
     status,

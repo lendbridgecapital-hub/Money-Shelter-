@@ -843,7 +843,9 @@ export default function PolicyCardManager({ initialCards, dynamicDefs }: PolicyC
                         onChange={(e) => setMaxTenureMonths(Number(e.target.value))}
                         className="w-full p-2 rounded-xl border border-slate-200 font-mono text-xs font-bold"
                       />
-                      <span className="text-[10px] text-slate-400">e.g. 360m = 30 yrs</span>
+                      <span className="text-[10px] text-slate-500 font-medium">
+                        {maxTenureMonths ? `${Math.round(maxTenureMonths / 12)} yrs (${maxTenureMonths}m)` : ''} · Home: 360m (30y) | PL: 84m (7y)
+                      </span>
                     </div>
                   </div>
 

@@ -11,7 +11,7 @@ import type {
 } from '@/types/policy';
 import type { LoanType } from '@/types/db';
 import { LOAN_TYPE_LABELS, formatCurrencyINR } from '@/lib/format';
-import { getSalarySlabFoirCap } from '@/lib/policyEngine';
+import { getSalarySlabFoirCap, getMaxTenureYearsForLoanType } from '@/lib/policyEngine';
 import { evaluateCustomerEligibilityAction, attachRecommendationToApplicationAction } from '@/actions/policyActions';
 
 interface ActiveAppSummary {
@@ -231,7 +231,8 @@ export default function EligibilityCalculatorClient({
                     key={lt.type}
                     onClick={() => {
                       setLoanType(lt.type);
-                      if (lt.type === 'PERSONAL_LOAN' && requestedTenureYears > 5) setRequestedTenureYears(5);
+                      const maxAllowed = getMaxTenureYearsForLoanType(lt.type);
+                      if (requestedTenureYears > maxAllowed) setRequestedTenureYears(maxAllowed);
                     }}
                     className={`p-2 rounded-xl border text-left font-bold text-xs transition flex items-center gap-1.5 ${
                       loanType === lt.type
@@ -439,13 +440,22 @@ export default function EligibilityCalculatorClient({
                 <span className="text-[10px] text-slate-500 mt-0.5 block">{formatCurrencyINR(requestedAmount)}</span>
               </div>
               <div>
-                <label className="font-bold text-slate-700 block mb-1">Tenure (Years) *</label>
+                <label className="font-bold text-slate-700 block mb-1">
+                  Tenure (Years) *
+                  <span className="text-[10px] text-slate-500 font-normal ml-1">
+                    ({loanType === 'HOME_LOAN' ? 'Max 30 yrs' : loanType === 'PERSONAL_LOAN' ? 'Max 7 yrs' : `Max ${getMaxTenureYearsForLoanType(loanType)} yrs`})
+                  </span>
+                </label>
                 <input
                   type="number"
                   min={1}
-                  max={loanType === 'PERSONAL_LOAN' ? 5 : 30}
+                  max={getMaxTenureYearsForLoanType(loanType)}
                   value={requestedTenureYears}
-                  onChange={(e) => setRequestedTenureYears(Number(e.target.value))}
+                  onChange={(e) => {
+                    const val = Number(e.target.value);
+                    const maxAllowed = getMaxTenureYearsForLoanType(loanType);
+                    setRequestedTenureYears(Math.min(maxAllowed, Math.max(1, val)));
+                  }}
                   className="w-full p-2.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-indigo-500 font-mono font-bold"
                 />
                 <span className="text-[10px] text-slate-500 mt-0.5 block">{requestedTenureYears * 12} Months</span>

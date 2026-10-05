@@ -831,6 +831,7 @@ export async function editCustomerInformationAction(
     loanAmount: number;
     monthlyIncome?: number | null;
     existingEmi?: number | null;
+    tenureMonths?: number | null;
     panNumber?: string | null;
     aadhaarNumber?: string | null;
     remark: string; // MANDATORY!
@@ -882,6 +883,11 @@ export async function editCustomerInformationAction(
     if (Number(data.existingEmi || 0) !== Number(application.existingEmi || 0)) {
       changes.push(`Existing EMI: ₹${Number(application.existingEmi || 0).toLocaleString('en-IN')} → ₹${Number(data.existingEmi || 0).toLocaleString('en-IN')}`);
     }
+    if (data.tenureMonths !== undefined && data.tenureMonths !== application.tenureMonths) {
+      const oldTenure = application.tenureMonths ? `${application.tenureMonths / 12} yrs (${application.tenureMonths}m)` : '—';
+      const newTenure = data.tenureMonths ? `${data.tenureMonths / 12} yrs (${data.tenureMonths}m)` : '—';
+      changes.push(`Tenure: ${oldTenure} → ${newTenure}`);
+    }
     if ((data.panNumber || '').trim().toUpperCase() !== (application.panNumber || '').trim().toUpperCase()) {
       changes.push(`PAN: '${application.panNumber || '—'}' → '${(data.panNumber || '—').trim().toUpperCase()}'`);
     }
@@ -900,6 +906,7 @@ export async function editCustomerInformationAction(
       loanAmount: Number(data.loanAmount) || 0,
       monthlyIncome: data.monthlyIncome !== undefined ? Number(data.monthlyIncome) : null,
       existingEmi: data.existingEmi !== undefined ? Number(data.existingEmi) : null,
+      tenureMonths: data.tenureMonths !== undefined ? Number(data.tenureMonths) : null,
       panNumber: data.panNumber,
       aadhaarNumber: data.aadhaarNumber,
     });

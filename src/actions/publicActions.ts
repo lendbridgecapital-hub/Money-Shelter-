@@ -52,6 +52,13 @@ export async function submitCustomerApplication(token: string, formData: FormDat
   const monthlyIncome = rawMonthlyIncome !== null && rawMonthlyIncome !== '' ? Number(rawMonthlyIncome) : undefined;
   const rawExistingEmi = formData.get('existingEmi');
   const existingEmi = rawExistingEmi !== null && rawExistingEmi !== '' ? Number(rawExistingEmi) : undefined;
+  const rawTenureYears = formData.get('tenureYears');
+  const rawTenureMonths = formData.get('tenureMonths');
+  const tenureMonths = rawTenureYears
+    ? Number(rawTenureYears) * 12
+    : rawTenureMonths
+    ? Number(rawTenureMonths)
+    : undefined;
   const attested = formData.get('selfAttested') === 'on';
 
   if (!fullName) return { ok: false, error: 'Full name is required.' };
@@ -87,6 +94,7 @@ export async function submitCustomerApplication(token: string, formData: FormDat
     loanAmount,
     monthlyIncome,
     existingEmi,
+    tenureMonths,
   });
 
   // Save every uploaded document.
