@@ -2,9 +2,11 @@
 
 import React, { useState, useMemo } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import type { LoanApplication, ApplicationStatus } from '@/types/db';
 import { LOAN_TYPE_LABELS, formatCurrencyINR, formatDate } from '@/lib/format';
 import StatusBadge from '@/components/StatusBadge';
+import LoanEligibilityMatchModal from '@/components/LoanEligibilityMatchModal';
 
 interface RequestTableProps {
   applications: LoanApplication[];
@@ -12,8 +14,10 @@ interface RequestTableProps {
 }
 
 export default function RequestTable({ applications, showBranchColumn = false }: RequestTableProps) {
+  const router = useRouter();
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('ALL');
+  const [eligibilityApp, setEligibilityApp] = useState<LoanApplication | null>(null);
 
   const filtered = useMemo(() => {
     return applications.filter((app) => {
@@ -151,6 +155,33 @@ export default function RequestTable({ applications, showBranchColumn = false }:
         </div>
       </div>
 
+      {/* Documents In Bucket Action Banner */}
+      {statusFilter === 'DOCUMENTS_IN' && (
+        <div className="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white rounded-2xl p-4 shadow-sm border border-indigo-800/40 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="space-y-0.5">
+            <div className="flex items-center gap-2">
+              <span className="px-2 py-0.5 rounded-md bg-emerald-500/20 text-emerald-300 border border-emerald-400/30 text-[10px] font-black uppercase tracking-wider">
+                📂 Documents In Bucket
+              </span>
+              <span className="text-xs text-indigo-300 font-semibold">Underwriting & Matchmaking Ready</span>
+            </div>
+            <p className="text-xs sm:text-sm text-slate-200">
+              KYC & financials received. Open any case below to enter applicant CIBIL and match eligible bank policies & interest rates in 1 click.
+            </p>
+          </div>
+          {filtered.length > 0 && (
+            <button
+              type="button"
+              onClick={() => setEligibilityApp(filtered[0])}
+              className="px-3.5 py-2 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white font-bold text-xs rounded-xl shadow-xs transition flex items-center gap-1.5 shrink-0 self-start sm:self-auto"
+            >
+              <span>⚡</span>
+              <span>Match 1st Case ({filtered[0].fullName || filtered[0].token})</span>
+            </button>
+          )}
+        </div>
+      )}
+
       {/* Mobile Card List View (Visible on mobile, hidden on desktop) */}
       <div className="block md:hidden space-y-2.5">
         {filtered.length === 0 ? (
@@ -221,7 +252,7 @@ export default function RequestTable({ applications, showBranchColumn = false }:
 
               {/* Footer: Bank, Partner & Action */}
               <div className="flex items-center justify-between text-[11px] text-slate-500 pt-0.5">
-                <div className="flex items-center gap-2 truncate max-w-[210px]">
+                <div className="flex items-center gap-2 truncate max-w-[170px]">
                   <div className="flex items-center gap-1 truncate">
                     <svg className="w-3.5 h-3.5 text-slate-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
@@ -232,9 +263,24 @@ export default function RequestTable({ applications, showBranchColumn = false }:
                   <span className="truncate">{app.channelPartnerName || app.createdByName || 'Direct'}</span>
                 </div>
 
-                <span className="font-bold text-emerald-700 text-xs flex items-center gap-0.5 shrink-0">
-                  Case File →
-                </span>
+                <div className="flex items-center gap-2 shrink-0">
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      setEligibilityApp(app);
+                    }}
+                    className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 font-bold text-xs shadow-2xs active:scale-95 transition"
+                    title="Find Eligible Banks & Rates"
+                  >
+                    <span>⚡</span>
+                    <span>Match</span>
+                  </button>
+                  <span className="font-bold text-emerald-700 text-xs flex items-center gap-0.5">
+                    Case File →
+                  </span>
+                </div>
               </div>
             </Link>
           ))
@@ -308,7 +354,16 @@ export default function RequestTable({ applications, showBranchColumn = false }:
                   <td className="px-4 py-3.5 text-xs text-slate-400">
                     {formatDate(app.createdAt)}
                   </td>
-                  <td className="px-4 py-3.5 text-right">
+                  <td className="px-4 py-3.5 text-right whitespace-nowrap">
+                    <button
+                      type="button"
+                      onClick={() => setEligibilityApp(app)}
+                      className="inline-flex items-center gap-1 text-xs font-bold text-indigo-700 hover:text-indigo-800 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200/90 px-2.5 py-1.5 rounded-lg transition-colors mr-2 shadow-2xs active:scale-95"
+                      title="Run Loan Eligibility Match & Find Rates"
+                    >
+                      <span>⚡</span>
+                      <span>Eligibility Match</span>
+                    </button>
                     <Link
                       href={`/branch/requests/${app.id}`}
                       className="inline-flex items-center text-xs font-semibold text-emerald-700 hover:text-emerald-800 bg-emerald-50 hover:bg-emerald-100 px-3 py-1.5 rounded-md transition-colors"
@@ -322,6 +377,16 @@ export default function RequestTable({ applications, showBranchColumn = false }:
           </tbody>
         </table>
       </div>
+
+      {/* Dedicated Pre-filled Loan Eligibility Match Modal */}
+      <LoanEligibilityMatchModal
+        application={eligibilityApp}
+        isOpen={!!eligibilityApp}
+        onClose={() => setEligibilityApp(null)}
+        onAssigned={() => {
+          router.refresh();
+        }}
+      />
     </div>
   );
 }

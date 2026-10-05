@@ -13,6 +13,7 @@ import {
   disburseCaseAction,
 } from '@/actions/workflowActions';
 import { formatCurrencyINR, formatDateTime } from '@/lib/format';
+import LoanEligibilityMatchModal from '@/components/LoanEligibilityMatchModal';
 
 interface Props {
   application: LoanApplication;
@@ -55,6 +56,9 @@ export default function OperationalWorkflowPanel({
   const [showDisburseModal, setShowDisburseModal] = useState(false);
   const [disbursedAmount, setDisbursedAmount] = useState(application.approvedAmount || application.loanAmount || 1000000);
   const [disburseNote, setDisburseNote] = useState('');
+
+  // Loan Eligibility Match Modal State
+  const [showEligibilityModal, setShowEligibilityModal] = useState(false);
 
   // Document Upload Window / Modal States
   const [showUploadDocModal, setShowUploadDocModal] = useState(false);
@@ -466,11 +470,47 @@ export default function OperationalWorkflowPanel({
             </div>
           )}
 
+          {/* Documents In Bucket Matchmaking Banner */}
+          {application.status === 'DOCUMENTS_IN' && isOpsOrAdmin && (
+            <div className="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white rounded-xl p-4 shadow-sm border border-indigo-800/40 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="px-2 py-0.5 rounded-md bg-emerald-500/20 text-emerald-300 border border-emerald-400/30 text-[10px] font-black uppercase tracking-wider">
+                    📂 Documents In Bucket
+                  </span>
+                  <span className="text-xs text-indigo-300 font-semibold">Underwriting & Matchmaking Ready</span>
+                </div>
+                <p className="text-xs text-slate-200 mt-1">
+                  Applicant KYC & financial documents are in. Enter applicant CIBIL score to immediately evaluate live bank cards & find best interest rates.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowEligibilityModal(true)}
+                className="px-4 py-2.5 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white text-xs font-black rounded-xl shadow-md transition flex items-center gap-1.5 shrink-0 self-start sm:self-auto"
+              >
+                <span>⚡</span>
+                <span>Match Loan Eligibility & Rates</span>
+              </button>
+            </div>
+          )}
+
           {/* ACTION BUTTONS TOOLBAR */}
           <div className="pt-2">
             <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3">Flowchart Action Controls</h4>
 
             <div className="flex flex-wrap gap-2.5">
+              {/* Operations & Admin: Loan Eligibility Match */}
+              {isOpsOrAdmin && (
+                <button
+                  type="button"
+                  onClick={() => setShowEligibilityModal(true)}
+                  className="px-4 py-2 bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 text-white text-xs font-bold rounded-lg shadow-xs transition flex items-center gap-1.5"
+                >
+                  ⚡ Loan Eligibility Match & Rates
+                </button>
+              )}
+
               {/* Operations & Admin: Send to Bank */}
               {isOpsOrAdmin && (
                 <button
@@ -1142,6 +1182,16 @@ export default function OperationalWorkflowPanel({
           </div>
         </div>
       )}
+
+      {/* Dedicated Pre-filled Loan Eligibility Match Modal */}
+      <LoanEligibilityMatchModal
+        application={application}
+        isOpen={showEligibilityModal}
+        onClose={() => setShowEligibilityModal(false)}
+        onAssigned={() => {
+          router.refresh();
+        }}
+      />
     </div>
   );
 }
