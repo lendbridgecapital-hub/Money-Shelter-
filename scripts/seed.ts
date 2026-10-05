@@ -107,12 +107,33 @@ async function main() {
       address: '100ft Road, HAL 2nd Stage, Indiranagar, Bengaluru - 560038',
       phone: '+91 80 8000 3300',
     });
+    createBranch({
+      name: 'Satara Branch',
+      code: 'STR01',
+      email: 'satara@quickfinsure.com',
+      address: 'Powai Naka, Satara, Maharashtra - 415001',
+      phone: '+91 2162 230011',
+    });
     branches = listBranches();
     console.log(`✓ Created ${branches.length} Quickfinsure branches.`);
   }
 
+  // Ensure Satara Branch exists
+  if (!branches.some((b) => b.code === 'STR01' || b.name.toLowerCase().includes('satara'))) {
+    createBranch({
+      name: 'Satara Branch',
+      code: 'STR01',
+      email: 'satara@quickfinsure.com',
+      address: 'Powai Naka, Satara, Maharashtra - 415001',
+      phone: '+91 2162 230011',
+    });
+    branches = listBranches();
+    console.log('✓ Seeded Satara Branch (STR01).');
+  }
+
   const hq = branches[0];
   const second = branches[1] || branches[0];
+  const sataraBranch = branches.find((b) => b.code === 'STR01' || b.name.toLowerCase().includes('satara')) || hq;
 
   // 4. Seed Partner Lending Banks
   let banks = listBanks('default');
@@ -243,6 +264,21 @@ async function main() {
       branchId: second.id,
       phone: '+91 98765 00006',
     },
+    // Sub-DSA Master Partner (Satara Branch)
+    {
+      name: 'Tejas (Sub-DSA Partner)',
+      email: 'tejas@quickfinsure.com',
+      role: 'SUB_DSA' as const,
+      branchId: sataraBranch.id,
+      phone: '9822334455',
+    },
+    {
+      name: 'Tejas (Sub-DSA Partner)',
+      email: 'tejas.subdsa@quickfinsure.com',
+      role: 'SUB_DSA' as const,
+      branchId: sataraBranch.id,
+      phone: '9822334455',
+    },
   ];
 
   for (const u of roleUsers) {
@@ -288,6 +324,25 @@ async function main() {
          agreement_authorized_text = 'SUB-DSA REFERRAL AGREEMENT executed by Vikram Malhotra (Prime Capital) on 25-Sep-2026. PAN: PRIME1234K. DPDP compliant.'
      WHERE email = 'vikram@primecapital.in'`
   ).run();
+
+  // Set Tejas Sub-DSA partner approval & certificate states
+  for (const tejasEmail of ['tejas@quickfinsure.com', 'tejas.subdsa@quickfinsure.com']) {
+    db.prepare(
+      `UPDATE users 
+       SET partner_status = 'APPROVED',
+           certificate_number = 'QFS-CERT-2026-4412',
+           certificate_issued_at = '2026-10-05T18:30:00.000Z',
+           assigned_rm_id = ?,
+           assigned_rm_name = ?,
+           partner_code = 'QFS-SUB-4412',
+           pan_number = 'ABCDE5678G',
+           aadhaar_number = '987654321012',
+           commission_rate = 1.5,
+           agreement_accepted = 1,
+           city = 'Satara'
+       WHERE email = ?`
+    ).run(rmUser.id, rmUser.name, tejasEmail);
+  }
 
   // 5.5 Seed Product-Wise Partner Lending Bank Cards
   const existingProducts = listBankProducts('default');

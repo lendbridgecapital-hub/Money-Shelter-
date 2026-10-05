@@ -6,6 +6,7 @@ import { updateSettings } from '@/lib/repos/settingsRepo';
 import { saveUploadedFile } from '@/lib/uploads';
 import { sendMail } from '@/lib/mail';
 import { getCompanySettings } from '@/lib/settings';
+import { syncDatabase } from '@/lib/db';
 
 export type ActionResult = { ok: true; message?: string } | { ok: false; error: string };
 
@@ -42,6 +43,7 @@ export async function updateBranding(formData: FormData): Promise<ActionResult> 
       ...(logoUrl ? { logoUrl } : {}),
     });
 
+    await syncDatabase();
     revalidatePath('/', 'layout');
     return { ok: true, message: 'Company branding updated.' };
   } catch (err) {
@@ -72,6 +74,7 @@ export async function updateSmtpSettings(formData: FormData): Promise<ActionResu
       smtpFromName: smtpFromName || undefined,
     });
 
+    await syncDatabase();
     revalidatePath('/admin/email-settings');
     return { ok: true, message: 'Email / SMTP settings saved.' };
   } catch (err) {

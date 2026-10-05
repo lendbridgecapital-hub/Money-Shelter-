@@ -94,6 +94,17 @@
       "email": "blr@quickfinsure.com",
       "created_at": "2026-09-25T20:17:17.438Z",
       "updated_at": "2026-09-25T20:17:17.438Z"
+    },
+    {
+      "id": "br_satara_01",
+      "tenant_id": "default",
+      "name": "Satara Branch",
+      "code": "STR01",
+      "address": "Powai Naka, Satara, Maharashtra - 415001",
+      "phone": "+91 2162 230011",
+      "email": "satara@quickfinsure.com",
+      "created_at": "2026-10-05T18:00:00.000Z",
+      "updated_at": "2026-10-05T18:00:00.000Z"
     }
   ],
   "users": [
@@ -386,6 +397,54 @@
       "firm_name": "Apex Sub-DSA Network",
       "bio": "Leading Sub-DSA channel network with over 20+ loan advisors across Maharashtra.",
       "city": "Pune"
+    },
+    {
+      "id": "usr_tejas_subdsa_01",
+      "tenant_id": "default",
+      "name": "Tejas (Sub-DSA Partner)",
+      "email": "tejas@quickfinsure.com",
+      "password_hash": "$2a$10$PZCb.z/.Vf6D8Y4V0k/zaOOfMEdQZ8sGDtMYQrvrQFGaFcROwoD9i",
+      "role": "SUB_DSA",
+      "branch_id": "br_satara_01",
+      "phone": "9822334455",
+      "active": 1,
+      "created_at": "2026-10-05T18:00:00.000Z",
+      "is_blocked": 0,
+      "partner_status": "APPROVED",
+      "certificate_number": "QFS-CERT-2026-4412",
+      "certificate_issued_at": "2026-10-05T18:30:00.000Z",
+      "assigned_rm_id": "usr_300b47def112f815",
+      "assigned_rm_name": "Relationship Manager (Pune)",
+      "partner_code": "QFS-SUB-4412",
+      "pan_number": "ABCDE5678G",
+      "aadhaar_number": "987654321012",
+      "agreement_accepted": 1,
+      "commission_rate": 1.5,
+      "city": "Satara"
+    },
+    {
+      "id": "usr_tejas_subdsa_alias",
+      "tenant_id": "default",
+      "name": "Tejas (Sub-DSA Partner)",
+      "email": "tejas.subdsa@quickfinsure.com",
+      "password_hash": "$2a$10$PZCb.z/.Vf6D8Y4V0k/zaOOfMEdQZ8sGDtMYQrvrQFGaFcROwoD9i",
+      "role": "SUB_DSA",
+      "branch_id": "br_satara_01",
+      "phone": "9822334455",
+      "active": 1,
+      "created_at": "2026-10-05T18:00:00.000Z",
+      "is_blocked": 0,
+      "partner_status": "APPROVED",
+      "certificate_number": "QFS-CERT-2026-4412",
+      "certificate_issued_at": "2026-10-05T18:30:00.000Z",
+      "assigned_rm_id": "usr_300b47def112f815",
+      "assigned_rm_name": "Relationship Manager (Pune)",
+      "partner_code": "QFS-SUB-4412",
+      "pan_number": "ABCDE5678G",
+      "aadhaar_number": "987654321012",
+      "agreement_accepted": 1,
+      "commission_rate": 1.5,
+      "city": "Satara"
     }
   ],
   "loan_applications": [

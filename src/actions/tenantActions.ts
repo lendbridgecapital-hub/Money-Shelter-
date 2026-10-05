@@ -3,6 +3,7 @@
 import { revalidatePath } from 'next/cache';
 import bcrypt from 'bcryptjs';
 import { requireRole } from '@/lib/auth';
+import { syncDatabase } from '@/lib/db';
 import * as tenantsRepo from '@/lib/repos/tenantsRepo';
 import * as branchesRepo from '@/lib/repos/branchesRepo';
 import * as usersRepo from '@/lib/repos/usersRepo';
@@ -67,6 +68,7 @@ export async function createTenantAction(formData: FormData): Promise<ActionResu
       }
     }
 
+    await syncDatabase();
     revalidatePath('/admin/tenants');
     return { ok: true, message: `Client organization "${companyName}" created successfully!` };
   } catch (err) {
@@ -116,6 +118,7 @@ export async function updateTenantAction(id: string, formData: FormData): Promis
       id
     );
 
+    await syncDatabase();
     revalidatePath('/admin/tenants');
     return { ok: true, message: 'Client organization branding updated.' };
   } catch (err) {
@@ -150,6 +153,7 @@ export async function applyTenantAsActiveSystemAction(tenantId: string): Promise
       'default'
     );
 
+    await syncDatabase();
     revalidatePath('/', 'layout');
     return { ok: true, message: `Active branding switched to "${tenant.companyName}".` };
   } catch (err) {
@@ -172,6 +176,7 @@ export async function deleteTenantAction(tenantId: string): Promise<ActionResult
 
     tenantsRepo.deleteTenant(tenantId);
 
+    await syncDatabase();
     revalidatePath('/admin/tenants');
     revalidatePath('/', 'layout');
     return { ok: true, message: `Company "${tenant.companyName}" was permanently deleted.` };

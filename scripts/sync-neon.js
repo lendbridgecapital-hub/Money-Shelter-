@@ -568,7 +568,9 @@ async function pullData(client) {
 
   try {
     const appPortablePath = path.resolve(process.cwd(), 'data/app-portable.json');
+    const seedPath = path.resolve(process.cwd(), 'data/initial-data.json');
     fs.writeFileSync(appPortablePath, JSON.stringify(merged, null, 2), 'utf8');
+    fs.writeFileSync(seedPath, JSON.stringify(merged, null, 2), 'utf8');
   } catch {}
 
   return merged;
@@ -590,7 +592,9 @@ async function pushData(client, data) {
   );
   try {
     const appPortablePath = path.resolve(process.cwd(), 'data/app-portable.json');
+    const seedPath = path.resolve(process.cwd(), 'data/initial-data.json');
     fs.writeFileSync(appPortablePath, JSON.stringify(payload, null, 2), 'utf8');
+    fs.writeFileSync(seedPath, JSON.stringify(payload, null, 2), 'utf8');
   } catch {}
 }
 
@@ -600,14 +604,47 @@ async function main() {
   const dbUrl = getDatabaseUrl();
 
   if (!dbUrl) {
-    const fallback = loadInitialSeedData();
+    const dbDir = path.resolve(process.cwd(), 'data');
+    const portablePath = path.join(dbDir, 'app-portable.json');
+    const seedPath = path.join(dbDir, 'initial-data.json');
+    let activeData = null;
+
+    // 1. If app-portable.json already exists and has records, KEEP IT as the source of truth!
+    if (fs.existsSync(portablePath)) {
+      try {
+        const raw = fs.readFileSync(portablePath, 'utf8');
+        const parsed = JSON.parse(raw);
+        if (parsed && Array.isArray(parsed.users) && parsed.users.length > 0) {
+          activeData = parsed;
+        }
+      } catch {}
+    }
+
+    // 2. If app-portable is not yet populated, check initial-data.json
+    if (!activeData && fs.existsSync(seedPath)) {
+      try {
+        const raw = fs.readFileSync(seedPath, 'utf8');
+        const parsed = JSON.parse(raw);
+        if (parsed && Array.isArray(parsed.users) && parsed.users.length > 0) {
+          activeData = parsed;
+        }
+      } catch {}
+    }
+
+    // 3. Fallback to loaded initial seed template only if neither file has users
+    if (!activeData) {
+      activeData = loadInitialSeedData();
+    }
+
+    // Safely ensure data directory exists and mirror active state to both files
     try {
-      const dbDir = path.resolve(process.cwd(), 'data');
       if (!fs.existsSync(dbDir)) fs.mkdirSync(dbDir, { recursive: true });
-      fs.writeFileSync(path.join(dbDir, 'app-portable.json'), JSON.stringify(fallback, null, 2), 'utf8');
+      fs.writeFileSync(portablePath, JSON.stringify(activeData, null, 2), 'utf8');
+      fs.writeFileSync(seedPath, JSON.stringify(activeData, null, 2), 'utf8');
     } catch {}
+
     if (mode === 'pull') {
-      process.stdout.write(JSON.stringify(fallback));
+      process.stdout.write(JSON.stringify(activeData));
     }
     process.exit(0);
   }

@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache';
 import bcrypt from 'bcryptjs';
 import { requireRole, requireUser } from '@/lib/auth';
 import { saveUploadedFile } from '@/lib/uploads';
+import { syncDatabase } from '@/lib/db';
 import * as usersRepo from '@/lib/repos/usersRepo';
 import { listBranches } from '@/lib/repos/branchesRepo';
 import type { Role } from '@/types/db';
@@ -57,6 +58,7 @@ export async function createUserAction(formData: FormData): Promise<ActionResult
       commissionRate,
     });
 
+    await syncDatabase();
     revalidatePath('/admin/users');
     revalidatePath('/admin/partners');
     revalidatePath('/admin/partner-requests');
@@ -70,6 +72,7 @@ export async function setUserActiveAction(id: string, active: boolean): Promise<
   try {
     await requireRole('ADMIN', 'CENTRAL_SUPPORT');
     usersRepo.setUserActive(id, active);
+    await syncDatabase();
     revalidatePath('/admin/users');
     return { ok: true };
   } catch (err) {
@@ -82,6 +85,7 @@ export async function updateUserRoleBranchAction(id: string, role: Role, branchI
     await requireRole('ADMIN', 'CENTRAL_SUPPORT');
     if (!VALID_ROLES.includes(role)) return { ok: false, error: 'Invalid role.' };
     usersRepo.updateUserRoleAndBranch(id, role, branchId);
+    await syncDatabase();
     revalidatePath('/admin/users');
     return { ok: true, message: 'User updated.' };
   } catch (err) {
@@ -218,6 +222,7 @@ export async function bulkCreateRmAction(
       }
     }
 
+    await syncDatabase();
     revalidatePath('/admin/users');
     revalidatePath('/admin/partner-requests');
     revalidatePath('/dashboard');
@@ -284,6 +289,7 @@ export async function updateUserProfileAction(formData: FormData): Promise<Actio
       city: city || null,
     });
 
+    await syncDatabase();
     revalidatePath('/profile');
     revalidatePath('/dashboard');
     revalidatePath(`/card/${currentUser.id}`);

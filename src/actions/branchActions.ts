@@ -2,6 +2,7 @@
 
 import { revalidatePath } from 'next/cache';
 import { requireRole } from '@/lib/auth';
+import { syncDatabase } from '@/lib/db';
 import * as branchesRepo from '@/lib/repos/branchesRepo';
 import type { ActionResult } from '@/actions/settingsActions';
 
@@ -27,6 +28,7 @@ export async function createBranchAction(formData: FormData): Promise<ActionResu
       email: email || null,
     });
 
+    await syncDatabase();
     revalidatePath('/admin/branches');
     return { ok: true, message: `Branch "${name}" created.` };
   } catch (err) {
@@ -56,6 +58,7 @@ export async function updateBranchAction(id: string, formData: FormData): Promis
       email,
     });
 
+    await syncDatabase();
     revalidatePath('/admin/branches');
     return { ok: true, message: 'Branch updated.' };
   } catch (err) {
@@ -70,6 +73,7 @@ export async function deleteBranchAction(id: string): Promise<ActionResult> {
     if (branches.length <= 1) return { ok: false, error: 'At least one branch must exist.' };
 
     branchesRepo.deleteBranch(id);
+    await syncDatabase();
     revalidatePath('/admin/branches');
     return { ok: true, message: 'Branch deleted.' };
   } catch (err) {

@@ -378,6 +378,22 @@ function createPortableStorage(storageFilePath: string): DatabaseAdapter {
       return cachedData;
     }
 
+    // 1b. Check if initial-data.json has existing valid data
+    const initialSeedFilePath = path.resolve(process.cwd(), 'data/initial-data.json');
+    if (fs.existsSync(initialSeedFilePath)) {
+      try {
+        const raw = fs.readFileSync(initialSeedFilePath, 'utf8');
+        let parsed = JSON.parse(raw);
+        if (parsed && parsed.default) parsed = parsed.default;
+        if (parsed && typeof parsed === 'object' && Array.isArray(parsed.users) && parsed.users.length > 0) {
+          sanitizeBlobs(parsed);
+          cachedData = { ...defaultData, ...parsed };
+          hasHydratedFromNeon = true;
+          return cachedData;
+        }
+      } catch {}
+    }
+
     // 2. If Neon PostgreSQL is configured, pull fresh database snapshot on startup
     if (dbUrl && !hasHydratedFromNeon) {
       hasHydratedFromNeon = true;
@@ -399,6 +415,7 @@ function createPortableStorage(storageFilePath: string): DatabaseAdapter {
               cachedData = { ...defaultData, ...parsed };
               try {
                 fs.writeFileSync(storageFilePath, JSON.stringify(cachedData, null, 2), 'utf8');
+                fs.writeFileSync(initialSeedFilePath, JSON.stringify(cachedData, null, 2), 'utf8');
               } catch {}
               return cachedData;
             }
@@ -419,6 +436,8 @@ function createPortableStorage(storageFilePath: string): DatabaseAdapter {
     try {
       fs.writeFileSync(storageFilePath, JSON.stringify(data, null, 2), 'utf8');
       lastDiskMtime = fs.statSync(storageFilePath).mtimeMs;
+      const initialSeedFilePath = path.resolve(process.cwd(), 'data/initial-data.json');
+      fs.writeFileSync(initialSeedFilePath, JSON.stringify(data, null, 2), 'utf8');
     } catch {
       // Local cache write might fail on read-only environments; Neon is the primary store
     }
