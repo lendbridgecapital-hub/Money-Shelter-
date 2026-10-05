@@ -12,7 +12,7 @@ import * as usersRepo from '@/lib/repos/usersRepo';
 import * as documentsRepo from '@/lib/repos/documentsRepo';
 import { syncDatabase } from '@/lib/db';
 import { saveUploadedFile, MAX_FILE_SIZE } from '@/lib/uploads';
-import type { ApplicationStatus, Bank, Role } from '@/types/db';
+import type { ApplicationStatus, Bank, Role, LoanType } from '@/types/db';
 import type { ActionResult } from '@/actions/settingsActions';
 
 // 1. Send Details to Bank (Operations)
@@ -816,6 +816,124 @@ export async function deleteBankAction(id: string): Promise<ActionResult> {
     return { ok: true, message: 'Bank removed.' };
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : 'Failed to delete bank.';
+    return { ok: false, error: msg };
+  }
+}
+
+// 12. Edit Customer Information (Operations / Admin) with Mandatory Remark
+export async function editCustomerInformationAction(
+  applicationId: string,
+  data: {
+    fullName: string;
+    mobile: string;
+    email?: string | null;
+    loanType: LoanType;
+    loanAmount: number;
+    monthlyIncome?: number | null;
+    existingEmi?: number | null;
+    panNumber?: string | null;
+    aadhaarNumber?: string | null;
+    remark: string; // MANDATORY!
+  }
+): Promise<ActionResult> {
+  try {
+    const user = await requireUser();
+    if (user.role !== 'OPERATIONS' && user.role !== 'ADMIN' && user.role !== 'CENTRAL_SUPPORT') {
+      return { ok: false, error: 'Only Operations, Central Support, and Admin staff have permission to edit customer information.' };
+    }
+
+    if (!data.remark || !data.remark.trim()) {
+      return { ok: false, error: 'A mandatory remark explaining the reason for modifying customer information is required.' };
+    }
+
+    if (!data.fullName || !data.fullName.trim()) {
+      return { ok: false, error: 'Customer full name cannot be empty.' };
+    }
+
+    if (!data.mobile || !data.mobile.trim()) {
+      return { ok: false, error: 'Customer mobile number cannot be empty.' };
+    }
+
+    const application = applicationsRepo.getApplicationById(applicationId);
+    if (!application) {
+      return { ok: false, error: 'Application not found.' };
+    }
+
+    // Compare fields and generate comprehensive audit log diff
+    const changes: string[] = [];
+    if (data.fullName.trim() !== (application.fullName || '').trim()) {
+      changes.push(`Name: '${application.fullName || '—'}' → '${data.fullName.trim()}'`);
+    }
+    if (data.mobile.trim() !== (application.mobile || '').trim()) {
+      changes.push(`Mobile: '${application.mobile || '—'}' → '${data.mobile.trim()}'`);
+    }
+    if ((data.email || '').trim().toLowerCase() !== (application.email || '').trim().toLowerCase()) {
+      changes.push(`Email: '${application.email || '—'}' → '${(data.email || '—').trim().toLowerCase()}'`);
+    }
+    if (data.loanType !== application.loanType) {
+      changes.push(`Loan Type: '${application.loanType || '—'}' → '${data.loanType}'`);
+    }
+    if (Number(data.loanAmount) !== Number(application.loanAmount)) {
+      changes.push(`Loan Amount: ₹${Number(application.loanAmount || 0).toLocaleString('en-IN')} → ₹${Number(data.loanAmount).toLocaleString('en-IN')}`);
+    }
+    if (Number(data.monthlyIncome || 0) !== Number(application.monthlyIncome || 0)) {
+      changes.push(`Monthly Income: ₹${Number(application.monthlyIncome || 0).toLocaleString('en-IN')} → ₹${Number(data.monthlyIncome || 0).toLocaleString('en-IN')}`);
+    }
+    if (Number(data.existingEmi || 0) !== Number(application.existingEmi || 0)) {
+      changes.push(`Existing EMI: ₹${Number(application.existingEmi || 0).toLocaleString('en-IN')} → ₹${Number(data.existingEmi || 0).toLocaleString('en-IN')}`);
+    }
+    if ((data.panNumber || '').trim().toUpperCase() !== (application.panNumber || '').trim().toUpperCase()) {
+      changes.push(`PAN: '${application.panNumber || '—'}' → '${(data.panNumber || '—').trim().toUpperCase()}'`);
+    }
+    if ((data.aadhaarNumber || '').trim().replace(/\s+/g, '') !== (application.aadhaarNumber || '').trim().replace(/\s+/g, '')) {
+      changes.push(`Aadhaar: '${application.aadhaarNumber || '—'}' → '${(data.aadhaarNumber || '—').trim().replace(/\s+/g, '')}'`);
+    }
+
+    const diffSummary = changes.length > 0 ? changes.join('; ') : 'No field values modified';
+
+    // 1. Update database record
+    applicationsRepo.updateApplicationCustomerInfo(applicationId, {
+      fullName: data.fullName,
+      mobile: data.mobile,
+      email: data.email,
+      loanType: data.loanType,
+      loanAmount: Number(data.loanAmount) || 0,
+      monthlyIncome: data.monthlyIncome !== undefined ? Number(data.monthlyIncome) : null,
+      existingEmi: data.existingEmi !== undefined ? Number(data.existingEmi) : null,
+      panNumber: data.panNumber,
+      aadhaarNumber: data.aadhaarNumber,
+    });
+
+    // 2. Add to Operational Remarks
+    workflowRepo.addOperationalRemark({
+      applicationId,
+      authorId: user.id,
+      authorName: user.name,
+      authorRole: user.role,
+      statusChangedTo: application.status,
+      remark: `✏️ [Customer Info Edited]: ${data.remark.trim()}${changes.length > 0 ? ` [Modifications: ${diffSummary}]` : ''}`,
+    });
+
+    // 3. Add to Lifecycle Status History (Audit Trail)
+    statusHistoryRepo.addStatusHistory({
+      applicationId,
+      status: application.status,
+      note: `Customer info edited by ${user.name} (${user.role}). Mandatory Remark: "${data.remark.trim()}". ${changes.length > 0 ? `Modifications: ${diffSummary}` : ''}`,
+      changedById: user.id,
+    });
+
+    // 4. Synchronously flush to Neon PostgreSQL
+    await syncDatabase();
+
+    // 5. Revalidate cache
+    revalidatePath(`/branch/requests/${applicationId}`);
+    revalidatePath('/branch/requests');
+    revalidatePath('/dashboard');
+    revalidatePath('/ops/eligibility');
+
+    return { ok: true, message: 'Customer information successfully updated and recorded in log history.' };
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : 'Failed to update customer information.';
     return { ok: false, error: msg };
   }
 }

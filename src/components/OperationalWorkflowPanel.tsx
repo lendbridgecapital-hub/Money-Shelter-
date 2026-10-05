@@ -14,6 +14,7 @@ import {
 } from '@/actions/workflowActions';
 import { formatCurrencyINR, formatDateTime } from '@/lib/format';
 import LoanEligibilityMatchModal from '@/components/LoanEligibilityMatchModal';
+import EditCustomerInfoModal from '@/components/EditCustomerInfoModal';
 
 interface Props {
   application: LoanApplication;
@@ -59,6 +60,9 @@ export default function OperationalWorkflowPanel({
 
   // Loan Eligibility Match Modal State
   const [showEligibilityModal, setShowEligibilityModal] = useState(false);
+
+  // Edit Customer Info Modal State
+  const [showEditCustomerModal, setShowEditCustomerModal] = useState(false);
 
   // Document Upload Window / Modal States
   const [showUploadDocModal, setShowUploadDocModal] = useState(false);
@@ -307,10 +311,24 @@ export default function OperationalWorkflowPanel({
           </button>
         </div>
 
-        {/* Role Badge */}
-        <span className="text-[11px] font-semibold text-slate-500 pb-2">
-          Role: <strong className="text-slate-800">{currentUser.role}</strong>
-        </span>
+        {/* Role Badge & Quick Edit Button */}
+        <div className="flex items-center gap-2 pb-2">
+          {isOpsOrAdmin && (
+            <button
+              type="button"
+              onClick={() => setShowEditCustomerModal(true)}
+              className="px-2.5 py-1 bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-300 font-bold text-xs rounded-lg transition flex items-center gap-1 shadow-2xs active:scale-95"
+              title="Edit customer information with mandatory audit remark"
+            >
+              <span>✏️</span>
+              <span className="hidden sm:inline">Edit Customer Info</span>
+              <span className="sm:hidden">Edit</span>
+            </button>
+          )}
+          <span className="text-[11px] font-semibold text-slate-500">
+            Role: <strong className="text-slate-800">{currentUser.role}</strong>
+          </span>
+        </div>
       </div>
 
       {/* Global Feedback Banner */}
@@ -519,6 +537,17 @@ export default function OperationalWorkflowPanel({
                   className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-lg shadow-xs transition flex items-center gap-1.5"
                 >
                   🏦 Send Details to Bank
+                </button>
+              )}
+
+              {/* Operations & Admin: Edit Customer Information (Mandatory Remark Audit) */}
+              {isOpsOrAdmin && (
+                <button
+                  type="button"
+                  onClick={() => setShowEditCustomerModal(true)}
+                  className="px-4 py-2 bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-700 hover:to-amber-800 text-white text-xs font-bold rounded-lg shadow-xs transition flex items-center gap-1.5 active:scale-95"
+                >
+                  ✏️ Edit Customer Information
                 </button>
               )}
 
@@ -1189,6 +1218,21 @@ export default function OperationalWorkflowPanel({
         isOpen={showEligibilityModal}
         onClose={() => setShowEligibilityModal(false)}
         onAssigned={() => {
+          router.refresh();
+        }}
+      />
+
+      {/* Edit Customer Information Modal with Mandatory Remark */}
+      <EditCustomerInfoModal
+        application={application}
+        isOpen={showEditCustomerModal}
+        onClose={() => setShowEditCustomerModal(false)}
+        onSaved={() => {
+          setFeedback({
+            type: 'success',
+            message: 'Customer information updated and recorded in log history.',
+          });
+          setActiveTab('REMARKS');
           router.refresh();
         }}
       />

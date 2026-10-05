@@ -146,6 +146,48 @@ export function updateApplicationStatus(id: string, status: ApplicationStatus): 
   db.prepare('UPDATE loan_applications SET status = ?, updated_at = ? WHERE id = ?').run(status, now, id);
 }
 
+export function updateApplicationCustomerInfo(
+  id: string,
+  data: {
+    fullName: string;
+    mobile: string;
+    email?: string | null;
+    loanType: LoanType;
+    loanAmount: number;
+    monthlyIncome?: number | null;
+    existingEmi?: number | null;
+    panNumber?: string | null;
+    aadhaarNumber?: string | null;
+  }
+): LoanApplication {
+  const now = new Date().toISOString();
+  db.prepare(
+    `UPDATE loan_applications
+     SET full_name = ?, mobile = ?, email = ?, loan_type = ?, loan_amount = ?,
+         monthly_income = ?, existing_emi = ?, pan_number = ?, aadhaar_number = ?,
+         updated_at = ?
+     WHERE id = ?`
+  ).run(
+    data.fullName.trim(),
+    data.mobile.trim(),
+    data.email ? data.email.trim().toLowerCase() : null,
+    data.loanType,
+    Number(data.loanAmount) || 0,
+    data.monthlyIncome !== undefined && data.monthlyIncome !== null ? Number(data.monthlyIncome) : null,
+    data.existingEmi !== undefined && data.existingEmi !== null ? Number(data.existingEmi) : null,
+    data.panNumber ? data.panNumber.trim().toUpperCase() : null,
+    data.aadhaarNumber ? data.aadhaarNumber.trim().replace(/\s+/g, '') : null,
+    now,
+    id
+  );
+
+  const updated = getApplicationById(id);
+  if (!updated) {
+    throw new Error('Application not found after update');
+  }
+  return updated;
+}
+
 // 1. Send details to bank
 export function sendCaseToBank(applicationId: string, bankId: string, bankName: string): void {
   const now = new Date().toISOString();
