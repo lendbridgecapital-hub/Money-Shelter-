@@ -660,7 +660,19 @@ function createPortableStorage(storageFilePath: string): DatabaseAdapter {
 
           // Handle ORDER BY
           if (upperSql.includes('ORDER BY')) {
-            if (upperSql.includes('DESC')) {
+            const orderMatch = cleanSql.match(/ORDER\s+BY\s+([a-zA-Z0-9_.]+)(?:\s+(ASC|DESC))?/i);
+            if (orderMatch) {
+              const col = cleanColName(orderMatch[1]);
+              const isDesc = (orderMatch[2] || '').toUpperCase() === 'DESC';
+              rows.sort((a, b) => {
+                const camel = col.replace(/_([a-z])/g, (_, g) => g.toUpperCase());
+                const valA = (a[col] !== undefined && a[col] !== null ? a[col] : a[camel]) ?? '';
+                const valB = (b[col] !== undefined && b[col] !== null ? b[col] : b[camel]) ?? '';
+                if (valA < valB) return isDesc ? 1 : -1;
+                if (valA > valB) return isDesc ? -1 : 1;
+                return 0;
+              });
+            } else if (upperSql.includes('DESC')) {
               rows.reverse();
             }
           }

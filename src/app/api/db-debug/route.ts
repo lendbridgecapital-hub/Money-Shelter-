@@ -107,7 +107,7 @@ export async function GET(req: NextRequest) {
   } catch {}
 
   return NextResponse.json({
-    version: 'v7-db-audit',
+    version: 'v8-neon-sync',
     neonDirectWrite,
     neonError,
     databaseUrlSet: !!(process.env.DATABASE_URL || process.env.POSTGRES_URL),
@@ -119,6 +119,7 @@ export async function GET(req: NextRequest) {
     passwordMatch: passwordCheck,
     accountsStatus: testResults,
     totalApplications: applications.length,
+    tejashreeFound: applications.find((a) => String(a.fullName || a.full_name || '').includes('Tejashree') || a.id === 'app_tejashree_jadhav_2026') || null,
     applications: applications.slice(0, 10),
     totalEmailLogs: emailLogs.length,
     recentEmails: emailLogs.slice(0, 5),
