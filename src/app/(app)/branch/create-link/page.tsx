@@ -8,8 +8,8 @@ export default async function CreateLinkPage() {
   const user = await requireUser();
   const settings = await getCompanySettings();
 
-  // Guard: If channel partner has not yet been approved by Central Support, enforce approval lock
-  if (user.role === 'CHANNEL_PARTNER' && user.partnerStatus !== 'APPROVED') {
+  // Guard: If partner has not yet been approved by Central Support, enforce approval lock
+  if ((user.role === 'CHANNEL_PARTNER' || user.role === 'SUB_DSA') && user.partnerStatus !== 'APPROVED') {
     return (
       <PartnerOnboardingStatusGuard
         partner={user}
@@ -17,6 +17,9 @@ export default async function CreateLinkPage() {
       />
     );
   }
+
+  const isSubDsa = user.role === 'SUB_DSA';
+  const isPartner = user.role === 'CHANNEL_PARTNER';
 
   return (
     <div className="space-y-4">
@@ -38,8 +41,41 @@ export default async function CreateLinkPage() {
           <span>Cases Pipeline</span>
         </Link>
       </div>
+
+      {/* Sub-DSA Network Banner */}
+      {isSubDsa && (
+        <div className="bg-gradient-to-r from-indigo-50 via-purple-50/60 to-white border border-indigo-200 rounded-xl px-4 py-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 shadow-2xs">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-lg bg-indigo-600 text-white flex items-center justify-center font-bold text-base shadow-xs shrink-0">
+              🏢
+            </div>
+            <div>
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="text-xs font-bold text-indigo-950">
+                  Verified Sub-DSA Partner • Code: {user.partnerCode || 'QFS-SUB'}
+                </span>
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-indigo-100 text-indigo-800">
+                  Override Engine Active
+                </span>
+              </div>
+              <p className="text-[11px] text-slate-600 mt-0.5">
+                As a Sub-DSA, you can originate direct loans (below) or recruit agents to earn override commissions.
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2 self-start sm:self-auto shrink-0">
+            <Link
+              href="/dashboard"
+              className="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-lg shadow-2xs transition inline-flex items-center gap-1"
+            >
+              <span>Recruit Agents Link →</span>
+            </Link>
+          </div>
+        </div>
+      )}
+
       {/* Partner Association Header Badge */}
-      {user.role === 'CHANNEL_PARTNER' && (
+      {isPartner && (
         <div className="bg-emerald-50 border border-emerald-200 rounded-xl px-4 py-2.5 flex flex-wrap items-center justify-between gap-2">
           <div className="flex items-center gap-2">
             <span className="text-sm">✓</span>

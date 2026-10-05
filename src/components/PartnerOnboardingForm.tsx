@@ -17,10 +17,23 @@ export interface ReferralRm {
   branchName?: string;
 }
 
+export interface ReferralSubDsa {
+  id: string;
+  name: string;
+  partnerCode?: string;
+  phone?: string;
+  branchId?: string;
+  branchName?: string;
+  assignedRmId?: string;
+  assignedRmName?: string;
+}
+
 interface Props {
   branches: Branch[];
   companyName?: string;
   referralRm?: ReferralRm | null;
+  referralSubDsa?: ReferralSubDsa | null;
+  targetRole?: 'SUB_DSA' | 'CHANNEL_PARTNER';
 }
 
 function compressAndReadDoc(file: File): Promise<string> {
@@ -72,6 +85,8 @@ export default function PartnerOnboardingForm({
   branches,
   companyName = 'Quickfinsure',
   referralRm,
+  referralSubDsa,
+  targetRole = 'CHANNEL_PARTNER',
 }: Props) {
   // Stepper state: 1 = Profile, 2 = KYC & Docs, 3 = Agreement, 4 = OTP Confirmation, 5 = Success
   const [currentStep, setCurrentStep] = useState<1 | 2 | 3 | 4 | 5>(1);
@@ -84,7 +99,9 @@ export default function PartnerOnboardingForm({
   const [address, setAddress] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [selectedBranchId, setSelectedBranchId] = useState(referralRm?.branchId || branches[0]?.id || '');
+  const [selectedBranchId, setSelectedBranchId] = useState(
+    referralRm?.branchId || referralSubDsa?.branchId || branches[0]?.id || ''
+  );
 
   // KYC Fields
   const [panNumber, setPanNumber] = useState('');
@@ -212,15 +229,17 @@ export default function PartnerOnboardingForm({
     }
 
     setIsVerifying(true);
+    const agreementRoleTitle = targetRole === 'SUB_DSA' ? 'Sub-DSA Master Partner' : 'Referral Partner / Agent';
+    const agreementSubDsaNote = referralSubDsa ? `Operating under Sub-DSA: ${referralSubDsa.name} (${referralSubDsa.partnerCode || 'Mapped'})` : '';
     const agreementAuthorizedText = `SUB-DSA / REFERRAL PARTNER AGREEMENT
 Executed on: ${currentDateFormatted}
 First Party: Quickfinsure Solutions (Galore Tech IT Park, Bavdhan, Pune HQ)
-Second Party (Referral Partner / Sub-DSA): ${fullName}
+Second Party (${agreementRoleTitle}): ${fullName}
 Father's/Spouse's Name: ${fatherSpouseName}
 Registered Address: ${address}
 Permanent Account Number (PAN): ${panNumber}
 Aadhaar Number: ${maskedAadhaar()}
-Digital Verification Audit: Authorized via 6-digit confirmation OTP dispatched to +91 ${mobile.slice(-10)} and ${email}.
+${agreementSubDsaNote ? `${agreementSubDsaNote}\n` : ''}Digital Verification Audit: Authorized via 6-digit confirmation OTP dispatched to +91 ${mobile.slice(-10)} and ${email}.
 Compliance Undertaking: DPDP Act 2023 compliant, Zero-Cash Collection policy, non-exclusive referral appointment, and commission clawback provisions acknowledged and executed.`;
 
     const res = await completePartnerOnboardingAction({
@@ -237,9 +256,12 @@ Compliance Undertaking: DPDP Act 2023 compliant, Zero-Cash Collection policy, no
       password,
       otp: otp.trim(),
       branchId: selectedBranchId,
-      assignedRmId: referralRm?.id || null,
-      assignedRmName: referralRm?.name || null,
+      assignedRmId: referralRm?.id || referralSubDsa?.assignedRmId || null,
+      assignedRmName: referralRm?.name || referralSubDsa?.assignedRmName || null,
       agreementAccepted: true,
+      targetRole,
+      parentSubDsaId: referralSubDsa?.id || null,
+      parentSubDsaName: referralSubDsa?.name || null,
     });
     setIsVerifying(false);
 
@@ -278,10 +300,18 @@ Compliance Undertaking: DPDP Act 2023 compliant, Zero-Cash Collection policy, no
           Q
         </div>
         <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
-          Channel Partner & Sub-DSA Onboarding
+          {targetRole === 'SUB_DSA'
+            ? 'Sub-DSA Partner & Network Onboarding'
+            : referralSubDsa
+            ? 'Channel Partner (Agent) Onboarding'
+            : 'Channel Partner & Sub-DSA Onboarding'}
         </h1>
         <p className="text-xs sm:text-sm text-slate-500 max-w-md mx-auto mt-1">
-          Join {companyName} as an authorized loan referral associate. Sourced digital leads, transparent slabs, and real-time bank payouts.
+          {targetRole === 'SUB_DSA'
+            ? `Join ${companyName} as an authorized Sub-DSA. Build and manage your agent network, earn override commissions on team business, and originate direct customer loans.`
+            : referralSubDsa
+            ? `Join ${companyName} under ${referralSubDsa.name}'s agency network. Earn guaranteed bank payouts on every disbursed loan.`
+            : `Join ${companyName} as an authorized loan referral associate. Sourced digital leads, transparent slabs, and real-time bank payouts.`}
         </p>
       </div>
 
@@ -362,8 +392,52 @@ Compliance Undertaking: DPDP Act 2023 compliant, Zero-Cash Collection policy, no
         {/* ================= STEP 1: CREATE PROFILE FORM ================= */}
         {currentStep === 1 && (
           <form onSubmit={handleProceedToKyc} className="p-5 sm:p-7 space-y-4">
+            {/* Sub-DSA Tier Banner */}
+            {targetRole === 'SUB_DSA' && (
+              <div className="p-3.5 bg-gradient-to-r from-indigo-50 via-purple-50/70 to-slate-50/60 border border-indigo-200/90 rounded-xl flex items-start gap-3 shadow-2xs">
+                <div className="w-8 h-8 rounded-lg bg-indigo-600 text-white font-bold text-base flex items-center justify-center shrink-0 shadow-2xs mt-0.5">
+                  🏢
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-indigo-800 bg-indigo-100/90 px-2 py-0.5 rounded">
+                      Sub-DSA Master Tier
+                    </span>
+                    <span className="text-xs font-bold text-slate-800">
+                      Multi-Tier Partner Network Appointment
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-slate-600 mt-1 leading-snug">
+                    You are registering as an authorized <strong>Sub-DSA</strong>. You will be empowered to recruit your own agent team with custom referral links, earn override commissions on their disbursed business, and originate direct customer loans.
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {/* Mapped Sub-DSA Team Referral Banner */}
+            {referralSubDsa && (
+              <div className="p-3.5 bg-gradient-to-r from-blue-50 via-cyan-50/70 to-slate-50/60 border border-blue-200/90 rounded-xl flex items-start gap-3 shadow-2xs">
+                <div className="w-8 h-8 rounded-lg bg-blue-600 text-white font-bold text-base flex items-center justify-center shrink-0 shadow-2xs mt-0.5">
+                  🤝
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-blue-800 bg-blue-100/90 px-2 py-0.5 rounded">
+                      Sub-DSA Team Invitation
+                    </span>
+                    <span className="text-xs font-bold text-slate-800">
+                      Invited by {referralSubDsa.name} {referralSubDsa.partnerCode ? `(${referralSubDsa.partnerCode})` : ''}
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-slate-600 mt-1 leading-snug">
+                    You are joining as an authorized <strong>Channel Partner (Agent)</strong> mapped under Sub-DSA <strong>{referralSubDsa.name}</strong>. You will receive dedicated support from their team and full access to {companyName}&apos;s digital loan origination platform.
+                  </p>
+                </div>
+              </div>
+            )}
+
             {/* RM Referral Invitation Banner */}
-            {referralRm && (
+            {referralRm && !referralSubDsa && (
               <div className="p-3.5 bg-gradient-to-r from-emerald-50 via-emerald-50/70 to-slate-50/60 border border-emerald-200/90 rounded-xl flex items-start gap-3 shadow-2xs">
                 <div className="w-8 h-8 rounded-lg bg-emerald-600 text-white font-bold text-base flex items-center justify-center shrink-0 shadow-2xs mt-0.5">
                   👔
@@ -955,14 +1029,18 @@ Compliance Undertaking: DPDP Act 2023 compliant, Zero-Cash Collection policy, no
                 Onboarding Submitted, {successData.partnerName}!
               </h2>
               <p className="text-xs text-slate-500 mt-1 max-w-md mx-auto">
-                Your KYC documents and authorized Sub-DSA Agreement have been submitted to Central Support for verification.
+                {targetRole === 'SUB_DSA'
+                  ? 'Your Sub-DSA application and executed Master Partner Agreement have been submitted for verification.'
+                  : 'Your KYC documents and authorized Referral Partner Agreement have been submitted to Central Support for verification.'}
               </p>
             </div>
 
             {/* Official Reference Code Card */}
             <div className="bg-gradient-to-br from-emerald-50 to-slate-50 border-2 border-emerald-300 rounded-2xl p-5 max-w-md mx-auto shadow-sm">
               <span className="text-[11px] font-bold text-emerald-800 uppercase tracking-wider block mb-1">
-                Your Channel Partner (DSA) Reference Code
+                {targetRole === 'SUB_DSA'
+                  ? 'Your Sub-DSA Master Reference Code'
+                  : 'Your Channel Partner (Agent) Reference Code'}
               </span>
               <div className="flex items-center justify-center gap-3 my-2">
                 <span className="font-mono text-3xl font-black text-slate-900 tracking-wider">
@@ -977,7 +1055,9 @@ Compliance Undertaking: DPDP Act 2023 compliant, Zero-Cash Collection policy, no
                 </button>
               </div>
               <p className="text-[11px] text-slate-500">
-                Quote this code for all bank approvals, Central Support verification, and commission tracking.
+                {targetRole === 'SUB_DSA'
+                  ? 'Quote this code to recruit agents under your network and submit direct client loans.'
+                  : 'Quote this code for all bank approvals, Central Support verification, and commission tracking.'}
               </p>
             </div>
 
@@ -997,7 +1077,11 @@ Compliance Undertaking: DPDP Act 2023 compliant, Zero-Cash Collection policy, no
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="text-emerald-600 font-bold shrink-0">3.</span>
-                  <span><strong>Activation & Certificate:</strong> Once approved, customer loan link sharing will be unlocked and your official <strong>Certificate of Association</strong> will be issued.</span>
+                  <span>
+                    {targetRole === 'SUB_DSA'
+                      ? <strong>Agent Network Hub & Direct Sourcing: Once approved, log in to access your Sub-DSA Command Hub, generate agent referral links, and earn override commissions.</strong>
+                      : <strong>Activation & Certificate: Once approved, customer loan link sharing will be unlocked and your official Certificate of Association will be issued.</strong>}
+                  </span>
                 </li>
               </ul>
             </div>
@@ -1005,12 +1089,20 @@ Compliance Undertaking: DPDP Act 2023 compliant, Zero-Cash Collection policy, no
             {/* Profile Summary Box */}
             <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 max-w-md mx-auto text-left text-xs space-y-1.5">
               <div className="flex justify-between py-1 border-b border-slate-200/60">
-                <span className="text-slate-500">Auto-Assigned Role:</span>
-                <strong className="text-emerald-700">Channel Partner (Auto-Assigned)</strong>
+                <span className="text-slate-500">Assigned Role:</span>
+                <strong className={targetRole === 'SUB_DSA' ? 'text-indigo-700' : 'text-emerald-700'}>
+                  {targetRole === 'SUB_DSA' ? 'Sub-DSA Master Partner' : 'Channel Partner (Agent)'}
+                </strong>
               </div>
+              {referralSubDsa && (
+                <div className="flex justify-between py-1 border-b border-slate-200/60">
+                  <span className="text-slate-500">Mapped Sub-DSA:</span>
+                  <strong className="text-blue-700">🏢 {referralSubDsa.name} ({referralSubDsa.partnerCode})</strong>
+                </div>
+              )}
               {referralRm && (
                 <div className="flex justify-between py-1 border-b border-slate-200/60">
-                  <span className="text-slate-500">Auto-Assigned RM:</span>
+                  <span className="text-slate-500">Assigned RM:</span>
                   <strong className="text-indigo-700">👔 {referralRm.name}</strong>
                 </div>
               )}

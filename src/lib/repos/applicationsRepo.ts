@@ -1,7 +1,7 @@
 import crypto from 'crypto';
 import { db } from '@/lib/db';
 import type { LoanApplication, ApplicationStatus, LoanType, PipelineStats, User } from '@/types/db';
-import { listPartnersByRm, getUserById } from '@/lib/repos/usersRepo';
+import { listPartnersByRm, listPartnersBySubDsa, getUserById } from '@/lib/repos/usersRepo';
 import { generateApplicationToken } from '@/lib/tokens';
 
 export function createApplicationLink(data: {
@@ -303,9 +303,33 @@ export function listApplicationsForRm(rmId: string, tenantId = 'default'): LoanA
   });
 }
 
+export function listApplicationsForSubDsa(subDsaId: string, tenantId = 'default'): LoanApplication[] {
+  const mappedPartners = listPartnersBySubDsa(subDsaId, tenantId);
+  const mappedPartnerIds = new Set(mappedPartners.map((p) => p.id));
+  const allApps = listAllApplications(tenantId);
+
+  return allApps.filter((app) => {
+    // 1. Direct cases created by Sub-DSA
+    if (app.channelPartnerId === subDsaId || app.createdById === subDsaId) {
+      return true;
+    }
+    // 2. Team cases created by mapped agents
+    if (app.channelPartnerId && mappedPartnerIds.has(app.channelPartnerId)) {
+      return true;
+    }
+    if (app.createdById && mappedPartnerIds.has(app.createdById)) {
+      return true;
+    }
+    return false;
+  });
+}
+
 export function listApplicationsByRole(user: User): LoanApplication[] {
   if (user.role === 'CHANNEL_PARTNER') {
     return listApplicationsByPartner(user.id);
+  }
+  if (user.role === 'SUB_DSA') {
+    return listApplicationsForSubDsa(user.id, user.tenantId || 'default');
   }
   if (user.role === 'RELATIONSHIP_MANAGER') {
     return listApplicationsForRm(user.id, user.tenantId || 'default');

@@ -12,12 +12,15 @@ export const metadata = {
 export default async function PartnerOnboardPage({
   searchParams,
 }: {
-  searchParams?: { rmId?: string; ref?: string; branchId?: string };
+  searchParams?: { rmId?: string; ref?: string; branchId?: string; role?: string; subDsaId?: string; code?: string };
 }) {
   const branches = listBranches();
   const settings = await getCompanySettings();
 
-  const refRmId = searchParams?.rmId || searchParams?.ref;
+  const isExplicitSubDsa = searchParams?.role?.toUpperCase() === 'SUB_DSA';
+  const refId = searchParams?.subDsaId || searchParams?.rmId || searchParams?.ref;
+  const refCode = searchParams?.code;
+
   let referralRm: {
     id: string;
     name: string;
@@ -27,20 +30,82 @@ export default async function PartnerOnboardPage({
     branchName?: string;
   } | null = null;
 
-  if (refRmId) {
-    const rmUser = getUserById(refRmId);
-    if (rmUser && rmUser.role === 'RELATIONSHIP_MANAGER' && rmUser.active && !rmUser.isBlocked) {
-      const rmBranch = branches.find((b) => b.id === rmUser.branchId);
-      referralRm = {
-        id: rmUser.id,
-        name: rmUser.name,
-        email: rmUser.email,
-        phone: rmUser.phone || undefined,
-        branchId: rmUser.branchId,
-        branchName: rmBranch ? rmBranch.name : undefined,
+  let referralSubDsa: {
+    id: string;
+    name: string;
+    partnerCode?: string;
+    phone?: string;
+    branchId?: string;
+    branchName?: string;
+    assignedRmId?: string;
+    assignedRmName?: string;
+  } | null = null;
+
+  // 1. Check if referred by Sub-DSA (by subDsaId or refCode or ref user with SUB_DSA role)
+  if (searchParams?.subDsaId) {
+    const subDsaUser = getUserById(searchParams.subDsaId);
+    if (subDsaUser && subDsaUser.role === 'SUB_DSA' && subDsaUser.active && !subDsaUser.isBlocked) {
+      const b = branches.find((br) => br.id === subDsaUser.branchId);
+      referralSubDsa = {
+        id: subDsaUser.id,
+        name: subDsaUser.name,
+        partnerCode: subDsaUser.partnerCode,
+        phone: subDsaUser.phone || undefined,
+        branchId: subDsaUser.branchId,
+        branchName: b ? b.name : undefined,
+        assignedRmId: subDsaUser.assignedRmId || undefined,
+        assignedRmName: subDsaUser.assignedRmName || undefined,
+      };
+    }
+  } else if (refCode) {
+    const { getPartnerByCode } = await import('@/lib/repos/usersRepo');
+    const matched = getPartnerByCode(refCode);
+    if (matched && matched.role === 'SUB_DSA' && matched.active && !matched.isBlocked) {
+      const b = branches.find((br) => br.id === matched.branchId);
+      referralSubDsa = {
+        id: matched.id,
+        name: matched.name,
+        partnerCode: matched.partnerCode,
+        phone: matched.phone || undefined,
+        branchId: matched.branchId,
+        branchName: b ? b.name : undefined,
+        assignedRmId: matched.assignedRmId || undefined,
+        assignedRmName: matched.assignedRmName || undefined,
       };
     }
   }
+
+  // 2. Check if referred by RM or Admin
+  if (refId && !referralSubDsa) {
+    const u = getUserById(refId);
+    if (u && u.active && !u.isBlocked) {
+      if (u.role === 'SUB_DSA' && !isExplicitSubDsa) {
+        const b = branches.find((br) => br.id === u.branchId);
+        referralSubDsa = {
+          id: u.id,
+          name: u.name,
+          partnerCode: u.partnerCode,
+          phone: u.phone || undefined,
+          branchId: u.branchId,
+          branchName: b ? b.name : undefined,
+          assignedRmId: u.assignedRmId || undefined,
+          assignedRmName: u.assignedRmName || undefined,
+        };
+      } else if (u.role === 'RELATIONSHIP_MANAGER') {
+        const rmBranch = branches.find((b) => b.id === u.branchId);
+        referralRm = {
+          id: u.id,
+          name: u.name,
+          email: u.email,
+          phone: u.phone || undefined,
+          branchId: u.branchId,
+          branchName: rmBranch ? rmBranch.name : undefined,
+        };
+      }
+    }
+  }
+
+  const targetRole = isExplicitSubDsa ? 'SUB_DSA' : 'CHANNEL_PARTNER';
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -48,6 +113,8 @@ export default async function PartnerOnboardPage({
         branches={branches}
         companyName={settings.companyName || 'Quickfinsure'}
         referralRm={referralRm}
+        referralSubDsa={referralSubDsa}
+        targetRole={targetRole}
       />
     </div>
   );

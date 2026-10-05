@@ -2,11 +2,13 @@ import Link from 'next/link';
 import { requireUser } from '@/lib/auth';
 import { getPipelineStats, listApplicationsByRole } from '@/lib/repos/applicationsRepo';
 import { listBranchesWithCounts } from '@/lib/repos/branchesRepo';
-import { listPartnersByRm, getUserById } from '@/lib/repos/usersRepo';
+import { listPartnersByRm, listPartnersBySubDsa, getUserById } from '@/lib/repos/usersRepo';
+import { getSubDsaEarningsSummary } from '@/lib/repos/commissionsRepo';
 import { formatCurrencyINR, LOAN_TYPE_LABELS, formatDate } from '@/lib/format';
 import StatusBadge from '@/components/StatusBadge';
 import ActiveReportsSection from '@/components/ActiveReportsSection';
 import MobileDashboardSlider from '@/components/MobileDashboardSlider';
+import SubDsaCommandHub from '@/components/SubDsaCommandHub';
 import {
   getOrganisationReport,
   getRmTerritoryReport,
@@ -26,7 +28,12 @@ export default async function DashboardPage() {
   const isAdmin = user.role === 'ADMIN';
   const isSupport = user.role === 'CENTRAL_SUPPORT';
   const isPartner = user.role === 'CHANNEL_PARTNER';
+  const isSubDsa = user.role === 'SUB_DSA';
   const isRM = user.role === 'RELATIONSHIP_MANAGER';
+
+  // Sub-DSA Network & Earnings
+  const mappedAgents = isSubDsa ? listPartnersBySubDsa(user.id, tenantId) : [];
+  const subDsaEarnings = isSubDsa ? getSubDsaEarningsSummary(user.id, tenantId) : null;
 
   // Compute access-scoped active reports
   const orgReport = isAdmin ? getOrganisationReport(tenantId) : null;
@@ -101,8 +108,8 @@ export default async function DashboardPage() {
         </div>
       </div>
 
-      {/* Partner Approval Notice Banner if Partner is not approved yet */}
-      {isPartner && user.partnerStatus !== 'APPROVED' && (
+      {/* Partner / Sub-DSA Approval Notice Banner if not approved yet */}
+      {(isPartner || isSubDsa) && user.partnerStatus !== 'APPROVED' && (
         <div className="bg-amber-50 border border-amber-200 rounded-xl px-3.5 py-2 shadow-2xs flex flex-wrap items-center justify-between gap-2">
           <div className="flex items-center gap-2">
             <span className="text-base">⏳</span>
@@ -183,6 +190,15 @@ export default async function DashboardPage() {
           partnerReport={partnerPersonalReport}
         />
       </div>
+
+      {/* Sub-DSA Master Command Hub (Agent Recruitment Link, Overrides, Mapped Network) */}
+      {isSubDsa && subDsaEarnings && (
+        <SubDsaCommandHub
+          user={user}
+          mappedAgents={mappedAgents}
+          earnings={subDsaEarnings}
+        />
+      )}
 
       {/* 5. Main Workspace */}
       <div className={`grid grid-cols-1 ${hasSideColumn ? 'lg:grid-cols-12' : ''} gap-2`}>

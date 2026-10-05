@@ -24,6 +24,7 @@ export async function saveBankProductAction(data: {
   banks: string[];
   baseRate: number;
   partnerRate: number;
+  subDsaRate?: number;
   dedicatedPartnerId?: string | null;
   dedicatedPartnerName?: string | null;
   dedicatedPartnerMobile?: string | null;
@@ -53,6 +54,8 @@ export async function saveBankProductAction(data: {
       return { ok: false, error: 'Please provide a valid partner rate (% shared with partner).' };
     }
 
+    const subDsaRate = Number(data.subDsaRate !== undefined ? data.subDsaRate : 0.1);
+
     // If dedicated partner is provided, verify they are a registered partner
     let dedicatedPartnerId = data.dedicatedPartnerId || null;
     let dedicatedPartnerName = data.dedicatedPartnerName || null;
@@ -72,6 +75,7 @@ export async function saveBankProductAction(data: {
         banks: data.banks,
         baseRate,
         partnerRate,
+        subDsaRate,
         dedicatedPartnerId,
         dedicatedPartnerName,
         dedicatedPartnerMobile,
@@ -79,6 +83,7 @@ export async function saveBankProductAction(data: {
       });
 
       revalidatePath('/admin/banks');
+      revalidatePath('/admin/commissions');
       return { ok: true, message: `Updated product offering for ${data.productName.trim()}.` };
     }
 
@@ -88,6 +93,7 @@ export async function saveBankProductAction(data: {
       banks: data.banks,
       baseRate,
       partnerRate,
+      subDsaRate,
       dedicatedPartnerId,
       dedicatedPartnerName,
       dedicatedPartnerMobile,
@@ -95,10 +101,56 @@ export async function saveBankProductAction(data: {
     });
 
     revalidatePath('/admin/banks');
+    revalidatePath('/admin/commissions');
     return { ok: true, message: `Added ${created.productName} offering successfully.`, data: created };
   } catch (err) {
     console.error('[saveBankProductAction] Error:', err);
     return { ok: false, error: (err as Error).message || 'Failed to save product offering.' };
+  }
+}
+
+export async function updateProductCommissionSplitsAction(splits: {
+  id?: string;
+  productName: string;
+  baseRate: number;
+  partnerRate: number;
+  subDsaRate: number;
+}[]): Promise<ActionResult> {
+  try {
+    const user = await requireUser();
+    if (user.role !== 'ADMIN') {
+      return { ok: false, error: 'Only Administrators can configure product commission splits.' };
+    }
+
+    const { syncDatabase } = await import('@/lib/db');
+    for (const split of splits) {
+      if (split.id) {
+        updateBankProduct(split.id, {
+          baseRate: Number(split.baseRate) || 0,
+          partnerRate: Number(split.partnerRate) || 0,
+          subDsaRate: Number(split.subDsaRate) || 0,
+        });
+      } else {
+        createBankProduct({
+          tenantId: user.tenantId || 'default',
+          productName: split.productName,
+          banks: ['All Lending Banks & NBFCs'],
+          baseRate: Number(split.baseRate) || 0,
+          partnerRate: Number(split.partnerRate) || 0,
+          subDsaRate: Number(split.subDsaRate) || 0,
+          notes: 'Configured via Product-Wise Commission Splits settings panel',
+        });
+      }
+    }
+
+    revalidatePath('/admin/commissions');
+    revalidatePath('/admin/banks');
+    await syncDatabase();
+
+    return { ok: true, message: 'Product commission splits successfully updated across all loan categories.' };
+  } catch (err) {
+    console.error('[updateProductCommissionSplitsAction] Error:', err);
+    return { ok: false, error: (err as Error).message || 'Failed to update commission splits.' };
   }
 }
 

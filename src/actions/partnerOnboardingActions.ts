@@ -98,6 +98,9 @@ export async function completePartnerOnboardingAction(payload: {
   assignedRmId?: string | null;
   assignedRmName?: string | null;
   agreementAccepted: boolean;
+  targetRole?: 'SUB_DSA' | 'CHANNEL_PARTNER';
+  parentSubDsaId?: string | null;
+  parentSubDsaName?: string | null;
 }): Promise<CompleteOnboardingResult> {
   const fullName = (payload.fullName || '').trim();
   const fatherSpouseName = (payload.fatherSpouseName || '').trim();
@@ -108,6 +111,7 @@ export async function completePartnerOnboardingAction(payload: {
   const aadhaarNumber = (payload.aadhaarNumber || '').trim().replace(/[^0-9]/g, '');
   const password = payload.password || '';
   const otp = (payload.otp || '').trim();
+  const targetRole = payload.targetRole === 'SUB_DSA' ? 'SUB_DSA' : 'CHANNEL_PARTNER';
 
   if (!fullName) return { ok: false, error: 'Full name is required.' };
   if (!fatherSpouseName) return { ok: false, error: "Father's / Spouse's name is required." };
@@ -130,7 +134,7 @@ export async function completePartnerOnboardingAction(payload: {
   }
 
   if (!payload.agreementAccepted) {
-    return { ok: false, error: 'You must read and agree to the Sub-DSA / Referral Partner Agreement.' };
+    return { ok: false, error: 'You must read and agree to the Partnership / Referral Agreement.' };
   }
 
   // OTP Verification
@@ -182,6 +186,9 @@ export async function completePartnerOnboardingAction(payload: {
       branchId,
       assignedRmId,
       assignedRmName,
+      role: targetRole,
+      parentSubDsaId: payload.parentSubDsaId || null,
+      parentSubDsaName: payload.parentSubDsaName || null,
     });
 
     // Clear OTP after successful use
@@ -190,12 +197,26 @@ export async function completePartnerOnboardingAction(payload: {
     // Notify assigned RM if referral link was used
     if (createdPartner.assignedRmId) {
       try {
+        const isSubDsa = targetRole === 'SUB_DSA';
         createNotification({
           recipientId: createdPartner.assignedRmId,
           recipientRole: 'RELATIONSHIP_MANAGER',
           applicationId: 'partner-onboarding',
-          title: 'New Partner Onboarded via Your Link! 🤝',
-          message: `${fullName} has completed partner onboarding using your link and is auto-assigned to you (Pending Central Support verification).`,
+          title: isSubDsa ? 'New Sub-DSA Registered via Your Link! 🏢' : 'New Partner Onboarded via Your Link! 🤝',
+          message: `${fullName} has completed ${isSubDsa ? 'Sub-DSA' : 'partner'} onboarding using your link and is auto-assigned to you (Pending Central Support verification).`,
+        });
+      } catch {}
+    }
+
+    // Notify parent Sub-DSA if an agent signed up via Sub-DSA referral link
+    if (payload.parentSubDsaId) {
+      try {
+        createNotification({
+          recipientId: payload.parentSubDsaId,
+          recipientRole: 'SUB_DSA',
+          applicationId: 'sub-dsa-network',
+          title: 'New Agent Joined Your Team! 👥',
+          message: `${fullName} has registered using your referral link and is now mapped to your Sub-DSA network!`,
         });
       } catch {}
     }
@@ -248,11 +269,12 @@ export async function directAdminOnboardPartnerAction(payload: {
   panNumber?: string | null;
   aadhaarNumber?: string | null;
   commissionRate?: number;
+  role?: 'SUB_DSA' | 'CHANNEL_PARTNER';
 }): Promise<{ ok: boolean; message?: string; error?: string; partner?: User }> {
   try {
     const sessionUser = await requireUser();
     if (sessionUser.role !== 'ADMIN' && sessionUser.role !== 'CENTRAL_SUPPORT' && sessionUser.role !== 'RELATIONSHIP_MANAGER') {
-      return { ok: false, error: 'Unauthorized to onboard channel partners.' };
+      return { ok: false, error: 'Unauthorized to onboard partners.' };
     }
 
     const fullName = (payload.fullName || '').trim();
@@ -260,6 +282,7 @@ export async function directAdminOnboardPartnerAction(payload: {
     const mobile = (payload.mobile || '').trim().replace(/[^0-9]/g, '').slice(-10);
     const password = payload.password || 'Quickfin@123';
     const branchId = payload.branchId;
+    const isSubDsa = payload.role === 'SUB_DSA';
 
     if (!fullName) return { ok: false, error: 'Partner full name is required.' };
     if (!email || !/^\S+@\S+\.\S+$/.test(email)) return { ok: false, error: 'A valid email address is required.' };
@@ -285,14 +308,14 @@ export async function directAdminOnboardPartnerAction(payload: {
 
     const passwordHash = await bcrypt.hash(password, 10);
     const randomSuffix = Math.floor(1000 + Math.random() * 9000);
-    const partnerCode = `QFS-PRT-${randomSuffix}`;
+    const partnerCode = isSubDsa ? `QFS-SUB-${randomSuffix}` : `QFS-PRT-${randomSuffix}`;
 
     const created = createUser({
       name: fullName,
       email,
       phone: mobile,
       passwordHash,
-      role: 'CHANNEL_PARTNER',
+      role: isSubDsa ? 'SUB_DSA' : 'CHANNEL_PARTNER',
       branchId,
       partnerCode,
       partnerStatus: 'APPROVED',

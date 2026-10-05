@@ -10,6 +10,7 @@ import * as banksRepo from '@/lib/repos/banksRepo';
 import * as commissionsRepo from '@/lib/repos/commissionsRepo';
 import * as usersRepo from '@/lib/repos/usersRepo';
 import * as documentsRepo from '@/lib/repos/documentsRepo';
+import { getProductCommissionSplit } from '@/lib/repos/bankProductsRepo';
 import { syncDatabase } from '@/lib/db';
 import { saveUploadedFile, MAX_FILE_SIZE } from '@/lib/uploads';
 import type { ApplicationStatus, Bank, Role, LoanType } from '@/types/db';
@@ -606,40 +607,92 @@ export async function disburseCaseAction(
       return { ok: false, error: 'Please enter a valid disbursement amount.' };
     }
 
-    // Determine partner commission rate: check partner's custom rate or bank's commission slab
-    let commissionRate = 1.0; // default 1%
-    if (application.channelPartnerId) {
-      const partner = usersRepo.getUserById(application.channelPartnerId);
-      if (partner?.commissionRate !== undefined && partner.commissionRate > 0) {
-        commissionRate = partner.commissionRate;
-      } else if (application.bankId) {
-        const bank = banksRepo.getBankById(application.bankId);
-        if (bank && bank.commissionPct) {
-          commissionRate = bank.commissionPct;
-        }
+    // Determine partner commission rate from product split, partner custom rate, or bank slab
+    const split = getProductCommissionSplit(application.loanType || 'PERSONAL_LOAN', application.tenantId);
+    const partnerId = application.channelPartnerId || application.createdById;
+    const partner = partnerId ? usersRepo.getUserById(partnerId) : undefined;
+
+    let commissionRate = split.partnerRate;
+    if (partner?.commissionRate !== undefined && partner.commissionRate > 0) {
+      commissionRate = partner.commissionRate;
+    } else if (application.bankId) {
+      const bank = banksRepo.getBankById(application.bankId);
+      if (bank && bank.commissionPct) {
+        commissionRate = bank.commissionPct;
       }
     }
 
     const commissionAmount = Math.round((disbursedAmount * commissionRate) / 100);
 
+    // Check if partner is mapped under a Sub-DSA (Team Business)
+    let overrideAmount = 0;
+    const overrideRate = split.subDsaRate || 0.1;
+    let subDsa: any = undefined;
+    if (partner?.parentSubDsaId) {
+      subDsa = usersRepo.getUserById(partner.parentSubDsaId);
+    }
+
     // Update application
     applicationsRepo.disburseApplication(applicationId, disbursedAmount, commissionAmount);
 
-    // Record Commission ledger entry
-    if (application.channelPartnerId) {
+    // Record Commission ledger entries
+    if (partner) {
+      const isDirectSubDsa = partner.role === 'SUB_DSA';
+
+      // 1. Primary Direct Commission (to Agent or Sub-DSA acting as primary agent)
       commissionsRepo.recordCommission({
         tenantId: application.tenantId,
         applicationId,
-        channelPartnerId: application.channelPartnerId,
-        channelPartnerName: application.channelPartnerName || 'Partner',
+        channelPartnerId: partner.id,
+        channelPartnerName: partner.name,
         bankId: application.bankId || 'bank_default',
         bankName: application.bankName || 'Lending Bank',
         disbursedAmount,
         commissionRate,
+        commissionAmount,
+        earningType: 'DIRECT',
+        productName: split.productName,
+        bankPayoutRate: split.baseRate,
+        subDsaOverrideRate: subDsa ? overrideRate : 0,
+        netCompanyMargin: subDsa
+          ? Math.max(0, Number((split.baseRate - commissionRate - overrideRate).toFixed(2)))
+          : Math.max(0, Number((split.baseRate - commissionRate).toFixed(2))),
       });
+
+      // 2. Override Commission for Sub-DSA (Team Business)
+      if (subDsa && !isDirectSubDsa) {
+        overrideAmount = Math.round((disbursedAmount * overrideRate) / 100);
+        commissionsRepo.recordCommission({
+          tenantId: application.tenantId,
+          applicationId,
+          channelPartnerId: subDsa.id,
+          channelPartnerName: subDsa.name,
+          bankId: application.bankId || 'bank_default',
+          bankName: application.bankName || 'Lending Bank',
+          disbursedAmount,
+          commissionRate: overrideRate,
+          commissionAmount: overrideAmount,
+          earningType: 'OVERRIDE',
+          sourcePartnerId: partner.id,
+          sourcePartnerName: partner.name,
+          productName: split.productName,
+          bankPayoutRate: split.baseRate,
+          subDsaOverrideRate: overrideRate,
+          netCompanyMargin: Math.max(0, Number((split.baseRate - commissionRate - overrideRate).toFixed(2))),
+        });
+
+        // Notify Sub-DSA about the override commission
+        workflowRepo.createNotification({
+          recipientId: subDsa.id,
+          recipientRole: 'SUB_DSA',
+          applicationId,
+          title: `Team Override Earned: ₹${overrideAmount.toLocaleString('en-IN')}! 🚀`,
+          message: `Your mapped partner ${partner.name} closed a ${split.productName} for ₹${disbursedAmount.toLocaleString('en-IN')}. You earned an override of ₹${overrideAmount.toLocaleString('en-IN')} (${overrideRate}%).`,
+        });
+      }
     }
 
-    const histNote = `Loan disbursed: ₹${disbursedAmount.toLocaleString('en-IN')}. Calculated Partner Commission: ₹${commissionAmount.toLocaleString('en-IN')} (${commissionRate}%). ${note ? `Note: ${note}` : ''}`;
+    const histNote = `Loan disbursed: ₹${disbursedAmount.toLocaleString('en-IN')}. Direct Commission: ₹${commissionAmount.toLocaleString('en-IN')} (${commissionRate}%)${overrideAmount > 0 ? ` + Sub-DSA Override: ₹${overrideAmount.toLocaleString('en-IN')} (${overrideRate}%)` : ''}. ${note ? `Note: ${note}` : ''}`;
     statusHistoryRepo.addStatusHistory({
       applicationId,
       status: 'DISBURSED',
@@ -657,10 +710,10 @@ export async function disburseCaseAction(
     });
 
     // Notify Channel Partner
-    if (application.channelPartnerId) {
+    if (partner) {
       workflowRepo.createNotification({
-        recipientId: application.channelPartnerId,
-        recipientRole: 'CHANNEL_PARTNER',
+        recipientId: partner.id,
+        recipientRole: partner.role === 'SUB_DSA' ? 'SUB_DSA' : 'CHANNEL_PARTNER',
         applicationId,
         title: `Loan Disbursed! Commission Earned: ₹${commissionAmount.toLocaleString('en-IN')}`,
         message: `Case for ${application.fullName || 'Customer'} has been disbursed. Your payout of ₹${commissionAmount.toLocaleString('en-IN')} is queued.`,

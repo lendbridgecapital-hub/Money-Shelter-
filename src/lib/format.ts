@@ -5,6 +5,7 @@ export const ROLE_LABELS: Record<Role, string> = {
   CENTRAL_SUPPORT: 'Central Support',
   OPERATIONS: 'Operations Desk',
   RELATIONSHIP_MANAGER: 'Relationship Manager',
+  SUB_DSA: 'Sub-DSA Partner',
   CHANNEL_PARTNER: 'Channel Partner',
 };
 

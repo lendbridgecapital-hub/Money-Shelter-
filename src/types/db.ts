@@ -3,6 +3,7 @@ export type Role =
   | 'CENTRAL_SUPPORT'
   | 'OPERATIONS'
   | 'RELATIONSHIP_MANAGER'
+  | 'SUB_DSA'
   | 'CHANNEL_PARTNER';
 
 export type PartnerStatus =
@@ -61,7 +62,8 @@ export interface BankProduct {
   productName: string; // 'Home Loan' | 'Personal Loan' | 'Business Loan' | 'Education Loan' | 'Balance Transfer' | 'Property Loan' | custom
   banks: string[]; // List of Indian bank & NBFC names
   baseRate: number; // Gross commission % receivable by Quickfinsure from the bank (e.g. 2.0%)
-  partnerRate: number; // Commission % shared with the Channel Partner (e.g. 1.0%)
+  partnerRate: number; // Commission % shared with the Channel Partner (e.g. 1.5%)
+  subDsaRate: number; // Override commission % shared with the Sub-DSA (e.g. 0.1%)
   dedicatedPartnerId?: string | null; // null if applicable for all partners
   dedicatedPartnerName?: string | null;
   dedicatedPartnerMobile?: string | null;
@@ -83,6 +85,13 @@ export interface Commission {
   commissionRate: number; // percentage
   commissionAmount: number; // calculated rupees
   status: 'PENDING' | 'APPROVED' | 'PAID' | 'CLAWBACK';
+  earningType?: 'DIRECT' | 'OVERRIDE';
+  sourcePartnerId?: string | null;
+  sourcePartnerName?: string | null;
+  productName?: string | null;
+  bankPayoutRate?: number | null;
+  subDsaOverrideRate?: number | null;
+  netCompanyMargin?: number | null;
   paidAt?: string | null;
   createdAt: string;
 }
@@ -225,6 +234,8 @@ export interface User {
   agreementAuthorizedText?: string | null;
   assignedRmId?: string | null;
   assignedRmName?: string | null;
+  parentSubDsaId?: string | null;
+  parentSubDsaName?: string | null;
   approvalRemark?: string | null;
   approvedAt?: string | null;
   approvedById?: string | null;

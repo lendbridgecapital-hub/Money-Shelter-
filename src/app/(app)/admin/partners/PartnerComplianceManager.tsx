@@ -38,12 +38,29 @@ export default function PartnerComplianceManager({
   const [error, setError] = useState<string | null>(null);
   const [copiedLink, setCopiedLink] = useState(false);
 
+  // Sub-DSA Modal State
+  const [showSubDsaModal, setShowSubDsaModal] = useState(false);
+  const [copiedSubDsaLink, setCopiedSubDsaLink] = useState(false);
+  const [selectedOnboardRole, setSelectedOnboardRole] = useState<'CHANNEL_PARTNER' | 'SUB_DSA'>('CHANNEL_PARTNER');
+  const [roleFilter, setRoleFilter] = useState<'ALL' | 'SUB_DSA' | 'CHANNEL_PARTNER' | 'PENDING'>('ALL');
+
   // Direct Onboard Modal State
   const [showOnboardModal, setShowOnboardModal] = useState(false);
   const [onboardLoading, setOnboardLoading] = useState(false);
   const [onboardError, setOnboardError] = useState<string | null>(null);
   const [onboardSuccess, setOnboardSuccess] = useState<string | null>(null);
   const [approvingId, setApprovingId] = useState<string | null>(null);
+
+  // Sub-DSA Team Size Map
+  const teamSizeMap = React.useMemo(() => {
+    const map = new Map<string, number>();
+    for (const p of partners) {
+      if (p.parentSubDsaId) {
+        map.set(p.parentSubDsaId, (map.get(p.parentSubDsaId) || 0) + 1);
+      }
+    }
+    return map;
+  }, [partners]);
 
   // Onboarding Form Fields
   const [fullName, setFullName] = useState('');
@@ -63,6 +80,12 @@ export default function PartnerComplianceManager({
     return `${origin}/partner/onboard`;
   };
 
+  const getSubDsaOnboardingUrl = () => {
+    const origin = typeof window !== 'undefined' ? window.location.origin : '';
+    const refParam = currentUserId ? `&ref=${currentUserId}` : '';
+    return `${origin}/partner/onboard?role=SUB_DSA${refParam}`;
+  };
+
   const copyOnboardingLink = () => {
     const link = getOnboardingUrl();
     navigator.clipboard.writeText(link);
@@ -70,10 +93,25 @@ export default function PartnerComplianceManager({
     setTimeout(() => setCopiedLink(false), 2500);
   };
 
+  const copySubDsaLink = () => {
+    const link = getSubDsaOnboardingUrl();
+    navigator.clipboard.writeText(link);
+    setCopiedSubDsaLink(true);
+    setTimeout(() => setCopiedSubDsaLink(false), 2500);
+  };
+
   const shareViaWhatsApp = () => {
     const link = getOnboardingUrl();
     const text = encodeURIComponent(
       `Hello! Register as an authorized Channel Partner with Quickfinsure using my direct onboarding link: ${link}`
+    );
+    window.open(`https://api.whatsapp.com/send?text=${text}`, '_blank');
+  };
+
+  const shareSubDsaViaWhatsApp = () => {
+    const link = getSubDsaOnboardingUrl();
+    const text = encodeURIComponent(
+      `Hello! We invite you to join Quickfinsure as an authorized Sub-DSA. Build your own agent team, earn override commissions on your network's business, and access direct loan disbursements: ${link}`
     );
     window.open(`https://api.whatsapp.com/send?text=${text}`, '_blank');
   };
@@ -125,6 +163,7 @@ export default function PartnerComplianceManager({
       assignedRmId: isRM ? currentUserId : assignedRmId || null,
       panNumber: panNumber ? panNumber.toUpperCase() : null,
       aadhaarNumber: aadhaarNumber || null,
+      role: selectedOnboardRole,
     });
     setOnboardLoading(false);
 
@@ -175,19 +214,32 @@ export default function PartnerComplianceManager({
           </p>
         </div>
 
-        {(isAdmin || isSupport || isRM) && (
-          <button
-            type="button"
-            onClick={() => {
-              setOnboardError(null);
-              setOnboardSuccess(null);
-              setShowOnboardModal(true);
-            }}
-            className="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl shadow-xs transition inline-flex items-center gap-1.5 self-start sm:self-auto active:scale-95"
-          >
-            <span>➕ Onboard New Partner</span>
-          </button>
-        )}
+        <div className="flex items-center gap-2 self-start sm:self-auto flex-wrap">
+          {(isAdmin || isSupport || isRM) && (
+            <button
+              type="button"
+              onClick={() => setShowSubDsaModal(true)}
+              className="px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-xl shadow-xs transition inline-flex items-center gap-1.5 active:scale-95"
+            >
+              <span>🏢 Appoint Sub-DSA</span>
+            </button>
+          )}
+
+          {(isAdmin || isSupport || isRM) && (
+            <button
+              type="button"
+              onClick={() => {
+                setSelectedOnboardRole('CHANNEL_PARTNER');
+                setOnboardError(null);
+                setOnboardSuccess(null);
+                setShowOnboardModal(true);
+              }}
+              className="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl shadow-xs transition inline-flex items-center gap-1.5 active:scale-95"
+            >
+              <span>➕ Onboard New Partner</span>
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Partner Onboarding Link Banner */}
@@ -242,13 +294,36 @@ export default function PartnerComplianceManager({
         </div>
       </div>
 
+      {/* Filter Tabs */}
+      <div className="flex flex-wrap items-center gap-2 border-b border-slate-200 pb-2">
+        {[
+          { id: 'ALL', label: `All Network Partners (${partners.length})` },
+          { id: 'SUB_DSA', label: `Sub-DSAs (${partners.filter((p) => p.role === 'SUB_DSA').length})` },
+          { id: 'CHANNEL_PARTNER', label: `Channel Partners (${partners.filter((p) => p.role === 'CHANNEL_PARTNER').length})` },
+          { id: 'PENDING', label: `Pending KYC (${partners.filter((p) => p.partnerStatus === 'PENDING_APPROVAL').length})` },
+        ].map((tab) => (
+          <button
+            key={tab.id}
+            type="button"
+            onClick={() => setRoleFilter(tab.id as any)}
+            className={`px-3 py-1.5 text-xs font-bold rounded-lg transition ${
+              roleFilter === tab.id
+                ? 'bg-slate-900 text-white shadow-2xs'
+                : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+            }`}
+          >
+            {tab.label}
+          </button>
+        ))}
+      </div>
+
       {/* Partners Table */}
       <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr className="bg-slate-50 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide border-b border-slate-200">
-                <th className="px-4 py-3">Channel Partner</th>
+                <th className="px-4 py-3">Partner / Organization</th>
                 <th className="px-4 py-3">Branch / Assigned RM</th>
                 <th className="px-4 py-3">Phone / Contact</th>
                 <th className="px-4 py-3">Commission Slab</th>
@@ -265,41 +340,77 @@ export default function PartnerComplianceManager({
                   </td>
                 </tr>
               ) : (
-                partners.map((p) => {
-                  const isBlocked = Boolean(p.isBlocked);
-                  const status = p.partnerStatus || 'APPROVED';
-                  const isPending = status === 'PENDING_APPROVAL';
+                partners
+                  .filter((p) => {
+                    if (roleFilter === 'SUB_DSA') return p.role === 'SUB_DSA';
+                    if (roleFilter === 'CHANNEL_PARTNER') return p.role === 'CHANNEL_PARTNER';
+                    if (roleFilter === 'PENDING') return p.partnerStatus === 'PENDING_APPROVAL';
+                    return true;
+                  })
+                  .map((p) => {
+                    const isBlocked = Boolean(p.isBlocked);
+                    const status = p.partnerStatus || 'APPROVED';
+                    const isPending = status === 'PENDING_APPROVAL';
+                    const isSubDsa = p.role === 'SUB_DSA';
+                    const teamCount = teamSizeMap.get(p.id) || 0;
 
-                  return (
-                    <tr key={p.id} className="hover:bg-slate-50/70 transition-colors">
-                      <td className="px-4 py-3.5">
-                        <div className="flex items-center gap-2">
-                          <p className="font-bold text-slate-900">{p.name}</p>
-                          {p.partnerCode && (
-                            <span className="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-800 border border-emerald-200/60">
-                              {p.partnerCode}
+                    return (
+                      <tr key={p.id} className="hover:bg-slate-50/70 transition-colors">
+                        <td className="px-4 py-3.5">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <p className="font-bold text-slate-900">{p.name}</p>
+                            {p.partnerCode && (
+                              <span
+                                className={`text-[10px] font-mono font-bold px-1.5 py-0.5 rounded border ${
+                                  isSubDsa
+                                    ? 'bg-indigo-50 text-indigo-800 border-indigo-200'
+                                    : 'bg-emerald-50 text-emerald-800 border-emerald-200/60'
+                                }`}
+                              >
+                                {p.partnerCode}
+                              </span>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-1.5 flex-wrap mt-1">
+                            <span
+                              className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${
+                                isSubDsa
+                                  ? 'bg-indigo-100 text-indigo-800 border border-indigo-200'
+                                  : 'bg-slate-100 text-slate-700'
+                              }`}
+                            >
+                              {isSubDsa ? '🏢 Sub-DSA' : '👤 Agent'}
+                            </span>
+                            {isSubDsa && (
+                              <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-purple-50 text-purple-700 border border-purple-200">
+                                👥 {teamCount} Mapped Agents
+                              </span>
+                            )}
+                            {p.parentSubDsaName && (
+                              <span className="text-[10px] text-blue-700 font-semibold bg-blue-50 px-1.5 py-0.5 rounded border border-blue-200">
+                                Mapped to: 🏢 {p.parentSubDsaName}
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-xs text-slate-400 mt-1">{p.email}</p>
+                          {p.panNumber && (
+                            <span className="text-[10px] font-mono text-slate-500 block mt-0.5">
+                              PAN: {p.panNumber} • Aadhaar: •••• {p.aadhaarNumber?.slice(-4) || 'Verified'}
                             </span>
                           )}
-                        </div>
-                        <p className="text-xs text-slate-400">{p.email}</p>
-                        {p.panNumber && (
-                          <span className="text-[10px] font-mono text-slate-500 block mt-0.5">
-                            PAN: {p.panNumber} • Aadhaar: •••• {p.aadhaarNumber?.slice(-4) || 'Verified'}
-                          </span>
-                        )}
-                      </td>
-                      <td className="px-4 py-3.5 text-xs text-slate-600">
-                        <p className="font-medium text-slate-800">{p.branchName || 'Head Office'}</p>
-                        <p className="text-[11px] text-slate-400 mt-0.5">
-                          RM: {p.assignedRmName || 'Not Assigned'}
-                        </p>
-                      </td>
-                      <td className="px-4 py-3.5 text-xs text-slate-600 font-mono">
-                        {p.phone || '—'}
-                      </td>
-                      <td className="px-4 py-3.5 text-xs font-bold text-emerald-700">
-                        {p.commissionRate !== undefined ? `${p.commissionRate}%` : 'Standard Bank Slab'}
-                      </td>
+                        </td>
+                        <td className="px-4 py-3.5 text-xs text-slate-600">
+                          <p className="font-medium text-slate-800">{p.branchName || 'Head Office'}</p>
+                          <p className="text-[11px] text-slate-400 mt-0.5">
+                            RM: {p.assignedRmName || 'Not Assigned'}
+                          </p>
+                        </td>
+                        <td className="px-4 py-3.5 text-xs text-slate-600 font-mono">
+                          {p.phone || '—'}
+                        </td>
+                        <td className="px-4 py-3.5 text-xs font-bold text-emerald-700">
+                          {p.commissionRate !== undefined ? `${p.commissionRate}%` : 'Standard Bank Slab'}
+                        </td>
                       <td className="px-4 py-3.5">
                         {isBlocked ? (
                           <div>
@@ -410,6 +521,25 @@ export default function PartnerComplianceManager({
             )}
 
             <form onSubmit={handleDirectOnboard} className="space-y-3.5">
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  Appointment Role & Network Tier <span className="text-rose-500">*</span>
+                </label>
+                <select
+                  value={selectedOnboardRole}
+                  onChange={(e) => setSelectedOnboardRole(e.target.value as any)}
+                  className="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500 font-bold text-slate-800"
+                >
+                  <option value="CHANNEL_PARTNER">Channel Partner (Agent) — Direct Origination Tier</option>
+                  <option value="SUB_DSA">Sub-DSA (Master Tier) — Team Recruitment & Override Engine</option>
+                </select>
+                <span className="text-[10px] text-slate-400 block mt-0.5">
+                  {selectedOnboardRole === 'SUB_DSA'
+                    ? 'Generates a QFS-SUB-XXXX code. Sub-DSA can recruit agents and earn override commissions.'
+                    : 'Generates a QFS-PRT-XXXX code for direct customer sourcing.'}
+                </span>
+              </div>
+
               <div className="grid sm:grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-semibold text-slate-700 mb-1">
@@ -550,7 +680,7 @@ export default function PartnerComplianceManager({
               </div>
 
               <div className="p-3 bg-emerald-50/60 border border-emerald-200 rounded-xl text-[11px] text-emerald-800">
-                ⚡ <strong>Instant Setup:</strong> Partner Code (e.g. QFS-PRT-XXXX) & Certificate of Association are generated immediately. The partner can log in and originate loans right away.
+                ⚡ <strong>Instant Setup:</strong> Official Reference Code (e.g. {selectedOnboardRole === 'SUB_DSA' ? 'QFS-SUB-XXXX' : 'QFS-PRT-XXXX'}) is generated immediately. The partner can log in and originate loans right away.
               </div>
 
               <div className="flex justify-end gap-2 pt-2 border-t border-slate-100">
@@ -570,6 +700,87 @@ export default function PartnerComplianceManager({
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Appoint Sub-DSA Invitation Link Modal */}
+      {showSubDsaModal && (
+        <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-4">
+            <div className="flex justify-between items-center border-b border-slate-100 pb-3">
+              <div className="flex items-center gap-2.5">
+                <div className="w-10 h-10 rounded-xl bg-indigo-600 text-white flex items-center justify-center text-xl font-bold shadow-xs">
+                  🏢
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-slate-900">Appoint Sub-DSA (Master Partner)</h3>
+                  <p className="text-xs text-slate-500">Automated link-based onboarding for franchise networks.</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowSubDsaModal(false)}
+                className="text-slate-400 hover:text-slate-600 font-bold"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="p-3.5 bg-gradient-to-r from-indigo-50 to-purple-50/70 border border-indigo-200 rounded-xl space-y-2 text-xs text-slate-700">
+              <div className="flex items-center gap-1.5 font-bold text-indigo-950">
+                <span>🌟</span>
+                <span>Sub-DSA Capabilities & Commission Structure</span>
+              </div>
+              <p className="text-[11px] leading-relaxed text-slate-600">
+                When a broker registers using this link, they are designated as a <strong>Sub-DSA</strong>. They can:
+              </p>
+              <ul className="text-[11px] space-y-1 text-slate-600 list-disc list-inside">
+                <li>Generate agent referral links to recruit their own team of Channel Partners.</li>
+                <li>Earn <strong>Override Commissions</strong> (e.g. 0.1% PL) on all loans disbursed by their agents.</li>
+                <li>Originate direct customer loans and earn the full standard Partner commission.</li>
+              </ul>
+            </div>
+
+            <div className="space-y-2">
+              <label className="block text-xs font-semibold text-slate-700">
+                Sub-DSA Unique Registration Link
+              </label>
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  readOnly
+                  value={getSubDsaOnboardingUrl()}
+                  className="w-full px-3 py-2 text-xs font-mono bg-slate-50 border border-slate-200 rounded-lg text-slate-800"
+                />
+                <button
+                  type="button"
+                  onClick={copySubDsaLink}
+                  className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-lg shadow-2xs transition whitespace-nowrap"
+                >
+                  {copiedSubDsaLink ? '✓ Copied' : '📋 Copy Link'}
+                </button>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between pt-3 border-t border-slate-100">
+              <a
+                href={getSubDsaOnboardingUrl()}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-xs font-semibold text-indigo-600 hover:underline inline-flex items-center gap-1"
+              >
+                <span>Preview Registration Portal</span>
+                <span>↗</span>
+              </a>
+              <button
+                type="button"
+                onClick={shareSubDsaViaWhatsApp}
+                className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-lg shadow-2xs transition inline-flex items-center gap-1.5"
+              >
+                <span>Share via WhatsApp</span>
+              </button>
+            </div>
           </div>
         </div>
       )}

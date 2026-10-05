@@ -43,6 +43,7 @@ export function createBankProduct(data: {
   banks: string[];
   baseRate: number;
   partnerRate: number;
+  subDsaRate?: number;
   dedicatedPartnerId?: string | null;
   dedicatedPartnerName?: string | null;
   dedicatedPartnerMobile?: string | null;
@@ -55,10 +56,10 @@ export function createBankProduct(data: {
 
   db.prepare(
     `INSERT INTO bank_products (
-      id, tenant_id, product_name, banks, base_rate, partner_rate,
+      id, tenant_id, product_name, banks, base_rate, partner_rate, sub_dsa_rate,
       dedicated_partner_id, dedicated_partner_name, dedicated_partner_mobile,
       notes, active, created_at, updated_at
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?, ?)`
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?, ?)`
   ).run(
     id,
     tenantId,
@@ -66,6 +67,7 @@ export function createBankProduct(data: {
     banksJson,
     Number(data.baseRate) || 0,
     Number(data.partnerRate) || 0,
+    Number(data.subDsaRate !== undefined ? data.subDsaRate : 0.1),
     data.dedicatedPartnerId || null,
     data.dedicatedPartnerName || null,
     data.dedicatedPartnerMobile || null,
@@ -103,6 +105,10 @@ export function updateBankProduct(
   if (data.partnerRate !== undefined) {
     updates.push('partner_rate = ?');
     params.push(Number(data.partnerRate));
+  }
+  if (data.subDsaRate !== undefined) {
+    updates.push('sub_dsa_rate = ?');
+    params.push(Number(data.subDsaRate));
   }
   if (data.dedicatedPartnerId !== undefined) {
     updates.push('dedicated_partner_id = ?');
@@ -145,6 +151,80 @@ export function toggleBankProductStatus(id: string, active: boolean): void {
   );
 }
 
+/**
+ * Resolves product-wise commission split rates for a loan category.
+ * Bank Payout (baseRate), Partner Earning (partnerRate), Sub-DSA Override (subDsaRate), and Net Margin.
+ */
+export function getProductCommissionSplit(
+  loanTypeOrName: string,
+  tenantId = 'default'
+): {
+  productName: string;
+  baseRate: number;
+  partnerRate: number;
+  subDsaRate: number;
+  netCompanyMargin: number;
+} {
+  const products = listBankProducts(tenantId).filter((p) => p.active && !p.dedicatedPartnerId);
+  const normalized = (loanTypeOrName || '').toLowerCase().replace(/_/g, ' ').trim();
+
+  // Try matching by product name or common loan aliases
+  const matched = products.find((p) => {
+    const pn = p.productName.toLowerCase();
+    if (pn === normalized) return true;
+    if (normalized.includes('personal') && pn.includes('personal')) return true;
+    if (normalized.includes('home') && pn.includes('home')) return true;
+    if (normalized.includes('business') && pn.includes('business')) return true;
+    if ((normalized.includes('property') || normalized.includes('lap')) && (pn.includes('property') || pn.includes('lap'))) return true;
+    if (normalized.includes('education') && pn.includes('education')) return true;
+    if (normalized.includes('gold') && pn.includes('gold')) return true;
+    if (normalized.includes('balance') && pn.includes('balance')) return true;
+    return false;
+  });
+
+  if (matched) {
+    const baseRate = Number(matched.baseRate) || 2.0;
+    const partnerRate = Number(matched.partnerRate) || 1.5;
+    const subDsaRate = Number(matched.subDsaRate !== undefined ? matched.subDsaRate : 0.1);
+    const netCompanyMargin = Math.max(0, Number((baseRate - partnerRate - subDsaRate).toFixed(2)));
+    return {
+      productName: matched.productName,
+      baseRate,
+      partnerRate,
+      subDsaRate,
+      netCompanyMargin,
+    };
+  }
+
+  // Standard industry defaults if product record is not in database
+  if (normalized.includes('personal')) {
+    return { productName: 'Personal Loan', baseRate: 2.5, partnerRate: 1.5, subDsaRate: 0.1, netCompanyMargin: 0.9 };
+  }
+  if (normalized.includes('home')) {
+    return { productName: 'Home Loan', baseRate: 2.0, partnerRate: 1.2, subDsaRate: 0.1, netCompanyMargin: 0.7 };
+  }
+  if (normalized.includes('business')) {
+    return { productName: 'Business Loan', baseRate: 2.75, partnerRate: 1.65, subDsaRate: 0.1, netCompanyMargin: 1.0 };
+  }
+  if (normalized.includes('property') || normalized.includes('lap')) {
+    return { productName: 'Loan Against Property', baseRate: 2.0, partnerRate: 1.2, subDsaRate: 0.1, netCompanyMargin: 0.7 };
+  }
+  if (normalized.includes('education')) {
+    return { productName: 'Education Loan', baseRate: 1.8, partnerRate: 1.1, subDsaRate: 0.1, netCompanyMargin: 0.6 };
+  }
+  if (normalized.includes('gold')) {
+    return { productName: 'Gold Loan', baseRate: 1.0, partnerRate: 0.6, subDsaRate: 0.1, netCompanyMargin: 0.3 };
+  }
+
+  return {
+    productName: loanTypeOrName || 'Loan',
+    baseRate: 2.0,
+    partnerRate: 1.5,
+    subDsaRate: 0.1,
+    netCompanyMargin: 0.4,
+  };
+}
+
 function mapRowToBankProduct(row: Record<string, unknown>): BankProduct {
   let banks: string[] = [];
   if (Array.isArray(row.banks)) {
@@ -164,6 +244,7 @@ function mapRowToBankProduct(row: Record<string, unknown>): BankProduct {
     banks,
     baseRate: Number(row.base_rate !== undefined ? row.base_rate : (row.baseRate || 0)),
     partnerRate: Number(row.partner_rate !== undefined ? row.partner_rate : (row.partnerRate || 0)),
+    subDsaRate: Number(row.sub_dsa_rate !== undefined ? row.sub_dsa_rate : (row.subDsaRate !== undefined ? row.subDsaRate : 0.1)),
     dedicatedPartnerId: row.dedicated_partner_id || row.dedicatedPartnerId ? String(row.dedicated_partner_id || row.dedicatedPartnerId) : null,
     dedicatedPartnerName: row.dedicated_partner_name || row.dedicatedPartnerName ? String(row.dedicated_partner_name || row.dedicatedPartnerName) : null,
     dedicatedPartnerMobile: row.dedicated_partner_mobile || row.dedicatedPartnerMobile ? String(row.dedicated_partner_mobile || row.dedicatedPartnerMobile) : null,

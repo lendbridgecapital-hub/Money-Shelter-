@@ -58,6 +58,7 @@ export default function Sidebar({
   const isOps = role === 'OPERATIONS';
   const isRM = role === 'RELATIONSHIP_MANAGER';
   const isPartner = role === 'CHANNEL_PARTNER';
+  const isSubDsa = role === 'SUB_DSA';
 
   // Partner-related sub-items grouped into the collapsible "Partners" drawer
   const partnerSubItems = [
@@ -78,7 +79,13 @@ export default function Sidebar({
       external: false,
     },
     {
-      label: isPartner ? 'My Commissions' : isRM ? 'Partner Commissions' : 'Commissions & Payouts',
+      label: isSubDsa
+        ? 'Overrides & Commissions'
+        : isPartner
+        ? 'My Commissions'
+        : isRM
+        ? 'Partner Commissions'
+        : 'Commissions & Payouts',
       href: '/admin/commissions',
       icon: '💰',
       description: 'Commissions & ledger',
@@ -86,19 +93,31 @@ export default function Sidebar({
       external: false,
     },
     {
-      label: isPartner ? 'My Certificate' : 'Certificate of Association',
+      label: isSubDsa
+        ? 'Sub-DSA Certificate'
+        : isPartner
+        ? 'My Certificate'
+        : 'Certificate of Association',
       href: '/partner/certificate',
       icon: '🎓',
       description: 'Official partner certificate',
-      show: isPartner,
+      show: isPartner || isSubDsa,
       external: false,
     },
     {
-      label: isRM ? 'Share Onboarding Link' : 'Public Onboard Link',
-      href: isRM && userId ? `/partner/onboard?rmId=${userId}` : '/partner/onboard',
+      label: isSubDsa ? 'Recruit Agents Link' : isRM ? 'Share Onboarding Link' : 'Public Onboard Link',
+      href: isSubDsa && userId
+        ? `/partner/onboard?subDsaId=${userId}`
+        : isRM && userId
+        ? `/partner/onboard?rmId=${userId}`
+        : '/partner/onboard',
       icon: '🔗',
-      description: isRM ? 'Auto-assigns partners to your RM portfolio' : 'External partner onboard form',
-      show: isAdmin || isSupport || isRM,
+      description: isSubDsa
+        ? 'Invite agents under your Sub-DSA network'
+        : isRM
+        ? 'Auto-assigns partners to your RM portfolio'
+        : 'External partner onboard form',
+      show: isAdmin || isSupport || isRM || isSubDsa,
       external: true,
     },
   ].filter((item) => item.show);
@@ -142,7 +161,7 @@ export default function Sidebar({
       show: true,
     },
     {
-      label: isPartner ? 'My Leads & Pipeline' : isOps ? 'Loan Pipeline' : 'Loan Requests',
+      label: isPartner || isSubDsa ? 'My Leads & Pipeline' : isOps ? 'Loan Pipeline' : 'Loan Requests',
       href: '/branch/requests',
       icon: '📋',
       show: true,
@@ -164,7 +183,7 @@ export default function Sidebar({
   // Secondary operational items after Partners
   const secondaryNavItems = [
     {
-      label: isPartner ? 'Bank Products & Rates' : 'Partner Banks & Products',
+      label: isPartner || isSubDsa ? 'Bank Products & Rates' : 'Partner Banks & Products',
       href: '/admin/banks',
       icon: '🏦',
       show: true,

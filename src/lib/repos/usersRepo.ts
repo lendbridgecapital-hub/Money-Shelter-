@@ -55,9 +55,10 @@ export function createUser(data: {
   const email = data.email.trim().toLowerCase();
   const tenantId = data.tenantId || 'default';
 
-  if (data.role === 'CHANNEL_PARTNER') {
+  if (data.role === 'CHANNEL_PARTNER' || data.role === 'SUB_DSA') {
     const randomSuffix = Math.floor(1000 + Math.random() * 9000);
-    const partnerCode = data.partnerCode || `QFS-PRT-${randomSuffix}`;
+    const defaultPrefix = data.role === 'SUB_DSA' ? 'QFS-SUB' : 'QFS-PRT';
+    const partnerCode = data.partnerCode || `${defaultPrefix}-${randomSuffix}`;
     const certNum = `QFS-CERT-2026-${randomSuffix}`;
     const partnerStatus = data.partnerStatus || 'APPROVED';
 
@@ -65,9 +66,9 @@ export function createUser(data: {
       `INSERT INTO users (
         id, tenant_id, name, email, password_hash, role, branch_id, phone,
         partner_code, partner_status, pan_number, aadhaar_number, assigned_rm_id,
-        assigned_rm_name, certificate_number, certificate_issued_at, approved_at,
+        assigned_rm_name, parent_sub_dsa_id, parent_sub_dsa_name, certificate_number, certificate_issued_at, approved_at,
         commission_rate, agreement_accepted, active, is_blocked, created_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, 1, 0, ?)`
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, 1, 0, ?)`
     ).run(
       id,
       tenantId,
@@ -83,6 +84,8 @@ export function createUser(data: {
       data.aadhaarNumber ? data.aadhaarNumber.trim() : null,
       data.assignedRmId || null,
       data.assignedRmName || null,
+      (data as any).parentSubDsaId || null,
+      (data as any).parentSubDsaName || null,
       certNum,
       now,
       now,
@@ -128,13 +131,28 @@ export function listPartners(tenantId = 'default'): User[] {
   return users.filter((u) => u.role === 'CHANNEL_PARTNER');
 }
 
+export function listSubDsas(tenantId = 'default'): User[] {
+  const users = listUsers(tenantId);
+  return users.filter((u) => u.role === 'SUB_DSA');
+}
+
+export function listAllNetworkPartners(tenantId = 'default'): User[] {
+  const users = listUsers(tenantId);
+  return users.filter((u) => u.role === 'CHANNEL_PARTNER' || u.role === 'SUB_DSA');
+}
+
+export function listPartnersBySubDsa(subDsaId: string, tenantId = 'default'): User[] {
+  const users = listUsers(tenantId);
+  return users.filter((u) => u.parentSubDsaId === subDsaId);
+}
+
 export function listPartnersByRm(rmId: string, tenantId = 'default'): User[] {
-  const partners = listPartners(tenantId);
+  const partners = listAllNetworkPartners(tenantId);
   return partners.filter((p) => p.assignedRmId === rmId);
 }
 
 export function searchRegisteredPartners(query: string, tenantId = 'default'): User[] {
-  const partners = listPartners(tenantId).filter((p) => p.active && !p.isBlocked);
+  const partners = listAllNetworkPartners(tenantId).filter((p) => p.active && !p.isBlocked);
   const q = query.trim().toLowerCase();
   if (!q) return partners;
   return partners.filter((p) => {
@@ -147,7 +165,7 @@ export function searchRegisteredPartners(query: string, tenantId = 'default'): U
 
 export function getPartnerByCode(code: string): User | undefined {
   const clean = code.trim().toUpperCase();
-  const users = listPartners();
+  const users = listAllNetworkPartners();
   return users.find((u) => (u.partnerCode || '').toUpperCase() === clean);
 }
 
@@ -299,6 +317,9 @@ export function createPartnerOnboarding(data: {
   tenantId?: string;
   assignedRmId?: string | null;
   assignedRmName?: string | null;
+  role?: 'CHANNEL_PARTNER' | 'SUB_DSA';
+  parentSubDsaId?: string | null;
+  parentSubDsaName?: string | null;
 }): User {
   const id = `usr_${crypto.randomBytes(8).toString('hex')}`;
   const now = new Date().toISOString();
@@ -306,7 +327,9 @@ export function createPartnerOnboarding(data: {
   const tenantId = data.tenantId || 'default';
   const branchId = data.branchId || 'br_c95492722e36abe1'; // Default HQ branch
   const randomSuffix = Math.floor(1000 + Math.random() * 9000);
-  const partnerCode = `QFS-PRT-${randomSuffix}`;
+  const targetRole: Role = data.role === 'SUB_DSA' ? 'SUB_DSA' : 'CHANNEL_PARTNER';
+  const prefix = targetRole === 'SUB_DSA' ? 'QFS-SUB' : 'QFS-PRT';
+  const partnerCode = `${prefix}-${randomSuffix}`;
 
   // Persist base64 data URLs to disk files to avoid database bloat and payload limits
   const cleanPanDocUrl = saveBase64Document(data.panDocumentUrl, 'partners', 'pan');
@@ -317,15 +340,15 @@ export function createPartnerOnboarding(data: {
       id, tenant_id, name, email, password_hash, role, branch_id, phone,
       partner_code, partner_status, father_spouse_name, address, pan_number, pan_document_url,
       aadhaar_number, aadhaar_document_url, agreement_accepted, agreement_signed_at,
-      agreement_authorized_text, assigned_rm_id, assigned_rm_name, active, is_blocked, created_at
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'PENDING_APPROVAL', ?, ?, ?, ?, ?, ?, 1, ?, ?, ?, ?, 1, 0, ?)`
+      agreement_authorized_text, assigned_rm_id, assigned_rm_name, parent_sub_dsa_id, parent_sub_dsa_name, active, is_blocked, created_at
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'PENDING_APPROVAL', ?, ?, ?, ?, ?, ?, 1, ?, ?, ?, ?, ?, ?, 1, 0, ?)`
   ).run(
     id,
     tenantId,
     data.name.trim(),
     email,
     data.passwordHash,
-    'CHANNEL_PARTNER',
+    targetRole,
     branchId,
     data.phone.trim(),
     partnerCode,
@@ -339,6 +362,8 @@ export function createPartnerOnboarding(data: {
     data.agreementAuthorizedText || null,
     data.assignedRmId || null,
     data.assignedRmName || null,
+    data.parentSubDsaId || null,
+    data.parentSubDsaName || null,
     now
   );
 
@@ -352,9 +377,9 @@ export function createPartnerOnboarding(data: {
 function mapRowToUser(row: Record<string, unknown>): User {
   const role = (row.role as Role) || 'OPERATIONS';
   const rawStatus = (row.partner_status || row.partnerStatus) as PartnerStatus | undefined;
-  // Default legacy partners to APPROVED, but preserve PENDING_APPROVAL / DOCUMENTS_REQUIRED / REJECTED
+  // Default legacy partners/Sub-DSAs to APPROVED, but preserve PENDING_APPROVAL / DOCUMENTS_REQUIRED / REJECTED
   const partnerStatus: PartnerStatus | undefined =
-    role === 'CHANNEL_PARTNER' ? rawStatus || 'APPROVED' : undefined;
+    role === 'CHANNEL_PARTNER' || role === 'SUB_DSA' ? rawStatus || 'APPROVED' : undefined;
 
   return {
     id: String(row.id),
@@ -383,6 +408,8 @@ function mapRowToUser(row: Record<string, unknown>): User {
     agreementAuthorizedText: row.agreement_authorized_text || row.agreementAuthorizedText ? String(row.agreement_authorized_text || row.agreementAuthorizedText) : null,
     assignedRmId: row.assigned_rm_id || row.assignedRmId ? String(row.assigned_rm_id || row.assignedRmId) : null,
     assignedRmName: row.assigned_rm_name || row.assignedRmName ? String(row.assigned_rm_name || row.assignedRmName) : null,
+    parentSubDsaId: row.parent_sub_dsa_id || row.parentSubDsaId ? String(row.parent_sub_dsa_id || row.parentSubDsaId) : null,
+    parentSubDsaName: row.parent_sub_dsa_name || row.parentSubDsaName ? String(row.parent_sub_dsa_name || row.parentSubDsaName) : null,
     approvalRemark: row.approval_remark || row.approvalRemark ? String(row.approval_remark || row.approvalRemark) : null,
     approvedAt: row.approved_at || row.approvedAt ? String(row.approved_at || row.approvedAt) : null,
     approvedById: row.approved_by_id || row.approvedById ? String(row.approved_by_id || row.approvedById) : null,
