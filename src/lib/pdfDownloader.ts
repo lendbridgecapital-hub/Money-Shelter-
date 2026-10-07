@@ -55,6 +55,7 @@ export async function downloadElementAsPdf(elementId: string, fileName: string):
               p.style.display = 'flex';
               p.style.flexDirection = 'column';
               p.style.justifyContent = 'space-between';
+              p.style.fontFamily = 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif';
             });
           },
         });

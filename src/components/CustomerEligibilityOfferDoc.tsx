@@ -102,37 +102,27 @@ export default function CustomerEligibilityOfferDoc({ data }: CustomerEligibilit
           {/* ========================================================================= */}
           <div style={{ textAlign: 'center', marginBottom: '14px' }}>
             <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '8px' }}>
-              <table
+              <span
                 style={{
-                  borderCollapse: 'separate',
+                  display: 'inline-block',
                   borderRadius: '9999px',
                   backgroundColor: '#ecfdf5',
-                  border: '1px solid #6ee7b7',
-                  margin: '0 auto',
-                  height: '24px',
+                  border: '1.5px solid #6ee7b7',
+                  color: '#065f46',
+                  fontSize: '9.5px',
+                  fontWeight: 800,
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.08em',
+                  padding: '4.5px 18px 4.5px 18px',
+                  lineHeight: '1.2',
+                  verticalAlign: 'middle',
+                  textAlign: 'center',
+                  whiteSpace: 'nowrap',
+                  boxSizing: 'border-box',
                 }}
               >
-                <tbody>
-                  <tr>
-                    <td
-                      style={{
-                        verticalAlign: 'middle',
-                        textAlign: 'center',
-                        padding: '0 18px',
-                        height: '24px',
-                        fontSize: '10px',
-                        fontWeight: 800,
-                        textTransform: 'uppercase',
-                        letterSpacing: '0.08em',
-                        color: '#065f46',
-                        lineHeight: '24px',
-                      }}
-                    >
-                      OFFICIAL IN-PRINCIPLE ELIGIBILITY ASSESSMENT
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
+                OFFICIAL IN-PRINCIPLE ELIGIBILITY ASSESSMENT
+              </span>
             </div>
             <h2 className="text-base sm:text-lg font-black text-slate-900 tracking-tight uppercase leading-snug">
               TENTATIVE LOAN ELIGIBILITY & MULTI-BANK OFFER REPORT
@@ -426,75 +416,51 @@ export default function CustomerEligibilityOfferDoc({ data }: CustomerEligibilit
                         <div className="flex items-center flex-wrap gap-1">
                           <strong className="text-slate-900">{b.bankName}</strong>
                           {b.isBestMatch && (
-                            <table
+                            <span
                               style={{
-                                display: 'inline-table',
-                                borderCollapse: 'separate',
+                                display: 'inline-block',
                                 borderRadius: '9999px',
                                 backgroundColor: '#059669',
-                                height: '18px',
+                                color: '#ffffff',
+                                fontSize: '8.5px',
+                                fontWeight: 800,
+                                textTransform: 'uppercase',
+                                letterSpacing: '0.04em',
+                                padding: '3px 8px 3px 8px',
+                                lineHeight: '1.1',
                                 verticalAlign: 'middle',
-                                marginLeft: '4px',
-                                margin: 0,
+                                textAlign: 'center',
+                                marginLeft: '5px',
+                                whiteSpace: 'nowrap',
+                                boxSizing: 'border-box',
                               }}
                             >
-                              <tbody>
-                                <tr>
-                                  <td
-                                    style={{
-                                      verticalAlign: 'middle',
-                                      textAlign: 'center',
-                                      padding: '0 7px',
-                                      height: '18px',
-                                      fontSize: '8.5px',
-                                      fontWeight: 800,
-                                      textTransform: 'uppercase',
-                                      letterSpacing: '0.04em',
-                                      color: '#ffffff',
-                                      lineHeight: '18px',
-                                    }}
-                                  >
-                                    ★ Best
-                                  </td>
-                                </tr>
-                              </tbody>
-                            </table>
+                              ★ Best
+                            </span>
                           )}
                           {b.status === 'PARTIALLY_ELIGIBLE' && (
-                            <table
+                            <span
                               style={{
-                                display: 'inline-table',
-                                borderCollapse: 'separate',
+                                display: 'inline-block',
                                 borderRadius: '9999px',
                                 backgroundColor: '#fffbeb',
                                 border: '1px solid #f59e0b',
-                                height: '18px',
+                                color: '#b45309',
+                                fontSize: '8px',
+                                fontWeight: 800,
+                                textTransform: 'uppercase',
+                                letterSpacing: '0.04em',
+                                padding: '2.5px 7px 2.5px 7px',
+                                lineHeight: '1.1',
                                 verticalAlign: 'middle',
-                                marginLeft: '4px',
-                                margin: 0,
+                                textAlign: 'center',
+                                marginLeft: '5px',
+                                whiteSpace: 'nowrap',
+                                boxSizing: 'border-box',
                               }}
                             >
-                              <tbody>
-                                <tr>
-                                  <td
-                                    style={{
-                                      verticalAlign: 'middle',
-                                      textAlign: 'center',
-                                      padding: '0 6px',
-                                      height: '18px',
-                                      fontSize: '8px',
-                                      fontWeight: 800,
-                                      textTransform: 'uppercase',
-                                      letterSpacing: '0.04em',
-                                      color: '#b45309',
-                                      lineHeight: '18px',
-                                    }}
-                                  >
-                                    ⚠ Partial
-                                  </td>
-                                </tr>
-                              </tbody>
-                            </table>
+                              ⚠ Partial
+                            </span>
                           )}
                         </div>
                       </td>
@@ -541,99 +507,76 @@ export default function CustomerEligibilityOfferDoc({ data }: CustomerEligibilit
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-2">
                     {/* Bank Logo & Title aligned */}
                     <div style={{ display: 'flex', alignItems: 'center' }}>
-                      <div
-                        style={{
-                          width: '38px',
-                          height: '38px',
-                          borderRadius: '10px',
-                          backgroundColor: '#0f172a',
-                          color: '#ffffff',
-                          fontWeight: 900,
-                          fontSize: '12px',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          textAlign: 'center',
-                          marginRight: '10px',
-                          flexShrink: 0,
-                          lineHeight: '38px',
-                        }}
+                      <svg
+                        width="38"
+                        height="38"
+                        viewBox="0 0 38 38"
+                        style={{ display: 'block', marginRight: '10px', flexShrink: 0 }}
                       >
-                        {b.bankCode.slice(0, 3)}
-                      </div>
+                        <rect width="38" height="38" rx="10" fill="#0f172a" />
+                        <text
+                          x="19"
+                          y="20"
+                          textAnchor="middle"
+                          dominantBaseline="central"
+                          fill="#ffffff"
+                          fontSize="12"
+                          fontWeight="900"
+                          letterSpacing="0.04em"
+                          fontFamily="system-ui, -apple-system, sans-serif"
+                        >
+                          {b.bankCode.slice(0, 3)}
+                        </text>
+                      </svg>
                       <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
                         <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '6px' }}>
                           <span style={{ fontSize: '14px', fontWeight: 900, color: '#0f172a', lineHeight: '1.2' }}>
                             {b.bankName}
                           </span>
                           {b.isBestMatch && (
-                            <table
+                            <span
                               style={{
-                                display: 'inline-table',
-                                borderCollapse: 'separate',
+                                display: 'inline-block',
                                 borderRadius: '9999px',
                                 backgroundColor: '#059669',
-                                height: '20px',
+                                color: '#ffffff',
+                                fontSize: '8.5px',
+                                fontWeight: 800,
+                                textTransform: 'uppercase',
+                                letterSpacing: '0.05em',
+                                padding: '3.5px 10px 3.5px 10px',
+                                lineHeight: '1.1',
                                 verticalAlign: 'middle',
-                                margin: 0,
+                                textAlign: 'center',
+                                whiteSpace: 'nowrap',
+                                boxSizing: 'border-box',
                               }}
                             >
-                              <tbody>
-                                <tr>
-                                  <td
-                                    style={{
-                                      verticalAlign: 'middle',
-                                      textAlign: 'center',
-                                      padding: '0 9px',
-                                      height: '20px',
-                                      fontSize: '8.5px',
-                                      fontWeight: 800,
-                                      textTransform: 'uppercase',
-                                      letterSpacing: '0.05em',
-                                      color: '#ffffff',
-                                      lineHeight: '20px',
-                                    }}
-                                  >
-                                    Primary Recommendation
-                                  </td>
-                                </tr>
-                              </tbody>
-                            </table>
+                              Primary Recommendation
+                            </span>
                           )}
                           {b.status === 'PARTIALLY_ELIGIBLE' && (
-                            <table
+                            <span
                               style={{
-                                display: 'inline-table',
-                                borderCollapse: 'separate',
+                                display: 'inline-block',
                                 borderRadius: '9999px',
                                 backgroundColor: '#fffbeb',
                                 border: '1px solid #f59e0b',
-                                height: '20px',
+                                color: '#b45309',
+                                fontSize: '8.5px',
+                                fontWeight: 800,
+                                textTransform: 'uppercase',
+                                letterSpacing: '0.04em',
+                                padding: '3px 9px 3px 9px',
+                                lineHeight: '1.1',
                                 verticalAlign: 'middle',
-                                margin: 0,
+                                textAlign: 'center',
+                                whiteSpace: 'nowrap',
+                                boxSizing: 'border-box',
                               }}
                             >
-                              <tbody>
-                                <tr>
-                                  <td
-                                    style={{
-                                      verticalAlign: 'middle',
-                                      textAlign: 'center',
-                                      padding: '0 8px',
-                                      height: '20px',
-                                      fontSize: '8.5px',
-                                      fontWeight: 800,
-                                      textTransform: 'uppercase',
-                                      letterSpacing: '0.04em',
-                                      color: '#b45309',
-                                      lineHeight: '20px',
-                                    }}
-                                  >
-                                    ⚠ Partially Eligible
-                                  </td>
-                                </tr>
-                              </tbody>
-                            </table>
+                              ⚠ Partially Eligible
+                            </span>
                           )}
                         </div>
                         <div style={{ fontSize: '10px', color: '#64748b', marginTop: '2px', lineHeight: '1.2' }}>
@@ -850,91 +793,95 @@ export default function CustomerEligibilityOfferDoc({ data }: CustomerEligibilit
             </h4>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px] text-slate-700">
               <div className="flex items-start">
-                <span
-                  style={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    width: '18px',
-                    height: '18px',
-                    borderRadius: '9999px',
-                    backgroundColor: '#059669',
-                    color: '#ffffff',
-                    fontSize: '10px',
-                    fontWeight: 800,
-                    marginRight: '8px',
-                    flexShrink: 0,
-                    lineHeight: 1,
-                  }}
+                <svg
+                  width="18"
+                  height="18"
+                  viewBox="0 0 18 18"
+                  style={{ display: 'inline-block', verticalAlign: 'middle', marginRight: '8px', flexShrink: 0, marginTop: '1px' }}
                 >
-                  1
-                </span>
+                  <circle cx="9" cy="9" r="8.5" fill="#059669" />
+                  <text
+                    x="9"
+                    y="9.5"
+                    textAnchor="middle"
+                    dominantBaseline="central"
+                    fill="#ffffff"
+                    fontSize="10"
+                    fontWeight="800"
+                    fontFamily="system-ui, -apple-system, sans-serif"
+                  >
+                    1
+                  </text>
+                </svg>
                 <span>Latest 3 months Salary Slips (or 2 years ITR with computation & audit report for business entities).</span>
               </div>
               <div className="flex items-start">
-                <span
-                  style={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    width: '18px',
-                    height: '18px',
-                    borderRadius: '9999px',
-                    backgroundColor: '#059669',
-                    color: '#ffffff',
-                    fontSize: '10px',
-                    fontWeight: 800,
-                    marginRight: '8px',
-                    flexShrink: 0,
-                    lineHeight: 1,
-                  }}
+                <svg
+                  width="18"
+                  height="18"
+                  viewBox="0 0 18 18"
+                  style={{ display: 'inline-block', verticalAlign: 'middle', marginRight: '8px', flexShrink: 0, marginTop: '1px' }}
                 >
-                  2
-                </span>
+                  <circle cx="9" cy="9" r="8.5" fill="#059669" />
+                  <text
+                    x="9"
+                    y="9.5"
+                    textAnchor="middle"
+                    dominantBaseline="central"
+                    fill="#ffffff"
+                    fontSize="10"
+                    fontWeight="800"
+                    fontFamily="system-ui, -apple-system, sans-serif"
+                  >
+                    2
+                  </text>
+                </svg>
                 <span>Latest 6 months Bank Account Statements where primary salary or revenues are credited.</span>
               </div>
               <div className="flex items-start">
-                <span
-                  style={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    width: '18px',
-                    height: '18px',
-                    borderRadius: '9999px',
-                    backgroundColor: '#059669',
-                    color: '#ffffff',
-                    fontSize: '10px',
-                    fontWeight: 800,
-                    marginRight: '8px',
-                    flexShrink: 0,
-                    lineHeight: 1,
-                  }}
+                <svg
+                  width="18"
+                  height="18"
+                  viewBox="0 0 18 18"
+                  style={{ display: 'inline-block', verticalAlign: 'middle', marginRight: '8px', flexShrink: 0, marginTop: '1px' }}
                 >
-                  3
-                </span>
+                  <circle cx="9" cy="9" r="8.5" fill="#059669" />
+                  <text
+                    x="9"
+                    y="9.5"
+                    textAnchor="middle"
+                    dominantBaseline="central"
+                    fill="#ffffff"
+                    fontSize="10"
+                    fontWeight="800"
+                    fontFamily="system-ui, -apple-system, sans-serif"
+                  >
+                    3
+                  </text>
+                </svg>
                 <span>PAN Card, Aadhaar Card, and Current Residence Proof (Utility bill / Valid registered Rent agreement).</span>
               </div>
               <div className="flex items-start">
-                <span
-                  style={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    width: '18px',
-                    height: '18px',
-                    borderRadius: '9999px',
-                    backgroundColor: '#059669',
-                    color: '#ffffff',
-                    fontSize: '10px',
-                    fontWeight: 800,
-                    marginRight: '8px',
-                    flexShrink: 0,
-                    lineHeight: 1,
-                  }}
+                <svg
+                  width="18"
+                  height="18"
+                  viewBox="0 0 18 18"
+                  style={{ display: 'inline-block', verticalAlign: 'middle', marginRight: '8px', flexShrink: 0, marginTop: '1px' }}
                 >
-                  4
-                </span>
+                  <circle cx="9" cy="9" r="8.5" fill="#059669" />
+                  <text
+                    x="9"
+                    y="9.5"
+                    textAnchor="middle"
+                    dominantBaseline="central"
+                    fill="#ffffff"
+                    fontSize="10"
+                    fontWeight="800"
+                    fontFamily="system-ui, -apple-system, sans-serif"
+                  >
+                    4
+                  </text>
+                </svg>
                 <span>Existing loan sanction letters & repayment track records (if balance transfer or FOIR deduction requested).</span>
               </div>
             </div>
@@ -1039,21 +986,22 @@ export default function CustomerEligibilityOfferDoc({ data }: CustomerEligibilit
                 <tbody>
                   <tr>
                     <td style={{ verticalAlign: 'middle', paddingRight: '8px' }}>
-                      <div
-                        style={{
-                          width: '22px',
-                          height: '22px',
-                          borderRadius: '9999px',
-                          backgroundColor: '#059669',
-                          color: '#ffffff',
-                          fontSize: '13px',
-                          fontWeight: 900,
-                          lineHeight: '22px',
-                          textAlign: 'center',
-                        }}
+                      <svg
+                        width="22"
+                        height="22"
+                        viewBox="0 0 22 22"
+                        fill="none"
+                        style={{ display: 'block' }}
                       >
-                        ✓
-                      </div>
+                        <circle cx="11" cy="11" r="10" fill="#059669" />
+                        <path
+                          d="M6.5 11.5L9.5 14.5L15.5 8.5"
+                          stroke="#ffffff"
+                          strokeWidth="2.2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                      </svg>
                     </td>
                     <td style={{ verticalAlign: 'middle', textAlign: 'left' }}>
                       <div
@@ -1076,6 +1024,7 @@ export default function CustomerEligibilityOfferDoc({ data }: CustomerEligibilit
                           color: '#047857',
                           lineHeight: '1.2',
                           whiteSpace: 'nowrap',
+                          marginTop: '1px',
                         }}
                       >
                         Quickfinsure Sourcing Engine
