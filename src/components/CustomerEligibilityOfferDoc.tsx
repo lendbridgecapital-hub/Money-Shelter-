@@ -102,27 +102,41 @@ export default function CustomerEligibilityOfferDoc({ data }: CustomerEligibilit
           {/* ========================================================================= */}
           <div style={{ textAlign: 'center', marginBottom: '14px' }}>
             <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '8px' }}>
-              <span
+              <svg
+                width="360"
+                height="24"
+                viewBox="0 0 360 24"
                 style={{
                   display: 'inline-block',
-                  borderRadius: '9999px',
-                  backgroundColor: '#ecfdf5',
-                  border: '1.5px solid #6ee7b7',
-                  color: '#065f46',
-                  fontSize: '9.5px',
-                  fontWeight: 800,
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.08em',
-                  padding: '4.5px 18px 4.5px 18px',
-                  lineHeight: '1.2',
+                  maxWidth: '100%',
+                  height: 'auto',
                   verticalAlign: 'middle',
-                  textAlign: 'center',
-                  whiteSpace: 'nowrap',
-                  boxSizing: 'border-box',
                 }}
               >
-                OFFICIAL IN-PRINCIPLE ELIGIBILITY ASSESSMENT
-              </span>
+                <rect
+                  x="0.75"
+                  y="0.75"
+                  width="358.5"
+                  height="22.5"
+                  rx="11.25"
+                  fill="#ecfdf5"
+                  stroke="#6ee7b7"
+                  strokeWidth="1.5"
+                />
+                <text
+                  x="180"
+                  y="12"
+                  textAnchor="middle"
+                  dominantBaseline="central"
+                  fill="#065f46"
+                  fontSize="9.5"
+                  fontWeight="800"
+                  letterSpacing="0.08em"
+                  fontFamily="Arial, Helvetica, sans-serif"
+                >
+                  OFFICIAL IN-PRINCIPLE ELIGIBILITY ASSESSMENT
+                </text>
+              </svg>
             </div>
             <h2 className="text-base sm:text-lg font-black text-slate-900 tracking-tight uppercase leading-snug">
               TENTATIVE LOAN ELIGIBILITY & MULTI-BANK OFFER REPORT
@@ -416,51 +430,60 @@ export default function CustomerEligibilityOfferDoc({ data }: CustomerEligibilit
                         <div className="flex items-center flex-wrap gap-1">
                           <strong className="text-slate-900">{b.bankName}</strong>
                           {b.isBestMatch && (
-                            <span
+                            <svg
+                              width="54"
+                              height="18"
+                              viewBox="0 0 54 18"
                               style={{
                                 display: 'inline-block',
-                                borderRadius: '9999px',
-                                backgroundColor: '#059669',
-                                color: '#ffffff',
-                                fontSize: '8.5px',
-                                fontWeight: 800,
-                                textTransform: 'uppercase',
-                                letterSpacing: '0.04em',
-                                padding: '3px 8px 3px 8px',
-                                lineHeight: '1.1',
                                 verticalAlign: 'middle',
-                                textAlign: 'center',
                                 marginLeft: '5px',
-                                whiteSpace: 'nowrap',
-                                boxSizing: 'border-box',
+                                flexShrink: 0,
                               }}
                             >
-                              ★ Best
-                            </span>
+                              <rect x="0" y="0" width="54" height="18" rx="9" fill="#059669" />
+                              <text
+                                x="27"
+                                y="9"
+                                textAnchor="middle"
+                                dominantBaseline="central"
+                                fill="#ffffff"
+                                fontSize="8.5"
+                                fontWeight="800"
+                                letterSpacing="0.04em"
+                                fontFamily="Arial, Helvetica, sans-serif"
+                              >
+                                ★ BEST
+                              </text>
+                            </svg>
                           )}
                           {b.status === 'PARTIALLY_ELIGIBLE' && (
-                            <span
+                            <svg
+                              width="66"
+                              height="18"
+                              viewBox="0 0 66 18"
                               style={{
                                 display: 'inline-block',
-                                borderRadius: '9999px',
-                                backgroundColor: '#fffbeb',
-                                border: '1px solid #f59e0b',
-                                color: '#b45309',
-                                fontSize: '8px',
-                                fontWeight: 800,
-                                textTransform: 'uppercase',
-                                letterSpacing: '0.04em',
-                                padding: '2.5px 7px 2.5px 7px',
-                                lineHeight: '1.1',
                                 verticalAlign: 'middle',
-                                textAlign: 'center',
                                 marginLeft: '5px',
-                                whiteSpace: 'nowrap',
-                                boxSizing: 'border-box',
+                                flexShrink: 0,
                               }}
                             >
-                              ⚠ Partial
-                            </span>
+                              <rect x="0.5" y="0.5" width="65" height="17" rx="8.5" fill="#fffbeb" stroke="#f59e0b" strokeWidth="1" />
+                              <text
+                                x="33"
+                                y="9"
+                                textAnchor="middle"
+                                dominantBaseline="central"
+                                fill="#b45309"
+                                fontSize="8"
+                                fontWeight="800"
+                                letterSpacing="0.04em"
+                                fontFamily="Arial, Helvetica, sans-serif"
+                              >
+                                ⚠ PARTIAL
+                              </text>
+                            </svg>
                           )}
                         </div>
                       </td>
@@ -516,14 +539,14 @@ export default function CustomerEligibilityOfferDoc({ data }: CustomerEligibilit
                         <rect width="38" height="38" rx="10" fill="#0f172a" />
                         <text
                           x="19"
-                          y="20"
+                          y="19"
                           textAnchor="middle"
                           dominantBaseline="central"
                           fill="#ffffff"
                           fontSize="12"
                           fontWeight="900"
                           letterSpacing="0.04em"
-                          fontFamily="system-ui, -apple-system, sans-serif"
+                          fontFamily="Arial, Helvetica, sans-serif"
                         >
                           {b.bankCode.slice(0, 3)}
                         </text>
@@ -534,49 +557,58 @@ export default function CustomerEligibilityOfferDoc({ data }: CustomerEligibilit
                             {b.bankName}
                           </span>
                           {b.isBestMatch && (
-                            <span
+                            <svg
+                              width="168"
+                              height="22"
+                              viewBox="0 0 168 22"
                               style={{
                                 display: 'inline-block',
-                                borderRadius: '9999px',
-                                backgroundColor: '#059669',
-                                color: '#ffffff',
-                                fontSize: '8.5px',
-                                fontWeight: 800,
-                                textTransform: 'uppercase',
-                                letterSpacing: '0.05em',
-                                padding: '3.5px 10px 3.5px 10px',
-                                lineHeight: '1.1',
                                 verticalAlign: 'middle',
-                                textAlign: 'center',
-                                whiteSpace: 'nowrap',
-                                boxSizing: 'border-box',
+                                flexShrink: 0,
                               }}
                             >
-                              Primary Recommendation
-                            </span>
+                              <rect x="0" y="0" width="168" height="22" rx="11" fill="#059669" />
+                              <text
+                                x="84"
+                                y="11"
+                                textAnchor="middle"
+                                dominantBaseline="central"
+                                fill="#ffffff"
+                                fontSize="8.5"
+                                fontWeight="800"
+                                letterSpacing="0.05em"
+                                fontFamily="Arial, Helvetica, sans-serif"
+                              >
+                                PRIMARY RECOMMENDATION
+                              </text>
+                            </svg>
                           )}
                           {b.status === 'PARTIALLY_ELIGIBLE' && (
-                            <span
+                            <svg
+                              width="152"
+                              height="22"
+                              viewBox="0 0 152 22"
                               style={{
                                 display: 'inline-block',
-                                borderRadius: '9999px',
-                                backgroundColor: '#fffbeb',
-                                border: '1px solid #f59e0b',
-                                color: '#b45309',
-                                fontSize: '8.5px',
-                                fontWeight: 800,
-                                textTransform: 'uppercase',
-                                letterSpacing: '0.04em',
-                                padding: '3px 9px 3px 9px',
-                                lineHeight: '1.1',
                                 verticalAlign: 'middle',
-                                textAlign: 'center',
-                                whiteSpace: 'nowrap',
-                                boxSizing: 'border-box',
+                                flexShrink: 0,
                               }}
                             >
-                              ⚠ Partially Eligible
-                            </span>
+                              <rect x="0.5" y="0.5" width="151" height="21" rx="10.5" fill="#fffbeb" stroke="#f59e0b" strokeWidth="1" />
+                              <text
+                                x="76"
+                                y="11"
+                                textAnchor="middle"
+                                dominantBaseline="central"
+                                fill="#b45309"
+                                fontSize="8.5"
+                                fontWeight="800"
+                                letterSpacing="0.04em"
+                                fontFamily="Arial, Helvetica, sans-serif"
+                              >
+                                ⚠ PARTIALLY ELIGIBLE
+                              </text>
+                            </svg>
                           )}
                         </div>
                         <div style={{ fontSize: '10px', color: '#64748b', marginTop: '2px', lineHeight: '1.2' }}>
