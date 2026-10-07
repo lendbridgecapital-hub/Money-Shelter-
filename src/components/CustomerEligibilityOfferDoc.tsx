@@ -366,6 +366,28 @@ export default function CustomerEligibilityOfferDoc({ data }: CustomerEligibilit
             <p className="text-slate-700 text-xs leading-relaxed">
               {data.obligationRemarks}
             </p>
+            {data.bankOffers.some((b) => b.status === 'PARTIALLY_ELIGIBLE' || (b.specialRemarks && b.specialRemarks.length > 0)) && (
+              <div
+                style={{
+                  marginTop: '8px',
+                  padding: '7px 10px',
+                  backgroundColor: '#fff1f2',
+                  border: '1px solid #fecdd3',
+                  borderRadius: '8px',
+                  fontSize: '11px',
+                  color: '#9f1239',
+                  lineHeight: '1.4',
+                  display: 'flex',
+                  alignItems: 'flex-start',
+                  gap: '6px',
+                }}
+              >
+                <span style={{ fontSize: '13px', lineHeight: 1, flexShrink: 0, marginTop: '1px' }}>⚠️</span>
+                <div>
+                  <strong>FOIR Cap Policy Notice:</strong> Select institutional lenders (such as {data.bankOffers.filter((b) => b.status === 'PARTIALLY_ELIGIBLE').map((b) => b.bankName).join(', ') || 'certain banks'}) have capped loan sanctions to comply with their strict 60% FOIR threshold on declared monthly income. The recommended amount reflects the maximum permissible borrowing limit to guarantee debt servicing safety.
+                </div>
+              </div>
+            )}
           </div>
 
           {/* ========================================================================= */}
@@ -401,7 +423,7 @@ export default function CustomerEligibilityOfferDoc({ data }: CustomerEligibilit
                       className={b.isBestMatch ? 'bg-emerald-50/70 font-semibold' : idx % 2 === 1 ? 'bg-slate-50/50' : ''}
                     >
                       <td className="p-2">
-                        <div className="flex items-center">
+                        <div className="flex items-center flex-wrap gap-1">
                           <strong className="text-slate-900">{b.bankName}</strong>
                           {b.isBestMatch && (
                             <table
@@ -412,7 +434,7 @@ export default function CustomerEligibilityOfferDoc({ data }: CustomerEligibilit
                                 backgroundColor: '#059669',
                                 height: '18px',
                                 verticalAlign: 'middle',
-                                marginLeft: '6px',
+                                marginLeft: '4px',
                                 margin: 0,
                               }}
                             >
@@ -438,13 +460,54 @@ export default function CustomerEligibilityOfferDoc({ data }: CustomerEligibilit
                               </tbody>
                             </table>
                           )}
+                          {b.status === 'PARTIALLY_ELIGIBLE' && (
+                            <table
+                              style={{
+                                display: 'inline-table',
+                                borderCollapse: 'separate',
+                                borderRadius: '9999px',
+                                backgroundColor: '#fffbeb',
+                                border: '1px solid #f59e0b',
+                                height: '18px',
+                                verticalAlign: 'middle',
+                                marginLeft: '4px',
+                                margin: 0,
+                              }}
+                            >
+                              <tbody>
+                                <tr>
+                                  <td
+                                    style={{
+                                      verticalAlign: 'middle',
+                                      textAlign: 'center',
+                                      padding: '0 6px',
+                                      height: '18px',
+                                      fontSize: '8px',
+                                      fontWeight: 800,
+                                      textTransform: 'uppercase',
+                                      letterSpacing: '0.04em',
+                                      color: '#b45309',
+                                      lineHeight: '18px',
+                                    }}
+                                  >
+                                    ⚠ Partial
+                                  </td>
+                                </tr>
+                              </tbody>
+                            </table>
+                          )}
                         </div>
                       </td>
                       <td className="p-2 text-emerald-700 font-black">
                         {b.interestRate.toFixed(2)}% p.a.
                       </td>
                       <td className="p-2 font-black text-slate-900">
-                        {formatCurrencyINR(b.recommendedAmount)}
+                        <div>{formatCurrencyINR(b.recommendedAmount)}</div>
+                        {b.status === 'PARTIALLY_ELIGIBLE' && (
+                          <div style={{ fontSize: '9px', fontWeight: 700, color: '#b45309', lineHeight: 1, marginTop: '2px' }}>
+                            (FOIR Adjusted Cap)
+                          </div>
+                        )}
                       </td>
                       <td className="p-2 font-black text-indigo-950">
                         ₹{Math.round(b.proposedEmi).toLocaleString('en-IN')}/m
@@ -499,8 +562,8 @@ export default function CustomerEligibilityOfferDoc({ data }: CustomerEligibilit
                         {b.bankCode.slice(0, 3)}
                       </div>
                       <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-                        <div style={{ display: 'flex', alignItems: 'center' }}>
-                          <span style={{ fontSize: '14px', fontWeight: 900, color: '#0f172a', marginRight: '8px', lineHeight: '1.2' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '6px' }}>
+                          <span style={{ fontSize: '14px', fontWeight: 900, color: '#0f172a', lineHeight: '1.2' }}>
                             {b.bankName}
                           </span>
                           {b.isBestMatch && (
@@ -537,6 +600,41 @@ export default function CustomerEligibilityOfferDoc({ data }: CustomerEligibilit
                               </tbody>
                             </table>
                           )}
+                          {b.status === 'PARTIALLY_ELIGIBLE' && (
+                            <table
+                              style={{
+                                display: 'inline-table',
+                                borderCollapse: 'separate',
+                                borderRadius: '9999px',
+                                backgroundColor: '#fffbeb',
+                                border: '1px solid #f59e0b',
+                                height: '20px',
+                                verticalAlign: 'middle',
+                                margin: 0,
+                              }}
+                            >
+                              <tbody>
+                                <tr>
+                                  <td
+                                    style={{
+                                      verticalAlign: 'middle',
+                                      textAlign: 'center',
+                                      padding: '0 8px',
+                                      height: '20px',
+                                      fontSize: '8.5px',
+                                      fontWeight: 800,
+                                      textTransform: 'uppercase',
+                                      letterSpacing: '0.04em',
+                                      color: '#b45309',
+                                      lineHeight: '20px',
+                                    }}
+                                  >
+                                    ⚠ Partially Eligible
+                                  </td>
+                                </tr>
+                              </tbody>
+                            </table>
+                          )}
                         </div>
                         <div style={{ fontSize: '10px', color: '#64748b', marginTop: '2px', lineHeight: '1.2' }}>
                           Product: {loanLabel} • Turnaround Time: ~{b.tatDays} Working Days
@@ -553,25 +651,55 @@ export default function CustomerEligibilityOfferDoc({ data }: CustomerEligibilit
                     </div>
                   </div>
 
-                  {/* 3 Core Metrics Tile */}
-                  <div className="grid grid-cols-3 gap-2 bg-slate-50/90 p-2 rounded-xl border border-slate-100 text-xs mb-2 text-center">
+                  {/* 4 Core Financial Metrics Grid */}
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 bg-slate-50/90 p-2.5 rounded-xl border border-slate-100 text-xs mb-2 text-center">
                     <div>
-                      <span className="text-[9px] text-slate-400 block uppercase font-bold">Sanction Capacity</span>
-                      <strong className="text-slate-900 font-black text-xs sm:text-sm">{formatCurrencyINR(b.recommendedAmount)}</strong>
+                      <span className="text-[9px] text-slate-400 block uppercase font-bold">Interest Rate</span>
+                      <strong className="text-emerald-700 font-black text-xs sm:text-sm block">
+                        {b.interestRate.toFixed(2)}%
+                      </strong>
+                      <span className="text-[9px] text-slate-400 block">p.a. floating</span>
                     </div>
                     <div>
-                      <span className="text-[9px] text-slate-400 block uppercase font-bold">Estimated EMI</span>
-                      <strong className="text-indigo-950 font-black text-xs sm:text-sm">₹{Math.round(b.proposedEmi).toLocaleString('en-IN')}/m</strong>
+                      <span className="text-[9px] text-slate-400 block uppercase font-bold">Sanction Cap</span>
+                      <strong className="text-slate-900 font-black text-xs sm:text-sm block">
+                        {formatCurrencyINR(b.recommendedAmount)}
+                      </strong>
+                      <span
+                        className={`text-[9px] block font-bold ${
+                          b.status === 'PARTIALLY_ELIGIBLE' ? 'text-amber-700' : 'text-slate-400'
+                        }`}
+                      >
+                        {b.status === 'PARTIALLY_ELIGIBLE' ? 'FOIR Adjusted Cap' : 'Max Approved'}
+                      </span>
                     </div>
                     <div>
-                      <span className="text-[9px] text-slate-400 block uppercase font-bold">Approved Tenure</span>
-                      <strong className="text-slate-900 font-black text-xs sm:text-sm">{b.tenureYears} Years ({b.tenureMonths}m)</strong>
+                      <span className="text-[9px] text-slate-400 block uppercase font-bold">Monthly EMI</span>
+                      <strong className="text-indigo-950 font-black text-xs sm:text-sm block">
+                        ₹{Math.round(b.proposedEmi).toLocaleString('en-IN')}/m
+                      </strong>
+                      <span className="text-[9px] text-slate-400 block">
+                        {b.tenureMonths} Months ({b.tenureYears} Yrs)
+                      </span>
+                    </div>
+                    <div>
+                      <span className="text-[9px] text-slate-400 block uppercase font-bold">FOIR Status</span>
+                      <strong
+                        className={`text-xs sm:text-sm block font-black ${
+                          b.foirPct > b.maxFoirPct ? 'text-amber-700' : 'text-slate-900'
+                        }`}
+                      >
+                        {b.foirPct}%
+                      </strong>
+                      <span className="text-[9px] text-slate-500 block">
+                        Bank Cap: {b.maxFoirPct}%
+                      </span>
                     </div>
                   </div>
 
                   {/* Underwriting Eligibility Remarks */}
                   {b.passRemarks && b.passRemarks.length > 0 && (
-                    <div className="space-y-1 mb-1.5">
+                    <div className="space-y-1 mb-2">
                       <span className="text-[9px] font-bold text-slate-500 uppercase block">Underwriting Eligibility Remarks:</span>
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-1 text-[10.5px] text-emerald-800">
                         {b.passRemarks.map((remark, rIdx) => (
@@ -580,6 +708,33 @@ export default function CustomerEligibilityOfferDoc({ data }: CustomerEligibilit
                             <span>{remark}</span>
                           </div>
                         ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Red/Rose Breach & Caution Alert Box */}
+                  {((b.specialRemarks && b.specialRemarks.length > 0) || b.status === 'PARTIALLY_ELIGIBLE') && (
+                    <div
+                      style={{
+                        backgroundColor: '#fff1f2',
+                        border: '1px solid #fecdd3',
+                        borderRadius: '8px',
+                        padding: '8px 12px',
+                        fontSize: '11px',
+                        color: '#9f1239',
+                        fontWeight: 600,
+                        lineHeight: '1.4',
+                        marginBottom: '8px',
+                        display: 'flex',
+                        alignItems: 'flex-start',
+                        gap: '6px',
+                      }}
+                    >
+                      <span style={{ fontSize: '13px', lineHeight: 1, flexShrink: 0, marginTop: '1px' }}>⚠️</span>
+                      <div>
+                        {b.specialRemarks && b.specialRemarks.length > 0
+                          ? b.specialRemarks.join(' ')
+                          : `Requested loan of ${formatCurrencyINR(data.requestedAmount)} pushes FOIR to ${b.foirPct}% (Max permissible: ${b.maxFoirPct}%). Sanctionable up to ${formatCurrencyINR(b.recommendedAmount)}.`}
                       </div>
                     </div>
                   )}

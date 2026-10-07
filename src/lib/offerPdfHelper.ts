@@ -79,7 +79,15 @@ export function buildCustomerEligibilityOfferData(params: {
 
   // Default Obligation Analysis Remark
   let defaultObligationRemark = '';
-  if (existingEmi > 0) {
+  const partiallyEligibleOffers = offersList.filter((o) => o.status === 'PARTIALLY_ELIGIBLE');
+  if (partiallyEligibleOffers.length > 0) {
+    const bankNames = partiallyEligibleOffers.map((b) => b.bankName).join(', ');
+    if (existingEmi > 0) {
+      defaultObligationRemark = `Applicant has declared ongoing monthly EMI obligations of ₹${existingEmi.toLocaleString('en-IN')} (${currentFoir}% of gross monthly income). Factoring an institutional FOIR cap of ${autoFoirCap}%, you retain ₹${availableEmiHeadroom.toLocaleString('en-IN')}/month in disposable EMI headroom. Note: Select institutional lenders (${bankNames}) apply strict FOIR capping (e.g. 50%–60%), resulting in a prudentially adjusted sanction limit to maintain debt service safety margins.`;
+    } else {
+      defaultObligationRemark = `Applicant reports zero active monthly debt obligations. While baseline debt allowance is ₹${availableEmiHeadroom.toLocaleString('en-IN')}/month, certain lenders (${bankNames}) enforce prudential FOIR thresholds, offering a revised sanction limit tailored for conservative risk benchmarks.`;
+    }
+  } else if (existingEmi > 0) {
     defaultObligationRemark = `Applicant has declared ongoing monthly EMI obligations of ₹${existingEmi.toLocaleString('en-IN')} (${currentFoir}% of gross monthly income). Factoring an institutional FOIR cap of ${autoFoirCap}%, you retain ₹${availableEmiHeadroom.toLocaleString('en-IN')}/month in disposable EMI headroom. The offered loan limits are carefully matched to ensure comfortable debt servicing without strain.`;
   } else {
     defaultObligationRemark = `Applicant reports zero active monthly debt obligations. 100% of the permissible FOIR allowance (₹${availableEmiHeadroom.toLocaleString('en-IN')}/month headroom) is fully available for fresh borrowing, qualifying for prime sanction limits.`;

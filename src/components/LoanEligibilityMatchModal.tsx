@@ -19,6 +19,7 @@ import {
 import {
   evaluateCustomerEligibilityAction,
   attachRecommendationToApplicationAction,
+  saveApplicationEligibilityOfferAction,
 } from '@/actions/policyActions';
 import CustomerEligibilityOfferModal from '@/components/CustomerEligibilityOfferModal';
 import { buildCustomerEligibilityOfferData, generateWhatsAppShareUrl } from '@/lib/offerPdfHelper';
@@ -132,6 +133,22 @@ export default function LoanEligibilityMatchModal({
       const res = await evaluateCustomerEligibilityAction(input, rankBy);
       if (res.ok && res.summary) {
         setSummary(res.summary);
+        if (application?.id) {
+          try {
+            const autoOffer = buildCustomerEligibilityOfferData({
+              application,
+              input,
+              summary: res.summary,
+              advisor: {
+                name: application.relationshipManagerName || application.channelPartnerName || 'Quickfinsure Senior Credit Advisor',
+                role: application.relationshipManagerName ? 'Relationship Manager' : 'Financial Advisor',
+                phone: '+91 98765 43210',
+                branchName: application.branchName || 'Pune Bavdhan HQ',
+              },
+            });
+            saveApplicationEligibilityOfferAction(application.id, autoOffer).catch(() => {});
+          } catch {}
+        }
       } else {
         setErrorMessage(res.error || 'Failed to match bank policies. Please check inputs.');
       }
@@ -155,6 +172,22 @@ export default function LoanEligibilityMatchModal({
         const res = await evaluateCustomerEligibilityAction(input, criterion);
         if (res.ok && res.summary) {
           setSummary(res.summary);
+          if (application?.id) {
+            try {
+              const autoOffer = buildCustomerEligibilityOfferData({
+                application,
+                input,
+                summary: res.summary,
+                advisor: {
+                  name: application.relationshipManagerName || application.channelPartnerName || 'Quickfinsure Senior Credit Advisor',
+                  role: application.relationshipManagerName ? 'Relationship Manager' : 'Financial Advisor',
+                  phone: '+91 98765 43210',
+                  branchName: application.branchName || 'Pune Bavdhan HQ',
+                },
+              });
+              saveApplicationEligibilityOfferAction(application.id, autoOffer).catch(() => {});
+            } catch {}
+          }
         }
       });
     }
