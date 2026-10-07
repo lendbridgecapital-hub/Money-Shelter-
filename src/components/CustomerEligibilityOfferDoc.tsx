@@ -374,22 +374,18 @@ export default function CustomerEligibilityOfferDoc({ data }: CustomerEligibilit
               <div
                 style={{
                   marginTop: '8px',
-                  padding: '7px 10px',
+                  padding: '9px 16px',
                   backgroundColor: '#fff1f2',
                   border: '1px solid #fecdd3',
                   borderRadius: '8px',
                   fontSize: '11px',
                   color: '#9f1239',
-                  lineHeight: '1.4',
-                  display: 'flex',
-                  alignItems: 'flex-start',
-                  gap: '6px',
+                  lineHeight: '1.5',
+                  textAlign: 'center',
                 }}
               >
-                <span style={{ fontSize: '13px', lineHeight: 1, flexShrink: 0, marginTop: '1px' }}>⚠️</span>
-                <div>
-                  <strong>FOIR Cap Policy Notice:</strong> Select institutional lenders (such as {data.bankOffers.filter((b) => b.status === 'PARTIALLY_ELIGIBLE').map((b) => b.bankName).join(', ') || 'certain banks'}) have capped loan sanctions to comply with their strict 60% FOIR threshold on declared monthly income. The recommended amount reflects the maximum permissible borrowing limit to guarantee debt servicing safety.
-                </div>
+                <span style={{ fontSize: '13px', marginRight: '5px', verticalAlign: '-1px' }}>⚠️</span>
+                <strong>FOIR Cap Policy Notice:</strong> Select institutional lenders (such as {data.bankOffers.filter((b) => b.status === 'PARTIALLY_ELIGIBLE').map((b) => b.bankName).join(', ') || 'certain banks'}) have capped loan sanctions to comply with their strict 60% FOIR threshold on declared monthly income. The recommended amount reflects the maximum permissible borrowing limit to guarantee debt servicing safety.
               </div>
             )}
           </div>
@@ -431,19 +427,19 @@ export default function CustomerEligibilityOfferDoc({ data }: CustomerEligibilit
                           <strong className="text-slate-900">{b.bankName}</strong>
                           {b.isBestMatch && (
                             <svg
-                              width="54"
+                              width="72"
                               height="18"
-                              viewBox="0 0 54 18"
+                              viewBox="0 0 72 18"
                               style={{
                                 display: 'inline-block',
                                 verticalAlign: 'middle',
-                                marginLeft: '5px',
+                                marginLeft: '6px',
                                 flexShrink: 0,
                               }}
                             >
-                              <rect x="0" y="0" width="54" height="18" rx="9" fill="#059669" />
+                              <rect x="0" y="0" width="72" height="18" rx="9" fill="#059669" />
                               <text
-                                x="27"
+                                x="36"
                                 y="9"
                                 textAnchor="middle"
                                 dominantBaseline="central"
@@ -459,19 +455,19 @@ export default function CustomerEligibilityOfferDoc({ data }: CustomerEligibilit
                           )}
                           {b.status === 'PARTIALLY_ELIGIBLE' && (
                             <svg
-                              width="66"
+                              width="84"
                               height="18"
-                              viewBox="0 0 66 18"
+                              viewBox="0 0 84 18"
                               style={{
                                 display: 'inline-block',
                                 verticalAlign: 'middle',
-                                marginLeft: '5px',
+                                marginLeft: '6px',
                                 flexShrink: 0,
                               }}
                             >
-                              <rect x="0.5" y="0.5" width="65" height="17" rx="8.5" fill="#fffbeb" stroke="#f59e0b" strokeWidth="1" />
+                              <rect x="0.5" y="0.5" width="83" height="17" rx="8.5" fill="#fffbeb" stroke="#f59e0b" strokeWidth="1" />
                               <text
-                                x="33"
+                                x="42"
                                 y="9"
                                 textAnchor="middle"
                                 dominantBaseline="central"
@@ -558,18 +554,18 @@ export default function CustomerEligibilityOfferDoc({ data }: CustomerEligibilit
                           </span>
                           {b.isBestMatch && (
                             <svg
-                              width="168"
+                              width="176"
                               height="22"
-                              viewBox="0 0 168 22"
+                              viewBox="0 0 176 22"
                               style={{
                                 display: 'inline-block',
                                 verticalAlign: 'middle',
                                 flexShrink: 0,
                               }}
                             >
-                              <rect x="0" y="0" width="168" height="22" rx="11" fill="#059669" />
+                              <rect x="0" y="0" width="176" height="22" rx="11" fill="#059669" />
                               <text
-                                x="84"
+                                x="88"
                                 y="11"
                                 textAnchor="middle"
                                 dominantBaseline="central"
@@ -585,18 +581,18 @@ export default function CustomerEligibilityOfferDoc({ data }: CustomerEligibilit
                           )}
                           {b.status === 'PARTIALLY_ELIGIBLE' && (
                             <svg
-                              width="152"
+                              width="160"
                               height="22"
-                              viewBox="0 0 152 22"
+                              viewBox="0 0 160 22"
                               style={{
                                 display: 'inline-block',
                                 verticalAlign: 'middle',
                                 flexShrink: 0,
                               }}
                             >
-                              <rect x="0.5" y="0.5" width="151" height="21" rx="10.5" fill="#fffbeb" stroke="#f59e0b" strokeWidth="1" />
+                              <rect x="0.5" y="0.5" width="159" height="21" rx="10.5" fill="#fffbeb" stroke="#f59e0b" strokeWidth="1" />
                               <text
-                                x="76"
+                                x="80"
                                 y="11"
                                 textAnchor="middle"
                                 dominantBaseline="central"
@@ -694,23 +690,21 @@ export default function CustomerEligibilityOfferDoc({ data }: CustomerEligibilit
                         backgroundColor: '#fff1f2',
                         border: '1px solid #fecdd3',
                         borderRadius: '8px',
-                        padding: '8px 12px',
+                        padding: '8px 14px',
                         fontSize: '11px',
                         color: '#9f1239',
                         fontWeight: 600,
-                        lineHeight: '1.4',
+                        lineHeight: '1.45',
                         marginBottom: '8px',
-                        display: 'flex',
-                        alignItems: 'flex-start',
-                        gap: '6px',
+                        textAlign: 'center',
                       }}
                     >
-                      <span style={{ fontSize: '13px', lineHeight: 1, flexShrink: 0, marginTop: '1px' }}>⚠️</span>
-                      <div>
+                      <span style={{ fontSize: '13px', marginRight: '5px', verticalAlign: '-1px' }}>⚠️</span>
+                      <span>
                         {b.specialRemarks && b.specialRemarks.length > 0
                           ? b.specialRemarks.join(' ')
                           : `Requested loan of ${formatCurrencyINR(data.requestedAmount)} pushes FOIR to ${b.foirPct}% (Max permissible: ${b.maxFoirPct}%). Sanctionable up to ${formatCurrencyINR(b.recommendedAmount)}.`}
-                      </div>
+                      </span>
                     </div>
                   )}
 
