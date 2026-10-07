@@ -171,7 +171,7 @@ export default function ActiveReportsSection({
 
             {/* Navigation Tabs for Active Reports */}
             <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200 pb-2">
-              <div className="flex items-center gap-1 overflow-x-auto scrollbar-none py-0.5">
+              <div className="flex flex-wrap items-center gap-1 py-0.5">
                 <button
                   type="button"
                   onClick={() => { setAdminTab('branches'); setSearchQuery(''); }}

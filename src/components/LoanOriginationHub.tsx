@@ -683,39 +683,39 @@ export default function LoanOriginationHub({
             </div>
 
             {/* 2. Partner Action Mode & Share Link Option for Selected Loan Type */}
-            <div className="p-3 rounded-2xl bg-gradient-to-r from-slate-900 via-slate-800 to-emerald-950 text-white flex flex-wrap items-center justify-between gap-3 shadow-sm">
-            <div className="min-w-0">
-              <div className="flex items-center gap-1.5">
-                <span className="text-xs">🔗</span>
-                <p className="text-xs font-bold text-white">
-                  Customer Self-Apply Link for {LOAN_TYPE_LABELS[effectiveLoanType]}
+            <div className="p-2.5 rounded-xl bg-gradient-to-r from-slate-900 via-slate-800 to-emerald-950 text-white flex flex-wrap items-center justify-between gap-2 shadow-xs">
+              <div className="min-w-0">
+                <div className="flex items-center gap-1.5">
+                  <span className="text-xs">🔗</span>
+                  <p className="text-[11px] font-bold text-white">
+                    Self-Apply Link for {LOAN_TYPE_LABELS[effectiveLoanType]}
+                  </p>
+                </div>
+                <p className="text-[9px] text-slate-300">
+                  Channel partner can fill form directly below OR share customer link via WhatsApp
                 </p>
               </div>
-              <p className="text-[10px] text-slate-300 mt-0.5">
-                Channel partner can fill form directly below OR share customer link via WhatsApp / Copy
-              </p>
+              <div className="flex items-center gap-1.5 shrink-0">
+                <button
+                  type="button"
+                  onClick={handleGenerateShareLink}
+                  disabled={shareLinkLoading}
+                  className="px-2.5 py-1 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-[11px] font-extrabold active:scale-95 transition shadow-xs flex items-center gap-1.5 disabled:opacity-50"
+                >
+                  {shareLinkLoading ? (
+                    <>
+                      <span className="w-2.5 h-2.5 border-2 border-slate-900 border-t-transparent rounded-full animate-spin"></span>
+                      <span>Generating...</span>
+                    </>
+                  ) : (
+                    <>
+                      <span>📲 Share Link</span>
+                      <span>↗</span>
+                    </>
+                  )}
+                </button>
+              </div>
             </div>
-            <div className="flex items-center gap-2 shrink-0">
-              <button
-                type="button"
-                onClick={handleGenerateShareLink}
-                disabled={shareLinkLoading}
-                className="px-3 py-1.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-xs font-extrabold active:scale-95 transition shadow-xs flex items-center gap-1.5 disabled:opacity-50"
-              >
-                {shareLinkLoading ? (
-                  <>
-                    <span className="w-3 h-3 border-2 border-slate-900 border-t-transparent rounded-full animate-spin"></span>
-                    <span>Generating...</span>
-                  </>
-                ) : (
-                  <>
-                    <span>📲 Share Link to Customer</span>
-                    <span>↗</span>
-                  </>
-                )}
-              </button>
-            </div>
-          </div>
 
           {/* Error Banner */}
           {errorMessage && (

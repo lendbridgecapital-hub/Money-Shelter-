@@ -77,29 +77,29 @@ export default async function DashboardPage() {
       />
 
       {/* Mobile Digital Business Card Quick Share Card (Visible on mobile, hidden on desktop) */}
-      <div className="block md:hidden bg-gradient-to-r from-slate-900 via-slate-800 to-emerald-950 border border-emerald-500/25 text-white rounded-2xl p-3.5 shadow-md mb-3">
-        <div className="flex items-center justify-between gap-3">
+      <div className="block md:hidden bg-gradient-to-r from-slate-900 via-slate-800 to-emerald-950 border border-emerald-500/25 text-white rounded-xl p-2.5 shadow-xs mb-2">
+        <div className="flex items-center justify-between gap-2.5">
           <div className="min-w-0">
             <div className="flex items-center gap-1.5">
               <span className="text-xs">🪪</span>
-              <p className="text-xs font-bold text-white tracking-wide">Smart Visiting Card</p>
-              <span className="px-1.5 py-0.5 rounded bg-emerald-400/20 text-emerald-300 text-[9px] font-bold border border-emerald-400/30">1-Click Save</span>
+              <p className="text-[11px] font-bold text-white tracking-wide">Smart Visiting Card</p>
+              <span className="px-1 py-0.5 rounded bg-emerald-400/20 text-emerald-300 text-[8px] font-bold border border-emerald-400/30">1-Click Save</span>
             </div>
-            <p className="text-[10px] text-slate-300 mt-0.5 truncate">
-              Share your digital profile & auto-capture loan leads
+            <p className="text-[9px] text-slate-300 truncate">
+              Share digital profile & auto-capture loan leads
             </p>
           </div>
-          <div className="flex items-center gap-1.5 shrink-0">
+          <div className="flex items-center gap-1 shrink-0">
             <Link
               href={`/card/${user.id}`}
               target="_blank"
-              className="px-2.5 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 border border-white/15 text-white text-[11px] font-bold active:scale-95 transition"
+              className="px-2 py-1 rounded-lg bg-white/10 hover:bg-white/20 border border-white/15 text-white text-[10px] font-bold active:scale-95 transition"
             >
               View
             </Link>
             <Link
               href="/profile"
-              className="px-3 py-1.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-[11px] font-extrabold shadow-sm active:scale-95 transition flex items-center gap-1"
+              className="px-2.5 py-1 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-[10px] font-extrabold shadow-xs active:scale-95 transition flex items-center gap-1"
             >
               <span>Share</span>
               <span>↗</span>
@@ -303,26 +303,26 @@ function PipelineCard({
   return (
     <Link
       href={href}
-      className="bg-white border border-slate-200/90 hover:border-emerald-400 hover:shadow-xs rounded-2xl p-2 sm:p-3 aspect-[1.05/1] sm:aspect-square flex flex-col justify-between items-center text-center transition-all group shadow-2xs active:scale-[0.98]"
+      className="bg-white border border-slate-200/90 hover:border-emerald-400 hover:shadow-xs rounded-xl p-2 sm:p-2.5 py-2 flex flex-col justify-between items-center text-center transition-all group shadow-2xs active:scale-[0.98]"
     >
       {/* Top: Card Name */}
-      <div className="flex items-center justify-center gap-1.5 w-full pt-0.5">
-        <span className={`w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full ${dotColor} shrink-0`} />
-        <span className="text-[10px] sm:text-xs font-bold text-slate-600 uppercase tracking-wider truncate group-hover:text-slate-900 transition-colors">
+      <div className="flex items-center justify-center gap-1 w-full">
+        <span className={`w-1.5 h-1.5 rounded-full ${dotColor} shrink-0`} />
+        <span className="text-[10px] font-bold text-slate-600 uppercase tracking-wider truncate group-hover:text-slate-900 transition-colors">
           {label}
         </span>
       </div>
 
       {/* Center: Number */}
       <div className="flex-1 flex items-center justify-center py-0.5 sm:py-1">
-        <span className={`text-xl sm:text-3xl lg:text-4xl font-black ${colorClass} tracking-tight group-hover:scale-105 transition-transform`}>
+        <span className={`text-lg sm:text-2xl font-black ${colorClass} tracking-tight group-hover:scale-105 transition-transform`}>
           {count}
         </span>
       </div>
 
       {/* Bottom hint (desktop only) */}
-      <div className="pb-0.5 hidden sm:block">
-        <span className="text-[10px] font-medium text-slate-400 group-hover:text-emerald-700 transition-colors">
+      <div className="hidden sm:block">
+        <span className="text-[9px] font-medium text-slate-400 group-hover:text-emerald-700 transition-colors">
           View Pipeline →
         </span>
       </div>

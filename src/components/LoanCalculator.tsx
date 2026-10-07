@@ -188,35 +188,35 @@ export default function LoanCalculator({
 
   return (
     <div
-      className={`bg-gradient-to-b from-slate-50 to-white rounded-2xl border border-slate-200/90 shadow-xs overflow-hidden transition-all ${className}`}
+      className={`bg-gradient-to-b from-slate-50 to-white rounded-xl border border-slate-200/90 shadow-2xs overflow-hidden transition-all ${className}`}
     >
       {/* Top Header & Dual Mode Switcher */}
-      <div className="p-3 sm:p-4 border-b border-slate-200/80 bg-white flex flex-wrap items-center justify-between gap-2.5">
-        <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center text-sm font-black shadow-inner">
+      <div className="p-2 sm:p-2.5 border-b border-slate-200/80 bg-white flex flex-wrap items-center justify-between gap-2">
+        <div className="flex items-center gap-1.5">
+          <div className="w-6 h-6 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center text-xs font-black shadow-inner">
             🧮
           </div>
           <div>
-            <h3 className="text-xs sm:text-sm font-extrabold text-slate-900 tracking-tight flex items-center gap-1.5">
+            <h3 className="text-xs font-extrabold text-slate-900 tracking-tight flex items-center gap-1">
               <span>{isHome ? 'Home Loan' : 'Personal Loan'} EMI Calculator</span>
-              <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200/60">
+              <span className="px-1 py-0.5 rounded text-[8px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200/60">
                 Live Estimates
               </span>
             </h3>
-            <p className="text-[10px] text-slate-500">
+            <p className="text-[9px] text-slate-500 leading-none mt-0.5">
               Calculate instant monthly installment & interest breakdown
             </p>
           </div>
         </div>
 
         {/* Dual Tab Switcher Pill */}
-        <div className="flex items-center p-0.5 bg-slate-100 rounded-xl border border-slate-200/80">
+        <div className="flex items-center p-0.5 bg-slate-100 rounded-lg border border-slate-200/80">
           <button
             type="button"
             onClick={() => handleTypeSelect('HOME_LOAN')}
-            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 ${
+            className={`px-2.5 py-1 rounded-md text-[11px] font-bold transition flex items-center gap-1 ${
               isHome
-                ? 'bg-white text-emerald-800 shadow-xs ring-1 ring-slate-200/80'
+                ? 'bg-white text-emerald-800 shadow-2xs ring-1 ring-slate-200/80'
                 : 'text-slate-600 hover:text-slate-900'
             }`}
           >
@@ -226,9 +226,9 @@ export default function LoanCalculator({
           <button
             type="button"
             onClick={() => handleTypeSelect('PERSONAL_LOAN')}
-            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 ${
+            className={`px-2.5 py-1 rounded-md text-[11px] font-bold transition flex items-center gap-1 ${
               !isHome
-                ? 'bg-white text-emerald-800 shadow-xs ring-1 ring-slate-200/80'
+                ? 'bg-white text-emerald-800 shadow-2xs ring-1 ring-slate-200/80'
                 : 'text-slate-600 hover:text-slate-900'
             }`}
           >
@@ -396,38 +396,38 @@ export default function LoanCalculator({
         {/* Right Output Column (5 cols on desktop, full width on mobile) */}
         <div className="lg:col-span-5 flex flex-col justify-between space-y-3.5">
           {/* Highlighted EMI Card */}
-          <div className="p-4 rounded-2xl bg-gradient-to-br from-slate-900 via-slate-800 to-emerald-950 text-white shadow-md relative overflow-hidden">
-            <div className="absolute right-0 top-0 w-32 h-32 bg-emerald-500/10 rounded-full blur-2xl pointer-events-none"></div>
+          <div className="p-3 sm:p-3.5 rounded-xl bg-gradient-to-br from-slate-900 via-slate-800 to-emerald-950 text-white shadow-xs relative overflow-hidden">
+            <div className="absolute right-0 top-0 w-28 h-28 bg-emerald-500/10 rounded-full blur-2xl pointer-events-none"></div>
 
-            <div className="flex items-center justify-between text-xs text-slate-300 mb-1">
-              <span className="font-semibold uppercase tracking-wider text-[10px]">
+            <div className="flex items-center justify-between text-xs text-slate-300 mb-0.5">
+              <span className="font-semibold uppercase tracking-wider text-[9px]">
                 Calculated Monthly Installment
               </span>
-              <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 text-[10px] font-bold border border-emerald-400/30">
+              <span className="px-1.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 text-[9px] font-bold border border-emerald-400/30">
                 EMI
               </span>
             </div>
 
-            <div className="my-2">
-              <div className="text-2xl sm:text-3xl font-black text-emerald-400 tracking-tight flex items-baseline gap-1">
+            <div className="my-1.5">
+              <div className="text-xl sm:text-2xl font-black text-emerald-400 tracking-tight flex items-baseline gap-1">
                 <span>{formatCurrencyINR(emi)}</span>
-                <span className="text-xs text-slate-300 font-normal">/ month</span>
+                <span className="text-[11px] text-slate-300 font-normal">/ month</span>
               </div>
             </div>
 
             {/* Split Progress Bar */}
-            <div className="space-y-1.5 pt-2 border-t border-white/10">
-              <div className="flex items-center justify-between text-[10px] text-slate-300">
+            <div className="space-y-1 pt-1.5 border-t border-white/10">
+              <div className="flex items-center justify-between text-[9px] text-slate-300">
                 <span className="flex items-center gap-1">
-                  <span className="w-2 h-2 rounded-full bg-emerald-400 inline-block"></span>
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 inline-block"></span>
                   Principal ({principalPercent}%)
                 </span>
                 <span className="flex items-center gap-1">
-                  <span className="w-2 h-2 rounded-full bg-amber-400 inline-block"></span>
+                  <span className="w-1.5 h-1.5 rounded-full bg-amber-400 inline-block"></span>
                   Interest ({interestPercent}%)
                 </span>
               </div>
-              <div className="w-full h-2.5 rounded-full bg-slate-700/80 overflow-hidden flex">
+              <div className="w-full h-2 rounded-full bg-slate-700/80 overflow-hidden flex">
                 <div
                   style={{ width: `${principalPercent}%` }}
                   className="bg-emerald-400 h-full transition-all duration-300"
@@ -440,15 +440,15 @@ export default function LoanCalculator({
             </div>
 
             {/* Summary Numbers */}
-            <div className="grid grid-cols-2 gap-2 mt-3 pt-2.5 border-t border-white/10 text-xs">
+            <div className="grid grid-cols-2 gap-2 mt-2 pt-2 border-t border-white/10 text-xs">
               <div>
-                <p className="text-[10px] text-slate-400">Total Interest</p>
+                <p className="text-[9px] text-slate-400">Total Interest</p>
                 <p className="text-xs sm:text-sm font-bold text-amber-300">
                   {formatCurrencyINR(totalInterest)}
                 </p>
               </div>
               <div className="text-right">
-                <p className="text-[10px] text-slate-400">Total Payable</p>
+                <p className="text-[9px] text-slate-400">Total Payable</p>
                 <p className="text-xs sm:text-sm font-bold text-white">
                   {formatCurrencyINR(totalPayable)}
                 </p>
