@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import type { Commission, Clawback, Role, User, BankProduct } from '@/types/db';
 import { recordClawbackAction } from '@/actions/workflowActions';
@@ -170,6 +171,12 @@ export default function CommissionManager({
           </p>
         </div>
         <div className="flex items-center gap-2 self-start sm:self-auto">
+          <Link
+            href="/admin/rewards"
+            className="px-3 py-2 bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-300 text-xs font-bold rounded-lg shadow-2xs transition flex items-center gap-1.5"
+          >
+            🪙 Rewards & CRP Wallet
+          </Link>
           {canManageSplits && activeTab === 'SPLITS' && (
             <button
               type="button"

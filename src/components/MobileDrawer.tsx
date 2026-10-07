@@ -100,6 +100,12 @@ export default function MobileDrawer({
       show: !isSupport,
     },
     {
+      label: isPartner ? 'Rewards & CRP Wallet' : 'Rewards & CRP Ledger',
+      href: '/admin/rewards',
+      icon: '🪙',
+      show: true,
+    },
+    {
       label: 'Partner Lending Banks',
       href: '/admin/banks',
       icon: '🏦',

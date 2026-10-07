@@ -115,6 +115,8 @@ function initDatabase(): DatabaseAdapter {
       'ALTER TABLE commissions ADD COLUMN paid_at TEXT',
       'CREATE TABLE IF NOT EXISTS email_logs (id TEXT PRIMARY KEY, tenant_id TEXT DEFAULT "default", to_email TEXT NOT NULL, subject TEXT NOT NULL, body_html TEXT NOT NULL, status TEXT NOT NULL DEFAULT "SENT", error_message TEXT, message_id TEXT, created_at TEXT NOT NULL)',
       'CREATE TABLE IF NOT EXISTS bank_policy_cards (id TEXT PRIMARY KEY, tenant_id TEXT DEFAULT "default", bank_name TEXT NOT NULL, bank_code TEXT NOT NULL, logo_url TEXT, loan_type TEXT NOT NULL, min_cibil INTEGER NOT NULL DEFAULT 650, max_cibil INTEGER NOT NULL DEFAULT 900, min_monthly_income REAL NOT NULL DEFAULT 25000, max_foir_pct REAL NOT NULL DEFAULT 55, allowed_income_types TEXT NOT NULL DEFAULT "[\"SALARIED\"]", min_tenure_months INTEGER NOT NULL DEFAULT 12, max_tenure_months INTEGER NOT NULL DEFAULT 240, min_loan_amount REAL NOT NULL DEFAULT 100000, max_loan_amount REAL NOT NULL DEFAULT 50000000, base_interest_rate REAL NOT NULL DEFAULT 8.5, processing_fee_pct REAL NOT NULL DEFAULT 0.5, processing_fee_flat REAL, rate_matrix TEXT NOT NULL DEFAULT "[]", dynamic_criteria TEXT NOT NULL DEFAULT "{}", tat_days INTEGER DEFAULT 3, special_features TEXT DEFAULT "[]", active INTEGER NOT NULL DEFAULT 1, priority_weight INTEGER DEFAULT 0, created_at TEXT NOT NULL, updated_at TEXT NOT NULL)',
+      'CREATE TABLE IF NOT EXISTS reward_ledger (id TEXT PRIMARY KEY, tenant_id TEXT DEFAULT "default", partner_id TEXT NOT NULL, partner_name TEXT, application_id TEXT, customer_name TEXT, customer_mobile TEXT, loan_type TEXT, disbursed_amount REAL, commission_amount REAL, points REAL NOT NULL, rate_multiplier REAL DEFAULT 10, type TEXT NOT NULL, status TEXT NOT NULL DEFAULT "CREDITED", description TEXT, redemption_id TEXT, created_at TEXT NOT NULL)',
+      'CREATE TABLE IF NOT EXISTS reward_redemptions (id TEXT PRIMARY KEY, tenant_id TEXT DEFAULT "default", partner_id TEXT NOT NULL, partner_name TEXT NOT NULL, partner_email TEXT, partner_phone TEXT, points REAL NOT NULL, inr_amount REAL NOT NULL, payout_method TEXT NOT NULL, payout_details TEXT NOT NULL, status TEXT NOT NULL DEFAULT "PENDING", admin_notes TEXT, transaction_ref TEXT, processed_by_id TEXT, processed_by_name TEXT, processed_at TEXT, created_at TEXT NOT NULL)',
     ];
     for (const stmt of alterStatements) {
       try {
@@ -186,6 +188,8 @@ function createPortableStorage(storageFilePath: string): DatabaseAdapter {
     bank_products: Record<string, unknown>[];
     email_logs: Record<string, unknown>[];
     bank_policy_cards: Record<string, unknown>[];
+    reward_ledger: Record<string, unknown>[];
+    reward_redemptions: Record<string, unknown>[];
     [key: string]: Record<string, unknown>[];
   }
 
@@ -209,6 +213,8 @@ function createPortableStorage(storageFilePath: string): DatabaseAdapter {
       required_documents: seed?.required_documents || [],
       email_logs: seed?.email_logs || [],
       bank_policy_cards: seed?.bank_policy_cards || [],
+      reward_ledger: seed?.reward_ledger || [],
+      reward_redemptions: seed?.reward_redemptions || [],
     };
   }
 

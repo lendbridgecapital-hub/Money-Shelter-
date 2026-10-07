@@ -107,6 +107,57 @@ export interface Clawback {
   createdAt: string;
 }
 
+export interface RewardLedgerEntry {
+  id: string;
+  tenantId?: string;
+  partnerId: string;
+  partnerName?: string | null;
+  applicationId?: string | null;
+  customerName?: string | null;
+  customerMobile?: string | null;
+  loanType?: string | null;
+  disbursedAmount?: number | null;
+  commissionAmount?: number | null;
+  points: number;
+  rateMultiplier: number; // default 10 (1 CRP = ₹10)
+  type: 'COMMISSION_EARNING' | 'REDEMPTION' | 'ADJUSTMENT';
+  status: 'CREDITED' | 'PENDING' | 'REDEEMED' | 'CANCELLED';
+  description: string;
+  redemptionId?: string | null;
+  createdAt: string;
+}
+
+export interface RewardRedemption {
+  id: string;
+  tenantId?: string;
+  partnerId: string;
+  partnerName: string;
+  partnerEmail?: string | null;
+  partnerPhone?: string | null;
+  points: number;
+  inrAmount: number;
+  payoutMethod: 'BANK_TRANSFER' | 'UPI';
+  payoutDetails: string;
+  status: 'PENDING' | 'APPROVED' | 'REJECTED';
+  adminNotes?: string | null;
+  transactionRef?: string | null;
+  processedById?: string | null;
+  processedByName?: string | null;
+  processedAt?: string | null;
+  createdAt: string;
+}
+
+export interface PartnerWalletSummary {
+  partnerId: string;
+  totalCrpEarned: number;
+  totalCrpRedeemed: number;
+  pendingCrpRedemption: number;
+  availableCrp: number;
+  availableInr: number;
+  totalEarnedInr: number;
+  totalRedeemedInr: number;
+}
+
 export interface PartnerNotification {
   id: string;
   tenantId?: string;

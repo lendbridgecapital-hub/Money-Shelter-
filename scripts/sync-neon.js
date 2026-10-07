@@ -337,6 +337,46 @@ async function initSchema(client) {
       priority_weight INTEGER DEFAULT 0,
       created_at TEXT NOT NULL,
       updated_at TEXT NOT NULL
+    );`,
+
+    `CREATE TABLE IF NOT EXISTS reward_ledger (
+      id TEXT PRIMARY KEY,
+      tenant_id TEXT DEFAULT 'default',
+      partner_id TEXT NOT NULL,
+      partner_name TEXT,
+      application_id TEXT,
+      customer_name TEXT,
+      customer_mobile TEXT,
+      loan_type TEXT,
+      disbursed_amount REAL,
+      commission_amount REAL,
+      points REAL NOT NULL,
+      rate_multiplier REAL DEFAULT 10,
+      type TEXT NOT NULL,
+      status TEXT NOT NULL DEFAULT 'CREDITED',
+      description TEXT,
+      redemption_id TEXT,
+      created_at TEXT NOT NULL
+    );`,
+
+    `CREATE TABLE IF NOT EXISTS reward_redemptions (
+      id TEXT PRIMARY KEY,
+      tenant_id TEXT DEFAULT 'default',
+      partner_id TEXT NOT NULL,
+      partner_name TEXT NOT NULL,
+      partner_email TEXT,
+      partner_phone TEXT,
+      points REAL NOT NULL,
+      inr_amount REAL NOT NULL,
+      payout_method TEXT NOT NULL,
+      payout_details TEXT NOT NULL,
+      status TEXT NOT NULL DEFAULT 'PENDING',
+      admin_notes TEXT,
+      transaction_ref TEXT,
+      processed_by_id TEXT,
+      processed_by_name TEXT,
+      processed_at TEXT,
+      created_at TEXT NOT NULL
     );`
   ];
 

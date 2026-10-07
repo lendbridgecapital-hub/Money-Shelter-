@@ -94,6 +94,14 @@ export default function Sidebar({
       external: false,
     },
     {
+      label: isPartner || isSubDsa ? 'Rewards & CRP Wallet' : 'Partner Rewards & CRP',
+      href: '/admin/rewards',
+      icon: '🪙',
+      description: '1 CRP = ₹10 ledger & redemptions',
+      show: true,
+      external: false,
+    },
+    {
       label: isSubDsa
         ? 'Sub-DSA Certificate'
         : isPartner

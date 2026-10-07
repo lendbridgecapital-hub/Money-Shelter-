@@ -8,6 +8,7 @@ import * as statusHistoryRepo from '@/lib/repos/statusHistoryRepo';
 import * as workflowRepo from '@/lib/repos/workflowRepo';
 import * as banksRepo from '@/lib/repos/banksRepo';
 import * as commissionsRepo from '@/lib/repos/commissionsRepo';
+import * as rewardsRepo from '@/lib/repos/rewardsRepo';
 import * as usersRepo from '@/lib/repos/usersRepo';
 import * as documentsRepo from '@/lib/repos/documentsRepo';
 import { getProductCommissionSplit } from '@/lib/repos/bankProductsRepo';
@@ -666,6 +667,20 @@ export async function disburseCaseAction(
           : Math.max(0, Number((split.baseRate - commissionRate).toFixed(2))),
       });
 
+      // Credit CRP (Credit Reward Points: 1 CRP = ₹10) to Partner Wallet
+      rewardsRepo.creditCommissionReward({
+        tenantId: application.tenantId,
+        partnerId: partner.id,
+        partnerName: partner.name,
+        applicationId,
+        customerName: application.fullName,
+        customerMobile: application.mobile,
+        loanType: application.loanType,
+        disbursedAmount,
+        commissionAmount,
+        earningType: 'DIRECT',
+      });
+
       // 2. Override Commission for Sub-DSA (Team Business)
       if (subDsa && !isDirectSubDsa) {
         overrideAmount = Math.round((disbursedAmount * overrideRate) / 100);
@@ -688,13 +703,29 @@ export async function disburseCaseAction(
           netCompanyMargin: Math.max(0, Number((split.baseRate - commissionRate - overrideRate).toFixed(2))),
         });
 
-        // Notify Sub-DSA about the override commission
+        // Credit CRP to Sub-DSA Wallet for Team Override
+        rewardsRepo.creditCommissionReward({
+          tenantId: application.tenantId,
+          partnerId: subDsa.id,
+          partnerName: subDsa.name,
+          applicationId,
+          customerName: application.fullName,
+          customerMobile: application.mobile,
+          loanType: application.loanType,
+          disbursedAmount,
+          commissionAmount: overrideAmount,
+          earningType: 'OVERRIDE',
+          sourcePartnerName: partner.name,
+        });
+
+        // Notify Sub-DSA about the override commission & CRP points
+        const subDsaCrp = Math.round((overrideAmount / 10) * 100) / 100;
         workflowRepo.createNotification({
           recipientId: subDsa.id,
           recipientRole: 'SUB_DSA',
           applicationId,
-          title: `Team Override Earned: ₹${overrideAmount.toLocaleString('en-IN')}! 🚀`,
-          message: `Your mapped partner ${partner.name} closed a ${split.productName} for ₹${disbursedAmount.toLocaleString('en-IN')}. You earned an override of ₹${overrideAmount.toLocaleString('en-IN')} (${overrideRate}%).`,
+          title: `Team Override Earned: ₹${overrideAmount.toLocaleString('en-IN')} (${subDsaCrp.toLocaleString('en-IN')} CRP)! 🚀`,
+          message: `Your mapped partner ${partner.name} closed a ${split.productName} for ₹${disbursedAmount.toLocaleString('en-IN')}. You earned an override of ₹${overrideAmount.toLocaleString('en-IN')} (+${subDsaCrp} CRP credited to your wallet).`,
         });
       }
     }
@@ -735,6 +766,8 @@ export async function disburseCaseAction(
     revalidatePath('/dashboard');
     revalidatePath('/branch/requests');
     revalidatePath(`/branch/requests/${applicationId}`);
+    revalidatePath('/admin/rewards');
+    revalidatePath('/admin/commissions');
 
     await syncDatabase();
 
