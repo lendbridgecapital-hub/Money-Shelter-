@@ -14,6 +14,7 @@ import { syncDatabase } from '@/lib/db';
 import { saveUploadedFile } from '@/lib/uploads';
 import { generateApplicationToken } from '@/lib/tokens';
 import { LOAN_TYPE_LABELS, formatCurrencyINR } from '@/lib/format';
+import { notifyTouchpoint01_CustomerSubmitted, notifyTouchpoint08_LoanRejected } from '@/lib/touchpoints';
 import type { ApplicationStatus, LoanType } from '@/types/db';
 import type { ActionResult } from '@/actions/settingsActions';
 
@@ -141,6 +142,18 @@ export async function updateApplicationStatusAction(
 
     applicationsRepo.updateApplicationStatus(applicationId, status);
     statusHistoryRepo.addStatusHistory({ applicationId, status, note: note || null, changedById: user.id });
+
+    if (status === 'REJECTED') {
+      try {
+        await notifyTouchpoint08_LoanRejected(
+          application,
+          note || 'Application rejected by operations.',
+          { tenantId: application.tenantId }
+        );
+      } catch (err) {
+        console.warn('[updateApplicationStatusAction] Error triggering Touchpoint 08:', err);
+      }
+    }
 
     safeRevalidate('/dashboard');
     safeRevalidate('/branch/requests');
@@ -314,78 +327,12 @@ export async function submitDirectPartnerLoanAction(formData: FormData): Promise
 
     // MAIL SYSTEM DISPATCH: Send notification emails to branch and customer
     let emailDispatched = false;
-    const settings = await getCompanySettings(user.tenantId || 'default');
-    const branch = getBranchById(application.branchId);
-
-    // 1. Branch Alert Email (Dispatched to Branch / Admin / Official Email)
-    const alertTo = branch?.email || settings.officialEmail || process.env.SMTP_TO_EMAIL || process.env.ADMIN_EMAIL;
-    if (alertTo) {
-      try {
-        const alert = branchAlertEmail({
-          fullName,
-          mobile,
-          email: email || 'Not provided',
-          loanType: LOAN_TYPE_LABELS[loanType] || loanType,
-          loanAmount,
-          monthlyIncome,
-          existingEmi,
-          branchName: branch?.name || 'Quickfinsure Head Office',
-          applicationUrl: `${cleanBase}/branch/requests/${application.id}`,
-        });
-        const sendRes = await sendMail({
-          to: alertTo,
-          ...alert,
-          tenantId: user.tenantId,
-        });
-        if (sendRes.sent) emailDispatched = true;
-      } catch (mailErr) {
-        console.warn('[DirectPartnerLoan] Branch alert email failed:', mailErr);
-      }
-    }
-
-    // 2. Customer Confirmation Email (Dispatched if applicant email provided)
-    if (email) {
-      try {
-        const confirmation = customerConfirmationEmail({
-          fullName,
-          companyName: settings.companyName,
-          loanType: LOAN_TYPE_LABELS[loanType] || loanType,
-          loanAmount,
-        });
-        const sendRes = await sendMail({
-          to: email,
-          ...confirmation,
-          tenantId: user.tenantId,
-        });
-        if (sendRes.sent) emailDispatched = true;
-      } catch (mailErr) {
-        console.warn('[DirectPartnerLoan] Customer confirmation email failed:', mailErr);
-      }
-    }
-
-    // IN-APP NOTIFICATIONS:
-    if (application.relationshipManagerId) {
-      try {
-        workflowRepo.createNotification({
-          recipientId: application.relationshipManagerId,
-          recipientRole: 'RELATIONSHIP_MANAGER',
-          applicationId: application.id,
-          title: `New Customer Lead: ${fullName}`,
-          message: `${user.name} submitted a new ${LOAN_TYPE_LABELS[loanType] || loanType} request for ${formatCurrencyINR(loanAmount)}.`,
-        });
-      } catch {}
-    }
-
-    if (application.channelPartnerId) {
-      try {
-        workflowRepo.createNotification({
-          recipientId: application.channelPartnerId,
-          recipientRole: 'CHANNEL_PARTNER',
-          applicationId: application.id,
-          title: `Customer Request Registered: ${fullName}`,
-          message: `Your ${LOAN_TYPE_LABELS[loanType] || loanType} application for ${fullName} (${formatCurrencyINR(loanAmount)}) is stored in the system.`,
-        });
-      } catch {}
+    // Trigger Touchpoint 01 Notifications (In-App to RM & Ops + Customer & Branch Emails)
+    try {
+      await notifyTouchpoint01_CustomerSubmitted(application, { tenantId: user.tenantId });
+      emailDispatched = true;
+    } catch (notifErr) {
+      console.warn('[DirectPartnerLoan] Error triggering Touchpoint 01 notifications:', notifErr);
     }
 
     // MAIN SYSTEM SYNC: Ensure database persistence is completed before returning

@@ -15,6 +15,7 @@ import * as workflowRepo from '@/lib/repos/workflowRepo';
 import { syncDatabase } from '@/lib/db';
 import { DOCUMENT_GROUPS } from '@/lib/documentChecklist';
 import { LOAN_TYPE_LABELS } from '@/lib/format';
+import { notifyTouchpoint01_CustomerSubmitted } from '@/lib/touchpoints';
 import type { LoanType } from '@/types/db';
 
 export type SubmitResult = { ok: false; error: string } | { ok: true };
@@ -121,37 +122,12 @@ export async function submitCustomerApplication(token: string, formData: FormDat
     changedById: null,
   });
 
-  // Fire off notification emails — failures here must never block the customer's submission.
-  const settings = await getCompanySettings();
-  const branch = getBranchById(application.branchId);
-  const base =
-    process.env.APP_BASE_URL ||
-    process.env.RENDER_EXTERNAL_URL ||
-    (process.env.NEXTAUTH_URL && !process.env.NEXTAUTH_URL.includes('localhost') ? process.env.NEXTAUTH_URL : '') ||
-    'https://quicfinsure.onrender.com';
-
-  const confirmation = customerConfirmationEmail({
-    fullName,
-    companyName: settings.companyName,
-    loanType: LOAN_TYPE_LABELS[loanType],
-    loanAmount,
-  });
-  await sendMail({ to: email, ...confirmation });
-
-  const alertTo = branch?.email || settings.officialEmail;
-  if (alertTo) {
-    const alert = branchAlertEmail({
-      fullName,
-      mobile,
-      email,
-      loanType: LOAN_TYPE_LABELS[loanType],
-      loanAmount,
-      monthlyIncome,
-      existingEmi,
-      branchName: branch?.name || 'Unknown branch',
-      applicationUrl: `${base}/branch/requests/${application.id}`,
-    });
-    await sendMail({ to: alertTo, ...alert });
+  // Trigger Touchpoint 01: In-App to RM & Ops + Customer email + Branch/Ops email
+  const updatedApplication = applicationsRepo.getApplicationById(application.id) || application;
+  try {
+    await notifyTouchpoint01_CustomerSubmitted(updatedApplication);
+  } catch (err) {
+    console.warn('[submitCustomerApplication] Error sending Touchpoint 01 notifications:', err);
   }
 
   revalidatePath('/dashboard');

@@ -19,6 +19,11 @@ import { listBranches } from '@/lib/repos/branchesRepo';
 import { createNotification } from '@/lib/repos/workflowRepo';
 import { syncDatabase } from '@/lib/db';
 import type { User } from '@/types/db';
+import {
+  notifyTouchpoint09_PartnerOnboarded,
+  notifyTouchpoint10_PartnerApproved,
+  notifyTouchpoint11_PartnerDocsRequested,
+} from '@/lib/touchpoints';
 
 // Ephemeral in-memory OTP store for onboarding verification
 const otpStore = new Map<string, { otp: string; expiresAt: number }>();
@@ -196,21 +201,15 @@ export async function completePartnerOnboardingAction(payload: {
     // Clear OTP after successful use
     otpStore.delete(email);
 
-    // Notify assigned RM if referral link was used
-    if (createdPartner.assignedRmId) {
-      try {
-        const isSubDsa = targetRole === 'SUB_DSA';
-        createNotification({
-          recipientId: createdPartner.assignedRmId,
-          recipientRole: 'RELATIONSHIP_MANAGER',
-          applicationId: 'partner-onboarding',
-          title: isSubDsa ? 'New Sub-DSA Registered via Your Link! 🏢' : 'New Partner Onboarded via Your Link! 🤝',
-          message: `${fullName} has completed ${isSubDsa ? 'Sub-DSA' : 'partner'} onboarding using your link and is auto-assigned to you (Pending Central Support verification).`,
-        });
-      } catch {}
+    // Trigger Touchpoint 09: Channel Partner Onboarding Submission (In-App to RM & Support + Welcome email)
+    try {
+      const assignedRm = createdPartner.assignedRmId ? getUserById(createdPartner.assignedRmId) : null;
+      await notifyTouchpoint09_PartnerOnboarded(createdPartner, assignedRm);
+    } catch (e) {
+      console.warn('[completePartnerOnboardingAction] Error dispatching Touchpoint 09:', e);
     }
 
-    // Notify parent Sub-DSA if an agent signed up via Sub-DSA referral link
+    // Also notify parent Sub-DSA if an agent signed up via Sub-DSA referral link
     if (payload.parentSubDsaId) {
       try {
         createNotification({
@@ -222,17 +221,6 @@ export async function completePartnerOnboardingAction(payload: {
         });
       } catch {}
     }
-
-    // Notify Central Support
-    try {
-      createNotification({
-        recipientId: 'central-support',
-        recipientRole: 'CENTRAL_SUPPORT',
-        applicationId: 'partner-onboarding',
-        title: 'New Partner Onboarding Submission 📋',
-        message: `${fullName} has submitted Sub-DSA onboarding.${createdPartner.assignedRmName ? ` Auto-assigned to RM ${createdPartner.assignedRmName}.` : ''} Pending KYC verification.`,
-      });
-    } catch {}
 
     safeRevalidate('/admin/partner-requests');
     safeRevalidate('/admin/partners');
@@ -402,13 +390,13 @@ export async function approvePartnerAction(payload: {
     );
 
     const isSubDsa = updated.role === 'SUB_DSA';
-    createNotification({
-      recipientId: updated.id,
-      recipientRole: isSubDsa ? 'SUB_DSA' : 'CHANNEL_PARTNER',
-      applicationId: 'partner-onboarding',
-      title: isSubDsa ? 'Sub-DSA Application Approved! 🏢' : 'Partner Application Approved! 🤝',
-      message: `Your ${isSubDsa ? 'Sub-DSA Master' : 'Channel Partner'} application has been approved by Central Support. Your assigned Relationship Manager is ${assignedRmName}. You can now create customer links and view your Certificate of Association.`,
-    });
+
+    // Trigger Touchpoint 10: Channel Partner KYC Approved & Certified (In-App + Welcome & Certificate email)
+    try {
+      await notifyTouchpoint10_PartnerApproved(updated, assignedRmName, { tenantId: updated.tenantId });
+    } catch (e) {
+      console.warn('[approvePartnerAction] Error dispatching Touchpoint 10:', e);
+    }
 
     safeRevalidate('/admin/partner-requests');
     safeRevalidate('/admin/partners');
@@ -486,13 +474,12 @@ export async function requestPartnerDocsAction(payload: {
       { id: sessionUser.id, name: sessionUser.name }
     );
 
-    createNotification({
-      recipientId: updated.id,
-      recipientRole: 'CHANNEL_PARTNER',
-      applicationId: 'partner-onboarding',
-      title: 'Action Required: Partner Document Update Requested',
-      message: `Central Support has requested an update: "${payload.remark.trim()}". Please log in to upload the requested files.`,
-    });
+    // Trigger Touchpoint 11: Partner KYC Document Update Requested (In-App + Document re-upload email)
+    try {
+      await notifyTouchpoint11_PartnerDocsRequested(updated, payload.remark.trim(), { tenantId: updated.tenantId });
+    } catch (e) {
+      console.warn('[requestPartnerDocsAction] Error dispatching Touchpoint 11:', e);
+    }
 
     safeRevalidate('/admin/partner-requests');
     safeRevalidate('/admin/partners');

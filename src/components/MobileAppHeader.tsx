@@ -5,6 +5,7 @@ import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
 import type { Role } from '@/types/db';
 import MobileDrawer from './MobileDrawer';
+import NotificationBell from './NotificationBell';
 
 interface MobileAppHeaderProps {
   role: Role;
@@ -127,8 +128,10 @@ export default function MobileAppHeader({
           </div>
         )}
 
-        {/* Right Side: Sync Button & Profile Avatar */}
-        <div className="flex items-center gap-2">
+        {/* Right Side: Sync Button, Notification Bell & Profile Avatar */}
+        <div className="flex items-center gap-1.5">
+          <NotificationBell />
+
           <button
             type="button"
             onClick={handleSync}

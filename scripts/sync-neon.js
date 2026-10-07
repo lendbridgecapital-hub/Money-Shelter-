@@ -419,6 +419,19 @@ async function initSchema(client) {
       await client.query(`ALTER TABLE loan_applications ADD COLUMN IF NOT EXISTS ${col};`);
     } catch (_) {}
   }
+
+  // Ensure notification columns exist in PostgreSQL
+  const notificationColumns = [
+    "tenant_id TEXT DEFAULT 'default'",
+    'recipient_id TEXT',
+    'recipient_role TEXT',
+    'application_id TEXT'
+  ];
+  for (const col of notificationColumns) {
+    try {
+      await client.query(`ALTER TABLE partner_notifications ADD COLUMN IF NOT EXISTS ${col};`);
+    } catch (_) {}
+  }
 }
 
 function loadInitialSeedData() {

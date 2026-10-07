@@ -6,6 +6,7 @@ import { usePathname } from 'next/navigation';
 import { signOut } from 'next-auth/react';
 import type { Role } from '@/types/db';
 import { ROLE_LABELS } from '@/lib/format';
+import NotificationBell from './NotificationBell';
 
 interface SidebarProps {
   role: Role;
@@ -277,23 +278,26 @@ export default function Sidebar({
           )}
         </div>
 
-        {/* Collapse / Expand Toggle Button */}
-        <button
-          type="button"
-          onClick={toggleCollapse}
-          title={collapsed ? 'Expand Sidebar' : 'Collapse Sidebar'}
-          className="p-1 rounded-md text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors shrink-0"
-        >
-          {collapsed ? (
-            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 5l7 7-7 7M5 5l7 7-7 7" />
-            </svg>
-          ) : (
-            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 19l-7-7 7-7m8 14l-7-7 7-7" />
-            </svg>
-          )}
-        </button>
+        {/* Actions: Notification Bell & Collapse Toggle */}
+        <div className="flex items-center gap-0.5 shrink-0">
+          <NotificationBell />
+          <button
+            type="button"
+            onClick={toggleCollapse}
+            title={collapsed ? 'Expand Sidebar' : 'Collapse Sidebar'}
+            className="p-1 rounded-md text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors shrink-0"
+          >
+            {collapsed ? (
+              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 5l7 7-7 7M5 5l7 7-7 7" />
+              </svg>
+            ) : (
+              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 19l-7-7 7-7m8 14l-7-7 7-7" />
+              </svg>
+            )}
+          </button>
+        </div>
       </div>
 
       {/* Navigation */}

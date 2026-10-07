@@ -167,3 +167,11 @@ export function listNotificationsForUser(userId: string): PartnerNotification[] 
     createdAt: String(r.created_at || r.createdAt || ''),
   }));
 }
+
+export function markNotificationRead(id: string): void {
+  db.prepare('UPDATE partner_notifications SET read = 1 WHERE id = ?').run(id);
+}
+
+export function markAllNotificationsRead(userId: string): void {
+  db.prepare('UPDATE partner_notifications SET read = 1 WHERE recipient_id = ?').run(userId);
+}

@@ -15,6 +15,16 @@ import { syncDatabase } from '@/lib/db';
 import { saveUploadedFile, MAX_FILE_SIZE } from '@/lib/uploads';
 import type { ApplicationStatus, Bank, Role, LoanType } from '@/types/db';
 import type { ActionResult } from '@/actions/settingsActions';
+import {
+  notifyTouchpoint02_SentToBank,
+  notifyTouchpoint03_DocumentsRequired,
+  notifyTouchpoint04_DocumentsReUploaded,
+  notifyTouchpoint05_LoanSanctioned,
+  notifyTouchpoint06_OfferAccepted,
+  notifyTouchpoint07_LoanDisbursed,
+  notifyTouchpoint08_LoanRejected,
+  notifyTouchpoint12_ClawbackRecorded,
+} from '@/lib/touchpoints';
 
 // 1. Send Details to Bank (Operations)
 export async function sendToBankAction(
@@ -57,26 +67,11 @@ export async function sendToBankAction(
       remark: historyNote,
     });
 
-    // Notify Channel Partner
-    if (application.channelPartnerId) {
-      workflowRepo.createNotification({
-        recipientId: application.channelPartnerId,
-        recipientRole: 'CHANNEL_PARTNER',
-        applicationId,
-        title: `Loan File Sent to Bank: ${bank.name}`,
-        message: `Case for ${application.fullName || 'Customer'} has been submitted to ${bank.name} by Operations team.`,
-      });
-    }
-
-    // Notify RM if assigned or branch manager
-    if (application.relationshipManagerId) {
-      workflowRepo.createNotification({
-        recipientId: application.relationshipManagerId,
-        recipientRole: 'RELATIONSHIP_MANAGER',
-        applicationId,
-        title: `Case Dispatched to ${bank.name}`,
-        message: `Application #${application.id.slice(-6)} submitted to ${bank.name}.`,
-      });
+    // Trigger Touchpoint 02: Loan File Sent to Bank (In-App to Partner & RM + Email notice)
+    try {
+      await notifyTouchpoint02_SentToBank(application, bank.name, { tenantId: application.tenantId });
+    } catch (notifErr) {
+      console.warn('[sendToBankAction] Error dispatching Touchpoint 02 notifications:', notifErr);
     }
 
     revalidatePath('/dashboard');
@@ -170,28 +165,57 @@ export async function submitRemarkAction(
       workflowRepo.addRequiredDocuments(applicationId, requiredDocTitles);
     }
 
-    // Flowchart Requirement: Trigger notification with status and remark to RM and Channel Partner
-    const notifTitle = `Remark on Loan #${application.id.slice(-6)}: ${status}`;
-    const notifMsg = `${user.name} (${user.role}): "${remark.trim()}"`;
+    // Check specific touchpoints
+    if (status === 'DOCUMENTS_REQUIRED') {
+      // Trigger Touchpoint 03: Operational Remark & Document Deficiency Raised
+      try {
+        await notifyTouchpoint03_DocumentsRequired(
+          application,
+          { name: user.name, role: user.role },
+          remark.trim(),
+          requiredDocTitles,
+          { tenantId: application.tenantId }
+        );
+      } catch (e) {
+        console.warn('[submitRemarkAction] Error dispatching Touchpoint 03:', e);
+      }
+    } else if (status === 'REJECTED') {
+      // Trigger Touchpoint 08: Loan Application Rejected
+      try {
+        await notifyTouchpoint08_LoanRejected(
+          application,
+          remark.trim(),
+          { tenantId: application.tenantId }
+        );
+      } catch (e) {
+        console.warn('[submitRemarkAction] Error dispatching Touchpoint 08:', e);
+      }
+    } else {
+      // Flowchart Requirement: Trigger standard notification with status and remark to RM and Channel Partner
+      const notifTitle = `Remark on Loan #${application.id.slice(-6)}: ${status}`;
+      const notifMsg = `${user.name} (${user.role}): "${remark.trim()}"`;
 
-    if (application.channelPartnerId) {
-      workflowRepo.createNotification({
-        recipientId: application.channelPartnerId,
-        recipientRole: 'CHANNEL_PARTNER',
-        applicationId,
-        title: notifTitle,
-        message: notifMsg,
-      });
-    }
+      if (application.channelPartnerId) {
+        workflowRepo.createNotification({
+          tenantId: application.tenantId,
+          recipientId: application.channelPartnerId,
+          recipientRole: 'CHANNEL_PARTNER',
+          applicationId,
+          title: notifTitle,
+          message: notifMsg,
+        });
+      }
 
-    if (application.relationshipManagerId && application.relationshipManagerId !== user.id) {
-      workflowRepo.createNotification({
-        recipientId: application.relationshipManagerId,
-        recipientRole: 'RELATIONSHIP_MANAGER',
-        applicationId,
-        title: notifTitle,
-        message: notifMsg,
-      });
+      if (application.relationshipManagerId && application.relationshipManagerId !== user.id) {
+        workflowRepo.createNotification({
+          tenantId: application.tenantId,
+          recipientId: application.relationshipManagerId,
+          recipientRole: 'RELATIONSHIP_MANAGER',
+          applicationId,
+          title: notifTitle,
+          message: notifMsg,
+        });
+      }
     }
 
     revalidatePath('/dashboard');
@@ -306,15 +330,11 @@ export async function uploadRequiredDocumentFileAction(
         changedById: user.id,
       });
 
-      // Notify Relationship Manager if assigned
-      if (application.relationshipManagerId) {
-        workflowRepo.createNotification({
-          recipientId: application.relationshipManagerId,
-          recipientRole: 'RELATIONSHIP_MANAGER',
-          applicationId,
-          title: `All Required Documents Uploaded`,
-          message: `All requested documents for ${application.fullName || 'Customer'} (Case #${application.id.slice(-6)}) have been uploaded. Ready for review.`,
-        });
+      // Trigger Touchpoint 04: Deficiency Documents Re-Uploaded (In-App to RM & Ops + status email)
+      try {
+        await notifyTouchpoint04_DocumentsReUploaded(application, { tenantId: application.tenantId });
+      } catch (e) {
+        console.warn('[uploadRequiredDocumentFileAction] Error dispatching Touchpoint 04:', e);
       }
     } else {
       statusHistoryRepo.addStatusHistory({
@@ -403,14 +423,12 @@ export async function partnerUploadRequiredDocAction(
     const stillPending = allRequired.some((d) => d.id !== requiredDocId && d.status === 'PENDING');
 
     if (!stillPending) {
-      // Move application back to DOCUMENTS_IN for Operations team review
-      applicationsRepo.updateApplicationStatus(applicationId, 'DOCUMENTS_IN');
-      statusHistoryRepo.addStatusHistory({
-        applicationId,
-        status: 'DOCUMENTS_IN',
-        note: 'All requested documents have been provided by Channel Partner. Ready for Ops review.',
-        changedById: user.id,
-      });
+      // Trigger Touchpoint 04: Deficiency Documents Re-Uploaded
+      try {
+        await notifyTouchpoint04_DocumentsReUploaded(application, { tenantId: application.tenantId });
+      } catch (e) {
+        console.warn('[partnerUploadRequiredDocAction] Error dispatching Touchpoint 04:', e);
+      }
     }
 
     revalidatePath('/dashboard');
@@ -487,25 +505,18 @@ export async function approveCaseAction(
       remark: histNote,
     });
 
-    // Notify Channel Partner & RM
-    if (application.channelPartnerId) {
-      workflowRepo.createNotification({
-        recipientId: application.channelPartnerId,
-        recipientRole: 'CHANNEL_PARTNER',
-        applicationId,
-        title: `Loan Approved: ₹${approvedAmount.toLocaleString('en-IN')}`,
-        message: `Sanction offer ready for ${application.fullName || 'Customer'} at ${interestRate}% by ${bankName || 'Bank'}. Customer acceptance link is now active.`,
-      });
-    }
-
-    if (application.relationshipManagerId) {
-      workflowRepo.createNotification({
-        recipientId: application.relationshipManagerId,
-        recipientRole: 'RELATIONSHIP_MANAGER',
-        applicationId,
-        title: `Loan Sanctioned: ₹${approvedAmount.toLocaleString('en-IN')}`,
-        message: `Case #${application.id.slice(-6)} sanctioned by ${bankName || 'Bank'}.`,
-      });
+    // Trigger Touchpoint 05: Loan Sanctioned & Approved (In-App to Partner & RM + Customer sanction email with link)
+    const updatedApp = applicationsRepo.getApplicationById(applicationId) || application;
+    try {
+      await notifyTouchpoint05_LoanSanctioned(
+        updatedApp,
+        approvedAmount,
+        interestRate,
+        bankName || 'Bank',
+        { tenantId: application.tenantId }
+      );
+    } catch (e) {
+      console.warn('[approveCaseAction] Error dispatching Touchpoint 05:', e);
     }
 
     revalidatePath('/dashboard');
@@ -561,15 +572,11 @@ export async function customerAcceptOfferAction(
       remark: `Customer reviewed and digitally accepted sanction letter terms. Reference: ${acceptanceRef}. Acceptance letter ready for bank transmission.`,
     });
 
-    // Notify Channel Partner
-    if (updated.channelPartnerId) {
-      workflowRepo.createNotification({
-        recipientId: updated.channelPartnerId,
-        recipientRole: 'CHANNEL_PARTNER',
-        applicationId: updated.id,
-        title: `Customer Accepted Sanction Offer! 🎉`,
-        message: `${updated.fullName || 'Customer'} has accepted the loan terms (${acceptanceRef}). Operations will now request disbursement from the bank.`,
-      });
+    // Trigger Touchpoint 06: Customer Digitally Accepts Sanction Offer (In-App to Partner & Ops + Email copy)
+    try {
+      await notifyTouchpoint06_OfferAccepted(updated, acceptanceRef, { tenantId: updated.tenantId });
+    } catch (e) {
+      console.warn('[customerAcceptOfferAction] Error dispatching Touchpoint 06:', e);
     }
 
     revalidatePath('/dashboard');
@@ -709,15 +716,20 @@ export async function disburseCaseAction(
       remark: histNote,
     });
 
-    // Notify Channel Partner
+    // Trigger Touchpoint 07: Loan Disbursed & Commission Credited (In-App to Partner + Commission credit email)
     if (partner) {
-      workflowRepo.createNotification({
-        recipientId: partner.id,
-        recipientRole: partner.role === 'SUB_DSA' ? 'SUB_DSA' : 'CHANNEL_PARTNER',
-        applicationId,
-        title: `Loan Disbursed! Commission Earned: ₹${commissionAmount.toLocaleString('en-IN')}`,
-        message: `Case for ${application.fullName || 'Customer'} has been disbursed. Your payout of ₹${commissionAmount.toLocaleString('en-IN')} is queued.`,
-      });
+      try {
+        await notifyTouchpoint07_LoanDisbursed(
+          application,
+          disbursedAmount,
+          commissionAmount,
+          commissionRate,
+          partner,
+          { tenantId: application.tenantId }
+        );
+      } catch (e) {
+        console.warn('[disburseCaseAction] Error dispatching Touchpoint 07:', e);
+      }
     }
 
     revalidatePath('/dashboard');
@@ -796,13 +808,18 @@ export async function recordClawbackAction(
       reason: reason.trim(),
     });
 
-    workflowRepo.createNotification({
-      recipientId: partnerId,
-      recipientRole: 'CHANNEL_PARTNER',
-      applicationId: applicationId || 'general',
-      title: `Commission Clawback Notice: ₹${amount.toLocaleString('en-IN')}`,
-      message: `A clawback of ₹${amount.toLocaleString('en-IN')} has been applied to your account. Reason: ${reason.trim()}`,
-    });
+    // Trigger Touchpoint 12: Commission Clawback Recorded (In-App to Partner + Statement adjustment email)
+    try {
+      await notifyTouchpoint12_ClawbackRecorded(
+        partner,
+        amount,
+        reason.trim(),
+        applicationId,
+        { tenantId: partner.tenantId }
+      );
+    } catch (e) {
+      console.warn('[recordClawbackAction] Error dispatching Touchpoint 12:', e);
+    }
 
     revalidatePath('/admin/partners');
     revalidatePath('/admin/commissions');
