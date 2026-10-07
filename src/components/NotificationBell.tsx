@@ -9,6 +9,17 @@ import {
   markAllNotificationsReadAction,
 } from '@/actions/notificationActions';
 import type { PartnerNotification } from '@/types/db';
+import {
+  triggerNotificationAlert,
+  testNotificationSound,
+  getNotificationSoundMode,
+  setNotificationSoundMode,
+  seedSeenNotifications,
+  markNotificationSeen,
+  isNotificationSeen,
+  unlockAudio,
+  type SoundMode,
+} from '@/lib/notificationAudio';
 
 interface NotificationBellProps {
   align?: 'auto' | 'left' | 'right';
@@ -20,26 +31,62 @@ export default function NotificationBell({ align = 'auto' }: NotificationBellPro
   const [unreadCount, setUnreadCount] = useState(0);
   const [loading, setLoading] = useState(false);
   const [popoverStyle, setPopoverStyle] = useState<React.CSSProperties>({});
-  
+  const [soundMode, setSoundMode] = useState<SoundMode>('voice');
+  const [activeToast, setActiveToast] = useState<PartnerNotification | null>(null);
+
   const buttonRef = useRef<HTMLButtonElement>(null);
   const popoverRef = useRef<HTMLDivElement>(null);
+  const isFirstLoadRef = useRef(true);
+  const toastTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const router = useRouter();
 
-  async function loadNotifications() {
+  // Load sound mode on client mount
+  useEffect(() => {
+    setSoundMode(getNotificationSoundMode());
+  }, []);
+
+  const loadNotifications = useCallback(async () => {
     try {
       const res = await getNotificationsAction();
       if (res.ok) {
         setNotifications(res.notifications);
         setUnreadCount(res.unreadCount);
+
+        // On initial page load: record existing notifications so they don't trigger sound retroactively
+        if (isFirstLoadRef.current) {
+          seedSeenNotifications(res.notifications.map((n) => n.id));
+          isFirstLoadRef.current = false;
+        } else {
+          // Detect brand new unread notifications that arrived while using the application
+          const brandNew = res.notifications.filter(
+            (n) => !isNotificationSeen(n.id) && !n.read
+          );
+
+          if (brandNew.length > 0) {
+            // Mark as seen immediately so sound doesn't re-trigger on next poll
+            brandNew.forEach((n) => markNotificationSeen(n.id));
+
+            // Trigger WhatsApp-style chime + natural voice alert for the newest notification
+            const latest = brandNew[0];
+            triggerNotificationAlert(latest);
+
+            // Show floating real-time in-app toast banner
+            setActiveToast(latest);
+            if (toastTimeoutRef.current) clearTimeout(toastTimeoutRef.current);
+            toastTimeoutRef.current = setTimeout(() => {
+              setActiveToast(null);
+            }, 6500);
+          }
+        }
       }
     } catch {}
-  }
+  }, []);
 
   useEffect(() => {
     loadNotifications();
-    const interval = setInterval(loadNotifications, 15000); // Polling every 15s for real-time alerts
+    const interval = setInterval(loadNotifications, 10000); // Polling every 10s for fast real-time alerts
     return () => clearInterval(interval);
-  }, []);
+  }, [loadNotifications]);
 
   // Compute fixed position ensuring the popover never goes off-screen
   const updatePosition = useCallback(() => {
@@ -55,7 +102,6 @@ export default function NotificationBell({ align = 'auto' }: NotificationBellPro
 
     if (align === 'left') {
       // Anchoring from left (e.g., sidebar on left side)
-      // Align with button's left edge, but ensure at least 12px from viewport left and right
       left = Math.max(12, Math.min(rect.left, viewportWidth - width - 12));
     } else if (align === 'right') {
       // Anchoring from right (e.g., mobile header on top right)
@@ -148,12 +194,29 @@ export default function NotificationBell({ align = 'auto' }: NotificationBellPro
       setUnreadCount((prev) => Math.max(0, prev - 1));
     }
     setIsOpen(false);
+    setActiveToast(null);
 
     // Navigate to appropriate screen
     if (notif.applicationId && notif.applicationId !== 'partner-onboarding' && notif.applicationId !== 'general') {
       router.push(`/branch/requests/${notif.applicationId}`);
     } else if (notif.applicationId === 'partner-onboarding') {
       router.push('/admin/partner-requests');
+    }
+  }
+
+  // Toggle sound mode: voice -> chime -> mute -> voice
+  function cycleSoundMode() {
+    unlockAudio();
+    let nextMode: SoundMode = 'voice';
+    if (soundMode === 'voice') nextMode = 'chime';
+    else if (soundMode === 'chime') nextMode = 'mute';
+    else if (soundMode === 'mute') nextMode = 'voice';
+
+    setSoundMode(nextMode);
+    setNotificationSoundMode(nextMode);
+
+    if (nextMode !== 'mute') {
+      testNotificationSound();
     }
   }
 
@@ -164,6 +227,7 @@ export default function NotificationBell({ align = 'auto' }: NotificationBellPro
         ref={buttonRef}
         type="button"
         onClick={() => {
+          unlockAudio();
           const nextState = !isOpen;
           setIsOpen(nextState);
           if (nextState) {
@@ -205,7 +269,7 @@ export default function NotificationBell({ align = 'auto' }: NotificationBellPro
           className="bg-white rounded-2xl shadow-2xl border border-slate-200/90 flex flex-col overflow-hidden animate-in fade-in slide-in-from-top-2 duration-150"
         >
           {/* Header */}
-          <div className="flex items-center justify-between px-4 py-3 bg-slate-50/90 border-b border-slate-200/80 shrink-0">
+          <div className="flex items-center justify-between px-3.5 py-2.5 bg-slate-50/90 border-b border-slate-200/80 shrink-0">
             <div className="flex items-center gap-2">
               <span className="font-extrabold text-sm text-slate-900">Notifications</span>
               {unreadCount > 0 && (
@@ -214,19 +278,52 @@ export default function NotificationBell({ align = 'auto' }: NotificationBellPro
                 </span>
               )}
             </div>
-            {unreadCount > 0 && (
+
+            <div className="flex items-center gap-2">
+              {/* Sound Mode Toggle */}
               <button
                 type="button"
-                disabled={loading}
-                onClick={handleMarkAllRead}
-                className="text-xs font-semibold text-emerald-600 hover:text-emerald-700 transition"
+                onClick={cycleSoundMode}
+                className="px-2 py-1 rounded-lg bg-white border border-slate-200 hover:border-emerald-300 text-[11px] font-semibold text-slate-700 hover:text-emerald-700 transition flex items-center gap-1 shadow-2xs active:scale-95"
+                title={`Sound mode: ${soundMode}. Click to toggle.`}
               >
-                Mark all read
+                <span>
+                  {soundMode === 'voice' && '🔊 Voice'}
+                  {soundMode === 'chime' && '🔔 Chime'}
+                  {soundMode === 'mute' && '🔕 Muted'}
+                </span>
               </button>
-            )}
+
+              {/* Mark All Read */}
+              {unreadCount > 0 && (
+                <button
+                  type="button"
+                  disabled={loading}
+                  onClick={handleMarkAllRead}
+                  className="text-xs font-semibold text-emerald-600 hover:text-emerald-700 transition"
+                >
+                  Mark all read
+                </button>
+              )}
+            </div>
           </div>
 
-          {/* List */}
+          {/* Test Sound Bar banner */}
+          <div className="px-3.5 py-1.5 bg-emerald-50/60 border-b border-emerald-100/80 flex items-center justify-between text-[11px] text-emerald-900">
+            <span className="flex items-center gap-1">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+              <span>Real-time voice alerts enabled</span>
+            </span>
+            <button
+              type="button"
+              onClick={() => testNotificationSound()}
+              className="text-[10px] font-bold text-emerald-700 hover:text-emerald-800 underline active:scale-95 transition"
+            >
+              Test Alert 🔈
+            </button>
+          </div>
+
+          {/* Notification List */}
           <div className="flex-1 overflow-y-auto divide-y divide-slate-100 min-h-0">
             {notifications.length === 0 ? (
               <div className="py-10 px-4 text-center text-slate-400">
@@ -301,6 +398,53 @@ export default function NotificationBell({ align = 'auto' }: NotificationBellPro
             >
               View Cases Pipeline →
             </Link>
+          </div>
+        </div>
+      )}
+
+      {/* Floating In-App Real-Time Toast Banner (WhatsApp / Push Notification Style) */}
+      {activeToast && (
+        <div className="fixed top-4 right-4 sm:right-6 z-[10000] max-w-sm w-[calc(100vw-32px)] sm:w-96 bg-slate-900/95 backdrop-blur-md text-white rounded-2xl p-3.5 shadow-2xl border border-emerald-500/50 flex items-start gap-3 animate-in fade-in slide-in-from-top-4 duration-300">
+          <div className="w-8 h-8 rounded-xl bg-emerald-600 flex items-center justify-center text-white text-base shrink-0 shadow-xs">
+            🔔
+          </div>
+
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center justify-between gap-2 mb-0.5">
+              <span className="text-[10px] font-black uppercase tracking-wider text-emerald-400">
+                New Notification
+              </span>
+              <button
+                type="button"
+                onClick={() => setActiveToast(null)}
+                className="text-slate-400 hover:text-white text-xs px-1"
+                aria-label="Close"
+              >
+                ✕
+              </button>
+            </div>
+            <p className="text-xs font-bold text-white truncate">
+              {activeToast.title}
+            </p>
+            <p className="text-[11px] text-slate-300 line-clamp-2 mt-0.5 leading-relaxed">
+              {activeToast.message}
+            </p>
+            <div className="mt-2 flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => handleNotificationClick(activeToast)}
+                className="px-2.5 py-1 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-[10px] rounded-lg transition active:scale-95 shadow-2xs"
+              >
+                Open Case →
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveToast(null)}
+                className="text-[10px] text-slate-400 hover:text-slate-200 transition"
+              >
+                Dismiss
+              </button>
+            </div>
           </div>
         </div>
       )}
