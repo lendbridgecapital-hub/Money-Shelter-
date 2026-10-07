@@ -101,25 +101,38 @@ export default function CustomerEligibilityOfferDoc({ data }: CustomerEligibilit
           {/* 2. DOCUMENT SUB-HEADER & CENTERED PILL BADGE                              */}
           {/* ========================================================================= */}
           <div style={{ textAlign: 'center', marginBottom: '14px' }}>
-            <div style={{ textAlign: 'center', marginBottom: '6px' }}>
-              <span
+            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '8px' }}>
+              <table
                 style={{
-                  display: 'inline-block',
-                  padding: '4px 16px',
+                  borderCollapse: 'separate',
                   borderRadius: '9999px',
                   backgroundColor: '#ecfdf5',
                   border: '1px solid #6ee7b7',
-                  color: '#065f46',
-                  fontSize: '10px',
-                  fontWeight: 800,
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.08em',
-                  lineHeight: '1.2',
-                  textAlign: 'center',
+                  margin: '0 auto',
+                  height: '24px',
                 }}
               >
-                OFFICIAL IN-PRINCIPLE ELIGIBILITY ASSESSMENT
-              </span>
+                <tbody>
+                  <tr>
+                    <td
+                      style={{
+                        verticalAlign: 'middle',
+                        textAlign: 'center',
+                        padding: '0 18px',
+                        height: '24px',
+                        fontSize: '10px',
+                        fontWeight: 800,
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.08em',
+                        color: '#065f46',
+                        lineHeight: '24px',
+                      }}
+                    >
+                      OFFICIAL IN-PRINCIPLE ELIGIBILITY ASSESSMENT
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
             </div>
             <h2 className="text-base sm:text-lg font-black text-slate-900 tracking-tight uppercase leading-snug">
               TENTATIVE LOAN ELIGIBILITY & MULTI-BANK OFFER REPORT
@@ -391,25 +404,39 @@ export default function CustomerEligibilityOfferDoc({ data }: CustomerEligibilit
                         <div className="flex items-center">
                           <strong className="text-slate-900">{b.bankName}</strong>
                           {b.isBestMatch && (
-                            <span
+                            <table
                               style={{
-                                display: 'inline-block',
-                                padding: '2px 7px',
+                                display: 'inline-table',
+                                borderCollapse: 'separate',
                                 borderRadius: '9999px',
                                 backgroundColor: '#059669',
-                                color: '#ffffff',
-                                fontSize: '8.5px',
-                                fontWeight: 800,
-                                textTransform: 'uppercase',
-                                letterSpacing: '0.04em',
-                                lineHeight: '1.2',
-                                textAlign: 'center',
+                                height: '18px',
                                 verticalAlign: 'middle',
                                 marginLeft: '6px',
+                                margin: 0,
                               }}
                             >
-                              ★ Best
-                            </span>
+                              <tbody>
+                                <tr>
+                                  <td
+                                    style={{
+                                      verticalAlign: 'middle',
+                                      textAlign: 'center',
+                                      padding: '0 7px',
+                                      height: '18px',
+                                      fontSize: '8.5px',
+                                      fontWeight: 800,
+                                      textTransform: 'uppercase',
+                                      letterSpacing: '0.04em',
+                                      color: '#ffffff',
+                                      lineHeight: '18px',
+                                    }}
+                                  >
+                                    ★ Best
+                                  </td>
+                                </tr>
+                              </tbody>
+                            </table>
                           )}
                         </div>
                       </td>
@@ -477,24 +504,38 @@ export default function CustomerEligibilityOfferDoc({ data }: CustomerEligibilit
                             {b.bankName}
                           </span>
                           {b.isBestMatch && (
-                            <span
+                            <table
                               style={{
-                                display: 'inline-block',
-                                padding: '2px 8px',
+                                display: 'inline-table',
+                                borderCollapse: 'separate',
                                 borderRadius: '9999px',
                                 backgroundColor: '#059669',
-                                color: '#ffffff',
-                                fontSize: '8.5px',
-                                fontWeight: 800,
-                                textTransform: 'uppercase',
-                                letterSpacing: '0.05em',
-                                lineHeight: '1.2',
-                                textAlign: 'center',
+                                height: '20px',
                                 verticalAlign: 'middle',
+                                margin: 0,
                               }}
                             >
-                              Primary Recommendation
-                            </span>
+                              <tbody>
+                                <tr>
+                                  <td
+                                    style={{
+                                      verticalAlign: 'middle',
+                                      textAlign: 'center',
+                                      padding: '0 9px',
+                                      height: '20px',
+                                      fontSize: '8.5px',
+                                      fontWeight: 800,
+                                      textTransform: 'uppercase',
+                                      letterSpacing: '0.05em',
+                                      color: '#ffffff',
+                                      lineHeight: '20px',
+                                    }}
+                                  >
+                                    Primary Recommendation
+                                  </td>
+                                </tr>
+                              </tbody>
+                            </table>
                           )}
                         </div>
                         <div style={{ fontSize: '10px', color: '#64748b', marginTop: '2px', lineHeight: '1.2' }}>
@@ -828,60 +869,77 @@ export default function CustomerEligibilityOfferDoc({ data }: CustomerEligibilit
               <span className="text-emerald-700 font-bold block mt-0.5">Direct Contact: {data.advisorPhone}</span>
             </div>
 
-            <div className="text-left sm:text-right">
-              {/* Digitally Verified Badge with rock-solid SVG checkmark & explicit colors */}
-              <div
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
+              {/* Digitally Verified Badge - rendered as bulletproof HTML table for 100% reliable canvas & print rendering */}
+              <table
                 style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
+                  borderCollapse: 'separate',
                   backgroundColor: '#ecfdf5',
                   border: '1.5px solid #10b981',
                   borderRadius: '12px',
-                  padding: '7px 14px',
+                  padding: '6px 14px',
+                  margin: 0,
                 }}
               >
-                <svg
-                  width="18"
-                  height="18"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="#059669"
-                  strokeWidth="2.5"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  style={{ marginRight: '8px', flexShrink: 0 }}
-                >
-                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-                  <path d="M9 12l2 2 4-4" />
-                </svg>
-                <div style={{ textAlign: 'left' }}>
-                  <div
-                    style={{
-                      fontSize: '9.5px',
-                      fontWeight: 900,
-                      textTransform: 'uppercase',
-                      letterSpacing: '0.06em',
-                      color: '#065f46',
-                      lineHeight: '1.2',
-                    }}
-                  >
-                    Digitally Verified
-                  </div>
-                  <div
-                    style={{
-                      fontSize: '9px',
-                      fontWeight: 700,
-                      color: '#047857',
-                      lineHeight: '1.2',
-                    }}
-                  >
-                    Quickfinsure Sourcing Engine
-                  </div>
-                </div>
-              </div>
-              <p className="text-[10px] text-slate-400 mt-1.5">
+                <tbody>
+                  <tr>
+                    <td style={{ verticalAlign: 'middle', paddingRight: '8px' }}>
+                      <div
+                        style={{
+                          width: '22px',
+                          height: '22px',
+                          borderRadius: '9999px',
+                          backgroundColor: '#059669',
+                          color: '#ffffff',
+                          fontSize: '13px',
+                          fontWeight: 900,
+                          lineHeight: '22px',
+                          textAlign: 'center',
+                        }}
+                      >
+                        ✓
+                      </div>
+                    </td>
+                    <td style={{ verticalAlign: 'middle', textAlign: 'left' }}>
+                      <div
+                        style={{
+                          fontSize: '9.5px',
+                          fontWeight: 900,
+                          textTransform: 'uppercase',
+                          letterSpacing: '0.06em',
+                          color: '#065f46',
+                          lineHeight: '1.2',
+                          whiteSpace: 'nowrap',
+                        }}
+                      >
+                        DIGITALLY VERIFIED
+                      </div>
+                      <div
+                        style={{
+                          fontSize: '9px',
+                          fontWeight: 700,
+                          color: '#047857',
+                          lineHeight: '1.2',
+                          whiteSpace: 'nowrap',
+                        }}
+                      >
+                        Quickfinsure Sourcing Engine
+                      </div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+              <div
+                style={{
+                  fontSize: '10px',
+                  color: '#94a3b8',
+                  marginTop: '5px',
+                  textAlign: 'right',
+                  lineHeight: '1.2',
+                }}
+              >
                 Generated on {generatedDateFormatted} • System Case ID #{data.referenceNumber}
-              </p>
+              </div>
             </div>
           </div>
         </div>
