@@ -94,12 +94,6 @@ export default function MobileDrawer({
       show: isPartner,
     },
     {
-      label: isPartner ? 'My Commissions' : 'Commissions & Payouts',
-      href: '/admin/commissions',
-      icon: '💰',
-      show: !isSupport,
-    },
-    {
       label: isPartner ? 'Rewards & CRP Wallet' : 'Rewards & CRP Ledger',
       href: '/admin/rewards',
       icon: '🪙',

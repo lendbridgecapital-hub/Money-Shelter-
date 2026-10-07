@@ -80,24 +80,10 @@ export default function Sidebar({
       external: false,
     },
     {
-      label: isSubDsa
-        ? 'Overrides & Commissions'
-        : isPartner
-        ? 'My Commissions'
-        : isRM
-        ? 'Partner Commissions'
-        : 'Commissions & Payouts',
-      href: '/admin/commissions',
-      icon: '💰',
-      description: 'Commissions & ledger',
-      show: !isSupport,
-      external: false,
-    },
-    {
       label: isPartner || isSubDsa ? 'Rewards & CRP Wallet' : 'Partner Rewards & CRP',
       href: '/admin/rewards',
       icon: '🪙',
-      description: '1 CRP = ₹10 ledger & redemptions',
+      description: '1 CRP = ₹10 commission ledger & redemption',
       show: true,
       external: false,
     },

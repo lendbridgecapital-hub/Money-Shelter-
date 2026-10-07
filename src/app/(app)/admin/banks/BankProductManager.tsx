@@ -7,6 +7,7 @@ import {
   saveBankProductAction,
   deleteBankProductAction,
   toggleBankProductStatusAction,
+  updateProductCommissionSplitsAction,
 } from '@/actions/bankProductActions';
 import {
   INDIAN_BANKS_AND_NBFCS,
@@ -37,6 +38,10 @@ export default function BankProductManager({
 
   // State
   const [products, setProducts] = useState<BankProduct[]>(initialProducts);
+  const [mainViewTab, setMainViewTab] = useState<'CARTS' | 'PAYOUT_BUCKET'>('CARTS');
+  const [isSavingSplits, setIsSavingSplits] = useState(false);
+  const [splitFeedback, setSplitFeedback] = useState<string | null>(null);
+
   const [selectedProductFilter, setSelectedProductFilter] = useState<string>('ALL');
   const [selectedScopeFilter, setSelectedScopeFilter] = useState<'ALL' | 'UNIVERSAL' | 'DEDICATED'>('ALL');
   const [searchTerm, setSearchTerm] = useState('');
@@ -52,6 +57,7 @@ export default function BankProductManager({
     selectedBanks: string[];
     baseRate: number | string;
     partnerRate: number | string;
+    subDsaRate: number | string;
     dedicatedPartnerId: string | null;
     dedicatedPartnerName: string | null;
     dedicatedPartnerMobile: string | null;
@@ -72,6 +78,7 @@ export default function BankProductManager({
   const [selectedBanks, setSelectedBanks] = useState<string[]>([]);
   const [baseRate, setBaseRate] = useState<number | string>(8.5);
   const [partnerRate, setPartnerRate] = useState<number | string>(1.0);
+  const [subDsaRate, setSubDsaRate] = useState<number | string>(0.1);
   const [notes, setNotes] = useState('');
 
   // Dedicated Partner Selection
@@ -182,6 +189,7 @@ export default function BankProductManager({
       selectedBanks: [...product.banks],
       baseRate: product.baseRate,
       partnerRate: product.partnerRate,
+      subDsaRate: product.subDsaRate !== undefined ? product.subDsaRate : 0.1,
       dedicatedPartnerId: product.dedicatedPartnerId || null,
       dedicatedPartnerName: product.dedicatedPartnerName || null,
       dedicatedPartnerMobile: product.dedicatedPartnerMobile || null,
@@ -275,6 +283,7 @@ export default function BankProductManager({
       banks: inlineForm.selectedBanks,
       baseRate: Number(inlineForm.baseRate),
       partnerRate: Number(inlineForm.partnerRate),
+      subDsaRate: Number(inlineForm.subDsaRate),
       dedicatedPartnerId: inlineForm.dedicatedPartnerId,
       dedicatedPartnerName: inlineForm.dedicatedPartnerName,
       dedicatedPartnerMobile: inlineForm.dedicatedPartnerMobile,
@@ -291,6 +300,7 @@ export default function BankProductManager({
                 banks: inlineForm.selectedBanks,
                 baseRate: Number(inlineForm.baseRate),
                 partnerRate: Number(inlineForm.partnerRate),
+                subDsaRate: Number(inlineForm.subDsaRate),
                 dedicatedPartnerId: inlineForm.dedicatedPartnerId,
                 dedicatedPartnerName: inlineForm.dedicatedPartnerName,
                 dedicatedPartnerMobile: inlineForm.dedicatedPartnerMobile,
@@ -307,6 +317,41 @@ export default function BankProductManager({
     }
   }
 
+  // Batch Payout Bucket Split handlers
+  const handleSplitRateChange = (
+    id: string,
+    field: 'baseRate' | 'partnerRate' | 'subDsaRate',
+    val: number
+  ) => {
+    setProducts((prev) =>
+      prev.map((p) => (p.id === id ? { ...p, [field]: val } : p))
+    );
+  };
+
+  async function handleSaveAllSplits() {
+    setIsSavingSplits(true);
+    setSplitFeedback(null);
+
+    const res = await updateProductCommissionSplitsAction(
+      products.map((p) => ({
+        id: p.id,
+        productName: p.productName,
+        baseRate: Number(p.baseRate),
+        partnerRate: Number(p.partnerRate),
+        subDsaRate: Number(p.subDsaRate !== undefined ? p.subDsaRate : 0.1),
+      }))
+    );
+    setIsSavingSplits(false);
+
+    if (res.ok) {
+      setSplitFeedback(res.message || 'Product commission splits successfully updated.');
+      router.refresh();
+      setTimeout(() => setSplitFeedback(null), 4000);
+    } else {
+      alert(res.error || 'Failed to update commission splits.');
+    }
+  }
+
   // Open Create Modal
   function handleOpenCreate() {
     setEditingId(null);
@@ -315,6 +360,7 @@ export default function BankProductManager({
     setSelectedBanks([]);
     setBaseRate(2.0);
     setPartnerRate(1.0);
+    setSubDsaRate(0.1);
     setSelectedPartner(null);
     setPartnerSearch('');
     setNotes('');
@@ -339,6 +385,7 @@ export default function BankProductManager({
     setSelectedBanks(product.banks || []);
     setBaseRate(product.baseRate);
     setPartnerRate(product.partnerRate);
+    setSubDsaRate(product.subDsaRate !== undefined ? product.subDsaRate : 0.1);
     setNotes(product.notes || '');
 
     if (product.dedicatedPartnerId) {
@@ -411,6 +458,7 @@ export default function BankProductManager({
       banks: selectedBanks,
       baseRate: Number(baseRate),
       partnerRate: Number(partnerRate),
+      subDsaRate: Number(subDsaRate),
       dedicatedPartnerId: selectedPartner ? selectedPartner.id : null,
       dedicatedPartnerName: selectedPartner ? selectedPartner.name : null,
       dedicatedPartnerMobile: selectedPartner ? selectedPartner.phone : null,
@@ -433,6 +481,7 @@ export default function BankProductManager({
                   banks: selectedBanks,
                   baseRate: Number(baseRate),
                   partnerRate: Number(partnerRate),
+                  subDsaRate: Number(subDsaRate),
                   dedicatedPartnerId: selectedPartner ? selectedPartner.id : null,
                   dedicatedPartnerName: selectedPartner ? selectedPartner.name : null,
                   dedicatedPartnerMobile: selectedPartner ? selectedPartner.phone : null,
@@ -527,29 +576,208 @@ export default function BankProductManager({
         )}
       </div>
 
-      {/* Highlights / Metric Stats */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-2xs">
-          <p className="text-xs font-medium text-slate-400 uppercase tracking-wider">Total Products</p>
-          <p className="text-2xl font-black text-slate-900 mt-1">{totalProducts}</p>
-          <p className="text-[11px] text-slate-500 mt-0.5">Active loan categories</p>
+      {/* View Switcher: Product Offering Carts vs Payout Bucket & Splits Matrix */}
+      {isOpsOrAdmin && (
+        <div className="flex items-center gap-2 border-b border-slate-200 pb-2">
+          <button
+            type="button"
+            onClick={() => setMainViewTab('CARTS')}
+            className={`px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 ${
+              mainViewTab === 'CARTS'
+                ? 'bg-emerald-600 text-white shadow-sm'
+                : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+            }`}
+          >
+            <span>🛒</span>
+            <span>Product Offering Carts ({products.length})</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setMainViewTab('PAYOUT_BUCKET')}
+            className={`px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 ${
+              mainViewTab === 'PAYOUT_BUCKET'
+                ? 'bg-indigo-600 text-white shadow-sm'
+                : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+            }`}
+          >
+            <span>💰</span>
+            <span>Payout Bucket & Splits Matrix</span>
+          </button>
         </div>
-        <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-2xs">
-          <p className="text-xs font-medium text-slate-400 uppercase tracking-wider">Banks & NBFCs</p>
-          <p className="text-2xl font-black text-emerald-700 mt-1">{totalBanksMapped}</p>
-          <p className="text-[11px] text-slate-500 mt-0.5">Institutions mapped</p>
+      )}
+
+      {mainViewTab === 'PAYOUT_BUCKET' && isOpsOrAdmin ? (
+        <div className="space-y-4">
+          <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-xs space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+              <div>
+                <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+                  <span>💰 Unified Payout Bucket & Commission Splits</span>
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-indigo-100 text-indigo-800">
+                    Auto-Applied on Loan Disbursals
+                  </span>
+                </h3>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  Set Base Bank Rate (receivable), Channel Partner Commission, and Sub-DSA Override. Company net margins are calculated automatically.
+                </p>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={handleSaveAllSplits}
+                  disabled={isSavingSplits}
+                  className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white text-xs font-bold rounded-lg shadow-sm transition flex items-center gap-1.5"
+                >
+                  {isSavingSplits ? 'Saving Splits…' : '💾 Save Commission Splits'}
+                </button>
+              </div>
+            </div>
+
+            {splitFeedback && (
+              <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-lg text-xs text-emerald-800 font-semibold flex items-center justify-between animate-fadeIn">
+                <span>✓ {splitFeedback}</span>
+                <button onClick={() => setSplitFeedback(null)} className="text-emerald-500 hover:text-emerald-700 font-bold ml-2">✕</button>
+              </div>
+            )}
+
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="bg-slate-50 text-left text-xs font-bold text-slate-500 uppercase tracking-wide border-b border-slate-200">
+                    <th className="px-4 py-3">Loan Product</th>
+                    <th className="px-4 py-3">Mapped Banks</th>
+                    <th className="px-4 py-3 text-center">Base Bank Payout (%)</th>
+                    <th className="px-4 py-3 text-center">Partner Commission (%)</th>
+                    <th className="px-4 py-3 text-center text-indigo-700 font-black">Sub-DSA Commission (%)</th>
+                    <th className="px-4 py-3 text-center">Net Team Margin (%)</th>
+                    <th className="px-4 py-3 text-center">Net Direct Margin (%)</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {products.map((prod) => {
+                    const subDsaVal = prod.subDsaRate !== undefined ? prod.subDsaRate : 0.1;
+                    const netTeamMargin = Number((prod.baseRate - prod.partnerRate - subDsaVal).toFixed(2));
+                    const netDirectMargin = Number((prod.baseRate - prod.partnerRate).toFixed(2));
+                    const isNegativeMargin = netTeamMargin < 0;
+
+                    return (
+                      <tr key={prod.id} className="hover:bg-slate-50/70 transition-colors">
+                        <td className="px-4 py-3.5">
+                          <div className="flex items-center gap-2">
+                            <span className="text-base">{getProductIcon(prod.productName)}</span>
+                            <div>
+                              <span className="font-bold text-slate-900 text-xs block">{prod.productName}</span>
+                              {prod.dedicatedPartnerName && (
+                                <span className="text-[10px] text-amber-700 font-semibold">⭐ Dedicated: {prod.dedicatedPartnerName}</span>
+                              )}
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-4 py-3.5 text-xs text-slate-500">
+                          <span className="px-2 py-0.5 rounded bg-slate-100 font-medium text-slate-700">
+                            {prod.banks.length} Lenders
+                          </span>
+                        </td>
+                        <td className="px-4 py-3.5 text-center">
+                          <div className="inline-flex items-center">
+                            <input
+                              type="number"
+                              step="0.05"
+                              min="0"
+                              value={prod.baseRate}
+                              onChange={(e) => handleSplitRateChange(prod.id, 'baseRate', Number(e.target.value))}
+                              className="w-16 px-2 py-1 text-xs font-bold text-center border border-slate-300 rounded-md focus:ring-2 focus:ring-emerald-500 focus:outline-none"
+                            />
+                            <span className="ml-1 text-xs text-slate-500 font-semibold">%</span>
+                          </div>
+                        </td>
+                        <td className="px-4 py-3.5 text-center">
+                          <div className="inline-flex items-center">
+                            <input
+                              type="number"
+                              step="0.05"
+                              min="0"
+                              value={prod.partnerRate}
+                              onChange={(e) => handleSplitRateChange(prod.id, 'partnerRate', Number(e.target.value))}
+                              className="w-16 px-2 py-1 text-xs font-bold text-center text-emerald-700 border border-slate-300 rounded-md focus:ring-2 focus:ring-emerald-500 focus:outline-none"
+                            />
+                            <span className="ml-1 text-xs text-slate-500 font-semibold">%</span>
+                          </div>
+                        </td>
+                        <td className="px-4 py-3.5 text-center">
+                          <div className="inline-flex items-center">
+                            <input
+                              type="number"
+                              step="0.05"
+                              min="0"
+                              value={subDsaVal}
+                              onChange={(e) => handleSplitRateChange(prod.id, 'subDsaRate', Number(e.target.value))}
+                              className="w-16 px-2 py-1 text-xs font-bold text-center text-indigo-700 border border-indigo-300 bg-indigo-50/40 rounded-md focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                            />
+                            <span className="ml-1 text-xs text-indigo-600 font-semibold">%</span>
+                          </div>
+                        </td>
+                        <td className="px-4 py-3.5 text-center">
+                          <span
+                            className={`text-xs font-black font-mono px-2 py-1 rounded-md ${
+                              isNegativeMargin
+                                ? 'bg-rose-100 text-rose-800'
+                                : 'bg-emerald-50 text-emerald-800 border border-emerald-200'
+                            }`}
+                          >
+                            {netTeamMargin}%
+                          </span>
+                        </td>
+                        <td className="px-4 py-3.5 text-center">
+                          <span className="text-xs font-bold font-mono px-2 py-1 rounded-md bg-slate-100 text-slate-800">
+                            {netDirectMargin}%
+                          </span>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+
+            <div className="flex justify-end pt-2 border-t border-slate-100">
+              <button
+                type="button"
+                onClick={handleSaveAllSplits}
+                disabled={isSavingSplits}
+                className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white text-xs font-bold rounded-lg shadow-sm transition flex items-center gap-2"
+              >
+                {isSavingSplits ? 'Saving Changes…' : '💾 Save Product Commission Splits'}
+              </button>
+            </div>
+          </div>
         </div>
-        <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-2xs">
-          <p className="text-xs font-medium text-slate-400 uppercase tracking-wider">Dedicated Tranches</p>
-          <p className="text-2xl font-black text-amber-600 mt-1">{dedicatedCount}</p>
-          <p className="text-[11px] text-slate-500 mt-0.5">Partner-specific offerings</p>
-        </div>
-        <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-2xs">
-          <p className="text-xs font-medium text-slate-400 uppercase tracking-wider">Universal Offerings</p>
-          <p className="text-2xl font-black text-emerald-600 mt-1">{universalCount}</p>
-          <p className="text-[11px] text-slate-500 mt-0.5">Applicable for all partners</p>
-        </div>
-      </div>
+      ) : (
+        <>
+          {/* Highlights / Metric Stats */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-2xs">
+              <p className="text-xs font-medium text-slate-400 uppercase tracking-wider">Total Products</p>
+              <p className="text-2xl font-black text-slate-900 mt-1">{totalProducts}</p>
+              <p className="text-[11px] text-slate-500 mt-0.5">Active loan categories</p>
+            </div>
+            <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-2xs">
+              <p className="text-xs font-medium text-slate-400 uppercase tracking-wider">Banks & NBFCs</p>
+              <p className="text-2xl font-black text-emerald-700 mt-1">{totalBanksMapped}</p>
+              <p className="text-[11px] text-slate-500 mt-0.5">Institutions mapped</p>
+            </div>
+            <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-2xs">
+              <p className="text-xs font-medium text-slate-400 uppercase tracking-wider">Dedicated Tranches</p>
+              <p className="text-2xl font-black text-amber-600 mt-1">{dedicatedCount}</p>
+              <p className="text-[11px] text-slate-500 mt-0.5">Partner-specific offerings</p>
+            </div>
+            <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-2xs">
+              <p className="text-xs font-medium text-slate-400 uppercase tracking-wider">Universal Offerings</p>
+              <p className="text-2xl font-black text-emerald-600 mt-1">{universalCount}</p>
+              <p className="text-[11px] text-slate-500 mt-0.5">Applicable for all partners</p>
+            </div>
+          </div>
 
       {/* Filter and Search Bar */}
       <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-xs space-y-3">
@@ -895,10 +1123,10 @@ export default function BankProductManager({
                             </h4>
 
                             {isOpsOrAdmin ? (
-                              <div className="grid grid-cols-3 gap-2">
+                              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                                 <div className="p-2.5 rounded-lg bg-slate-50 border border-slate-200">
                                   <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 block">
-                                    Bank Rate
+                                    Bank Payout
                                   </span>
                                   <p className="text-base font-black text-slate-900 mt-0.5">
                                     {product.baseRate}%
@@ -912,14 +1140,23 @@ export default function BankProductManager({
                                   <p className="text-base font-black text-emerald-800 mt-0.5">
                                     {product.partnerRate}%
                                   </p>
-                                  <span className="text-[10px] text-emerald-600">Disbursed to partner</span>
+                                  <span className="text-[10px] text-emerald-600">Direct Partner share</span>
+                                </div>
+                                <div className="p-2.5 rounded-lg bg-indigo-50 border border-indigo-200">
+                                  <span className="text-[10px] font-bold uppercase tracking-wider text-indigo-700 block">
+                                    Sub-DSA Commission
+                                  </span>
+                                  <p className="text-base font-black text-indigo-800 mt-0.5">
+                                    {product.subDsaRate !== undefined ? product.subDsaRate : 0.1}%
+                                  </p>
+                                  <span className="text-[10px] text-indigo-600">Sub-DSA override</span>
                                 </div>
                                 <div className="p-2.5 rounded-lg bg-slate-50 border border-slate-200">
                                   <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 block">
                                     Net Margin
                                   </span>
                                   <p className="text-base font-black text-slate-900 mt-0.5">
-                                    +{(product.baseRate - product.partnerRate).toFixed(2)}%
+                                    +{(product.baseRate - product.partnerRate - (product.subDsaRate !== undefined ? product.subDsaRate : 0.1)).toFixed(2)}%
                                   </p>
                                   <span className="text-[10px] text-slate-400">Platform retain</span>
                                 </div>
@@ -1051,10 +1288,10 @@ export default function BankProductManager({
 
                         {/* 1. RATES CONFIGURATION */}
                         <div className="space-y-2">
-                          <div className="grid sm:grid-cols-2 gap-3">
+                          <div className="grid sm:grid-cols-3 gap-3">
                             <div>
                               <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">
-                                Base Rate (% Receivable from Bank) <span className="text-rose-500">*</span>
+                                Base Rate (% Bank) <span className="text-rose-500">*</span>
                               </label>
                               <div className="relative">
                                 <input
@@ -1071,12 +1308,12 @@ export default function BankProductManager({
                                   %
                                 </span>
                               </div>
-                              <p className="text-[11px] text-slate-400 mt-0.5">Gross commission receivable by Quickfinsure</p>
+                              <p className="text-[11px] text-slate-400 mt-0.5">Receivable by QFS from bank</p>
                             </div>
 
                             <div>
                               <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">
-                                Partner Rate (% Commission Payout) <span className="text-rose-500">*</span>
+                                Partner Rate (% Payout) <span className="text-rose-500">*</span>
                               </label>
                               <div className="relative">
                                 <input
@@ -1093,16 +1330,38 @@ export default function BankProductManager({
                                   %
                                 </span>
                               </div>
-                              <p className="text-[11px] text-slate-400 mt-0.5">Commission paid out to Channel Partner</p>
+                              <p className="text-[11px] text-slate-400 mt-0.5">Commission to direct partner</p>
+                            </div>
+
+                            <div>
+                              <label className="block text-xs font-bold uppercase tracking-wider text-indigo-700 mb-1">
+                                Sub-DSA Rate (% Override) <span className="text-rose-500">*</span>
+                              </label>
+                              <div className="relative">
+                                <input
+                                  type="number"
+                                  step="0.05"
+                                  min="0"
+                                  max="100"
+                                  value={inlineForm.subDsaRate}
+                                  onChange={(e) => setInlineForm({ ...inlineForm, subDsaRate: e.target.value })}
+                                  required
+                                  className="w-full px-3 py-2 bg-indigo-50/50 border border-indigo-200 rounded-lg text-xs sm:text-sm font-semibold focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                                />
+                                <span className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none text-indigo-400 text-xs font-bold">
+                                  %
+                                </span>
+                              </div>
+                              <p className="text-[11px] text-indigo-500 mt-0.5">Override to Sub-DSA network</p>
                             </div>
                           </div>
 
                           {/* Net Margin indicator */}
                           {inlineForm.baseRate !== '' && inlineForm.partnerRate !== '' && (
                             <div className="p-2.5 rounded-lg bg-emerald-50/70 border border-emerald-200 flex items-center justify-between text-xs text-emerald-900">
-                              <span className="font-semibold">Quickfinsure Net Spread:</span>
+                              <span className="font-semibold">Quickfinsure Net Retained Spread:</span>
                               <span className="font-mono font-bold">
-                                +{(Number(inlineForm.baseRate) - Number(inlineForm.partnerRate)).toFixed(2)}% margin
+                                +{(Number(inlineForm.baseRate) - Number(inlineForm.partnerRate) - Number(inlineForm.subDsaRate || 0)).toFixed(2)}% margin
                               </span>
                             </div>
                           )}
@@ -1342,6 +1601,8 @@ export default function BankProductManager({
           })}
         </div>
       )}
+    </>
+  )}
 
       {/* CREATE / EDIT MODAL */}
       {showModal && (
@@ -1522,10 +1783,10 @@ export default function BankProductManager({
 
               {/* 3. BASE RATE & PARTNER RATE OPTIONS */}
               <div className="space-y-3">
-                <div className="grid sm:grid-cols-2 gap-4">
+                <div className="grid sm:grid-cols-3 gap-3">
                   <div>
                     <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">
-                      3. Base Rate (% from Bank) <span className="text-rose-500">*</span>
+                      3. Base Rate (% Bank) <span className="text-rose-500">*</span>
                     </label>
                     <div className="relative">
                       <input
@@ -1544,7 +1805,7 @@ export default function BankProductManager({
                       </span>
                     </div>
                     <p className="text-[11px] text-slate-500 mt-1">
-                      Gross commission % receivable by Quickfinsure from the bank (e.g. ICICI pays 2%).
+                      Gross commission from bank.
                     </p>
                   </div>
 
@@ -1569,7 +1830,32 @@ export default function BankProductManager({
                       </span>
                     </div>
                     <p className="text-[11px] text-slate-500 mt-1">
-                      Commission % paid out to the Channel Partner (e.g. Quickfinsure offers 1%).
+                      Paid to Channel Partner.
+                    </p>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold uppercase tracking-wider text-indigo-700 mb-1">
+                      5. Sub-DSA Commission (% Override) <span className="text-rose-500">*</span>
+                    </label>
+                    <div className="relative">
+                      <input
+                        type="number"
+                        step="0.05"
+                        min="0"
+                        max="100"
+                        value={subDsaRate}
+                        onChange={(e) => setSubDsaRate(e.target.value)}
+                        required
+                        placeholder="e.g. 0.20"
+                        className="w-full px-3.5 py-2.5 border border-indigo-200 bg-indigo-50/40 rounded-xl text-xs sm:text-sm font-semibold focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                      />
+                      <span className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none text-indigo-400 text-xs font-bold">
+                        %
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-indigo-500 mt-1">
+                      Override to parent Sub-DSA network.
                     </p>
                   </div>
                 </div>
@@ -1577,18 +1863,18 @@ export default function BankProductManager({
                 {/* Live Net Retained Margin Preview */}
                 {baseRate !== '' && partnerRate !== '' && !isNaN(Number(baseRate)) && !isNaN(Number(partnerRate)) && (
                   <div className={`p-3 rounded-xl border text-xs flex items-center justify-between ${
-                    Number(baseRate) >= Number(partnerRate)
+                    (Number(baseRate) - Number(partnerRate) - Number(subDsaRate || 0)) >= 0
                       ? 'bg-emerald-50/80 border-emerald-200 text-emerald-900'
-                      : 'bg-amber-50 border-amber-200 text-amber-900'
+                      : 'bg-rose-50 border-rose-200 text-rose-900'
                   }`}>
                     <div>
                       <span className="font-bold">Quickfinsure Net Retained Margin:</span>
                       <p className="text-[11px] opacity-75 mt-0.5">
-                        Bank Receivable ({Number(baseRate).toFixed(2)}%) − Partner Payout ({Number(partnerRate).toFixed(2)}%)
+                        Bank ({Number(baseRate).toFixed(2)}%) − Partner ({Number(partnerRate).toFixed(2)}%) − Sub-DSA ({Number(subDsaRate || 0).toFixed(2)}%)
                       </p>
                     </div>
                     <span className="text-base font-black">
-                      {Number(baseRate) >= Number(partnerRate) ? '+' : ''}{(Number(baseRate) - Number(partnerRate)).toFixed(2)}%
+                      {(Number(baseRate) - Number(partnerRate) - Number(subDsaRate || 0)) >= 0 ? '+' : ''}{(Number(baseRate) - Number(partnerRate) - Number(subDsaRate || 0)).toFixed(2)}%
                     </span>
                   </div>
                 )}

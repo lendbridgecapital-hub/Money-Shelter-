@@ -211,11 +211,11 @@ export default function RewardManager({
             </button>
           )}
           <Link
-            href="/admin/commissions"
+            href="/admin/banks"
             className="px-3 py-2 bg-white/10 hover:bg-white/20 text-white text-xs font-semibold rounded-xl border border-white/15 transition flex items-center gap-1"
           >
-            <span>💰</span>
-            <span>Commissions Ledger</span>
+            <span>🏦</span>
+            <span>Bank Products & Rates</span>
           </Link>
         </div>
       </div>
