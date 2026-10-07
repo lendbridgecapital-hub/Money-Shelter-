@@ -293,6 +293,7 @@ export interface LoanApplication {
   // Commission info
   commissionAmount?: number | null;
   commissionStatus?: 'PENDING' | 'PAID' | 'CLAWBACK' | null;
+  eligibilityOfferJson?: string | null;
 
   createdAt: string;
   submittedAt?: string | null;

@@ -136,3 +136,70 @@ export interface RecommendationSummary {
   results: PolicyEvaluationResult[];
   timestamp: string;
 }
+
+export interface CustomerEligibilityOfferBankItem {
+  cardId: string;
+  bankName: string;
+  bankCode: string;
+  logoUrl?: string | null;
+  status: MatchStatus;
+  isBestMatch?: boolean;
+  interestRate: number; // in % p.a.
+  recommendedAmount: number; // ₹
+  proposedEmi: number; // ₹/month
+  tenureMonths: number;
+  tenureYears: number;
+  processingFeeText: string;
+  processingFeeAmount: number;
+  tatDays: number;
+  foirPct: number;
+  maxFoirPct: number;
+  specialFeatures?: string[];
+  passRemarks: string[];
+  specialRemarks?: string[];
+}
+
+export interface CustomerEligibilityOfferData {
+  referenceNumber: string;
+  generatedAt: string;
+  validUntil: string;
+  applicationToken?: string;
+  applicationId?: string;
+  companyName: string;
+  companyTagline?: string;
+  supportPhone?: string;
+  officialEmail?: string;
+  advisorName?: string;
+  advisorRole?: string;
+  advisorPhone?: string;
+  branchName?: string;
+  
+  // Applicant details
+  customerName: string;
+  customerMobile?: string;
+  customerEmail?: string;
+  loanType: LoanType;
+  requestedAmount: number;
+  requestedTenureYears: number;
+  requestedTenureMonths: number;
+  monthlyIncome: number;
+  existingEmi: number;
+  employmentType: EmploymentType;
+  cibilScore?: number;
+  
+  // Underwriting / FOIR benchmarks
+  autoFoirCap: number;
+  currentFoir: number;
+  availableEmiHeadroom: number;
+  maxPermissibleObligations: number;
+  
+  // Evaluated Bank Options
+  bankOffers: CustomerEligibilityOfferBankItem[];
+  
+  // Custom or Operator-added Remarks & Obligation notes
+  obligationRemarks?: string;
+  specialRemarks?: string;
+  
+  // Mandatory Important Note
+  importantNote: string;
+}

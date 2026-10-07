@@ -13,6 +13,8 @@ import type { LoanType } from '@/types/db';
 import { LOAN_TYPE_LABELS, formatCurrencyINR } from '@/lib/format';
 import { getSalarySlabFoirCap, getMaxTenureYearsForLoanType } from '@/lib/policyEngine';
 import { evaluateCustomerEligibilityAction, attachRecommendationToApplicationAction } from '@/actions/policyActions';
+import CustomerEligibilityOfferModal from '@/components/CustomerEligibilityOfferModal';
+import { buildCustomerEligibilityOfferData, generateWhatsAppShareUrl } from '@/lib/offerPdfHelper';
 
 interface ActiveAppSummary {
   id: string;
@@ -73,6 +75,32 @@ export default function EligibilityCalculatorClient({
   const [summary, setSummary] = useState<RecommendationSummary | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [resultFilterTab, setResultFilterTab] = useState<'ELIGIBLE' | 'PARTIAL' | 'INELIGIBLE'>('ELIGIBLE');
+  const [isOfferPdfModalOpen, setIsOfferPdfModalOpen] = useState<boolean>(false);
+
+  // Build the rich shareable customer offer report
+  const selectedApp = activeApplications.find((a) => a && a.id === selectedAppId);
+  const offerData = summary
+    ? buildCustomerEligibilityOfferData({
+        application: selectedApp as any,
+        input: {
+          customerName: customerName.trim() || undefined,
+          loanType,
+          cibilScore: Number(cibilScore),
+          monthlyIncome: Number(monthlyIncome),
+          existingEmi: Number(existingEmi),
+          requestedAmount: Number(requestedAmount),
+          requestedTenureMonths: requestedTenureYears * 12,
+          employmentType,
+        },
+        summary,
+        advisor: {
+          name: 'Quickfinsure Senior Credit Advisor',
+          role: 'Underwriting Desk',
+          phone: '+91 98765 43210',
+          branchName: 'Pune Bavdhan HQ',
+        },
+      })
+    : null;
 
   // Quick fill from existing lead
   const handleSelectLead = (appId: string) => {
@@ -660,6 +688,55 @@ export default function EligibilityCalculatorClient({
                 </div>
               </div>
 
+              {/* Shareable Customer Offer PDF Banner */}
+              {offerData && (
+                <div className="bg-gradient-to-r from-emerald-900 via-teal-900 to-slate-900 text-white p-3.5 rounded-2xl flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 shadow-md border border-emerald-500/30">
+                  <div className="flex items-center gap-2.5">
+                    <span className="w-9 h-9 rounded-xl bg-emerald-500/20 text-emerald-300 font-bold flex items-center justify-center text-lg shrink-0 border border-emerald-400/30">
+                      📄
+                    </span>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <h4 className="text-xs sm:text-sm font-black text-white">Shareable Customer Offer PDF Report</h4>
+                        <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 text-[9px] font-bold uppercase tracking-wider">
+                          Ready to Send
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-slate-300">
+                        Includes bank options, eligibility remarks, obligation headroom & mandatory disclaimers.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2 shrink-0">
+                    <button
+                      type="button"
+                      onClick={() => setIsOfferPdfModalOpen(true)}
+                      className="px-3.5 py-1.5 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-xs rounded-xl shadow-md transition flex items-center gap-1.5 active:scale-95"
+                    >
+                      <span>🖨️</span>
+                      <span>Preview & Download PDF</span>
+                    </button>
+
+                    <a
+                      href={generateWhatsAppShareUrl(
+                        offerData,
+                        typeof window !== 'undefined'
+                          ? (selectedApp?.id ? `${window.location.origin}/offer/eligibility/${selectedApp.id}` : window.location.href)
+                          : 'https://quicfinsure.onrender.com'
+                      )}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="px-3 py-1.5 bg-emerald-700 hover:bg-emerald-600 text-white font-bold text-xs rounded-xl transition flex items-center gap-1.5 active:scale-95"
+                      title="Share directly via WhatsApp"
+                    >
+                      <span>📲</span>
+                      <span>WhatsApp</span>
+                    </a>
+                  </div>
+                </div>
+              )}
+
               {/* Filtered Results Stream */}
               <div className="space-y-3">
                 {summary.results
@@ -891,6 +968,17 @@ export default function EligibilityCalculatorClient({
             </div>
           </div>
         </div>
+      )}
+
+      {/* Customer Shareable Offer PDF Modal */}
+      {offerData && (
+        <CustomerEligibilityOfferModal
+          isOpen={isOfferPdfModalOpen}
+          onClose={() => setIsOfferPdfModalOpen(false)}
+          initialData={offerData}
+          applicationId={selectedApp?.id}
+          applicationToken={selectedApp?.id}
+        />
       )}
     </div>
   );

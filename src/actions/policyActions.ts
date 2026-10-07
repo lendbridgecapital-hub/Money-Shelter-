@@ -12,7 +12,7 @@ import {
   toggleBankPolicyCardStatus,
 } from '@/lib/repos/policyCardsRepo';
 import { evaluateCustomerAgainstAllCards } from '@/lib/policyEngine';
-import { getApplicationById } from '@/lib/repos/applicationsRepo';
+import { getApplicationById, saveApplicationEligibilityOffer } from '@/lib/repos/applicationsRepo';
 import { db } from '@/lib/db';
 import type {
   BankPolicyCard,
@@ -20,6 +20,7 @@ import type {
   PolicyEvaluationResult,
   RankingCriterion,
   RecommendationSummary,
+  CustomerEligibilityOfferData,
 } from '@/types/policy';
 
 function safeRevalidate(path: string) {
@@ -258,5 +259,35 @@ export async function attachRecommendationToApplicationAction(
   } catch (err) {
     console.error('[attachRecommendationToApplicationAction] error:', err);
     return { ok: false, error: (err as Error).message || 'Failed to attach recommendation to case.' };
+  }
+}
+
+/**
+ * Saves customer eligibility offer JSON report to the application record
+ */
+export async function saveApplicationEligibilityOfferAction(
+  applicationId: string,
+  offerData: CustomerEligibilityOfferData
+): Promise<{ ok: boolean; error?: string }> {
+  try {
+    const user = await requireRole(
+      'ADMIN',
+      'OPERATIONS',
+      'CENTRAL_SUPPORT',
+      'RELATIONSHIP_MANAGER',
+      'CHANNEL_PARTNER'
+    );
+    const app = getApplicationById(applicationId);
+    if (!app) {
+      return { ok: false, error: 'Application not found.' };
+    }
+
+    saveApplicationEligibilityOffer(applicationId, JSON.stringify(offerData));
+    await syncDatabase();
+    safeRevalidate('/branch/requests');
+    safeRevalidate(`/branch/requests/${applicationId}`);
+    return { ok: true };
+  } catch (err) {
+    return { ok: false, error: (err as Error).message || 'Failed to save eligibility offer.' };
   }
 }

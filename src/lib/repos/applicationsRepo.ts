@@ -411,10 +411,34 @@ function mapRowToApplication(row: Record<string, unknown>): LoanApplication {
     disbursedAt: row.disbursed_at || row.disbursedAt ? String(row.disbursed_at || row.disbursedAt) : null,
     commissionAmount: row.commission_amount || row.commissionAmount ? Number(row.commission_amount || row.commissionAmount) : null,
     commissionStatus: (row.commission_status || row.commissionStatus) as 'PENDING' | 'PAID' | 'CLAWBACK' | null,
+    eligibilityOfferJson: row.eligibility_offer_json || row.eligibilityOfferJson ? String(row.eligibility_offer_json || row.eligibilityOfferJson) : null,
     createdAt: String(row.created_at || row.createdAt || ''),
     submittedAt: row.submitted_at || row.submittedAt ? String(row.submitted_at || row.submittedAt) : null,
     updatedAt: row.updated_at || row.updatedAt ? String(row.updated_at || row.updatedAt) : null,
   };
+}
+
+export function saveApplicationEligibilityOffer(
+  applicationId: string,
+  eligibilityOfferJson: string
+): void {
+  const now = new Date().toISOString();
+  try {
+    db.prepare(
+      `UPDATE loan_applications
+       SET eligibility_offer_json = ?, updated_at = ?
+       WHERE id = ?`
+    ).run(eligibilityOfferJson, now, applicationId);
+  } catch {
+    try {
+      db.prepare('ALTER TABLE loan_applications ADD COLUMN eligibility_offer_json TEXT').run();
+      db.prepare(
+        `UPDATE loan_applications
+         SET eligibility_offer_json = ?, updated_at = ?
+         WHERE id = ?`
+      ).run(eligibilityOfferJson, now, applicationId);
+    } catch {}
+  }
 }
 
 export function createInquiryFromCard(data: {
