@@ -204,13 +204,13 @@ export default function PartnerRequestsClient({
       </div>
 
       {/* Filter Tabs & Search Strip */}
-      <div className="bg-white border border-slate-200/90 rounded-xl p-2.5 shadow-2xs flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5">
-        {/* Filter Pills */}
-        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0">
+      <div className="bg-white border border-slate-200/90 rounded-xl p-3 shadow-2xs space-y-2.5">
+        {/* Row 1: Status Workflow Buckets (Compact, all in one frame, no horizontal slider) */}
+        <div className="flex flex-wrap items-center gap-1.5">
           <button
             type="button"
             onClick={() => setSelectedStatus('PENDING_APPROVAL')}
-            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 shrink-0 ${
+            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 ${
               selectedStatus === 'PENDING_APPROVAL'
                 ? 'bg-amber-500 text-white shadow-2xs'
                 : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
@@ -225,7 +225,7 @@ export default function PartnerRequestsClient({
           <button
             type="button"
             onClick={() => setSelectedStatus('DOCUMENTS_REQUIRED')}
-            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 shrink-0 ${
+            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 ${
               selectedStatus === 'DOCUMENTS_REQUIRED'
                 ? 'bg-indigo-600 text-white shadow-2xs'
                 : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
@@ -240,7 +240,7 @@ export default function PartnerRequestsClient({
           <button
             type="button"
             onClick={() => setSelectedStatus('APPROVED')}
-            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 shrink-0 ${
+            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 ${
               selectedStatus === 'APPROVED'
                 ? 'bg-emerald-600 text-white shadow-2xs'
                 : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
@@ -255,7 +255,7 @@ export default function PartnerRequestsClient({
           <button
             type="button"
             onClick={() => setSelectedStatus('REJECTED')}
-            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 shrink-0 ${
+            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 ${
               selectedStatus === 'REJECTED'
                 ? 'bg-rose-600 text-white shadow-2xs'
                 : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
@@ -270,7 +270,7 @@ export default function PartnerRequestsClient({
           <button
             type="button"
             onClick={() => setSelectedStatus('ALL')}
-            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition shrink-0 ${
+            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition ${
               selectedStatus === 'ALL'
                 ? 'bg-slate-800 text-white shadow-2xs'
                 : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
@@ -280,13 +280,37 @@ export default function PartnerRequestsClient({
           </button>
         </div>
 
-        {/* Role Filter Pills & Search Input */}
-        <div className="flex flex-wrap items-center gap-2">
-          <div className="flex items-center gap-1 bg-slate-100 p-0.5 rounded-lg border border-slate-200/80">
+        {/* Row 2: Shifted Search Panel & Role Filter */}
+        <div className="pt-2 border-t border-slate-100 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5">
+          {/* Expanded Search Panel for Better View */}
+          <div className="relative flex-1 max-w-md">
+            <span className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400 text-xs">
+              🔍
+            </span>
+            <input
+              type="text"
+              placeholder="Search partner by name, phone, PAN, city…"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-8 pr-7 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:ring-2 focus:ring-emerald-500 focus:bg-white focus:outline-none transition"
+            />
+            {searchQuery && (
+              <button
+                type="button"
+                onClick={() => setSearchQuery('')}
+                className="absolute inset-y-0 right-0 pr-2.5 flex items-center text-slate-400 hover:text-slate-600 text-xs font-bold"
+              >
+                ✕
+              </button>
+            )}
+          </div>
+
+          {/* Role Filter Pills */}
+          <div className="flex items-center gap-1 bg-slate-100 p-0.5 rounded-lg border border-slate-200/80 shrink-0 self-start sm:self-auto">
             <button
               type="button"
               onClick={() => setSelectedRoleFilter('ALL')}
-              className={`px-2 py-1 rounded-md text-[11px] font-bold transition ${
+              className={`px-2.5 py-1 rounded-md text-[11px] font-bold transition ${
                 selectedRoleFilter === 'ALL' ? 'bg-white text-slate-900 shadow-2xs' : 'text-slate-600 hover:text-slate-900'
               }`}
             >
@@ -295,7 +319,7 @@ export default function PartnerRequestsClient({
             <button
               type="button"
               onClick={() => setSelectedRoleFilter('SUB_DSA')}
-              className={`px-2 py-1 rounded-md text-[11px] font-bold transition flex items-center gap-1 ${
+              className={`px-2.5 py-1 rounded-md text-[11px] font-bold transition flex items-center gap-1 ${
                 selectedRoleFilter === 'SUB_DSA' ? 'bg-indigo-600 text-white shadow-2xs' : 'text-indigo-700 hover:bg-indigo-50'
               }`}
             >
@@ -305,7 +329,7 @@ export default function PartnerRequestsClient({
             <button
               type="button"
               onClick={() => setSelectedRoleFilter('CHANNEL_PARTNER')}
-              className={`px-2 py-1 rounded-md text-[11px] font-bold transition flex items-center gap-1 ${
+              className={`px-2.5 py-1 rounded-md text-[11px] font-bold transition flex items-center gap-1 ${
                 selectedRoleFilter === 'CHANNEL_PARTNER' ? 'bg-emerald-600 text-white shadow-2xs' : 'text-emerald-700 hover:bg-emerald-50'
               }`}
             >
@@ -313,21 +337,8 @@ export default function PartnerRequestsClient({
               <span className="px-1 py-0.2 rounded-full text-[9px] bg-black/20 font-mono">{countAgents}</span>
             </button>
           </div>
-
-          <div className="relative w-full sm:w-56">
-          <input
-            type="text"
-            placeholder="Search partner, phone, PAN…"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-8 pr-3 py-1.5 border border-slate-200 rounded-lg text-xs focus:ring-2 focus:ring-emerald-500 focus:outline-none"
-          />
-          <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs">
-            🔍
-          </span>
         </div>
       </div>
-    </div>
 
       {/* Main Table View */}
       <div className="bg-white border border-slate-200/90 rounded-2xl shadow-2xs overflow-hidden">
