@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import {
@@ -10,11 +10,18 @@ import {
 } from '@/actions/notificationActions';
 import type { PartnerNotification } from '@/types/db';
 
-export default function NotificationBell() {
+interface NotificationBellProps {
+  align?: 'auto' | 'left' | 'right';
+}
+
+export default function NotificationBell({ align = 'auto' }: NotificationBellProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [notifications, setNotifications] = useState<PartnerNotification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [loading, setLoading] = useState(false);
+  const [popoverStyle, setPopoverStyle] = useState<React.CSSProperties>({});
+  
+  const buttonRef = useRef<HTMLButtonElement>(null);
   const popoverRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
 
@@ -34,18 +41,93 @@ export default function NotificationBell() {
     return () => clearInterval(interval);
   }, []);
 
-  // Close when clicking outside
+  // Compute fixed position ensuring the popover never goes off-screen
+  const updatePosition = useCallback(() => {
+    if (!buttonRef.current) return;
+    const rect = buttonRef.current.getBoundingClientRect();
+    const viewportWidth = window.innerWidth;
+    const viewportHeight = window.innerHeight;
+
+    // Popover width: max 384px, or window width minus 24px padding
+    const width = Math.min(384, Math.max(280, viewportWidth - 24));
+
+    let left: number;
+
+    if (align === 'left') {
+      // Anchoring from left (e.g., sidebar on left side)
+      // Align with button's left edge, but ensure at least 12px from viewport left and right
+      left = Math.max(12, Math.min(rect.left, viewportWidth - width - 12));
+    } else if (align === 'right') {
+      // Anchoring from right (e.g., mobile header on top right)
+      left = Math.max(12, Math.min(rect.right - width, viewportWidth - width - 12));
+    } else {
+      // Auto-detection based on screen quadrant
+      if (rect.left < viewportWidth / 2) {
+        left = Math.max(12, Math.min(rect.left, viewportWidth - width - 12));
+      } else {
+        left = Math.max(12, Math.min(rect.right - width, viewportWidth - width - 12));
+      }
+    }
+
+    // Top position: 8px under button, with safety margin from bottom
+    const top = Math.min(rect.bottom + 8, viewportHeight - 220);
+    const maxHeight = Math.min(460, Math.max(260, viewportHeight - top - 16));
+
+    setPopoverStyle({
+      position: 'fixed',
+      top: `${top}px`,
+      left: `${left}px`,
+      width: `${width}px`,
+      maxHeight: `${maxHeight}px`,
+      zIndex: 9999,
+    });
+  }, [align]);
+
+  // Update position on open, resize, or scroll
+  useEffect(() => {
+    if (!isOpen) return;
+
+    updatePosition();
+
+    function handleResizeOrScroll() {
+      updatePosition();
+    }
+
+    window.addEventListener('resize', handleResizeOrScroll, { passive: true });
+    window.addEventListener('scroll', handleResizeOrScroll, { passive: true, capture: true });
+
+    return () => {
+      window.removeEventListener('resize', handleResizeOrScroll);
+      window.removeEventListener('scroll', handleResizeOrScroll, { capture: true });
+    };
+  }, [isOpen, updatePosition]);
+
+  // Close when clicking outside or pressing Escape
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
-      if (popoverRef.current && !popoverRef.current.contains(event.target as Node)) {
+      if (
+        popoverRef.current &&
+        !popoverRef.current.contains(event.target as Node) &&
+        buttonRef.current &&
+        !buttonRef.current.contains(event.target as Node)
+      ) {
         setIsOpen(false);
       }
     }
+
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === 'Escape') {
+        setIsOpen(false);
+      }
+    }
+
     if (isOpen) {
       document.addEventListener('mousedown', handleClickOutside);
+      document.addEventListener('keydown', handleKeyDown);
     }
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('keydown', handleKeyDown);
     };
   }, [isOpen]);
 
@@ -76,17 +158,23 @@ export default function NotificationBell() {
   }
 
   return (
-    <div className="relative inline-block" ref={popoverRef}>
+    <div className="relative inline-block">
       {/* Bell Button */}
       <button
+        ref={buttonRef}
         type="button"
         onClick={() => {
-          setIsOpen(!isOpen);
-          if (!isOpen) loadNotifications();
+          const nextState = !isOpen;
+          setIsOpen(nextState);
+          if (nextState) {
+            loadNotifications();
+            setTimeout(updatePosition, 10);
+          }
         }}
         className="relative p-2 rounded-xl text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition active:scale-95 focus:outline-none"
         title="Notifications"
         aria-label="Notifications"
+        aria-expanded={isOpen}
       >
         <svg
           className="w-5 h-5"
@@ -109,11 +197,15 @@ export default function NotificationBell() {
         )}
       </button>
 
-      {/* Popover Dropdown */}
+      {/* Popover Dropdown (Fixed Viewport Clamped) */}
       {isOpen && (
-        <div className="fixed sm:absolute right-3 sm:right-0 top-16 sm:top-full mt-1.5 w-[calc(100vw-24px)] sm:w-96 max-w-sm bg-white rounded-2xl shadow-2xl border border-slate-200/90 z-50 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-150">
+        <div
+          ref={popoverRef}
+          style={popoverStyle}
+          className="bg-white rounded-2xl shadow-2xl border border-slate-200/90 flex flex-col overflow-hidden animate-in fade-in slide-in-from-top-2 duration-150"
+        >
           {/* Header */}
-          <div className="flex items-center justify-between px-4 py-3 bg-slate-50/80 border-b border-slate-200/80">
+          <div className="flex items-center justify-between px-4 py-3 bg-slate-50/90 border-b border-slate-200/80 shrink-0">
             <div className="flex items-center gap-2">
               <span className="font-extrabold text-sm text-slate-900">Notifications</span>
               {unreadCount > 0 && (
@@ -135,7 +227,7 @@ export default function NotificationBell() {
           </div>
 
           {/* List */}
-          <div className="max-h-[380px] overflow-y-auto divide-y divide-slate-100">
+          <div className="flex-1 overflow-y-auto divide-y divide-slate-100 min-h-0">
             {notifications.length === 0 ? (
               <div className="py-10 px-4 text-center text-slate-400">
                 <svg
@@ -201,7 +293,7 @@ export default function NotificationBell() {
           </div>
 
           {/* Footer */}
-          <div className="p-2.5 bg-slate-50/80 border-t border-slate-200/80 text-center">
+          <div className="p-2.5 bg-slate-50/90 border-t border-slate-200/80 text-center shrink-0">
             <Link
               href="/branch/requests"
               onClick={() => setIsOpen(false)}

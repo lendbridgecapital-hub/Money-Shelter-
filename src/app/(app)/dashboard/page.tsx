@@ -63,7 +63,7 @@ export default async function DashboardPage() {
   const hasSideColumn = (isAdmin && branches.length > 0) || (isRM && rmPartners.length > 0);
 
   return (
-    <div className="space-y-2.5">
+    <div className="space-y-2.5 min-w-0 max-w-full">
       {/* Dedicated Executive Mobile Dashboard (Visible on mobile, hidden on desktop) */}
       <MobileDashboardSlider
         stats={stats}
@@ -133,8 +133,8 @@ export default async function DashboardPage() {
         </div>
       )}
 
-      {/* Square Flowchart Pipeline Cards (Desktop only: 6 cols) */}
-      <div className="hidden md:grid sm:grid-cols-3 lg:grid-cols-6 gap-2 sm:gap-2.5">
+      {/* Square Flowchart Pipeline Cards (3 cols on medium/laptop, 6 cols on wide desktop) */}
+      <div className="hidden md:grid grid-cols-3 xl:grid-cols-6 gap-2 sm:gap-2.5 min-w-0">
         <PipelineCard
           label="Total Leads"
           count={stats.total}
@@ -180,7 +180,7 @@ export default async function DashboardPage() {
       </div>
 
       {/* 4. Access-Wise Active Reports & Organization Intelligence (Desktop only) */}
-      <div className="hidden md:block">
+      <div className="hidden md:block min-w-0 max-w-full">
         <ActiveReportsSection
           role={user.role}
           currentUserId={user.id}
@@ -201,9 +201,9 @@ export default async function DashboardPage() {
       )}
 
       {/* 5. Main Workspace */}
-      <div className={`grid grid-cols-1 ${hasSideColumn ? 'lg:grid-cols-12' : ''} gap-2`}>
+      <div className={`grid grid-cols-1 ${hasSideColumn ? 'lg:grid-cols-12' : ''} gap-2 min-w-0 max-w-full`}>
         {/* Left Column: Loan Origination Hub & Active Cases */}
-        <div className={hasSideColumn ? 'lg:col-span-8' : 'w-full'}>
+        <div className={`${hasSideColumn ? 'lg:col-span-8' : 'w-full'} min-w-0 max-w-full`}>
           <LoanOriginationHub
             recentApplications={recentApplications}
             totalApplicationsCount={stats.total}
@@ -216,7 +216,7 @@ export default async function DashboardPage() {
 
         {/* Right Column: Branch / Partner Overview (4 cols) */}
         {hasSideColumn && (
-          <div className="lg:col-span-4 space-y-1.5 flex flex-col justify-between">
+          <div className="lg:col-span-4 space-y-1.5 flex flex-col justify-between min-w-0 max-w-full">
             {isAdmin && branches.length > 0 ? (
               <div className="bg-white border border-slate-200/90 rounded-xl p-2 shadow-2xs">
                 <div className="flex items-center justify-between mb-1">

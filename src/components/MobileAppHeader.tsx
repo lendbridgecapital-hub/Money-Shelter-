@@ -130,7 +130,7 @@ export default function MobileAppHeader({
 
         {/* Right Side: Sync Button, Notification Bell & Profile Avatar */}
         <div className="flex items-center gap-1.5">
-          <NotificationBell />
+          <NotificationBell align="right" />
 
           <button
             type="button"

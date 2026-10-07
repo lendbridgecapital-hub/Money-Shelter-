@@ -19,6 +19,14 @@ export default function RequestTable({ applications, showBranchColumn = false }:
   const [statusFilter, setStatusFilter] = useState<string>('ALL');
   const [eligibilityApp, setEligibilityApp] = useState<LoanApplication | null>(null);
 
+  React.useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const s = params.get('status');
+      if (s) setStatusFilter(s);
+    }
+  }, []);
+
   const filtered = useMemo(() => {
     return applications.filter((app) => {
       // Status filter
@@ -98,9 +106,9 @@ export default function RequestTable({ applications, showBranchColumn = false }:
   ];
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-3 min-w-0 max-w-full">
       {/* Search & Tabs Header Bar */}
-      <div className="bg-white border border-slate-200/90 rounded-2xl p-3 shadow-2xs space-y-2.5">
+      <div className="bg-white border border-slate-200/90 rounded-2xl p-3 shadow-2xs space-y-2.5 min-w-0 max-w-full">
         {/* Search Bar */}
         <div className="relative">
           <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
@@ -126,7 +134,7 @@ export default function RequestTable({ applications, showBranchColumn = false }:
         </div>
 
         {/* Filter Chips Pill Bar (Smooth Horizontal Scroll) */}
-        <div className="flex gap-1.5 overflow-x-auto pb-0.5 no-scrollbar scroll-smooth">
+        <div className="flex gap-1.5 overflow-x-auto pb-0.5 no-scrollbar scroll-smooth max-w-full">
           {tabs.map((tab) => {
             const active = statusFilter === tab.key;
             return (
@@ -290,18 +298,18 @@ export default function RequestTable({ applications, showBranchColumn = false }:
       </div>
 
       {/* Desktop Table View (Hidden on mobile, visible on desktop) */}
-      <div className="hidden md:block bg-white border border-slate-200 rounded-xl overflow-x-auto shadow-sm">
-        <table className="w-full text-sm">
+      <div className="hidden md:block bg-white border border-slate-200 rounded-xl overflow-x-auto shadow-sm min-w-0 max-w-full">
+        <table className="w-full text-xs lg:text-sm">
           <thead>
-            <tr className="bg-slate-50 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide border-b border-slate-200">
-              <th className="px-4 py-3">Applicant / Customer</th>
-              <th className="px-4 py-3">Loan Product</th>
-              <th className="px-4 py-3">Amount</th>
-              <th className="px-4 py-3">Partner / Bank</th>
-              {showBranchColumn && <th className="px-4 py-3">Branch</th>}
-              <th className="px-4 py-3">Status</th>
-              <th className="px-4 py-3">Created</th>
-              <th className="px-4 py-3 text-right">Action</th>
+            <tr className="bg-slate-50 text-left text-[11px] lg:text-xs font-semibold text-slate-500 uppercase tracking-wide border-b border-slate-200">
+              <th className="px-3 lg:px-4 py-2.5 lg:py-3 whitespace-nowrap">Applicant / Customer</th>
+              <th className="px-2.5 lg:px-4 py-2.5 lg:py-3 whitespace-nowrap">Loan Product</th>
+              <th className="px-2.5 lg:px-4 py-2.5 lg:py-3 whitespace-nowrap">Amount</th>
+              <th className="px-2.5 lg:px-4 py-2.5 lg:py-3 whitespace-nowrap">Partner / Bank</th>
+              {showBranchColumn && <th className="px-2.5 lg:px-4 py-2.5 lg:py-3 whitespace-nowrap">Branch</th>}
+              <th className="px-2.5 lg:px-4 py-2.5 lg:py-3 whitespace-nowrap">Status</th>
+              <th className="px-2.5 lg:px-4 py-2.5 lg:py-3 whitespace-nowrap">Created</th>
+              <th className="px-3 lg:px-4 py-2.5 lg:py-3 text-right whitespace-nowrap">Action</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
@@ -314,11 +322,11 @@ export default function RequestTable({ applications, showBranchColumn = false }:
             ) : (
               filtered.map((app) => (
                 <tr key={app.id} className="hover:bg-slate-50/70 transition-colors">
-                  <td className="px-4 py-3.5">
+                  <td className="px-3 lg:px-4 py-2.5 lg:py-3">
                     {app.fullName ? (
                       <div>
-                        <p className="font-semibold text-slate-900">{app.fullName}</p>
-                        <p className="text-xs text-slate-400">{app.mobile || app.email}</p>
+                        <p className="font-semibold text-slate-900 truncate max-w-[130px] xl:max-w-none">{app.fullName}</p>
+                        <p className="text-[11px] lg:text-xs text-slate-400 truncate max-w-[130px] xl:max-w-none">{app.mobile || app.email}</p>
                       </div>
                     ) : (
                       <div>
@@ -329,48 +337,48 @@ export default function RequestTable({ applications, showBranchColumn = false }:
                       </div>
                     )}
                   </td>
-                  <td className="px-4 py-3.5 text-xs text-slate-700 font-medium">
+                  <td className="px-2.5 lg:px-4 py-2.5 lg:py-3 text-[11px] lg:text-xs text-slate-700 font-medium whitespace-nowrap">
                     {app.loanType ? LOAN_TYPE_LABELS[app.loanType] : '—'}
                   </td>
-                  <td className="px-4 py-3.5 text-xs font-semibold text-slate-900">
+                  <td className="px-2.5 lg:px-4 py-2.5 lg:py-3 text-[11px] lg:text-xs font-semibold text-slate-900 whitespace-nowrap">
                     {app.approvedAmount
                       ? formatCurrencyINR(app.approvedAmount)
                       : app.loanAmount
                       ? formatCurrencyINR(app.loanAmount)
                       : '—'}
                   </td>
-                  <td className="px-4 py-3.5 text-xs">
-                    <p className="font-medium text-slate-800">
+                  <td className="px-2.5 lg:px-4 py-2.5 lg:py-3 text-[11px] lg:text-xs">
+                    <p className="font-medium text-slate-800 truncate max-w-[120px] xl:max-w-none">
                       {app.channelPartnerName || app.createdByName || 'Direct'}
                     </p>
-                    <p className="text-[11px] text-slate-400">{app.bankName || 'Not assigned'}</p>
+                    <p className="text-[10px] lg:text-[11px] text-slate-400 truncate max-w-[120px] xl:max-w-none">{app.bankName || 'Not assigned'}</p>
                   </td>
                   {showBranchColumn && (
-                    <td className="px-4 py-3.5 text-xs text-slate-600">
+                    <td className="px-2.5 lg:px-4 py-2.5 lg:py-3 text-[11px] lg:text-xs text-slate-600 whitespace-nowrap">
                       {app.branchName || 'Head Office'}
                     </td>
                   )}
-                  <td className="px-4 py-3.5">
+                  <td className="px-2.5 lg:px-4 py-2.5 lg:py-3 whitespace-nowrap">
                     <StatusBadge status={app.status as ApplicationStatus} />
                   </td>
-                  <td className="px-4 py-3.5 text-xs text-slate-400">
+                  <td className="px-2.5 lg:px-4 py-2.5 lg:py-3 text-[11px] lg:text-xs text-slate-400 whitespace-nowrap">
                     {formatDate(app.createdAt)}
                   </td>
-                  <td className="px-4 py-3.5 text-right whitespace-nowrap">
+                  <td className="px-3 lg:px-4 py-2.5 lg:py-3 text-right whitespace-nowrap">
                     {app.status === 'DOCUMENTS_IN' && (
                       <button
                         type="button"
                         onClick={() => setEligibilityApp(app)}
-                        className="inline-flex items-center gap-1 text-xs font-bold text-indigo-700 hover:text-indigo-800 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200/90 px-2.5 py-1.5 rounded-lg transition-colors mr-2 shadow-2xs active:scale-95"
+                        className="inline-flex items-center gap-1 text-[11px] lg:text-xs font-bold text-indigo-700 hover:text-indigo-800 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200/90 px-2 lg:px-2.5 py-1 lg:py-1.5 rounded-lg transition-colors mr-1.5 shadow-2xs active:scale-95"
                         title="Run Loan Eligibility Match & Find Rates"
                       >
                         <span>⚡</span>
-                        <span>Eligibility Match</span>
+                        <span>Match</span>
                       </button>
                     )}
                     <Link
                       href={`/branch/requests/${app.id}`}
-                      className="inline-flex items-center text-xs font-semibold text-emerald-700 hover:text-emerald-800 bg-emerald-50 hover:bg-emerald-100 px-3 py-1.5 rounded-md transition-colors"
+                      className="inline-flex items-center text-[11px] lg:text-xs font-semibold text-emerald-700 hover:text-emerald-800 bg-emerald-50 hover:bg-emerald-100 px-2.5 lg:px-3 py-1 lg:py-1.5 rounded-md transition-colors"
                     >
                       Case File →
                     </Link>

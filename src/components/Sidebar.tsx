@@ -280,7 +280,7 @@ export default function Sidebar({
 
         {/* Actions: Notification Bell & Collapse Toggle */}
         <div className="flex items-center gap-0.5 shrink-0">
-          <NotificationBell />
+          <NotificationBell align="left" />
           <button
             type="button"
             onClick={toggleCollapse}
