@@ -22,364 +22,883 @@ export default function CustomerEligibilityOfferDoc({ data }: CustomerEligibilit
   });
 
   return (
-    <div
-      id="customer-eligibility-pdf"
-      className="bg-white text-slate-900 font-sans p-4 sm:p-10 max-w-4xl mx-auto border border-slate-200/90 rounded-2xl shadow-xl text-[12.5px] sm:text-[13px] leading-relaxed relative print:border-none print:shadow-none print:p-0 print:m-0 print:max-w-none"
-      style={{
-        boxShadow: '0 12px 36px -10px rgba(0, 0, 0, 0.08)',
-      }}
-    >
+    <div id="customer-eligibility-pdf" className="space-y-6 print:space-y-0">
       {/* ========================================================================= */}
-      {/* 1. OFFICIAL CORPORATE LETTERHEAD (MATCHES USER SPEC EXACTLY)             */}
+      {/* ============================== PAGE 1 =================================== */}
       {/* ========================================================================= */}
-      <div className="border-b-2 border-emerald-600 pb-4 sm:pb-5 mb-5 sm:mb-6">
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4">
-          {/* Logo & Company Title */}
-          <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-emerald-800 via-teal-700 to-slate-900 text-white font-black text-2xl flex items-center justify-center shadow-md shrink-0 border border-emerald-600/30">
-              <span className="text-amber-400 drop-shadow-xs">⚡</span>
-            </div>
-            <div>
-              <h1 className="text-lg sm:text-2xl font-black tracking-tight text-slate-900 uppercase leading-tight">
-                {data.companyName || 'QUICKFINSURE SOLUTIONS'}
-              </h1>
-              <p className="text-[10px] sm:text-[11px] font-bold text-emerald-800 tracking-wider uppercase mt-0.5">
-                {data.companyTagline || 'LICENSED DSA PARTNER & MULTI-BANK SYNDICATION NETWORK'}
-              </p>
-              <p className="text-[10px] sm:text-[11px] text-slate-500 mt-0.5">
-                Email: {data.officialEmail || 'support@quickfinsure.com'} • Helpdesk: {data.supportPhone || '+91 98765 43210'}
-              </p>
+      <div
+        id="pdf-page-1"
+        className="pdf-page bg-white text-slate-900 font-sans p-5 sm:p-9 max-w-4xl mx-auto border border-slate-200/90 rounded-2xl shadow-xl text-[12.5px] leading-relaxed relative flex flex-col justify-between print:border-none print:shadow-none print:p-0 print:m-0 print:max-w-none"
+        style={{
+          boxShadow: '0 12px 36px -10px rgba(0, 0, 0, 0.08)',
+        }}
+      >
+        <div>
+          {/* ========================================================================= */}
+          {/* 1. OFFICIAL CORPORATE LETTERHEAD (HEADER)                                 */}
+          {/* ========================================================================= */}
+          <div className="border-b-2 border-emerald-600 pb-3 sm:pb-4 mb-4">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+              {/* Logo & Company Title */}
+              <div className="flex items-center">
+                <div
+                  style={{
+                    width: '46px',
+                    height: '46px',
+                    borderRadius: '12px',
+                    background: 'linear-gradient(135deg, #065f46 0%, #0f766e 60%, #0f172a 100%)',
+                    color: '#ffffff',
+                    fontSize: '22px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    marginRight: '12px',
+                    flexShrink: 0,
+                    border: '1px solid rgba(16, 185, 129, 0.4)',
+                    boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)',
+                  }}
+                >
+                  <span style={{ color: '#fbbf24', lineHeight: 1 }}>⚡</span>
+                </div>
+                <div>
+                  <h1 className="text-lg sm:text-xl font-black tracking-tight text-slate-900 uppercase leading-none">
+                    {data.companyName || 'QUICKFINSURE SOLUTIONS'}
+                  </h1>
+                  <p className="text-[10px] font-bold text-emerald-800 tracking-wider uppercase mt-1">
+                    {data.companyTagline || 'LICENSED DSA PARTNER & MULTI-BANK SYNDICATION NETWORK'}
+                  </p>
+                  <p className="text-[10px] text-slate-500 mt-0.5">
+                    Email: {data.officialEmail || 'support@quickfinsure.com'} • Helpdesk: {data.supportPhone || '+91 98765 43210'}
+                  </p>
+                </div>
+              </div>
+
+              {/* Offer Reference Badge Box */}
+              <div
+                style={{
+                  backgroundColor: '#f8fafc',
+                  border: '1px solid #e2e8f0',
+                  borderRadius: '12px',
+                  padding: '8px 14px',
+                  textAlign: 'left',
+                }}
+                className="w-full sm:w-auto"
+              >
+                <div style={{ fontSize: '9px', fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                  OFFER REFERENCE
+                </div>
+                <div style={{ fontFamily: 'monospace', fontWeight: 900, fontSize: '13px', color: '#0f172a', letterSpacing: '0.05em', lineHeight: '1.2' }}>
+                  {data.referenceNumber}
+                </div>
+                <div style={{ fontSize: '10px', color: '#475569', marginTop: '2px', lineHeight: '1.2' }}>
+                  Dated: <strong style={{ color: '#0f172a' }}>{generatedDateFormatted}</strong> · Valid Until: <strong style={{ color: '#0f172a' }}>{validUntilFormatted}</strong>
+                </div>
+              </div>
             </div>
           </div>
 
-          {/* Offer Reference Badge Box */}
-          <div className="bg-slate-50/90 border border-slate-200/90 rounded-2xl p-2.5 sm:p-3 text-left sm:text-right w-full sm:w-auto shadow-2xs">
-            <div className="text-[9px] sm:text-[10px] uppercase font-bold text-slate-400 tracking-wider">
-              OFFER REFERENCE
+          {/* ========================================================================= */}
+          {/* 2. DOCUMENT SUB-HEADER & CENTERED PILL BADGE                              */}
+          {/* ========================================================================= */}
+          <div style={{ textAlign: 'center', marginBottom: '14px' }}>
+            <div style={{ textAlign: 'center', marginBottom: '6px' }}>
+              <span
+                style={{
+                  display: 'inline-block',
+                  padding: '4px 16px',
+                  borderRadius: '9999px',
+                  backgroundColor: '#ecfdf5',
+                  border: '1px solid #6ee7b7',
+                  color: '#065f46',
+                  fontSize: '10px',
+                  fontWeight: 800,
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.08em',
+                  lineHeight: '1.2',
+                  textAlign: 'center',
+                }}
+              >
+                OFFICIAL IN-PRINCIPLE ELIGIBILITY ASSESSMENT
+              </span>
             </div>
-            <div className="font-mono font-black text-slate-900 text-xs sm:text-sm tracking-wider">
-              {data.referenceNumber}
+            <h2 className="text-base sm:text-lg font-black text-slate-900 tracking-tight uppercase leading-snug">
+              TENTATIVE LOAN ELIGIBILITY & MULTI-BANK OFFER REPORT
+            </h2>
+            <p className="text-[11px] text-slate-500 max-w-lg mx-auto mt-0.5">
+              Prepared exclusively for <strong className="text-slate-900">{data.customerName}</strong> following institutional policy matrix evaluation.
+            </p>
+          </div>
+
+          {/* ========================================================================= */}
+          {/* 3. APPLICANT PROFILE & FINANCIAL SNAPSHOT (ZERO OVERLAPPING TEXT)         */}
+          {/* ========================================================================= */}
+          <div className="mb-4 bg-slate-50/90 border border-slate-200 rounded-2xl p-3 sm:p-4">
+            <div className="text-[11px] font-black uppercase tracking-wider text-slate-700 border-b border-slate-200 pb-1.5 mb-2.5 flex items-center justify-between">
+              <span className="flex items-center gap-1.5">
+                <span>📋</span>
+                <span>Applicant Profile & Financial Snapshot</span>
+              </span>
+              <span className="text-[10px] text-slate-400 font-semibold">Verified Inputs</span>
             </div>
-            <div className="text-slate-600 text-[10px] sm:text-[11px] mt-0.5">
-              Dated: <strong className="text-slate-900">{generatedDateFormatted}</strong> · Valid Until: <strong className="text-slate-900">{validUntilFormatted}</strong>
+
+            {/* Row 1: Basic Information */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
+              {/* Applicant Name */}
+              <div
+                style={{
+                  backgroundColor: '#ffffff',
+                  border: '1px solid #e2e8f0',
+                  borderRadius: '10px',
+                  padding: '8px 10px',
+                  minHeight: '66px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'center',
+                }}
+              >
+                <div style={{ fontSize: '9px', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: '3px', lineHeight: '1' }}>
+                  Applicant Name
+                </div>
+                <div style={{ fontSize: '13px', fontWeight: 900, color: '#0f172a', lineHeight: '1.2', wordBreak: 'break-word' }}>
+                  {data.customerName}
+                </div>
+                {data.customerMobile && (
+                  <div style={{ fontSize: '11px', fontWeight: 600, color: '#475569', marginTop: '3px', lineHeight: '1' }}>
+                    {data.customerMobile}
+                  </div>
+                )}
+              </div>
+
+              {/* Loan Facility */}
+              <div
+                style={{
+                  backgroundColor: '#ffffff',
+                  border: '1px solid #e2e8f0',
+                  borderRadius: '10px',
+                  padding: '8px 10px',
+                  minHeight: '66px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'center',
+                }}
+              >
+                <div style={{ fontSize: '9px', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: '3px', lineHeight: '1' }}>
+                  Loan Facility
+                </div>
+                <div style={{ fontSize: '13px', fontWeight: 900, color: '#1e1b4b', lineHeight: '1.2' }}>
+                  {loanLabel}
+                </div>
+                <div style={{ fontSize: '11px', fontWeight: 600, color: '#475569', marginTop: '3px', lineHeight: '1', textTransform: 'capitalize' }}>
+                  {data.employmentType.replace(/_/g, ' ').toLowerCase()}
+                </div>
+              </div>
+
+              {/* Requested Loan */}
+              <div
+                style={{
+                  backgroundColor: '#ffffff',
+                  border: '1px solid #e2e8f0',
+                  borderRadius: '10px',
+                  padding: '8px 10px',
+                  minHeight: '66px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'center',
+                }}
+              >
+                <div style={{ fontSize: '9px', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: '3px', lineHeight: '1' }}>
+                  Requested Loan
+                </div>
+                <div style={{ fontSize: '13px', fontWeight: 900, color: '#047857', lineHeight: '1.2' }}>
+                  {formatCurrencyINR(data.requestedAmount)}
+                </div>
+                <div style={{ fontSize: '10px', color: '#64748b', marginTop: '3px', lineHeight: '1' }}>
+                  Requested Amount
+                </div>
+              </div>
+
+              {/* Requested Tenure */}
+              <div
+                style={{
+                  backgroundColor: '#ffffff',
+                  border: '1px solid #e2e8f0',
+                  borderRadius: '10px',
+                  padding: '8px 10px',
+                  minHeight: '66px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'center',
+                }}
+              >
+                <div style={{ fontSize: '9px', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: '3px', lineHeight: '1' }}>
+                  Requested Tenure
+                </div>
+                <div style={{ fontSize: '13px', fontWeight: 900, color: '#0f172a', lineHeight: '1.2' }}>
+                  {data.requestedTenureYears} Years
+                </div>
+                <div style={{ fontSize: '10px', color: '#64748b', marginTop: '3px', lineHeight: '1' }}>
+                  ({data.requestedTenureMonths} Months)
+                </div>
+              </div>
             </div>
+
+            {/* Row 2: Financial Criteria */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-2 mt-2 border-t border-slate-200/80 text-xs">
+              {/* Monthly Income */}
+              <div
+                style={{
+                  backgroundColor: '#ffffff',
+                  border: '1px solid #e2e8f0',
+                  borderRadius: '10px',
+                  padding: '8px 10px',
+                  minHeight: '66px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'center',
+                }}
+              >
+                <div style={{ fontSize: '9px', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: '3px', lineHeight: '1' }}>
+                  Monthly Income
+                </div>
+                <div style={{ fontSize: '13px', fontWeight: 900, color: '#0f172a', lineHeight: '1.2' }}>
+                  ₹{data.monthlyIncome.toLocaleString('en-IN')}
+                </div>
+                <div style={{ fontSize: '10px', color: '#64748b', marginTop: '3px', lineHeight: '1' }}>
+                  Net In-Hand
+                </div>
+              </div>
+
+              {/* Active Obligations */}
+              <div
+                style={{
+                  backgroundColor: '#ffffff',
+                  border: '1px solid #e2e8f0',
+                  borderRadius: '10px',
+                  padding: '8px 10px',
+                  minHeight: '66px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'center',
+                }}
+              >
+                <div style={{ fontSize: '9px', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: '3px', lineHeight: '1' }}>
+                  Active Obligations
+                </div>
+                <div style={{ fontSize: '13px', fontWeight: 900, color: data.existingEmi > 0 ? '#b45309' : '#047857', lineHeight: '1.2' }}>
+                  ₹{data.existingEmi.toLocaleString('en-IN')}/mo
+                </div>
+                <div style={{ fontSize: '10px', color: '#64748b', marginTop: '3px', lineHeight: '1' }}>
+                  Current EMIs
+                </div>
+              </div>
+
+              {/* Assessed CIBIL */}
+              <div
+                style={{
+                  backgroundColor: '#ffffff',
+                  border: '1px solid #e2e8f0',
+                  borderRadius: '10px',
+                  padding: '8px 10px',
+                  minHeight: '66px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'center',
+                }}
+              >
+                <div style={{ fontSize: '9px', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: '3px', lineHeight: '1' }}>
+                  Assessed CIBIL
+                </div>
+                <div style={{ fontSize: '13px', fontWeight: 900, color: '#4338ca', lineHeight: '1.2' }}>
+                  {data.cibilScore ? `${data.cibilScore} / 900` : '750+ (Prime)'}
+                </div>
+                <div style={{ fontSize: '10px', color: '#64748b', marginTop: '3px', lineHeight: '1' }}>
+                  Credit Rating
+                </div>
+              </div>
+
+              {/* Permissible FOIR */}
+              <div
+                style={{
+                  backgroundColor: '#ffffff',
+                  border: '1px solid #e2e8f0',
+                  borderRadius: '10px',
+                  padding: '8px 10px',
+                  minHeight: '66px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'center',
+                }}
+              >
+                <div style={{ fontSize: '9px', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: '3px', lineHeight: '1' }}>
+                  Permissible FOIR
+                </div>
+                <div style={{ fontSize: '13px', fontWeight: 900, color: '#0f172a', lineHeight: '1.2' }}>
+                  {data.autoFoirCap}% Cap
+                </div>
+                <div style={{ fontSize: '10px', fontWeight: 700, color: '#047857', marginTop: '3px', lineHeight: '1' }}>
+                  ₹{data.availableEmiHeadroom.toLocaleString('en-IN')} Headroom
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* ========================================================================= */}
+          {/* 4. OBLIGATIONS & DISPOSABLE INCOME ANALYSIS                                */}
+          {/* ========================================================================= */}
+          <div className="mb-4 p-3 rounded-xl bg-blue-50/80 border border-blue-200 text-xs">
+            <div className="flex items-center gap-1.5 mb-1 font-black text-blue-900 text-xs">
+              <span>📊</span>
+              <span>Obligations & Repayment Capacity Evaluation:</span>
+            </div>
+            <p className="text-slate-700 text-xs leading-relaxed">
+              {data.obligationRemarks}
+            </p>
+          </div>
+
+          {/* ========================================================================= */}
+          {/* 5. MATCHED BANK OPTIONS (COMPARISON TABLE + DETAILED CARDS)               */}
+          {/* ========================================================================= */}
+          <div className="mb-3 space-y-3">
+            <div className="flex items-center justify-between border-b border-slate-200 pb-1.5">
+              <h3 className="text-[11px] font-black uppercase tracking-wider text-slate-800 flex items-center gap-1.5">
+                <span>🏦</span>
+                <span>Matched Institutional Bank Offers ({data.bankOffers.length} Options)</span>
+              </h3>
+              <span className="text-[10px] text-slate-500 font-medium">Ranked by Competitive Interest Rate</span>
+            </div>
+
+            {/* COMPARISON TABLE */}
+            <div className="overflow-x-auto rounded-xl border border-slate-200 shadow-2xs">
+              <table className="w-full text-left text-xs border-collapse">
+                <thead>
+                  <tr className="bg-slate-900 text-white text-[10px] uppercase tracking-wider">
+                    <th className="p-2 font-bold">Lending Bank</th>
+                    <th className="p-2 font-bold">Indicative Rate</th>
+                    <th className="p-2 font-bold">Sanction Limit</th>
+                    <th className="p-2 font-bold">Monthly EMI</th>
+                    <th className="p-2 font-bold">Tenure</th>
+                    <th className="p-2 font-bold">Proc. Fee</th>
+                    <th className="p-2 font-bold">TAT</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-200 bg-white">
+                  {data.bankOffers.map((b, idx) => (
+                    <tr
+                      key={b.cardId}
+                      className={b.isBestMatch ? 'bg-emerald-50/70 font-semibold' : idx % 2 === 1 ? 'bg-slate-50/50' : ''}
+                    >
+                      <td className="p-2">
+                        <div className="flex items-center">
+                          <strong className="text-slate-900">{b.bankName}</strong>
+                          {b.isBestMatch && (
+                            <span
+                              style={{
+                                display: 'inline-block',
+                                padding: '2px 7px',
+                                borderRadius: '9999px',
+                                backgroundColor: '#059669',
+                                color: '#ffffff',
+                                fontSize: '8.5px',
+                                fontWeight: 800,
+                                textTransform: 'uppercase',
+                                letterSpacing: '0.04em',
+                                lineHeight: '1.2',
+                                textAlign: 'center',
+                                verticalAlign: 'middle',
+                                marginLeft: '6px',
+                              }}
+                            >
+                              ★ Best
+                            </span>
+                          )}
+                        </div>
+                      </td>
+                      <td className="p-2 text-emerald-700 font-black">
+                        {b.interestRate.toFixed(2)}% p.a.
+                      </td>
+                      <td className="p-2 font-black text-slate-900">
+                        {formatCurrencyINR(b.recommendedAmount)}
+                      </td>
+                      <td className="p-2 font-black text-indigo-950">
+                        ₹{Math.round(b.proposedEmi).toLocaleString('en-IN')}/m
+                      </td>
+                      <td className="p-2 text-slate-600">
+                        {b.tenureYears} Yrs ({b.tenureMonths}m)
+                      </td>
+                      <td className="p-2 text-slate-600">
+                        {b.processingFeeText}
+                      </td>
+                      <td className="p-2 text-slate-600">
+                        ~{b.tatDays} Days
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* DETAILED BANK CARDS (VERTICALLY CENTERED LOGOS & TITLES) */}
+            <div className="space-y-2.5 pt-1">
+              {data.bankOffers.map((b) => (
+                <div
+                  key={b.cardId}
+                  className={`p-3 rounded-2xl border ${
+                    b.isBestMatch
+                      ? 'border-emerald-400 bg-emerald-50/20 shadow-xs ring-1 ring-emerald-300'
+                      : 'border-slate-200 bg-white'
+                  }`}
+                >
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-2">
+                    {/* Bank Logo & Title aligned */}
+                    <div style={{ display: 'flex', alignItems: 'center' }}>
+                      <div
+                        style={{
+                          width: '38px',
+                          height: '38px',
+                          borderRadius: '10px',
+                          backgroundColor: '#0f172a',
+                          color: '#ffffff',
+                          fontWeight: 900,
+                          fontSize: '12px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          textAlign: 'center',
+                          marginRight: '10px',
+                          flexShrink: 0,
+                          lineHeight: '38px',
+                        }}
+                      >
+                        {b.bankCode.slice(0, 3)}
+                      </div>
+                      <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+                        <div style={{ display: 'flex', alignItems: 'center' }}>
+                          <span style={{ fontSize: '14px', fontWeight: 900, color: '#0f172a', marginRight: '8px', lineHeight: '1.2' }}>
+                            {b.bankName}
+                          </span>
+                          {b.isBestMatch && (
+                            <span
+                              style={{
+                                display: 'inline-block',
+                                padding: '2px 8px',
+                                borderRadius: '9999px',
+                                backgroundColor: '#059669',
+                                color: '#ffffff',
+                                fontSize: '8.5px',
+                                fontWeight: 800,
+                                textTransform: 'uppercase',
+                                letterSpacing: '0.05em',
+                                lineHeight: '1.2',
+                                textAlign: 'center',
+                                verticalAlign: 'middle',
+                              }}
+                            >
+                              Primary Recommendation
+                            </span>
+                          )}
+                        </div>
+                        <div style={{ fontSize: '10px', color: '#64748b', marginTop: '2px', lineHeight: '1.2' }}>
+                          Product: {loanLabel} • Turnaround Time: ~{b.tatDays} Working Days
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Interest Rate */}
+                    <div className="text-left sm:text-right bg-emerald-50/60 sm:bg-transparent p-1.5 sm:p-0 rounded-xl sm:rounded-none">
+                      <span className="text-[9px] text-slate-400 uppercase font-bold block">Indicative Interest Rate</span>
+                      <span className="text-sm sm:text-base font-black text-emerald-700 leading-tight">
+                        {b.interestRate.toFixed(2)}% p.a.
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* 3 Core Metrics Tile */}
+                  <div className="grid grid-cols-3 gap-2 bg-slate-50/90 p-2 rounded-xl border border-slate-100 text-xs mb-2 text-center">
+                    <div>
+                      <span className="text-[9px] text-slate-400 block uppercase font-bold">Sanction Capacity</span>
+                      <strong className="text-slate-900 font-black text-xs sm:text-sm">{formatCurrencyINR(b.recommendedAmount)}</strong>
+                    </div>
+                    <div>
+                      <span className="text-[9px] text-slate-400 block uppercase font-bold">Estimated EMI</span>
+                      <strong className="text-indigo-950 font-black text-xs sm:text-sm">₹{Math.round(b.proposedEmi).toLocaleString('en-IN')}/m</strong>
+                    </div>
+                    <div>
+                      <span className="text-[9px] text-slate-400 block uppercase font-bold">Approved Tenure</span>
+                      <strong className="text-slate-900 font-black text-xs sm:text-sm">{b.tenureYears} Years ({b.tenureMonths}m)</strong>
+                    </div>
+                  </div>
+
+                  {/* Underwriting Eligibility Remarks */}
+                  {b.passRemarks && b.passRemarks.length > 0 && (
+                    <div className="space-y-1 mb-1.5">
+                      <span className="text-[9px] font-bold text-slate-500 uppercase block">Underwriting Eligibility Remarks:</span>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-1 text-[10.5px] text-emerald-800">
+                        {b.passRemarks.map((remark, rIdx) => (
+                          <div key={rIdx} className="flex items-start gap-1">
+                            <span className="text-emerald-600 font-bold shrink-0">✓</span>
+                            <span>{remark}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Special Features & USPs */}
+                  {b.specialFeatures && b.specialFeatures.length > 0 && (
+                    <div className="text-[10px] text-slate-600 pt-1 border-t border-slate-100 flex flex-wrap gap-1.5">
+                      <span className="font-bold text-slate-700">Bank USPs:</span>
+                      {b.specialFeatures.map((feat, fIdx) => (
+                        <span key={fIdx} className="px-1.5 py-0.5 rounded-md bg-slate-100 text-slate-700 text-[9.5px] font-semibold">
+                          • {feat}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* ========================================================================= */}
+        {/* OFFICIAL RUNNING FOOTER FOR PAGE 1                                        */}
+        {/* ========================================================================= */}
+        <div className="border-t-2 border-emerald-600/80 pt-3 mt-4 flex items-center justify-between text-[10px] text-slate-500">
+          <div>
+            <strong className="text-slate-800">{data.companyName || 'Quickfinsure Solutions'}</strong> • Multi-Bank Syndication Network
+          </div>
+          <div className="font-bold text-slate-700 uppercase tracking-wider">
+            TENTATIVE OFFER REPORT • Page 1 of 2
+          </div>
+          <div className="font-mono text-slate-600">
+            Ref: {data.referenceNumber}
           </div>
         </div>
       </div>
 
-      {/* ========================================================================= */}
-      {/* 2. DOCUMENT SUB-HEADER & ASSESSMENT TITLE                                 */}
-      {/* ========================================================================= */}
-      <div className="text-center mb-5 sm:mb-6">
-        <div className="inline-block px-3.5 py-1 rounded-full bg-emerald-50 border border-emerald-300 text-emerald-800 text-[10px] sm:text-[11px] font-extrabold uppercase tracking-widest mb-1.5 shadow-2xs">
-          OFFICIAL IN-PRINCIPLE ELIGIBILITY ASSESSMENT
-        </div>
-        <h2 className="text-base sm:text-xl font-black text-slate-900 tracking-tight uppercase">
-          TENTATIVE LOAN ELIGIBILITY & MULTI-BANK OFFER REPORT
-        </h2>
-        <p className="text-[11px] sm:text-xs text-slate-500 max-w-lg mx-auto mt-0.5">
-          Prepared exclusively for <strong className="text-slate-900">{data.customerName}</strong> following institutional policy matrix evaluation.
-        </p>
+      {/* Screen Page Break Separator (Hidden in Print) */}
+      <div className="text-center py-1 print:hidden text-xs text-slate-400 font-semibold flex items-center justify-center gap-2">
+        <span className="h-px bg-slate-300 w-16"></span>
+        <span>Page 2: Documentation & Institutional Terms</span>
+        <span className="h-px bg-slate-300 w-16"></span>
       </div>
 
       {/* ========================================================================= */}
-      {/* 3. APPLICANT PROFILE & BORROWING PARAMETERS                               */}
+      {/* ============================== PAGE 2 =================================== */}
       {/* ========================================================================= */}
-      <div className="mb-5 sm:mb-6 bg-slate-50/80 border border-slate-200 rounded-2xl p-3.5 sm:p-5">
-        <h3 className="text-[11px] sm:text-xs font-black uppercase tracking-wider text-slate-700 border-b border-slate-200 pb-2 mb-3 flex items-center justify-between">
-          <span className="flex items-center gap-1.5">
-            <span>📋</span>
-            <span>Applicant Profile & Financial Snapshot</span>
-          </span>
-          <span className="text-[10px] text-slate-400 font-semibold">Verified Inputs</span>
-        </h3>
+      <div
+        id="pdf-page-2"
+        className="pdf-page bg-white text-slate-900 font-sans p-5 sm:p-9 max-w-4xl mx-auto border border-slate-200/90 rounded-2xl shadow-xl text-[12.5px] leading-relaxed relative flex flex-col justify-between print:border-none print:shadow-none print:p-0 print:m-0 print:max-w-none"
+        style={{
+          boxShadow: '0 12px 36px -10px rgba(0, 0, 0, 0.08)',
+        }}
+      >
+        <div>
+          {/* ========================================================================= */}
+          {/* 1. CORPORATE RUNNING HEADER FOR PAGE 2                                    */}
+          {/* ========================================================================= */}
+          <div className="border-b-2 border-emerald-600 pb-3 mb-4">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
+              <div className="flex items-center">
+                <div
+                  style={{
+                    width: '36px',
+                    height: '36px',
+                    borderRadius: '10px',
+                    background: 'linear-gradient(135deg, #065f46 0%, #0f766e 60%, #0f172a 100%)',
+                    color: '#ffffff',
+                    fontSize: '18px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    marginRight: '10px',
+                    flexShrink: 0,
+                  }}
+                >
+                  <span style={{ color: '#fbbf24', lineHeight: 1 }}>⚡</span>
+                </div>
+                <div>
+                  <h2 className="text-base font-black tracking-tight text-slate-900 uppercase leading-none">
+                    {data.companyName || 'QUICKFINSURE SOLUTIONS'}
+                  </h2>
+                  <p className="text-[10px] font-bold text-emerald-800 tracking-wider uppercase mt-0.5">
+                    INSTITUTIONAL SYNDICATION & SANCTION GUIDELINES
+                  </p>
+                </div>
+              </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-3 text-xs">
-          <div className="bg-white p-2.5 rounded-xl border border-slate-100 shadow-2xs">
-            <span className="text-[9px] sm:text-[10px] text-slate-400 font-bold uppercase block">Applicant Name</span>
-            <strong className="text-slate-900 font-black text-xs sm:text-sm block truncate">{data.customerName}</strong>
-            {data.customerMobile && (
-              <span className="text-[10px] text-slate-500 block truncate">{data.customerMobile}</span>
+              <div
+                style={{
+                  backgroundColor: '#f8fafc',
+                  border: '1px solid #e2e8f0',
+                  borderRadius: '10px',
+                  padding: '6px 12px',
+                  textAlign: 'left',
+                }}
+                className="w-full sm:w-auto"
+              >
+                <div style={{ fontSize: '10px', color: '#475569' }}>
+                  Offer Ref: <strong className="font-mono text-slate-900">{data.referenceNumber}</strong> • Applicant: <strong className="text-slate-900">{data.customerName}</strong>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* ========================================================================= */}
+          {/* 2. PRE-SANCTION VERIFICATION & DOCUMENTATION CHECKLIST                    */}
+          {/* ========================================================================= */}
+          <div className="mb-4 p-4 rounded-2xl bg-slate-50 border border-slate-200 text-xs">
+            <h4 className="font-black text-slate-900 mb-2.5 flex items-center gap-1.5 text-xs uppercase tracking-wide">
+              <span>📁</span>
+              <span>Required Verification Checklist for Final Bank Sanction:</span>
+            </h4>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px] text-slate-700">
+              <div className="flex items-start">
+                <span
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    width: '18px',
+                    height: '18px',
+                    borderRadius: '9999px',
+                    backgroundColor: '#059669',
+                    color: '#ffffff',
+                    fontSize: '10px',
+                    fontWeight: 800,
+                    marginRight: '8px',
+                    flexShrink: 0,
+                    lineHeight: 1,
+                  }}
+                >
+                  1
+                </span>
+                <span>Latest 3 months Salary Slips (or 2 years ITR with computation & audit report for business entities).</span>
+              </div>
+              <div className="flex items-start">
+                <span
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    width: '18px',
+                    height: '18px',
+                    borderRadius: '9999px',
+                    backgroundColor: '#059669',
+                    color: '#ffffff',
+                    fontSize: '10px',
+                    fontWeight: 800,
+                    marginRight: '8px',
+                    flexShrink: 0,
+                    lineHeight: 1,
+                  }}
+                >
+                  2
+                </span>
+                <span>Latest 6 months Bank Account Statements where primary salary or revenues are credited.</span>
+              </div>
+              <div className="flex items-start">
+                <span
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    width: '18px',
+                    height: '18px',
+                    borderRadius: '9999px',
+                    backgroundColor: '#059669',
+                    color: '#ffffff',
+                    fontSize: '10px',
+                    fontWeight: 800,
+                    marginRight: '8px',
+                    flexShrink: 0,
+                    lineHeight: 1,
+                  }}
+                >
+                  3
+                </span>
+                <span>PAN Card, Aadhaar Card, and Current Residence Proof (Utility bill / Valid registered Rent agreement).</span>
+              </div>
+              <div className="flex items-start">
+                <span
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    width: '18px',
+                    height: '18px',
+                    borderRadius: '9999px',
+                    backgroundColor: '#059669',
+                    color: '#ffffff',
+                    fontSize: '10px',
+                    fontWeight: 800,
+                    marginRight: '8px',
+                    flexShrink: 0,
+                    lineHeight: 1,
+                  }}
+                >
+                  4
+                </span>
+                <span>Existing loan sanction letters & repayment track records (if balance transfer or FOIR deduction requested).</span>
+              </div>
+            </div>
+            {data.specialRemarks && (
+              <p className="mt-2.5 pt-2 border-t border-slate-200 text-[11px] text-slate-600 italic">
+                <strong>Advisor Remark:</strong> {data.specialRemarks}
+              </p>
             )}
           </div>
-          <div className="bg-white p-2.5 rounded-xl border border-slate-100 shadow-2xs">
-            <span className="text-[9px] sm:text-[10px] text-slate-400 font-bold uppercase block">Loan Facility</span>
-            <strong className="text-indigo-950 font-black text-xs sm:text-sm block">{loanLabel}</strong>
-            <span className="text-[10px] text-slate-500 block truncate">{data.employmentType.replace(/_/g, ' ')}</span>
-          </div>
-          <div className="bg-white p-2.5 rounded-xl border border-slate-100 shadow-2xs">
-            <span className="text-[9px] sm:text-[10px] text-slate-400 font-bold uppercase block">Requested Loan</span>
-            <strong className="text-emerald-700 font-black text-xs sm:text-sm block">{formatCurrencyINR(data.requestedAmount)}</strong>
-            <span className="text-[10px] text-slate-500 block">Requested Amount</span>
-          </div>
-          <div className="bg-white p-2.5 rounded-xl border border-slate-100 shadow-2xs">
-            <span className="text-[9px] sm:text-[10px] text-slate-400 font-bold uppercase block">Requested Tenure</span>
-            <strong className="text-slate-900 font-black text-xs sm:text-sm block">{data.requestedTenureYears} Years</strong>
-            <span className="text-[10px] text-slate-500 block">({data.requestedTenureMonths} Months)</span>
-          </div>
-        </div>
 
-        {/* Second Row: Financial Metrics */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-3 pt-2.5 mt-2.5 border-t border-slate-200/80 text-xs">
-          <div>
-            <span className="text-[9px] sm:text-[10px] text-slate-400 font-bold uppercase block">Monthly Income</span>
-            <strong className="text-slate-900 font-black">₹{data.monthlyIncome.toLocaleString('en-IN')}</strong>
-            <span className="text-[10px] text-slate-500 block">Net In-Hand</span>
-          </div>
-          <div>
-            <span className="text-[9px] sm:text-[10px] text-slate-400 font-bold uppercase block">Active Obligations</span>
-            <strong className={`font-black ${data.existingEmi > 0 ? 'text-amber-700' : 'text-emerald-700'}`}>
-              ₹{data.existingEmi.toLocaleString('en-IN')}/mo
-            </strong>
-            <span className="text-[10px] text-slate-500 block">Current EMIs</span>
-          </div>
-          <div>
-            <span className="text-[9px] sm:text-[10px] text-slate-400 font-bold uppercase block">Assessed CIBIL</span>
-            <strong className="text-indigo-700 font-black">
-              {data.cibilScore ? `${data.cibilScore} / 900` : '750+ (Prime)'}
-            </strong>
-            <span className="text-[10px] text-slate-500 block">Credit Rating</span>
-          </div>
-          <div>
-            <span className="text-[9px] sm:text-[10px] text-slate-400 font-bold uppercase block">Permissible FOIR</span>
-            <strong className="text-slate-900 font-black">{data.autoFoirCap}% Cap</strong>
-            <span className="text-[10px] text-emerald-700 block font-bold">
-              ₹{data.availableEmiHeadroom.toLocaleString('en-IN')} Headroom
-            </span>
-          </div>
-        </div>
-      </div>
-
-      {/* ========================================================================= */}
-      {/* 4. OBLIGATIONS & DISPOSABLE INCOME ANALYSIS                                */}
-      {/* ========================================================================= */}
-      <div className="mb-5 sm:mb-6 p-3.5 sm:p-4 rounded-2xl bg-blue-50/70 border border-blue-200 text-xs">
-        <div className="flex items-center gap-2 mb-1.5 font-black text-blue-900 text-xs">
-          <span>📊</span>
-          <span>Obligations & Repayment Capacity Evaluation:</span>
-        </div>
-        <p className="text-slate-700 text-xs leading-relaxed">
-          {data.obligationRemarks}
-        </p>
-      </div>
-
-      {/* ========================================================================= */}
-      {/* 5. MATCHED BANK OPTIONS OFFERED (COMPARISON TABLE + CARDS)                */}
-      {/* ========================================================================= */}
-      <div className="mb-5 sm:mb-6 space-y-4">
-        <div className="flex items-center justify-between border-b border-slate-200 pb-2">
-          <h3 className="text-[11px] sm:text-xs font-black uppercase tracking-wider text-slate-800 flex items-center gap-2">
-            <span>🏦</span>
-            <span>Matched Institutional Bank Offers ({data.bankOffers.length} Options)</span>
-          </h3>
-          <span className="text-[10px] sm:text-[11px] text-slate-500 font-medium">Ranked by Competitive Interest Rate</span>
-        </div>
-
-        {/* COMPARISON TABLE */}
-        <div className="overflow-x-auto rounded-xl border border-slate-200 shadow-2xs">
-          <table className="w-full text-left text-xs border-collapse">
-            <thead>
-              <tr className="bg-slate-900 text-white text-[10px] sm:text-[11px] uppercase tracking-wider">
-                <th className="p-2 sm:p-2.5 font-bold">Lending Bank</th>
-                <th className="p-2 sm:p-2.5 font-bold">Indicative Rate</th>
-                <th className="p-2 sm:p-2.5 font-bold">Sanction Limit</th>
-                <th className="p-2 sm:p-2.5 font-bold">Monthly EMI</th>
-                <th className="p-2 sm:p-2.5 font-bold">Tenure</th>
-                <th className="p-2 sm:p-2.5 font-bold">Proc. Fee</th>
-                <th className="p-2 sm:p-2.5 font-bold">TAT</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-200 bg-white">
-              {data.bankOffers.map((b, idx) => (
-                <tr
-                  key={b.cardId}
-                  className={b.isBestMatch ? 'bg-emerald-50/70 font-semibold' : idx % 2 === 1 ? 'bg-slate-50/50' : ''}
-                >
-                  <td className="p-2 sm:p-2.5">
-                    <div className="flex items-center gap-1.5">
-                      <strong className="text-slate-900">{b.bankName}</strong>
-                      {b.isBestMatch && (
-                        <span className="px-1.5 py-0.5 rounded-full bg-emerald-600 text-white text-[9px] font-black uppercase">
-                          ★ Best
-                        </span>
-                      )}
-                    </div>
-                  </td>
-                  <td className="p-2 sm:p-2.5 text-emerald-700 font-black">
-                    {b.interestRate.toFixed(2)}% p.a.
-                  </td>
-                  <td className="p-2 sm:p-2.5 font-black text-slate-900">
-                    {formatCurrencyINR(b.recommendedAmount)}
-                  </td>
-                  <td className="p-2 sm:p-2.5 font-black text-indigo-950">
-                    ₹{Math.round(b.proposedEmi).toLocaleString('en-IN')}/m
-                  </td>
-                  <td className="p-2 sm:p-2.5 text-slate-600">
-                    {b.tenureYears} Yrs ({b.tenureMonths}m)
-                  </td>
-                  <td className="p-2 sm:p-2.5 text-slate-600">
-                    {b.processingFeeText}
-                  </td>
-                  <td className="p-2 sm:p-2.5 text-slate-600">
-                    ~{b.tatDays} Days
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-
-        {/* DETAILED BANK CARDS WITH ELIGIBILITY REMARKS */}
-        <div className="space-y-3 pt-1">
-          {data.bankOffers.map((b) => (
-            <div
-              key={b.cardId}
-              className={`p-3.5 sm:p-4 rounded-2xl border ${
-                b.isBestMatch
-                  ? 'border-emerald-400 bg-emerald-50/25 shadow-xs ring-1 ring-emerald-300'
-                  : 'border-slate-200 bg-white'
-              } break-inside-avoid`}
-            >
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-2.5">
-                <div className="flex items-center gap-2.5">
-                  <div className="w-9 h-9 rounded-xl bg-slate-900 text-white font-black text-xs flex items-center justify-center shadow-2xs shrink-0">
-                    {b.bankCode.slice(0, 3)}
-                  </div>
-                  <div>
-                    <h4 className="font-black text-slate-900 text-sm flex items-center gap-2">
-                      <span>{b.bankName}</span>
-                      {b.isBestMatch && (
-                        <span className="px-2 py-0.5 rounded-full bg-emerald-600 text-white text-[9px] font-black uppercase tracking-wider">
-                          Primary Recommendation
-                        </span>
-                      )}
-                    </h4>
-                    <span className="text-[10px] text-slate-500 block">
-                      Product: {loanLabel} • Turnaround Time: ~{b.tatDays} Working Days
-                    </span>
-                  </div>
-                </div>
-
-                <div className="text-left sm:text-right bg-emerald-50/60 sm:bg-transparent p-2 sm:p-0 rounded-xl sm:rounded-none">
-                  <span className="text-[9px] sm:text-[10px] text-slate-400 uppercase font-bold block">Indicative Interest Rate</span>
-                  <span className="text-sm sm:text-base font-black text-emerald-700 leading-tight">
-                    {b.interestRate.toFixed(2)}% p.a.
-                  </span>
-                </div>
+          {/* ========================================================================= */}
+          {/* 3. MULTI-BANK SYNDICATION & SANCTION PROCESS TIMELINE                     */}
+          {/* ========================================================================= */}
+          <div className="mb-4 p-3.5 rounded-2xl bg-slate-50/80 border border-slate-200 text-xs">
+            <h4 className="font-black text-slate-800 mb-2.5 flex items-center gap-1.5 text-xs uppercase tracking-wide">
+              <span>🚀</span>
+              <span>Next Steps Toward Final Bank Sanction Letter:</span>
+            </h4>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-center text-xs">
+              <div className="bg-white p-2.5 rounded-xl border border-slate-100">
+                <span className="text-[10px] font-bold text-emerald-700 uppercase block mb-1">Step 1 • Completed</span>
+                <strong className="text-slate-900 block text-xs">In-Principle Eligibility Match</strong>
+                <span className="text-[10px] text-slate-500 block mt-0.5">Automated Multi-Bank Matrix Evaluation</span>
               </div>
-
-              {/* 3 Core Metrics Tile */}
-              <div className="grid grid-cols-3 gap-2 bg-slate-50/90 p-2 sm:p-2.5 rounded-xl border border-slate-100 text-xs mb-2.5 text-center">
-                <div>
-                  <span className="text-[9px] sm:text-[10px] text-slate-400 block uppercase font-bold">Sanction Capacity</span>
-                  <strong className="text-slate-900 font-black text-xs sm:text-sm">{formatCurrencyINR(b.recommendedAmount)}</strong>
-                </div>
-                <div>
-                  <span className="text-[9px] sm:text-[10px] text-slate-400 block uppercase font-bold">Estimated EMI</span>
-                  <strong className="text-indigo-950 font-black text-xs sm:text-sm">₹{Math.round(b.proposedEmi).toLocaleString('en-IN')}/m</strong>
-                </div>
-                <div>
-                  <span className="text-[9px] sm:text-[10px] text-slate-400 block uppercase font-bold">Approved Tenure</span>
-                  <strong className="text-slate-900 font-black text-xs sm:text-sm">{b.tenureYears} Years ({b.tenureMonths}m)</strong>
-                </div>
+              <div className="bg-emerald-50/80 p-2.5 rounded-xl border border-emerald-200">
+                <span className="text-[10px] font-bold text-emerald-800 uppercase block mb-1">Step 2 • Current Stage</span>
+                <strong className="text-slate-900 block text-xs">Document Collection & Verification</strong>
+                <span className="text-[10px] text-emerald-700 block mt-0.5">Assigned Advisor Assist & Direct Bank Login</span>
               </div>
-
-              {/* Underwriting Eligibility Remarks */}
-              {b.passRemarks && b.passRemarks.length > 0 && (
-                <div className="space-y-1 mb-2">
-                  <span className="text-[9px] sm:text-[10px] font-bold text-slate-500 uppercase block">Underwriting Eligibility Remarks:</span>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-1 text-[11px] text-emerald-800">
-                    {b.passRemarks.map((remark, rIdx) => (
-                      <div key={rIdx} className="flex items-start gap-1">
-                        <span className="text-emerald-600 font-bold shrink-0">✓</span>
-                        <span>{remark}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Special Features & USPs */}
-              {b.specialFeatures && b.specialFeatures.length > 0 && (
-                <div className="text-[10px] sm:text-[11px] text-slate-600 pt-1.5 border-t border-slate-100 flex flex-wrap gap-1.5 sm:gap-2">
-                  <span className="font-bold text-slate-700">Bank USPs:</span>
-                  {b.specialFeatures.map((feat, fIdx) => (
-                    <span key={fIdx} className="px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 text-[10px] font-semibold">
-                      • {feat}
-                    </span>
-                  ))}
-                </div>
-              )}
+              <div className="bg-white p-2.5 rounded-xl border border-slate-100">
+                <span className="text-[10px] font-bold text-slate-400 uppercase block mb-1">Step 3 • Final Step</span>
+                <strong className="text-slate-900 block text-xs">Credit Appraisal & Sanction</strong>
+                <span className="text-[10px] text-slate-500 block mt-0.5">Official Bank Sanction Letter & Disbursal</span>
+              </div>
             </div>
-          ))}
-        </div>
-      </div>
+          </div>
 
-      {/* ========================================================================= */}
-      {/* 6. PRE-SANCTION VERIFICATION & DOCUMENTATION CHECKLIST                     */}
-      {/* ========================================================================= */}
-      <div className="mb-5 sm:mb-6 p-3.5 sm:p-4 rounded-2xl bg-slate-50 border border-slate-200 text-xs break-inside-avoid">
-        <h4 className="font-black text-slate-900 mb-2 flex items-center gap-1.5 text-xs">
-          <span>📁</span>
-          <span>Required Verification Checklist for Final Bank Sanction:</span>
-        </h4>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px] text-slate-700">
-          <div className="flex items-start gap-1.5">
-            <span className="text-emerald-600 font-bold">1.</span>
-            <span>Latest 3 months Salary Slips (or 2 years ITR with computation & audit report for business).</span>
+          {/* ========================================================================= */}
+          {/* 4. MANDATORY IMPORTANT NOTE & SANCTION DISCLAIMER (PROMINENT HIGHLIGHT)   */}
+          {/* ========================================================================= */}
+          <div
+            style={{
+              backgroundColor: '#fffbeb',
+              border: '2px solid #fcd34d',
+              borderRadius: '16px',
+              padding: '16px 18px',
+              color: '#78350f',
+              marginBottom: '16px',
+            }}
+          >
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                fontSize: '11.5px',
+                fontWeight: 900,
+                color: '#92400e',
+                textTransform: 'uppercase',
+                letterSpacing: '0.05em',
+                marginBottom: '6px',
+              }}
+            >
+              <span style={{ fontSize: '15px', marginRight: '6px' }}>⚠️</span>
+              <span>IMPORTANT NOTE & SANCTION DISCLAIMER</span>
+            </div>
+            <p
+              style={{
+                fontSize: '12px',
+                lineHeight: '1.5',
+                fontWeight: 600,
+                color: '#78350f',
+                margin: 0,
+              }}
+            >
+              &ldquo;{data.importantNote}&rdquo;
+            </p>
           </div>
-          <div className="flex items-start gap-1.5">
-            <span className="text-emerald-600 font-bold">2.</span>
-            <span>Latest 6 months Bank Account Statements where salary/business revenues are credited.</span>
-          </div>
-          <div className="flex items-start gap-1.5">
-            <span className="text-emerald-600 font-bold">3.</span>
-            <span>PAN Card, Aadhaar Card, and Current Residence Proof (Utility bill / Rent agreement).</span>
-          </div>
-          <div className="flex items-start gap-1.5">
-            <span className="text-emerald-600 font-bold">4.</span>
-            <span>Existing loan sanction letters & track records (if balance transfer or FOIR deduction needed).</span>
+
+          {/* ========================================================================= */}
+          {/* 5. FINANCIAL ADVISOR SIGN-OFF & CRISP DIGITAL VERIFICATION BADGE          */}
+          {/* ========================================================================= */}
+          <div className="border-t-2 border-slate-200 pt-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs">
+            <div>
+              <span className="text-[9px] uppercase font-bold text-slate-400 block">Your Dedicated Financial Advisor</span>
+              <strong className="text-slate-900 text-sm font-black block">{data.advisorName}</strong>
+              <span className="text-slate-600 block">{data.advisorRole} • {data.branchName}</span>
+              <span className="text-emerald-700 font-bold block mt-0.5">Direct Contact: {data.advisorPhone}</span>
+            </div>
+
+            <div className="text-left sm:text-right">
+              {/* Digitally Verified Badge with rock-solid SVG checkmark & explicit colors */}
+              <div
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  backgroundColor: '#ecfdf5',
+                  border: '1.5px solid #10b981',
+                  borderRadius: '12px',
+                  padding: '7px 14px',
+                }}
+              >
+                <svg
+                  width="18"
+                  height="18"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="#059669"
+                  strokeWidth="2.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  style={{ marginRight: '8px', flexShrink: 0 }}
+                >
+                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                  <path d="M9 12l2 2 4-4" />
+                </svg>
+                <div style={{ textAlign: 'left' }}>
+                  <div
+                    style={{
+                      fontSize: '9.5px',
+                      fontWeight: 900,
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.06em',
+                      color: '#065f46',
+                      lineHeight: '1.2',
+                    }}
+                  >
+                    Digitally Verified
+                  </div>
+                  <div
+                    style={{
+                      fontSize: '9px',
+                      fontWeight: 700,
+                      color: '#047857',
+                      lineHeight: '1.2',
+                    }}
+                  >
+                    Quickfinsure Sourcing Engine
+                  </div>
+                </div>
+              </div>
+              <p className="text-[10px] text-slate-400 mt-1.5">
+                Generated on {generatedDateFormatted} • System Case ID #{data.referenceNumber}
+              </p>
+            </div>
           </div>
         </div>
-        {data.specialRemarks && (
-          <p className="mt-2.5 pt-2 border-t border-slate-200 text-[11px] text-slate-600 italic">
-            <strong>Advisor Remark:</strong> {data.specialRemarks}
-          </p>
-        )}
-      </div>
 
-      {/* ========================================================================= */}
-      {/* 7. MANDATORY IMPORTANT NOTE & SANCTION DISCLAIMER (PROMINENT HIGHLIGHT)   */}
-      {/* ========================================================================= */}
-      <div className="mb-5 sm:mb-6 p-4 sm:p-5 rounded-2xl bg-amber-50/90 border-2 border-amber-300 shadow-2xs text-amber-950 break-inside-avoid">
-        <div className="flex items-center gap-2 mb-1.5 font-black text-amber-900 text-xs uppercase tracking-wider">
-          <span className="text-base">⚠️</span>
-          <span>IMPORTANT NOTE & SANCTION DISCLAIMER</span>
-        </div>
-        <p className="text-xs sm:text-[13px] leading-relaxed font-semibold text-amber-950">
-          &ldquo;{data.importantNote}&rdquo;
-        </p>
-      </div>
-
-      {/* ========================================================================= */}
-      {/* 8. FINANCIAL ADVISOR SIGN-OFF & BRANCH CONTACT DETAILS                    */}
-      {/* ========================================================================= */}
-      <div className="border-t-2 border-slate-200 pt-4 sm:pt-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs break-inside-avoid">
-        <div>
-          <span className="text-[9px] sm:text-[10px] uppercase font-bold text-slate-400 block">Your Dedicated Financial Advisor</span>
-          <strong className="text-slate-900 text-sm font-black block">{data.advisorName}</strong>
-          <span className="text-slate-600 block">{data.advisorRole} • {data.branchName}</span>
-          <span className="text-emerald-700 font-bold block mt-0.5">Contact: {data.advisorPhone}</span>
-        </div>
-
-        <div className="text-left sm:text-right">
-          <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-50 border border-emerald-300 text-emerald-800 text-[10px] font-bold uppercase tracking-wider">
-            <span>🛡️</span>
-            <span>Digitally Verified by Quickfinsure Sourcing Engine</span>
+        {/* ========================================================================= */}
+        {/* OFFICIAL RUNNING FOOTER FOR PAGE 2                                        */}
+        {/* ========================================================================= */}
+        <div className="border-t-2 border-emerald-600/80 pt-3 mt-4 flex items-center justify-between text-[10px] text-slate-500">
+          <div>
+            <strong className="text-slate-800">{data.companyName || 'Quickfinsure Solutions'}</strong> • Multi-Bank Syndication Network
           </div>
-          <p className="text-[10px] text-slate-400 mt-1">
-            Generated on {generatedDateFormatted} • System Case ID #{data.referenceNumber}
-          </p>
+          <div className="font-bold text-slate-700 uppercase tracking-wider">
+            TENTATIVE OFFER REPORT • Page 2 of 2
+          </div>
+          <div className="font-mono text-slate-600">
+            Ref: {data.referenceNumber}
+          </div>
         </div>
       </div>
     </div>

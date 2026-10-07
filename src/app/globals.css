@@ -175,16 +175,35 @@ button, nav {
     width: 100% !important;
     max-width: 100% !important;
     margin: 0 !important;
-    padding: 15px 20px !important;
+    padding: 0 !important;
     border: none !important;
     box-shadow: none !important;
     border-radius: 0 !important;
     background: #ffffff !important;
     color: #0f172a !important;
-    font-size: 11.5px !important;
-    line-height: 1.4 !important;
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
+  }
+
+  .pdf-page {
+    page-break-after: always !important;
+    break-after: page !important;
+    min-height: 275mm !important;
+    box-sizing: border-box !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: space-between !important;
+    padding: 8mm 12mm !important;
+    margin: 0 !important;
+    border: none !important;
+    box-shadow: none !important;
+    border-radius: 0 !important;
+    background: #ffffff !important;
+  }
+
+  .pdf-page:last-child {
+    page-break-after: auto !important;
+    break-after: auto !important;
   }
 
   /* Prevent awkward page break splitting on cards */
