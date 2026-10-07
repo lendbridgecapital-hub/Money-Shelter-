@@ -131,3 +131,72 @@ button, nav {
 .safe-mb-bottom {
   margin-bottom: max(18px, calc(env(safe-area-inset-bottom, 0px) + 14px));
 }
+
+/* ========================================================================= */
+/* PRINT & SHAREABLE PDF EXPORT ENGINE                                       */
+/* ========================================================================= */
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 8mm 10mm;
+  }
+
+  html, body {
+    background: #ffffff !important;
+    color: #0f172a !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100% !important;
+    height: auto !important;
+    overflow: visible !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* When printing the eligibility offer report, hide everything else */
+  body:has(#customer-eligibility-pdf) > *:not(:has(#customer-eligibility-pdf)) {
+    display: none !important;
+  }
+
+  /* Any screen elements explicitly flagged as print:hidden */
+  .print\\:hidden,
+  nav,
+  header,
+  aside,
+  button,
+  .modal-backdrop {
+    display: none !important;
+  }
+
+  /* Enforce clean A4 page layout for the PDF canvas */
+  #customer-eligibility-pdf {
+    display: block !important;
+    position: static !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 15px 20px !important;
+    border: none !important;
+    box-shadow: none !important;
+    border-radius: 0 !important;
+    background: #ffffff !important;
+    color: #0f172a !important;
+    font-size: 11.5px !important;
+    line-height: 1.4 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Prevent awkward page break splitting on cards */
+  .break-inside-avoid,
+  #customer-eligibility-pdf .break-inside-avoid {
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+
+  /* Force background colors on badges and cards */
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+}

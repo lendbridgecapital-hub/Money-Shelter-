@@ -5,6 +5,7 @@ import type { CustomerEligibilityOfferData } from '@/types/policy';
 import CustomerEligibilityOfferDoc from './CustomerEligibilityOfferDoc';
 import { generateWhatsAppShareUrl } from '@/lib/offerPdfHelper';
 import { saveApplicationEligibilityOfferAction } from '@/actions/policyActions';
+import { downloadElementAsPdf } from '@/lib/pdfDownloader';
 
 interface CustomerEligibilityOfferModalProps {
   isOpen: boolean;
@@ -26,6 +27,7 @@ export default function CustomerEligibilityOfferModal({
   const [showEditRemarks, setShowEditRemarks] = useState(false);
   const [customObligationRemark, setCustomObligationRemark] = useState(initialData.obligationRemarks || '');
   const [customSpecialRemark, setCustomSpecialRemark] = useState(initialData.specialRemarks || '');
+  const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
 
   useEffect(() => {
     setData(initialData);
@@ -50,6 +52,14 @@ export default function CustomerEligibilityOfferModal({
     if (typeof window !== 'undefined') {
       window.print();
     }
+  };
+
+  const handleDownloadPdf = async () => {
+    setIsGeneratingPdf(true);
+    const cleanCustomerName = (data.customerName || 'Applicant').replace(/[^a-zA-Z0-9]/g, '_');
+    const fileName = `Quickfinsure_Eligibility_Offer_${cleanCustomerName}.pdf`;
+    await downloadElementAsPdf('customer-eligibility-pdf', fileName);
+    setIsGeneratingPdf(false);
   };
 
   const handleCopyLink = () => {
@@ -133,14 +143,27 @@ export default function CustomerEligibilityOfferModal({
               <span>{copiedLink ? '✓ Copied' : '🔗 Link'}</span>
             </button>
 
+            {/* Direct PDF File Download */}
+            <button
+              type="button"
+              onClick={handleDownloadPdf}
+              disabled={isGeneratingPdf}
+              className="px-4 py-1.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-xs font-black shadow-md active:scale-95 transition flex items-center gap-1.5 disabled:opacity-60"
+              title="Download official high-resolution A4 PDF letter directly"
+            >
+              <span>{isGeneratingPdf ? '⏳' : '📥'}</span>
+              <span>{isGeneratingPdf ? 'Generating PDF...' : 'Download PDF'}</span>
+            </button>
+
             {/* Print / Save as PDF */}
             <button
               type="button"
               onClick={handlePrint}
-              className="px-4 py-1.5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white text-xs font-black shadow-md active:scale-95 transition flex items-center gap-1.5"
+              className="px-3.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold transition flex items-center gap-1.5 border border-slate-700"
+              title="Print letter via browser print dialog"
             >
               <span>🖨️</span>
-              <span>Print / Save as PDF</span>
+              <span>Print</span>
             </button>
 
             {/* Close */}
