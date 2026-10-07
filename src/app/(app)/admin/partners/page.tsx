@@ -1,20 +1,22 @@
 import { redirect } from 'next/navigation';
 import { requireUser } from '@/lib/auth';
-import { listAllNetworkPartners, listPartnersByRm, listRelationshipManagers } from '@/lib/repos/usersRepo';
+import { listAllNetworkPartners, listPartnersByRm, listPartnersBySubDsa, listRelationshipManagers } from '@/lib/repos/usersRepo';
 import { listBranches } from '@/lib/repos/branchesRepo';
 import PartnerComplianceManager from './PartnerComplianceManager';
 
 export default async function PartnersPage() {
   const user = await requireUser();
 
-  // Channel partners should only see their own business, not the partner network/compliance directory
+  // Standard channel partners (agents) only see their own business, not the partner network directory
   if (user.role === 'CHANNEL_PARTNER') {
     redirect('/dashboard');
   }
 
-  // RMs only see their assigned network partners (agents + sub-dsas)
+  // Sub-DSAs see their mapped agents; RMs see their assigned network partners; Admins & Support see all
   const partners =
-    user.role === 'RELATIONSHIP_MANAGER'
+    user.role === 'SUB_DSA'
+      ? listPartnersBySubDsa(user.id, user.tenantId || 'default')
+      : user.role === 'RELATIONSHIP_MANAGER'
       ? listPartnersByRm(user.id, user.tenantId || 'default')
       : listAllNetworkPartners(user.tenantId || 'default');
 

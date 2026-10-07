@@ -30,6 +30,7 @@ export default function PartnerComplianceManager({
   const isAdmin = currentUserRole === 'ADMIN';
   const isRM = currentUserRole === 'RELATIONSHIP_MANAGER';
   const isSupport = currentUserRole === 'CENTRAL_SUPPORT';
+  const isSubDsa = currentUserRole === 'SUB_DSA';
 
   // Selection & Modals
   const [selectedPartner, setSelectedPartner] = useState<User | null>(null);
@@ -84,6 +85,9 @@ export default function PartnerComplianceManager({
 
   const getOnboardingUrl = () => {
     const origin = typeof window !== 'undefined' ? window.location.origin : '';
+    if (isSubDsa && currentUserId) {
+      return `${origin}/partner/onboard?subDsaId=${currentUserId}`;
+    }
     if (isRM && currentUserId) {
       return `${origin}/partner/onboard?rmId=${currentUserId}`;
     }
@@ -113,7 +117,9 @@ export default function PartnerComplianceManager({
   const shareViaWhatsApp = () => {
     const link = getOnboardingUrl();
     const text = encodeURIComponent(
-      `Hello! Register as an authorized Channel Partner with Quickfinsure using my direct onboarding link: ${link}`
+      isSubDsa
+        ? `Hi! Join my agency network at Quickfinsure as an authorized Channel Partner (Agent). Submit retail loans digitally, get instant bank approvals, and earn top commission slabs on every disbursement. Register directly using my link: ${link}`
+        : `Hello! Register as an authorized Channel Partner with Quickfinsure using my direct onboarding link: ${link}`
     );
     window.open(`https://api.whatsapp.com/send?text=${text}`, '_blank');
   };
@@ -262,10 +268,16 @@ export default function PartnerComplianceManager({
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-xl font-bold text-slate-900">
-            {isRM ? `My Assigned Channel Partners (${partners.length})` : 'Channel Partner Compliance & Network'}
+            {isSubDsa
+              ? `My Mapped Channel Partner (Agent) Network (${partners.length})`
+              : isRM
+              ? `My Assigned Channel Partners (${partners.length})`
+              : 'Channel Partner Compliance & Network'}
           </h1>
           <p className="text-xs text-slate-500 mt-0.5">
-            {isRM
+            {isSubDsa
+              ? 'Agents registered through your referral link. Disbursed loans generate automated override payouts to you.'
+              : isRM
               ? 'Directory of Channel Partners mapped to your RM portfolio. Monitor their performance, codes, and activities.'
               : 'Monitor Channel Partner originations, onboard new partners with instant approval, and manage network compliance.'}
           </p>
@@ -308,14 +320,24 @@ export default function PartnerComplianceManager({
           <div>
             <div className="flex items-center gap-2 flex-wrap">
               <h2 className="text-xs font-bold text-slate-900 uppercase tracking-wide">
-                {isRM ? 'My Partner Onboarding Link (Auto-Assign)' : 'Public Partner Self-Registration Link'}
+                {isSubDsa
+                  ? 'My Agent Referral & Onboarding Link'
+                  : isRM
+                  ? 'My Partner Onboarding Link (Auto-Assign)'
+                  : 'Public Partner Self-Registration Link'}
               </h2>
               <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-100 text-emerald-800">
-                {isRM ? '⚡ Auto-Assigns To You' : 'Self-Registration & Sub-DSA'}
+                {isSubDsa
+                  ? '⚡ 0.1% Team Override Engine'
+                  : isRM
+                  ? '⚡ Auto-Assigns To You'
+                  : 'Self-Registration & Sub-DSA'}
               </span>
             </div>
             <p className="text-[11px] text-slate-500 mt-0.5">
-              {isRM
+              {isSubDsa
+                ? 'Share this link with prospective agents. Any partner who registers through this link will be automatically mapped under your Sub-DSA network.'
+                : isRM
                 ? 'Share this link with prospective partners. Any partner who registers through this link will be automatically assigned to you.'
                 : 'Share this link with prospective partners to submit PAN & Aadhaar KYC, review the Sub-DSA agreement, and complete mobile OTP verification.'}
             </p>
@@ -328,10 +350,10 @@ export default function PartnerComplianceManager({
             onClick={copyOnboardingLink}
             className="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-lg shadow-2xs transition inline-flex items-center gap-1.5"
           >
-            <span>{copiedLink ? '✓ Copied Link' : isRM ? '📋 Copy My Link' : '📋 Copy Link'}</span>
+            <span>{copiedLink ? '✓ Copied Link' : (isRM || isSubDsa) ? '📋 Copy My Link' : '📋 Copy Link'}</span>
           </button>
           <a
-            href={isRM && currentUserId ? `/partner/onboard?rmId=${currentUserId}` : '/partner/onboard'}
+            href={isSubDsa && currentUserId ? `/partner/onboard?subDsaId=${currentUserId}` : isRM && currentUserId ? `/partner/onboard?rmId=${currentUserId}` : '/partner/onboard'}
             target="_blank"
             rel="noopener noreferrer"
             className="px-3 py-2 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-semibold rounded-lg transition inline-flex items-center gap-1"
@@ -339,7 +361,7 @@ export default function PartnerComplianceManager({
             <span>Preview Form</span>
             <span>↗</span>
           </a>
-          {isRM && (
+          {(isRM || isSubDsa) && (
             <button
               type="button"
               onClick={shareViaWhatsApp}
@@ -387,13 +409,16 @@ export default function PartnerComplianceManager({
                 <th className="px-4 py-3">Approval & Compliance</th>
                 <th className="px-4 py-3">Registered</th>
                 {(isAdmin || isSupport) && <th className="px-4 py-3 text-right">Actions</th>}
+                {isSubDsa && <th className="px-4 py-3 text-right">Connect</th>}
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
               {partners.length === 0 ? (
                 <tr>
-                  <td colSpan={isAdmin || isSupport ? 7 : 6} className="px-4 py-12 text-center text-slate-400 text-sm">
-                    No Channel Partners registered yet. Click &ldquo;➕ Onboard New Partner&rdquo; above to add your first partner.
+                  <td colSpan={isAdmin || isSupport || isSubDsa ? 7 : 6} className="px-4 py-12 text-center text-slate-400 text-sm">
+                    {isSubDsa
+                      ? "You haven't appointed any agents yet. Share your Agent Referral Link above to recruit your first partner!"
+                      : "No Channel Partners registered yet. Click \u201C\u2795 Onboard New Partner\u201D above to add your first partner."}
                   </td>
                 </tr>
               ) : (
@@ -550,6 +575,22 @@ export default function PartnerComplianceManager({
                             >
                               Block
                             </button>
+                          )}
+                        </td>
+                      )}
+                      {isSubDsa && (
+                        <td className="px-4 py-3.5 text-right">
+                          {p.phone ? (
+                            <a
+                              href={`https://api.whatsapp.com/send?phone=91${p.phone.replace(/[^0-9]/g, '').slice(-10)}&text=Hi%20${encodeURIComponent(p.name)},%20checking%20in%20on%20your%20active%20loan%20cases!`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="px-2.5 py-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 text-xs font-bold rounded-lg border border-emerald-200 transition inline-flex items-center gap-1"
+                            >
+                              <span>WhatsApp</span>
+                            </a>
+                          ) : (
+                            <span className="text-slate-400 text-xs">—</span>
                           )}
                         </td>
                       )}

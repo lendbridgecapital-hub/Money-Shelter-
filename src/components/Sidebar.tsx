@@ -72,11 +72,11 @@ export default function Sidebar({
       external: false,
     },
     {
-      label: isRM ? 'My Channel Partners' : isSupport ? 'Partner Directory' : 'Partner Compliance',
+      label: isSubDsa ? 'My Agent Network' : isRM ? 'My Channel Partners' : isSupport ? 'Partner Directory' : 'Partner Compliance',
       href: '/admin/partners',
       icon: '🛡️',
-      description: 'Active partners & records',
-      show: isAdmin || isSupport || isRM,
+      description: isSubDsa ? 'Mapped agents in your franchise' : 'Active partners & records',
+      show: isAdmin || isSupport || isRM || isSubDsa,
       external: false,
     },
     {
@@ -160,6 +160,12 @@ export default function Sidebar({
       href: '/branch/requests',
       icon: '📋',
       show: true,
+    },
+    {
+      label: 'Agent Network',
+      href: '/admin/partners',
+      icon: '👥',
+      show: isSubDsa,
     },
     {
       label: 'Loan Eligibility Match',
