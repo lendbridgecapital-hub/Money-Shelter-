@@ -37,6 +37,7 @@ export default function MobileDrawer({
   const isOps = role === 'OPERATIONS';
   const isRM = role === 'RELATIONSHIP_MANAGER';
   const isPartner = role === 'CHANNEL_PARTNER';
+  const isSubDsa = role === 'SUB_DSA';
 
   const menuItems = [
     {
@@ -82,10 +83,10 @@ export default function MobileDrawer({
       show: isAdmin || isSupport,
     },
     {
-      label: isRM ? 'My Channel Partners' : isSupport ? 'Partner Directory' : 'Partner Compliance',
+      label: isSubDsa ? 'My Team' : isRM ? 'My Channel Partners' : isSupport ? 'Partner Directory' : 'Partner Compliance',
       href: '/admin/partners',
-      icon: '🛡️',
-      show: isAdmin || isSupport || isRM,
+      icon: '👥',
+      show: isAdmin || isSupport || isRM || isSubDsa,
     },
     {
       label: isPartner ? 'My Approved Certificate' : 'Partner Certificate',

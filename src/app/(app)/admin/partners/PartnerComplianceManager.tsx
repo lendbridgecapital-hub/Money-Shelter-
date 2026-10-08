@@ -2,14 +2,14 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import type { User, Role, Branch } from '@/types/db';
+import type { User, Role, Branch, LoanApplication, RewardLedgerEntry } from '@/types/db';
 import { blockPartnerAction } from '@/actions/workflowActions';
 import {
   directAdminOnboardPartnerAction,
   approvePartnerAction,
   updatePartnerCommissionRateAction,
 } from '@/actions/partnerOnboardingActions';
-import { formatDate } from '@/lib/format';
+import { formatDate, LOAN_TYPE_LABELS, STATUS_LABELS, formatCurrencyINR } from '@/lib/format';
 
 interface Props {
   partners: User[];
@@ -17,6 +17,8 @@ interface Props {
   relationshipManagers?: User[];
   currentUserRole: Role;
   currentUserId?: string;
+  applications?: LoanApplication[];
+  rewardLedger?: RewardLedgerEntry[];
 }
 
 export default function PartnerComplianceManager({
@@ -25,6 +27,8 @@ export default function PartnerComplianceManager({
   relationshipManagers = [],
   currentUserRole,
   currentUserId,
+  applications = [],
+  rewardLedger = [],
 }: Props) {
   const router = useRouter();
   const isAdmin = currentUserRole === 'ADMIN';
@@ -82,6 +86,50 @@ export default function PartnerComplianceManager({
   const [commissionModalLoading, setCommissionModalLoading] = useState(false);
   const [commissionModalError, setCommissionModalError] = useState<string | null>(null);
   const [commissionModalSuccess, setCommissionModalSuccess] = useState<string | null>(null);
+
+  // Agent Activity Inspection Modal State
+  const [selectedPartnerForActivity, setSelectedPartnerForActivity] = useState<User | null>(null);
+  const [activityTab, setActivityTab] = useState<'APPLICATIONS' | 'REWARDS'>('APPLICATIONS');
+
+  // Active Agent activity metrics
+  const activeAgentApps = React.useMemo(() => {
+    if (!selectedPartnerForActivity) return [];
+    return applications.filter(
+      (app) =>
+        app.channelPartnerId === selectedPartnerForActivity.id ||
+        app.createdById === selectedPartnerForActivity.id
+    );
+  }, [selectedPartnerForActivity, applications]);
+
+  const activeAgentCrpEntries = React.useMemo(() => {
+    if (!selectedPartnerForActivity) return [];
+    return rewardLedger.filter((e) => e.partnerId === selectedPartnerForActivity.id);
+  }, [selectedPartnerForActivity, rewardLedger]);
+
+  const activeAgentStats = React.useMemo(() => {
+    const totalApps = activeAgentApps.length;
+    const disbursedApps = activeAgentApps.filter((a) => a.status === 'DISBURSED');
+    const disbursedVolume = disbursedApps.reduce((acc, a) => acc + (a.disbursedAmount || a.loanAmount || 0), 0);
+    const inProgressApps = activeAgentApps.filter(
+      (a) => a.status !== 'DISBURSED' && a.status !== 'REJECTED'
+    );
+    const approvedApps = activeAgentApps.filter((a) => a.status === 'APPROVED');
+    const totalCrpEarned = activeAgentCrpEntries
+      .filter((e) => e.type === 'COMMISSION_EARNING' && e.status === 'CREDITED')
+      .reduce((acc, e) => acc + e.points, 0);
+
+    const subDsaOverrideInr = isSubDsa ? Math.round(disbursedVolume * 0.001) : 0; // 0.1% override
+
+    return {
+      totalApps,
+      disbursedCount: disbursedApps.length,
+      disbursedVolume,
+      inProgressCount: inProgressApps.length,
+      approvedCount: approvedApps.length,
+      totalCrpEarned,
+      subDsaOverrideInr,
+    };
+  }, [activeAgentApps, activeAgentCrpEntries, isSubDsa]);
 
   const getOnboardingUrl = () => {
     const origin = typeof window !== 'undefined' ? window.location.origin : '';
@@ -269,14 +317,14 @@ export default function PartnerComplianceManager({
         <div>
           <h1 className="text-xl font-bold text-slate-900">
             {isSubDsa
-              ? `My Mapped Channel Partner (Agent) Network (${partners.length})`
+              ? `My Team (${partners.length})`
               : isRM
               ? `My Assigned Channel Partners (${partners.length})`
               : 'Channel Partner Compliance & Network'}
           </h1>
           <p className="text-xs text-slate-500 mt-0.5">
             {isSubDsa
-              ? 'Agents registered through your referral link. Disbursed loans generate automated override payouts to you.'
+              ? 'Directory of channel partner agents in your network. Click any agent name or Activity button to inspect their live loan applications, volume, and override payouts.'
               : isRM
               ? 'Directory of Channel Partners mapped to your RM portfolio. Monitor their performance, codes, and activities.'
               : 'Monitor Channel Partner originations, onboard new partners with instant approval, and manage network compliance.'}
@@ -433,18 +481,28 @@ export default function PartnerComplianceManager({
                     const isBlocked = Boolean(p.isBlocked);
                     const status = p.partnerStatus || 'APPROVED';
                     const isPending = status === 'PENDING_APPROVAL';
-                    const isSubDsa = p.role === 'SUB_DSA';
+                    const isPartnerSubDsa = p.role === 'SUB_DSA';
                     const teamCount = teamSizeMap.get(p.id) || 0;
 
                     return (
                       <tr key={p.id} className="hover:bg-slate-50/70 transition-colors">
                         <td className="px-4 py-3.5">
                           <div className="flex items-center gap-2 flex-wrap">
-                            <p className="font-bold text-slate-900">{p.name}</p>
+                            <button
+                              type="button"
+                              onClick={() => setSelectedPartnerForActivity(p)}
+                              className="font-bold text-slate-900 hover:text-emerald-700 text-left transition inline-flex items-center gap-1.5 cursor-pointer hover:underline"
+                              title="Click to view live activity & loan cases"
+                            >
+                              <span>{p.name}</span>
+                              <span className="text-[10px] text-emerald-600 font-semibold bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200">
+                                📊 View Activity
+                              </span>
+                            </button>
                             {p.partnerCode && (
                               <span
                                 className={`text-[10px] font-mono font-bold px-1.5 py-0.5 rounded border ${
-                                  isSubDsa
+                                  isPartnerSubDsa
                                     ? 'bg-indigo-50 text-indigo-800 border-indigo-200'
                                     : 'bg-emerald-50 text-emerald-800 border-emerald-200/60'
                                 }`}
@@ -456,14 +514,14 @@ export default function PartnerComplianceManager({
                           <div className="flex items-center gap-1.5 flex-wrap mt-1">
                             <span
                               className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${
-                                isSubDsa
+                                isPartnerSubDsa
                                   ? 'bg-indigo-100 text-indigo-800 border border-indigo-200'
-                                  : 'bg-slate-100 text-slate-700'
+                                  : 'bg-emerald-100 text-emerald-800 border border-emerald-200'
                               }`}
                             >
-                              {isSubDsa ? '🏢 Sub-DSA' : '👤 Agent'}
+                              {isPartnerSubDsa ? '🏢 Sub-DSA' : '👤 Channel Partner (Agent)'}
                             </span>
-                            {isSubDsa && (
+                            {isPartnerSubDsa && (
                               <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-purple-50 text-purple-700 border border-purple-200">
                                 👥 {teamCount} Mapped Agents
                               </span>
@@ -556,42 +614,62 @@ export default function PartnerComplianceManager({
                       <td className="px-4 py-3.5 text-xs text-slate-400">
                         {formatDate(p.createdAt)}
                       </td>
-                      {(isAdmin || isSupport) && (
+                      {(isAdmin || isSupport || isRM) && (
                         <td className="px-4 py-3.5 text-right">
-                          {isBlocked ? (
+                          <div className="flex items-center justify-end gap-1.5">
                             <button
                               type="button"
-                              onClick={() => handleToggleBlock(p, false)}
-                              disabled={loading}
-                              className="px-3 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 text-xs font-bold rounded-lg border border-emerald-200 transition"
+                              onClick={() => setSelectedPartnerForActivity(p)}
+                              className="px-2.5 py-1 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-xs font-bold rounded-lg border border-indigo-200 transition inline-flex items-center gap-1 cursor-pointer"
+                              title="View Partner Activity"
                             >
-                              Unblock Partner
+                              <span>📊 Activity</span>
                             </button>
-                          ) : (
-                            <button
-                              type="button"
-                              onClick={() => openBlockModal(p)}
-                              className="px-3 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 text-xs font-bold rounded-lg border border-rose-200 transition"
-                            >
-                              Block
-                            </button>
-                          )}
+                            {(isAdmin || isSupport) && (
+                              isBlocked ? (
+                                <button
+                                  type="button"
+                                  onClick={() => handleToggleBlock(p, false)}
+                                  disabled={loading}
+                                  className="px-2.5 py-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 text-xs font-bold rounded-lg border border-emerald-200 transition"
+                                >
+                                  Unblock
+                                </button>
+                              ) : (
+                                <button
+                                  type="button"
+                                  onClick={() => openBlockModal(p)}
+                                  className="px-2.5 py-1 bg-rose-50 hover:bg-rose-100 text-rose-700 text-xs font-bold rounded-lg border border-rose-200 transition"
+                                >
+                                  Block
+                                </button>
+                              )
+                            )}
+                          </div>
                         </td>
                       )}
                       {isSubDsa && (
                         <td className="px-4 py-3.5 text-right">
-                          {p.phone ? (
-                            <a
-                              href={`https://api.whatsapp.com/send?phone=91${p.phone.replace(/[^0-9]/g, '').slice(-10)}&text=Hi%20${encodeURIComponent(p.name)},%20checking%20in%20on%20your%20active%20loan%20cases!`}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="px-2.5 py-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 text-xs font-bold rounded-lg border border-emerald-200 transition inline-flex items-center gap-1"
+                          <div className="flex items-center justify-end gap-1.5">
+                            <button
+                              type="button"
+                              onClick={() => setSelectedPartnerForActivity(p)}
+                              className="px-2.5 py-1 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-xs font-bold rounded-lg border border-indigo-200 transition inline-flex items-center gap-1 cursor-pointer active:scale-95 shadow-2xs"
+                              title="Inspect this agent's loan applications, volume & override earnings"
                             >
-                              <span>WhatsApp</span>
-                            </a>
-                          ) : (
-                            <span className="text-slate-400 text-xs">—</span>
-                          )}
+                              <span>📊 Activity</span>
+                            </button>
+                            {p.phone && (
+                              <a
+                                href={`https://api.whatsapp.com/send?phone=91${p.phone.replace(/[^0-9]/g, '').slice(-10)}&text=Hi%20${encodeURIComponent(p.name)},%20checking%20in%20on%20your%20active%20loan%20cases!`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="px-2 py-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 text-xs font-bold rounded-lg border border-emerald-200 transition inline-flex items-center gap-1"
+                              >
+                                <span>WhatsApp</span>
+                              </a>
+                            )}
+                          </div>
                         </td>
                       )}
                     </tr>
@@ -1131,6 +1209,310 @@ export default function PartnerComplianceManager({
                 className="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold rounded-lg shadow-sm disabled:opacity-50"
               >
                 {loading ? 'Blocking…' : 'Confirm Block'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Agent Activity & Performance Inspection Modal */}
+      {selectedPartnerForActivity && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 md:p-6 overflow-y-auto">
+          <div className="bg-white rounded-2xl max-w-4xl w-full p-5 md:p-6 shadow-2xl space-y-5 my-auto max-h-[90vh] flex flex-col">
+            {/* Modal Header */}
+            <div className="flex items-start justify-between border-b border-slate-100 pb-4">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-xl font-bold text-indigo-700 shadow-2xs">
+                  {selectedPartnerForActivity.name?.charAt(0).toUpperCase() || 'P'}
+                </div>
+                <div>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <h3 className="text-base md:text-lg font-bold text-slate-900">
+                      {selectedPartnerForActivity.name}
+                    </h3>
+                    <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200">
+                      {selectedPartnerForActivity.partnerCode || 'AGENT'}
+                    </span>
+                    <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${
+                      selectedPartnerForActivity.isBlocked
+                        ? 'bg-rose-50 text-rose-700 border border-rose-200'
+                        : selectedPartnerForActivity.partnerStatus === 'PENDING_APPROVAL'
+                        ? 'bg-amber-50 text-amber-700 border border-amber-200'
+                        : 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                    }`}>
+                      {selectedPartnerForActivity.isBlocked ? 'BLOCKED' : (selectedPartnerForActivity.partnerStatus || 'ACTIVE')}
+                    </span>
+                  </div>
+                  <p className="text-xs text-slate-500 mt-0.5 flex items-center gap-3 flex-wrap">
+                    <span>✉ {selectedPartnerForActivity.email}</span>
+                    <span>📞 {selectedPartnerForActivity.phone || 'No Phone'}</span>
+                    {selectedPartnerForActivity.commissionRate !== undefined && selectedPartnerForActivity.commissionRate !== null && (
+                      <span className="text-emerald-700 font-semibold">
+                        🏷️ Comm: {selectedPartnerForActivity.commissionRate}%
+                      </span>
+                    )}
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2">
+                {selectedPartnerForActivity.phone && (
+                  <a
+                    href={`https://wa.me/91${selectedPartnerForActivity.phone.replace(/\D/g, '')}?text=${encodeURIComponent(`Hi ${selectedPartnerForActivity.name}, checking in on your loan applications with Quickfinsure.`)}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 rounded-lg text-xs font-semibold transition"
+                  >
+                    <span>💬 WhatsApp</span>
+                  </a>
+                )}
+                <button
+                  type="button"
+                  onClick={() => setSelectedPartnerForActivity(null)}
+                  className="w-8 h-8 rounded-lg border border-slate-200 hover:bg-slate-100 flex items-center justify-center text-slate-500 hover:text-slate-800 font-bold transition"
+                  title="Close"
+                >
+                  ✕
+                </button>
+              </div>
+            </div>
+
+            {/* Quick Metrics KPI Bar */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 bg-slate-50 p-3.5 rounded-xl border border-slate-200">
+              <div className="bg-white p-2.5 rounded-lg border border-slate-100 shadow-2xs">
+                <span className="text-[10px] uppercase font-bold text-slate-400 block tracking-wider">
+                  Total Sourced
+                </span>
+                <span className="text-base font-extrabold text-slate-800">
+                  {activeAgentStats.totalApps} <span className="text-xs font-normal text-slate-400">cases</span>
+                </span>
+                <span className="text-[10px] text-indigo-600 block mt-0.5">
+                  {activeAgentStats.inProgressCount} in-progress
+                </span>
+              </div>
+
+              <div className="bg-white p-2.5 rounded-lg border border-slate-100 shadow-2xs">
+                <span className="text-[10px] uppercase font-bold text-slate-400 block tracking-wider">
+                  Disbursed Volume
+                </span>
+                <span className="text-base font-extrabold text-emerald-700">
+                  ₹{activeAgentStats.disbursedVolume.toLocaleString('en-IN')}
+                </span>
+                <span className="text-[10px] text-emerald-600 block mt-0.5">
+                  {activeAgentStats.disbursedCount} disbursed
+                </span>
+              </div>
+
+              <div className="bg-white p-2.5 rounded-lg border border-slate-100 shadow-2xs">
+                <span className="text-[10px] uppercase font-bold text-slate-400 block tracking-wider">
+                  Agent CRP Earned
+                </span>
+                <span className="text-base font-extrabold text-amber-600">
+                  {activeAgentStats.totalCrpEarned} <span className="text-xs font-bold text-amber-500">CRP</span>
+                </span>
+                <span className="text-[10px] text-amber-700 block mt-0.5">
+                  ≈ ₹{(activeAgentStats.totalCrpEarned * 10).toLocaleString('en-IN')}
+                </span>
+              </div>
+
+              <div className="bg-white p-2.5 rounded-lg border border-slate-100 shadow-2xs">
+                <span className="text-[10px] uppercase font-bold text-slate-400 block tracking-wider">
+                  Sub-DSA Override
+                </span>
+                <span className="text-base font-extrabold text-indigo-700">
+                  ₹{activeAgentStats.subDsaOverrideInr.toLocaleString('en-IN')}
+                </span>
+                <span className="text-[10px] text-slate-400 block mt-0.5">
+                  0.10% on disbursed vol
+                </span>
+              </div>
+            </div>
+
+            {/* Navigation Tabs */}
+            <div className="flex border-b border-slate-200 gap-2 shrink-0">
+              <button
+                type="button"
+                onClick={() => setActivityTab('APPLICATIONS')}
+                className={`pb-2.5 px-3 text-xs font-bold transition flex items-center gap-1.5 border-b-2 ${
+                  activityTab === 'APPLICATIONS'
+                    ? 'border-indigo-600 text-indigo-700'
+                    : 'border-transparent text-slate-500 hover:text-slate-800'
+                }`}
+              >
+                <span>📋 Loan Applications</span>
+                <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-slate-100 text-slate-600 font-semibold">
+                  {activeAgentApps.length}
+                </span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setActivityTab('REWARDS')}
+                className={`pb-2.5 px-3 text-xs font-bold transition flex items-center gap-1.5 border-b-2 ${
+                  activityTab === 'REWARDS'
+                    ? 'border-indigo-600 text-indigo-700'
+                    : 'border-transparent text-slate-500 hover:text-slate-800'
+                }`}
+              >
+                <span>🪙 Reward & CRP Ledger</span>
+                <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-slate-100 text-slate-600 font-semibold">
+                  {activeAgentCrpEntries.length}
+                </span>
+              </button>
+            </div>
+
+            {/* Content Body */}
+            <div className="overflow-y-auto flex-1 min-h-[220px] max-h-[420px] pr-1">
+              {activityTab === 'APPLICATIONS' && (
+                <div>
+                  {activeAgentApps.length === 0 ? (
+                    <div className="text-center py-12 bg-slate-50 rounded-xl border border-dashed border-slate-200">
+                      <div className="text-3xl mb-2">📂</div>
+                      <p className="text-xs font-bold text-slate-700">No Loan Applications Logged Yet</p>
+                      <p className="text-[11px] text-slate-400 mt-1">
+                        When this agent sources loans or submits borrower cases, their live pipeline will show here.
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="overflow-x-auto border border-slate-200 rounded-xl shadow-2xs">
+                      <table className="w-full text-left text-xs text-slate-700 divide-y divide-slate-200">
+                        <thead className="bg-slate-50 text-[10px] uppercase font-bold text-slate-500 tracking-wider">
+                          <tr>
+                            <th className="px-3 py-2.5">Ref / App ID</th>
+                            <th className="px-3 py-2.5">Customer / Borrower</th>
+                            <th className="px-3 py-2.5">Product</th>
+                            <th className="px-3 py-2.5">Amount</th>
+                            <th className="px-3 py-2.5">Preferred Bank</th>
+                            <th className="px-3 py-2.5">Status</th>
+                            <th className="px-3 py-2.5">Date</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-100 bg-white">
+                          {activeAgentApps.map((app) => (
+                            <tr key={app.id} className="hover:bg-slate-50/70 transition">
+                              <td className="px-3 py-2.5 font-mono text-[11px] font-semibold text-slate-900">
+                                {app.id.slice(0, 10)}…
+                              </td>
+                              <td className="px-3 py-2.5">
+                                <div className="font-semibold text-slate-900">{app.fullName || 'Borrower'}</div>
+                                <div className="text-[10px] text-slate-400 font-mono">{app.mobile || '—'}</div>
+                              </td>
+                              <td className="px-3 py-2.5">
+                                <span className="inline-block px-2 py-0.5 rounded text-[10px] font-semibold bg-slate-100 text-slate-700">
+                                  {app.loanType ? (LOAN_TYPE_LABELS[app.loanType] || app.loanType) : 'Loan'}
+                                </span>
+                              </td>
+                              <td className="px-3 py-2.5 font-bold text-slate-900">
+                                ₹{(app.disbursedAmount || app.loanAmount || 0).toLocaleString('en-IN')}
+                              </td>
+                              <td className="px-3 py-2.5 text-slate-600 text-[11px]">
+                                {app.bankName || '—'}
+                              </td>
+                              <td className="px-3 py-2.5">
+                                <span className={`inline-block px-2 py-0.5 rounded text-[10px] font-bold ${
+                                  app.status === 'DISBURSED'
+                                    ? 'bg-emerald-100 text-emerald-800'
+                                    : app.status === 'APPROVED'
+                                    ? 'bg-blue-100 text-blue-800'
+                                    : app.status === 'REJECTED'
+                                    ? 'bg-rose-100 text-rose-800'
+                                    : 'bg-amber-100 text-amber-800'
+                                }`}>
+                                  {STATUS_LABELS[app.status] || app.status}
+                                </span>
+                              </td>
+                              <td className="px-3 py-2.5 text-[11px] text-slate-400 whitespace-nowrap">
+                                {new Date(app.createdAt).toLocaleDateString('en-IN', {
+                                  day: '2-digit',
+                                  month: 'short',
+                                  year: 'numeric'
+                                })}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {activityTab === 'REWARDS' && (
+                <div>
+                  {activeAgentCrpEntries.length === 0 ? (
+                    <div className="text-center py-12 bg-slate-50 rounded-xl border border-dashed border-slate-200">
+                      <div className="text-3xl mb-2">🪙</div>
+                      <p className="text-xs font-bold text-slate-700">No Reward Points Logged Yet</p>
+                      <p className="text-[11px] text-slate-400 mt-1">
+                        Disbursed loans generate CRP (1 CRP = ₹10) which will appear here with customer references.
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="overflow-x-auto border border-slate-200 rounded-xl shadow-2xs">
+                      <table className="w-full text-left text-xs text-slate-700 divide-y divide-slate-200">
+                        <thead className="bg-slate-50 text-[10px] uppercase font-bold text-slate-500 tracking-wider">
+                          <tr>
+                            <th className="px-3 py-2.5">Entry Type</th>
+                            <th className="px-3 py-2.5">Customer / Ref</th>
+                            <th className="px-3 py-2.5">CRP Points</th>
+                            <th className="px-3 py-2.5">Cash Equiv.</th>
+                            <th className="px-3 py-2.5">Status</th>
+                            <th className="px-3 py-2.5">Date</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-100 bg-white">
+                          {activeAgentCrpEntries.map((entry) => (
+                            <tr key={entry.id} className="hover:bg-slate-50/70 transition">
+                              <td className="px-3 py-2.5">
+                                <span className={`inline-block px-2 py-0.5 rounded text-[10px] font-bold ${
+                                  entry.type === 'COMMISSION_EARNING'
+                                    ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                                    : 'bg-indigo-50 text-indigo-700 border border-indigo-200'
+                                }`}>
+                                  {entry.type === 'COMMISSION_EARNING' ? 'Earning' : 'Redemption'}
+                                </span>
+                              </td>
+                              <td className="px-3 py-2.5">
+                                <div className="font-semibold text-slate-900">{entry.customerName || 'Direct'}</div>
+                                <div className="text-[10px] text-slate-400 font-mono">
+                                  {entry.applicationId ? `Ref #${entry.applicationId.slice(0, 8)}` : entry.description || '—'}
+                                </div>
+                              </td>
+                              <td className="px-3 py-2.5 font-extrabold text-amber-600">
+                                {entry.points > 0 ? `+${entry.points}` : entry.points} CRP
+                              </td>
+                              <td className="px-3 py-2.5 font-bold text-slate-800">
+                                ₹{(Math.abs(entry.points) * 10).toLocaleString('en-IN')}
+                              </td>
+                              <td className="px-3 py-2.5">
+                                <span className="inline-block px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-700">
+                                  {entry.status}
+                                </span>
+                              </td>
+                              <td className="px-3 py-2.5 text-[11px] text-slate-400 whitespace-nowrap">
+                                {new Date(entry.createdAt).toLocaleDateString('en-IN', {
+                                  day: '2-digit',
+                                  month: 'short',
+                                  year: 'numeric'
+                                })}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* Modal Footer */}
+            <div className="flex justify-end pt-3 border-t border-slate-100">
+              <button
+                type="button"
+                onClick={() => setSelectedPartnerForActivity(null)}
+                className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-lg transition"
+              >
+                Close Activity Window
               </button>
             </div>
           </div>

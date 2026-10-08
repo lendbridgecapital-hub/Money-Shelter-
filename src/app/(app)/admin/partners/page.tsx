@@ -2,6 +2,8 @@ import { redirect } from 'next/navigation';
 import { requireUser } from '@/lib/auth';
 import { listAllNetworkPartners, listPartnersByRm, listPartnersBySubDsa, listRelationshipManagers } from '@/lib/repos/usersRepo';
 import { listBranches } from '@/lib/repos/branchesRepo';
+import { listAllApplications, listApplicationsForSubDsa } from '@/lib/repos/applicationsRepo';
+import { listRewardLedger } from '@/lib/repos/rewardsRepo';
 import PartnerComplianceManager from './PartnerComplianceManager';
 
 export default async function PartnersPage() {
@@ -23,6 +25,14 @@ export default async function PartnersPage() {
   const branches = listBranches(user.tenantId || 'default');
   const relationshipManagers = listRelationshipManagers(user.tenantId || 'default');
 
+  // Fetch applications & rewards for team activity inspection
+  const applications =
+    user.role === 'SUB_DSA'
+      ? listApplicationsForSubDsa(user.id, user.tenantId || 'default')
+      : listAllApplications(user.tenantId || 'default');
+
+  const rewardLedger = listRewardLedger({ tenantId: user.tenantId || 'default' });
+
   return (
     <PartnerComplianceManager
       partners={partners}
@@ -30,6 +40,8 @@ export default async function PartnersPage() {
       relationshipManagers={relationshipManagers}
       currentUserRole={user.role}
       currentUserId={user.id}
+      applications={applications}
+      rewardLedger={rewardLedger}
     />
   );
 }

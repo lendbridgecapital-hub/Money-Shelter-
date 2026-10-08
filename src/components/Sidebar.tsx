@@ -72,7 +72,7 @@ export default function Sidebar({
       external: false,
     },
     {
-      label: isSubDsa ? 'My Agent Network' : isRM ? 'My Channel Partners' : isSupport ? 'Partner Directory' : 'Partner Compliance',
+      label: isSubDsa ? 'My Team' : isRM ? 'My Channel Partners' : isSupport ? 'Partner Directory' : 'Partner Compliance',
       href: '/admin/partners',
       icon: '🛡️',
       description: isSubDsa ? 'Mapped agents in your franchise' : 'Active partners & records',
@@ -162,7 +162,7 @@ export default function Sidebar({
       show: true,
     },
     {
-      label: 'Agent Network',
+      label: 'My Team',
       href: '/admin/partners',
       icon: '👥',
       show: isSubDsa,

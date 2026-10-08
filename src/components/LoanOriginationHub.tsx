@@ -73,14 +73,11 @@ export default function LoanOriginationHub({
   const [selectedSubLoanType, setSelectedSubLoanType] = useState<LoanType>('BALANCE_TRANSFER');
   const [isOtherModalOpen, setIsOtherModalOpen] = useState(false);
 
-  // Active Calculator Loan Type ('HOME_LOAN' | 'PERSONAL_LOAN')
-  const [calculatorType, setCalculatorType] = useState<CalculatorLoanType>('HOME_LOAN');
+  // Active Calculator Loan Type ('HOME_LOAN' | 'PERSONAL_LOAN') - null by default so it stays closed until clicked
+  const [calculatorType, setCalculatorType] = useState<CalculatorLoanType | null>(null);
 
   const handleSelectCategory = (cat: PrimaryCategory) => {
     setPrimaryCategory(cat);
-    if (cat === 'HOME_LOAN' || cat === 'PERSONAL_LOAN') {
-      setCalculatorType(cat);
-    }
   };
 
   const handleSelectOtherSubOption = (subType: LoanType) => {
@@ -241,30 +238,9 @@ export default function LoanOriginationHub({
 
       {/* 2. EMI Calculator Component: Home Loan & Personal Loan tabs that only open on selection */}
       <LoanCalculator
-        initialType={calculatorType}
+        initialType={calculatorType || undefined}
         onTypeChange={handleCalculatorTypeChange}
       />
-
-      {/* 3. Clean Quick Action Link to Lead Creator */}
-      <div className="flex flex-wrap items-center justify-between gap-2 p-2.5 bg-slate-50 border border-slate-200/80 rounded-xl">
-        <div className="flex items-center gap-2">
-          <span className="text-sm">⚡</span>
-          <div>
-            <p className="text-xs font-bold text-slate-800">
-              Originate Loan or Share Digital Form
-            </p>
-            <p className="text-[10px] text-slate-500">
-              Create a personalized loan quote link with instant bank eligibility check.
-            </p>
-          </div>
-        </div>
-        <Link
-          href="/branch/create-link"
-          className="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-lg shadow-2xs transition active:scale-95 inline-flex items-center gap-1"
-        >
-          <span>➕ Create Custom Link →</span>
-        </Link>
-      </div>
 
       {/* 4. Recent Applications Overview (Clean list of cases, no messy forms) */}
       <div className="border border-slate-200/90 rounded-xl overflow-hidden">
