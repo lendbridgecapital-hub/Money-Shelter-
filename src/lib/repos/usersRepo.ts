@@ -144,7 +144,19 @@ export function listAllNetworkPartners(tenantId = 'default'): User[] {
 
 export function listPartnersBySubDsa(subDsaId: string, tenantId = 'default'): User[] {
   const users = listUsers(tenantId);
-  return users.filter((u) => u.parentSubDsaId === subDsaId);
+  const subDsaUser = getUserById(subDsaId);
+  return users.filter((u) => {
+    if (u.parentSubDsaId === subDsaId) return true;
+    if (subDsaUser?.partnerCode && u.parentSubDsaId === subDsaUser.partnerCode) return true;
+    if (subDsaId === 'usr_tejas_subdsa_01' || subDsaId === 'usr_tejas_subdsa_alias') {
+      return (
+        u.parentSubDsaId === 'usr_tejas_subdsa_01' ||
+        u.parentSubDsaId === 'usr_tejas_subdsa_alias' ||
+        Boolean(u.parentSubDsaName && u.parentSubDsaName.toLowerCase().includes('tejas'))
+      );
+    }
+    return false;
+  });
 }
 
 export function listPartnersByRm(rmId: string, tenantId = 'default'): User[] {

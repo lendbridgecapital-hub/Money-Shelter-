@@ -129,6 +129,28 @@ export default function PartnerOnboardingForm({
     mobile: string;
   } | null>(null);
   const [copiedCode, setCopiedCode] = useState(false);
+  const [showExitModal, setShowExitModal] = useState(false);
+
+  const handleSafeExit = (target: 'dashboard' | 'login' | 'close' = 'close') => {
+    if (target === 'close') {
+      try {
+        window.close();
+      } catch {}
+      setTimeout(() => {
+        if (typeof window !== 'undefined') {
+          if (window.history.length > 1) {
+            window.history.back();
+          } else {
+            window.location.href = '/dashboard';
+          }
+        }
+      }, 150);
+      return;
+    }
+    if (typeof window !== 'undefined') {
+      window.location.href = target === 'dashboard' ? '/dashboard' : '/login';
+    }
+  };
 
   // Formatting helpers
   const handlePanChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -294,6 +316,28 @@ Compliance Undertaking: DPDP Act 2023 compliant, Zero-Cash Collection policy, no
 
   return (
     <div className="max-w-3xl mx-auto px-4 py-8 sm:py-12">
+      {/* Top Exit Navigation Bar */}
+      <div className="flex items-center justify-between pb-3 mb-6 border-b border-slate-200/80">
+        <div className="flex items-center gap-2">
+          <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+            {companyName} Partner Desk
+          </span>
+          {referralSubDsa && (
+            <span className="text-[11px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200">
+              Agency: {referralSubDsa.name}
+            </span>
+          )}
+        </div>
+        <button
+          type="button"
+          onClick={() => setShowExitModal(true)}
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-rose-50 hover:text-rose-700 hover:border-rose-200 text-slate-700 text-xs font-bold active:scale-95 transition border border-slate-200 shadow-2xs cursor-pointer"
+          title="Exit onboarding form"
+        >
+          <span>✕ Exit Form</span>
+        </button>
+      </div>
+
       {/* Brand Header */}
       <div className="text-center mb-6 sm:mb-8">
         <div className="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-emerald-600 text-white font-extrabold text-xl shadow-md mb-3">
@@ -1122,22 +1166,76 @@ Compliance Undertaking: DPDP Act 2023 compliant, Zero-Cash Collection policy, no
 
             {/* Action Buttons */}
             <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
-              <Link
-                href="/login"
-                className="w-full sm:w-auto px-6 py-3 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl shadow-md transition text-center"
+              <button
+                type="button"
+                onClick={() => handleSafeExit('login')}
+                className="w-full sm:w-auto px-6 py-3 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl shadow-md transition text-center cursor-pointer"
               >
                 Sign In to Partner Portal →
-              </Link>
-              <Link
-                href="/"
-                className="w-full sm:w-auto px-6 py-3 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-semibold rounded-xl transition text-center"
+              </button>
+              <button
+                type="button"
+                onClick={() => handleSafeExit('dashboard')}
+                className="w-full sm:w-auto px-6 py-3 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-semibold rounded-xl transition text-center cursor-pointer"
               >
-                Return to Home
-              </Link>
+                Return to Dashboard
+              </button>
+              <button
+                type="button"
+                onClick={() => handleSafeExit('close')}
+                className="w-full sm:w-auto px-4 py-3 bg-slate-100 border border-slate-200 hover:bg-rose-50 hover:text-rose-700 hover:border-rose-200 text-slate-600 text-xs font-semibold rounded-xl transition text-center cursor-pointer"
+              >
+                Close Window ✕
+              </button>
             </div>
           </div>
         )}
       </div>
+
+      {/* Exit Confirmation Modal */}
+      {showExitModal && (
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl max-w-sm w-full p-6 text-center shadow-2xl border border-slate-100 animate-in fade-in zoom-in-95 duration-150">
+            <div className="w-14 h-14 rounded-2xl bg-rose-50 text-rose-600 flex items-center justify-center text-2xl mx-auto mb-3 shadow-inner">
+              🚪
+            </div>
+            <h3 className="text-base font-bold text-slate-900 mb-1">Exit Partner Onboarding</h3>
+            <p className="text-xs text-slate-500 leading-relaxed mb-5">
+              Are you sure you want to exit? You can return to your dashboard, go to portal login, or close this tab.
+            </p>
+            <div className="space-y-2">
+              <button
+                type="button"
+                onClick={() => handleSafeExit('dashboard')}
+                className="w-full py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold transition shadow-xs cursor-pointer"
+              >
+                Go to Dashboard
+              </button>
+              <button
+                type="button"
+                onClick={() => handleSafeExit('login')}
+                className="w-full py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition shadow-xs cursor-pointer"
+              >
+                Go to Sign In
+              </button>
+              <button
+                type="button"
+                onClick={() => handleSafeExit('close')}
+                className="w-full py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold transition cursor-pointer"
+              >
+                Close Tab / Window
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowExitModal(false)}
+                className="w-full py-1.5 text-slate-400 hover:text-slate-600 text-xs font-medium transition cursor-pointer"
+              >
+                Stay on Form
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Support Footer */}
       <div className="mt-8 text-center text-xs text-slate-400 space-y-1">
