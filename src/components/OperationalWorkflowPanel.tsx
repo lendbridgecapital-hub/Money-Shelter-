@@ -268,9 +268,11 @@ export default function OperationalWorkflowPanel({
     }
   }
 
+  const isDocumentsIn = application.status === 'DOCUMENTS_IN';
+
   return (
     <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden mb-6">
-      {/* Header Tabs */}
+      {/* Header Tabs - Hide Required Docs, Remarks & Audit Log when in DOCUMENTS_IN */}
       <div className="border-b border-slate-200 px-5 pt-3 flex items-center justify-between bg-slate-50/50">
         <div className="flex gap-2">
           <button
@@ -283,32 +285,36 @@ export default function OperationalWorkflowPanel({
           >
             ⚡ Operational Workflow
           </button>
-          <button
-            onClick={() => setActiveTab('REQUIRED_DOCS')}
-            className={`pb-3 text-xs font-bold uppercase tracking-wider border-b-2 transition flex items-center gap-1.5 ${
-              activeTab === 'REQUIRED_DOCS'
-                ? 'border-emerald-600 text-emerald-600'
-                : 'border-transparent text-slate-500 hover:text-slate-800'
-            }`}
-          >
-            📂 Required Docs
-            {requiredDocs.filter((d) => d.status === 'PENDING').length > 0 && (
-              <span className="w-4 h-4 rounded-full bg-amber-500 text-white text-[10px] flex items-center justify-center font-bold">
-                {requiredDocs.filter((d) => d.status === 'PENDING').length}
-              </span>
-            )}
-          </button>
-          <button
-            onClick={() => setActiveTab('REMARKS')}
-            className={`pb-3 text-xs font-bold uppercase tracking-wider border-b-2 transition flex items-center gap-1.5 ${
-              activeTab === 'REMARKS'
-                ? 'border-emerald-600 text-emerald-600'
-                : 'border-transparent text-slate-500 hover:text-slate-800'
-            }`}
-          >
-            💬 Remarks & Audit Log
-            <span className="text-[10px] text-slate-400 font-semibold">({remarks.length})</span>
-          </button>
+          {!isDocumentsIn && (
+            <>
+              <button
+                onClick={() => setActiveTab('REQUIRED_DOCS')}
+                className={`pb-3 text-xs font-bold uppercase tracking-wider border-b-2 transition flex items-center gap-1.5 ${
+                  activeTab === 'REQUIRED_DOCS'
+                    ? 'border-emerald-600 text-emerald-600'
+                    : 'border-transparent text-slate-500 hover:text-slate-800'
+                }`}
+              >
+                📂 Required Docs
+                {requiredDocs.filter((d) => d.status === 'PENDING').length > 0 && (
+                  <span className="w-4 h-4 rounded-full bg-amber-500 text-white text-[10px] flex items-center justify-center font-bold">
+                    {requiredDocs.filter((d) => d.status === 'PENDING').length}
+                  </span>
+                )}
+              </button>
+              <button
+                onClick={() => setActiveTab('REMARKS')}
+                className={`pb-3 text-xs font-bold uppercase tracking-wider border-b-2 transition flex items-center gap-1.5 ${
+                  activeTab === 'REMARKS'
+                    ? 'border-emerald-600 text-emerald-600'
+                    : 'border-transparent text-slate-500 hover:text-slate-800'
+                }`}
+              >
+                💬 Remarks & Audit Log
+                <span className="text-[10px] text-slate-400 font-semibold">({remarks.length})</span>
+              </button>
+            </>
+          )}
         </div>
 
         {/* Role Badge & Quick Edit Button */}
@@ -350,40 +356,42 @@ export default function OperationalWorkflowPanel({
       {/* TAB 1: ACTIONS */}
       {activeTab === 'ACTIONS' && (
         <div className="p-5 space-y-5">
-          {/* Quick Links for Customer */}
-          <div className="bg-emerald-50/60 border border-emerald-100 rounded-xl p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-            <div>
-              <p className="text-xs font-bold text-emerald-950">Customer Application Link</p>
-              <p className="text-xs text-slate-500 font-mono truncate max-w-sm mt-0.5">{applyUrl}</p>
+          {/* Quick Links for Customer - Hidden under DOCUMENTS_IN */}
+          {!isDocumentsIn && (
+            <div className="bg-emerald-50/60 border border-emerald-100 rounded-xl p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+              <div>
+                <p className="text-xs font-bold text-emerald-950">Customer Application Link</p>
+                <p className="text-xs text-slate-500 font-mono truncate max-w-sm mt-0.5">{applyUrl}</p>
+              </div>
+              <div className="flex gap-2 flex-wrap items-center">
+                <button
+                  type="button"
+                  onClick={() => copyToClipboard(applyUrl, 'apply')}
+                  className="px-3 py-1.5 bg-white border border-emerald-200 text-emerald-700 hover:bg-emerald-50 text-xs font-semibold rounded-lg shadow-xs transition"
+                >
+                  {copiedLink === 'apply' ? '✓ Copied Link' : 'Copy Link'}
+                </button>
+                <a
+                  href={`https://api.whatsapp.com/send?text=${encodeURIComponent(
+                    `Hello! I am your financial advisor ${application.channelPartnerName || currentUser.name || 'Financial Advisor'}, Please complete your loan application with Quickfinsure by uploading your documents here:\n\n${applyUrl}`
+                  )}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold rounded-lg shadow-xs transition inline-flex items-center gap-1.5"
+                >
+                  <span>WhatsApp</span>
+                </a>
+                <a
+                  href={applyUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="px-3 py-1.5 bg-slate-900 text-white hover:bg-slate-800 text-xs font-semibold rounded-lg shadow-xs transition"
+                >
+                  Open Form ↗
+                </a>
+              </div>
             </div>
-            <div className="flex gap-2 flex-wrap items-center">
-              <button
-                type="button"
-                onClick={() => copyToClipboard(applyUrl, 'apply')}
-                className="px-3 py-1.5 bg-white border border-emerald-200 text-emerald-700 hover:bg-emerald-50 text-xs font-semibold rounded-lg shadow-xs transition"
-              >
-                {copiedLink === 'apply' ? '✓ Copied Link' : 'Copy Link'}
-              </button>
-              <a
-                href={`https://api.whatsapp.com/send?text=${encodeURIComponent(
-                  `Hello! I am your financial advisor ${application.channelPartnerName || currentUser.name || 'Financial Advisor'}, Please complete your loan application with Quickfinsure by uploading your documents here:\n\n${applyUrl}`
-                )}`}
-                target="_blank"
-                rel="noreferrer"
-                className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold rounded-lg shadow-xs transition inline-flex items-center gap-1.5"
-              >
-                <span>WhatsApp</span>
-              </a>
-              <a
-                href={applyUrl}
-                target="_blank"
-                rel="noreferrer"
-                className="px-3 py-1.5 bg-slate-900 text-white hover:bg-slate-800 text-xs font-semibold rounded-lg shadow-xs transition"
-              >
-                Open Form ↗
-              </a>
-            </div>
-          </div>
+          )}
 
           {/* Documents Required Banner (Alerts RM, Partner, and Ops) */}
           {application.status === 'DOCUMENTS_REQUIRED' && (
@@ -517,84 +525,109 @@ export default function OperationalWorkflowPanel({
           <div className="pt-2">
             <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3">Flowchart Action Controls</h4>
 
-            <div className="flex flex-wrap gap-2.5">
-              {/* Operations & Admin: Loan Eligibility Match (Only in Documents In bucket) */}
-              {isOpsOrAdmin && application.status === 'DOCUMENTS_IN' && (
-                <button
-                  type="button"
-                  onClick={() => setShowEligibilityModal(true)}
-                  className="px-4 py-2 bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 text-white text-xs font-bold rounded-lg shadow-xs transition flex items-center gap-1.5"
-                >
-                  ⚡ Loan Eligibility Match & Rates
-                </button>
-              )}
+            {isDocumentsIn ? (
+              /* Dropdown with only 3 options for DOCUMENTS_IN bucket */
+              <div className="max-w-md bg-slate-50 border border-slate-200/90 rounded-xl p-3.5 space-y-2">
+                <label className="block text-xs font-bold text-slate-800">
+                  Select Stage Action Workflow:
+                </label>
+                <div className="flex items-center gap-2">
+                  <select
+                    defaultValue=""
+                    onChange={(e) => {
+                      const action = e.target.value;
+                      if (action === 'SEND_TO_BANK') {
+                        setShowSendToBank(true);
+                      } else if (action === 'DOC_REQUEST') {
+                        setRemarkStatus('DOCUMENTS_REQUIRED');
+                        setShowRemarkModal(true);
+                      } else if (action === 'REQUEST_MORE_DOCS') {
+                        setRemarkStatus('DOCUMENTS_REQUIRED');
+                        setShowRemarkModal(true);
+                      }
+                      e.target.value = '';
+                    }}
+                    className="flex-1 px-3 py-2 bg-white border border-slate-300 rounded-lg text-xs font-semibold text-slate-800 shadow-xs focus:ring-2 focus:ring-emerald-500 focus:outline-none"
+                  >
+                    <option value="" disabled>-- Select Action --</option>
+                    <option value="SEND_TO_BANK">🏦 Send Details to Bank</option>
+                    <option value="DOC_REQUEST">📑 Document Request</option>
+                    <option value="REQUEST_MORE_DOCS">📂 Request More Document</option>
+                  </select>
+                </div>
+                <p className="text-[11px] text-slate-500">
+                  Choose from Send Details to Bank, Document Request, or Request More Document to initiate the required stage step.
+                </p>
+              </div>
+            ) : (
+              <div className="flex flex-wrap gap-2.5">
+                {/* Operations & Admin: Send to Bank */}
+                {isOpsOrAdmin && (
+                  <button
+                    type="button"
+                    onClick={() => setShowSendToBank(true)}
+                    className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-lg shadow-xs transition flex items-center gap-1.5"
+                  >
+                    🏦 Send Details to Bank
+                  </button>
+                )}
 
-              {/* Operations & Admin: Send to Bank */}
-              {isOpsOrAdmin && (
-                <button
-                  type="button"
-                  onClick={() => setShowSendToBank(true)}
-                  className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-lg shadow-xs transition flex items-center gap-1.5"
-                >
-                  🏦 Send Details to Bank
-                </button>
-              )}
+                {/* Operations & Admin: Edit Customer Information (Mandatory Remark Audit) */}
+                {isOpsOrAdmin && (
+                  <button
+                    type="button"
+                    onClick={() => setShowEditCustomerModal(true)}
+                    className="px-4 py-2 bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-700 hover:to-amber-800 text-white text-xs font-bold rounded-lg shadow-xs transition flex items-center gap-1.5 active:scale-95"
+                  >
+                    ✏️ Edit Customer Information
+                  </button>
+                )}
 
-              {/* Operations & Admin: Edit Customer Information (Mandatory Remark Audit) */}
-              {isOpsOrAdmin && (
-                <button
-                  type="button"
-                  onClick={() => setShowEditCustomerModal(true)}
-                  className="px-4 py-2 bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-700 hover:to-amber-800 text-white text-xs font-bold rounded-lg shadow-xs transition flex items-center gap-1.5 active:scale-95"
-                >
-                  ✏️ Edit Customer Information
-                </button>
-              )}
+                {/* Operations, Admin, RM: Submit Remark */}
+                {(isOpsOrAdmin || isRM) && (
+                  <button
+                    type="button"
+                    onClick={() => setShowRemarkModal(true)}
+                    className="px-4 py-2 bg-slate-800 hover:bg-slate-900 text-white text-xs font-bold rounded-lg shadow-xs transition flex items-center gap-1.5"
+                  >
+                    💬 Submit Remark & Query
+                  </button>
+                )}
 
-              {/* Operations, Admin, RM: Submit Remark */}
-              {(isOpsOrAdmin || isRM) && (
-                <button
-                  type="button"
-                  onClick={() => setShowRemarkModal(true)}
-                  className="px-4 py-2 bg-slate-800 hover:bg-slate-900 text-white text-xs font-bold rounded-lg shadow-xs transition flex items-center gap-1.5"
-                >
-                  💬 Submit Remark & Query
-                </button>
-              )}
+                {/* Operations & Admin: Approve Loan Case */}
+                {isOpsOrAdmin && (
+                  <button
+                    type="button"
+                    onClick={() => setShowApproveModal(true)}
+                    className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-lg shadow-xs transition flex items-center gap-1.5"
+                  >
+                    ✓ Approve Case (Bank Terms)
+                  </button>
+                )}
 
-              {/* Operations & Admin: Approve Loan Case */}
-              {isOpsOrAdmin && (
-                <button
-                  type="button"
-                  onClick={() => setShowApproveModal(true)}
-                  className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-lg shadow-xs transition flex items-center gap-1.5"
-                >
-                  ✓ Approve Case (Bank Terms)
-                </button>
-              )}
+                {/* Operations & Admin: Disburse Loan */}
+                {isOpsOrAdmin && (
+                  <button
+                    type="button"
+                    onClick={() => setShowDisburseModal(true)}
+                    className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-lg shadow-xs transition flex items-center gap-1.5"
+                  >
+                    💰 Record Final Disbursement
+                  </button>
+                )}
 
-              {/* Operations & Admin: Disburse Loan */}
-              {isOpsOrAdmin && (
-                <button
-                  type="button"
-                  onClick={() => setShowDisburseModal(true)}
-                  className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-lg shadow-xs transition flex items-center gap-1.5"
-                >
-                  💰 Record Final Disbursement
-                </button>
-              )}
-
-              {/* Channel Partner & RM: Upload Required Documents */}
-              {canUpload && (
-                <button
-                  type="button"
-                  onClick={() => setActiveTab('REQUIRED_DOCS')}
-                  className="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold rounded-lg shadow-xs transition flex items-center gap-1.5"
-                >
-                  📂 Upload Requested Documents
-                </button>
-              )}
-            </div>
+                {/* Channel Partner & RM: Upload Required Documents */}
+                {canUpload && (
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab('REQUIRED_DOCS')}
+                    className="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold rounded-lg shadow-xs transition flex items-center gap-1.5"
+                  >
+                    📂 Upload Requested Documents
+                  </button>
+                )}
+              </div>
+            )}
           </div>
         </div>
       )}

@@ -140,18 +140,21 @@ export default async function RequestDetailPage({ params }: { params: { id: stri
         <StatusTracker status={application.status} />
       </div>
 
-      {/* Main Flowchart Actions & Modals */}
-      <OperationalWorkflowPanel
-        application={application}
-        currentUser={user}
-        banks={banks}
-        requiredDocs={requiredDocs}
-        remarks={remarks}
-        baseUrl={baseUrl}
-      />
+      {/* Main Flowchart Actions & Modals - Hidden for LINK_SHARED */}
+      {application.status !== 'LINK_SHARED' && (
+        <OperationalWorkflowPanel
+          application={application}
+          currentUser={user}
+          banks={banks}
+          requiredDocs={requiredDocs}
+          remarks={remarks}
+          baseUrl={baseUrl}
+        />
+      )}
 
-      <div className="grid lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 space-y-6">
+      {/* Grid Layout: If LINK_SHARED or DOCUMENTS_IN, show full width without Right Column (Lifecycle Audit History) */}
+      <div className={application.status === 'LINK_SHARED' || application.status === 'DOCUMENTS_IN' ? 'space-y-6' : 'grid lg:grid-cols-3 gap-6'}>
+        <div className={application.status === 'LINK_SHARED' || application.status === 'DOCUMENTS_IN' ? 'space-y-6' : 'lg:col-span-2 space-y-6'}>
           {/* Basic Details */}
           <section className="bg-white border border-slate-200 rounded-xl p-5 shadow-xs">
             <h2 className="font-semibold text-slate-900 mb-4">Loan File Overview</h2>
@@ -199,68 +202,72 @@ export default async function RequestDetailPage({ params }: { params: { id: stri
             </dl>
           </section>
 
-          {/* Uploaded Documents */}
-          <section className="bg-white border border-slate-200 rounded-xl p-5 shadow-xs">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="font-semibold text-slate-900">Applicant Documents</h2>
-              <span className="text-xs text-slate-400 font-medium">{documents.length} files attached</span>
-            </div>
-            {documents.length === 0 ? (
-              <p className="text-sm text-slate-400">No documents uploaded yet — waiting on customer to complete the KYC form.</p>
-            ) : (
-              <div className="space-y-4">
-                {Object.entries(docsByCategory).map(([category, docs]) => (
-                  <div key={category}>
-                    <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">
-                      {CATEGORY_TITLES[category] || category}
-                    </p>
-                    <ul className="space-y-1.5">
-                      {docs.map((doc) => (
-                        <li key={doc.id} className="flex items-center justify-between py-1 border-b border-slate-50">
-                          <span className="text-sm font-medium text-slate-800">
-                            {doc.label} <span className="text-xs text-slate-400">({doc.fileName})</span>
-                          </span>
-                          <a
-                            href={doc.fileUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded text-xs font-medium transition"
-                          >
-                            Download ⤓
-                          </a>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                ))}
+          {/* Uploaded Documents - Hidden under LINK_SHARED as user requested only basic information */}
+          {application.status !== 'LINK_SHARED' && (
+            <section className="bg-white border border-slate-200 rounded-xl p-5 shadow-xs">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="font-semibold text-slate-900">Applicant Documents</h2>
+                <span className="text-xs text-slate-400 font-medium">{documents.length} files attached</span>
               </div>
-            )}
-          </section>
+              {documents.length === 0 ? (
+                <p className="text-sm text-slate-400">No documents uploaded yet — waiting on customer to complete the KYC form.</p>
+              ) : (
+                <div className="space-y-4">
+                  {Object.entries(docsByCategory).map(([category, docs]) => (
+                    <div key={category}>
+                      <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">
+                        {CATEGORY_TITLES[category] || category}
+                      </p>
+                      <ul className="space-y-1.5">
+                        {docs.map((doc) => (
+                          <li key={doc.id} className="flex items-center justify-between py-1 border-b border-slate-50">
+                            <span className="text-sm font-medium text-slate-800">
+                              {doc.label} <span className="text-xs text-slate-400">({doc.fileName})</span>
+                            </span>
+                            <a
+                              href={doc.fileUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded text-xs font-medium transition"
+                            >
+                              Download ⤓
+                            </a>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </section>
+          )}
         </div>
 
-        {/* Right Column: Status & Activity History */}
-        <div>
-          <section className="bg-white border border-slate-200 rounded-xl p-5 shadow-xs">
-            <h2 className="font-semibold text-slate-900 mb-4">Lifecycle Audit History</h2>
-            <ul className="space-y-3.5">
-              {history.map((h) => (
-                <li key={h.id} className="flex items-start gap-3 text-xs">
-                  <span className="h-2 w-2 rounded-full bg-emerald-500 mt-1.5 shrink-0" />
-                  <div>
-                    <div className="flex items-center gap-1.5 flex-wrap">
-                      <StatusBadge status={h.status} />
-                      <span className="text-[11px] text-slate-400">{formatDateTime(h.changedAt)}</span>
+        {/* Right Column: Status & Activity History - Hidden for LINK_SHARED and DOCUMENTS_IN */}
+        {application.status !== 'LINK_SHARED' && application.status !== 'DOCUMENTS_IN' && (
+          <div>
+            <section className="bg-white border border-slate-200 rounded-xl p-5 shadow-xs">
+              <h2 className="font-semibold text-slate-900 mb-4">Lifecycle Audit History</h2>
+              <ul className="space-y-3.5">
+                {history.map((h) => (
+                  <li key={h.id} className="flex items-start gap-3 text-xs">
+                    <span className="h-2 w-2 rounded-full bg-emerald-500 mt-1.5 shrink-0" />
+                    <div>
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <StatusBadge status={h.status} />
+                        <span className="text-[11px] text-slate-400">{formatDateTime(h.changedAt)}</span>
+                      </div>
+                      {h.note && <p className="text-slate-700 mt-1 leading-snug">{h.note}</p>}
+                      <p className="text-[10px] text-slate-400 mt-0.5">
+                        By: {h.changedByName || 'System / Customer'}
+                      </p>
                     </div>
-                    {h.note && <p className="text-slate-700 mt-1 leading-snug">{h.note}</p>}
-                    <p className="text-[10px] text-slate-400 mt-0.5">
-                      By: {h.changedByName || 'System / Customer'}
-                    </p>
-                  </div>
-                </li>
-              ))}
-            </ul>
-          </section>
-        </div>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          </div>
+        )}
       </div>
 
       {/* Bottom Navigation Helper for Mobile */}

@@ -21,7 +21,7 @@ export default function RequestTable({
 }: RequestTableProps) {
   const router = useRouter();
   const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState<string>('ALL');
+  const [statusFilter, setStatusFilter] = useState<string>('LINK_SHARED');
   const [eligibilityApp, setEligibilityApp] = useState<LoanApplication | null>(null);
 
   React.useEffect(() => {
@@ -67,7 +67,6 @@ export default function RequestTable({
   }, [applications, searchTerm, statusFilter]);
 
   const tabs: { key: string; label: string; count?: number }[] = [
-    { key: 'ALL', label: 'All Requests', count: applications.length },
     {
       key: 'LINK_SHARED',
       label: 'Link Shared',
