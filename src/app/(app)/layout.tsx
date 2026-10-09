@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation';
 import { auth } from '@/lib/auth';
 import { getCompanySettings } from '@/lib/settings';
+import { isUserDedicatedSiteRm } from '@/lib/repos/usersRepo';
 import Sidebar from '@/components/Sidebar';
 import MobileAppHeader from '@/components/MobileAppHeader';
 import MobileBottomNav from '@/components/MobileBottomNav';
@@ -10,6 +11,8 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   if (!session?.user) redirect('/login');
 
   const settings = await getCompanySettings();
+  const isDedicatedSiteRm =
+    session.user.role === 'RELATIONSHIP_MANAGER' ? isUserDedicatedSiteRm(session.user.id) : false;
 
   return (
     <div className="flex flex-col md:flex-row min-h-screen w-full max-w-full overflow-x-hidden bg-slate-50">
@@ -21,6 +24,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         logoUrl={settings.logoUrl}
         userName={session.user.name || 'User'}
         branchName={session.user.branchName}
+        isDedicatedSiteRm={isDedicatedSiteRm}
       />
 
       {/* 2. Mobile App Top Bar (visible on mobile, hidden on desktop) */}
@@ -31,6 +35,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         companyName={settings.companyName}
         logoUrl={settings.logoUrl}
         branchName={session.user.branchName}
+        isDedicatedSiteRm={isDedicatedSiteRm}
       />
 
       {/* 3. Main Workspace Area */}
@@ -46,6 +51,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         companyName={settings.companyName}
         logoUrl={settings.logoUrl}
         branchName={session.user.branchName}
+        isDedicatedSiteRm={isDedicatedSiteRm}
       />
     </div>
   );

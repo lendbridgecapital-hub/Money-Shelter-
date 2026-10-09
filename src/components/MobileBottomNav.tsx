@@ -13,6 +13,7 @@ interface Props {
   companyName?: string;
   logoUrl?: string | null;
   branchName?: string;
+  isDedicatedSiteRm?: boolean;
 }
 
 export default function MobileBottomNav({
@@ -22,20 +23,24 @@ export default function MobileBottomNav({
   companyName = 'Quickfinsure',
   logoUrl,
   branchName,
+  isDedicatedSiteRm = false,
 }: Props) {
   const pathname = usePathname();
   const [drawerOpen, setDrawerOpen] = useState(false);
 
-  const isAdminOrOps = role === 'ADMIN' || role === 'OPERATIONS';
+  const isAdmin = role === 'ADMIN';
+  const isOps = role === 'OPERATIONS';
   const isRM = role === 'RELATIONSHIP_MANAGER';
   const isPartner = role === 'CHANNEL_PARTNER';
+  const isSubDsa = role === 'SUB_DSA';
 
   const isHomeActive = pathname === '/dashboard';
   const isCasesActive = pathname.startsWith('/branch/requests');
   const isCreateActive = pathname === '/branch/create-link';
   const isPartnerActive = pathname.startsWith('/admin/partners') || pathname.startsWith('/admin/partner-requests');
   const isCertificateActive = pathname === '/partner/certificate';
-  const isBankActive = pathname.startsWith('/admin/banks');
+  const isProfileActive = pathname === '/profile';
+  const isEligibilityActive = pathname.startsWith('/ops/eligibility');
 
   return (
     <>
@@ -126,7 +131,7 @@ export default function MobileBottomNav({
               <span className="text-[11px] font-semibold mt-0.5 tracking-tight">Certificate</span>
               {isCertificateActive && <span className="w-1.5 h-1.5 rounded-full bg-emerald-600 mt-0.5" />}
             </Link>
-          ) : isAdminOrOps || isRM ? (
+          ) : isAdmin || isSubDsa || (isRM && !isDedicatedSiteRm) ? (
             <Link
               href="/admin/partners"
               className={`flex flex-col items-center justify-center min-h-[44px] py-1 px-2.5 rounded-xl transition active:scale-95 ${
@@ -146,18 +151,31 @@ export default function MobileBottomNav({
                   d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
                 />
               </svg>
-              <span className="text-[11px] font-semibold mt-0.5 tracking-tight">Partners</span>
+              <span className="text-[11px] font-semibold mt-0.5 tracking-tight">
+                {isSubDsa ? 'My Team' : 'Partners'}
+              </span>
               {isPartnerActive && <span className="w-1.5 h-1.5 rounded-full bg-emerald-600 mt-0.5" />}
+            </Link>
+          ) : isOps ? (
+            <Link
+              href="/ops/eligibility"
+              className={`flex flex-col items-center justify-center min-h-[44px] py-1 px-2.5 rounded-xl transition active:scale-95 ${
+                isEligibilityActive ? 'text-emerald-600 font-extrabold bg-emerald-50/80' : 'text-slate-500 hover:text-slate-800'
+              }`}
+            >
+              <span className="text-base leading-none">⚡</span>
+              <span className="text-[11px] font-semibold mt-0.5 tracking-tight">Eligibility</span>
+              {isEligibilityActive && <span className="w-1.5 h-1.5 rounded-full bg-emerald-600 mt-0.5" />}
             </Link>
           ) : (
             <Link
-              href="/admin/banks"
+              href="/profile"
               className={`flex flex-col items-center justify-center min-h-[44px] py-1 px-2.5 rounded-xl transition active:scale-95 ${
-                isBankActive ? 'text-emerald-600 font-extrabold bg-emerald-50/80' : 'text-slate-500 hover:text-slate-800'
+                isProfileActive ? 'text-emerald-600 font-extrabold bg-emerald-50/80' : 'text-slate-500 hover:text-slate-800'
               }`}
             >
               <svg
-                className={`w-5 h-5 ${isBankActive ? 'stroke-emerald-600' : 'stroke-slate-500'}`}
+                className={`w-5 h-5 ${isProfileActive ? 'stroke-emerald-600' : 'stroke-slate-500'}`}
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -165,12 +183,12 @@ export default function MobileBottomNav({
                 <path
                   strokeLinecap="round"
                   strokeLinejoin="round"
-                  strokeWidth={isBankActive ? 2.6 : 2}
-                  d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
+                  strokeWidth={isProfileActive ? 2.6 : 2}
+                  d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
                 />
               </svg>
-              <span className="text-[11px] font-semibold mt-0.5 tracking-tight">Banks</span>
-              {isBankActive && <span className="w-1.5 h-1.5 rounded-full bg-emerald-600 mt-0.5" />}
+              <span className="text-[11px] font-semibold mt-0.5 tracking-tight">Profile</span>
+              {isProfileActive && <span className="w-1.5 h-1.5 rounded-full bg-emerald-600 mt-0.5" />}
             </Link>
           )}
 
@@ -198,6 +216,7 @@ export default function MobileBottomNav({
         companyName={companyName}
         logoUrl={logoUrl}
         branchName={branchName}
+        isDedicatedSiteRm={isDedicatedSiteRm}
       />
     </>
   );

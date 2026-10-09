@@ -14,6 +14,7 @@ interface MobileAppHeaderProps {
   companyName: string;
   logoUrl?: string | null;
   branchName?: string;
+  isDedicatedSiteRm?: boolean;
 }
 
 function getPageTitle(pathname: string): string {
@@ -41,6 +42,7 @@ export default function MobileAppHeader({
   companyName,
   logoUrl,
   branchName,
+  isDedicatedSiteRm = false,
 }: MobileAppHeaderProps) {
   const router = useRouter();
   const pathname = usePathname();
@@ -163,6 +165,7 @@ export default function MobileAppHeader({
         companyName={companyName}
         logoUrl={logoUrl}
         branchName={branchName}
+        isDedicatedSiteRm={isDedicatedSiteRm}
       />
     </>
   );

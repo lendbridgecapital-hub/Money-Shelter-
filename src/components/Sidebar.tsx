@@ -15,6 +15,7 @@ interface SidebarProps {
   logoUrl?: string | null;
   userName: string;
   branchName?: string;
+  isDedicatedSiteRm?: boolean;
 }
 
 export default function Sidebar({
@@ -24,6 +25,7 @@ export default function Sidebar({
   logoUrl,
   userName,
   branchName,
+  isDedicatedSiteRm = false,
 }: SidebarProps) {
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(false);
@@ -76,15 +78,23 @@ export default function Sidebar({
       href: '/admin/partners',
       icon: '🛡️',
       description: isSubDsa ? 'Mapped agents in your franchise' : 'Active partners & records',
-      show: isAdmin || isSupport || isRM || isSubDsa,
+      show: isAdmin || isSupport || (isRM && !isDedicatedSiteRm) || isSubDsa,
       external: false,
     },
     {
-      label: isPartner || isSubDsa ? 'Rewards & CRP Wallet' : 'Partner Rewards & CRP',
+      label: isSubDsa
+        ? 'Bank-wise Receivables & CRP'
+        : isPartner
+        ? 'My Receivables & CRP'
+        : 'Partner Rewards & CRP',
       href: '/admin/rewards',
       icon: '🪙',
-      description: '1 CRP = ₹10 commission ledger & redemption',
-      show: true,
+      description: isSubDsa
+        ? 'Your franchise & partner payouts bank-wise'
+        : isPartner
+        ? 'Your bank receivables & commission ledger'
+        : '1 CRP = ₹10 commission ledger & redemption',
+      show: !isDedicatedSiteRm,
       external: false,
     },
     {
@@ -112,7 +122,7 @@ export default function Sidebar({
         : isRM
         ? 'Auto-assigns partners to your RM portfolio'
         : 'External partner onboard form',
-      show: isAdmin || isSupport || isRM || isSubDsa,
+      show: isAdmin || isSupport || (isRM && !isDedicatedSiteRm) || isSubDsa,
       external: true,
     },
   ].filter((item) => item.show);
@@ -171,7 +181,7 @@ export default function Sidebar({
       label: 'Loan Eligibility Match',
       href: '/ops/eligibility',
       icon: '⚡',
-      show: isAdmin || isOps || isSupport || isRM,
+      show: isAdmin || isOps,
     },
     {
       label: 'Create Custom Link',
@@ -187,7 +197,7 @@ export default function Sidebar({
       label: isPartner || isSubDsa ? 'Bank Products & Rates' : 'Partner Banks & Products',
       href: '/admin/banks',
       icon: '🏦',
-      show: true,
+      show: isAdmin,
     },
   ];
 

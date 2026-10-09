@@ -16,6 +16,7 @@ interface MobileDrawerProps {
   companyName: string;
   logoUrl?: string | null;
   branchName?: string;
+  isDedicatedSiteRm?: boolean;
 }
 
 export default function MobileDrawer({
@@ -27,6 +28,7 @@ export default function MobileDrawer({
   companyName,
   logoUrl,
   branchName,
+  isDedicatedSiteRm = false,
 }: MobileDrawerProps) {
   const pathname = usePathname();
 
@@ -68,7 +70,7 @@ export default function MobileDrawer({
       label: 'Loan Eligibility Match',
       href: '/ops/eligibility',
       icon: '⚡',
-      show: isAdmin || isOps || isSupport || isRM,
+      show: isAdmin || isOps,
     },
     {
       label: isPartner ? 'Apply / Share Form' : 'Generate Customer Link',
@@ -86,25 +88,29 @@ export default function MobileDrawer({
       label: isSubDsa ? 'My Team' : isRM ? 'My Channel Partners' : isSupport ? 'Partner Directory' : 'Partner Compliance',
       href: '/admin/partners',
       icon: '👥',
-      show: isAdmin || isSupport || isRM || isSubDsa,
+      show: isAdmin || isSupport || (isRM && !isDedicatedSiteRm) || isSubDsa,
     },
     {
       label: isPartner ? 'My Approved Certificate' : 'Partner Certificate',
       href: '/partner/certificate',
       icon: '🎓',
-      show: isPartner,
+      show: isPartner || isSubDsa,
     },
     {
-      label: isPartner ? 'Rewards & CRP Wallet' : 'Rewards & CRP Ledger',
+      label: isSubDsa
+        ? 'Bank-wise Receivables & CRP'
+        : isPartner
+        ? 'My Receivables & CRP'
+        : 'Rewards & CRP Ledger',
       href: '/admin/rewards',
       icon: '🪙',
-      show: true,
+      show: !isDedicatedSiteRm,
     },
     {
       label: 'Partner Lending Banks',
       href: '/admin/banks',
       icon: '🏦',
-      show: isAdmin || isOps || isPartner,
+      show: isAdmin,
     },
     {
       label: 'Bank Policy Cards',

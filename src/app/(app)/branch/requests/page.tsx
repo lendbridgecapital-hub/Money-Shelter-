@@ -52,7 +52,11 @@ export default async function RequestsPage() {
       </div>
 
       {/* Main Request Cards & Filter Component */}
-      <RequestTable applications={applications} showBranchColumn={isAdminOrOps} />
+      <RequestTable
+        applications={applications}
+        showBranchColumn={isAdminOrOps}
+        canMatchEligibility={isAdminOrOps}
+      />
     </div>
   );
 }

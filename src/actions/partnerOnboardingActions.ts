@@ -14,6 +14,7 @@ import {
   rejectPartnerOnboarding,
   resubmitPartnerDocuments,
   updatePartnerCommissionRate,
+  isUserDedicatedSiteRm,
 } from '@/lib/repos/usersRepo';
 import { listBranches } from '@/lib/repos/branchesRepo';
 import { createNotification } from '@/lib/repos/workflowRepo';
@@ -264,8 +265,12 @@ export async function directAdminOnboardPartnerAction(payload: {
 }): Promise<{ ok: boolean; message?: string; error?: string; partner?: User }> {
   try {
     const sessionUser = await requireUser();
-    if (sessionUser.role !== 'ADMIN' && sessionUser.role !== 'CENTRAL_SUPPORT' && sessionUser.role !== 'RELATIONSHIP_MANAGER') {
-      return { ok: false, error: 'Unauthorized to onboard partners.' };
+    if (sessionUser.role !== 'ADMIN' && sessionUser.role !== 'RELATIONSHIP_MANAGER') {
+      return { ok: false, error: 'Unauthorized to onboard partners or appoint Sub-DSAs.' };
+    }
+
+    if (sessionUser.role === 'RELATIONSHIP_MANAGER' && isUserDedicatedSiteRm(sessionUser)) {
+      return { ok: false, error: 'Dedicated Site Relationship Managers cannot appoint Sub-DSAs or onboard partners.' };
     }
 
     const fullName = (payload.fullName || '').trim();

@@ -11,9 +11,14 @@ import LoanEligibilityMatchModal from '@/components/LoanEligibilityMatchModal';
 interface RequestTableProps {
   applications: LoanApplication[];
   showBranchColumn?: boolean;
+  canMatchEligibility?: boolean;
 }
 
-export default function RequestTable({ applications, showBranchColumn = false }: RequestTableProps) {
+export default function RequestTable({
+  applications,
+  showBranchColumn = false,
+  canMatchEligibility = false,
+}: RequestTableProps) {
   const router = useRouter();
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('ALL');
@@ -278,7 +283,7 @@ export default function RequestTable({ applications, showBranchColumn = false }:
                 </div>
 
                 <div className="flex items-center gap-2 shrink-0">
-                  {app.status === 'DOCUMENTS_IN' && (
+                  {canMatchEligibility && app.status === 'DOCUMENTS_IN' && (
                     <button
                       type="button"
                       onClick={(e) => {
@@ -388,7 +393,7 @@ export default function RequestTable({ applications, showBranchColumn = false }:
                     {formatDate(app.createdAt)}
                   </td>
                   <td className="px-3 lg:px-4 py-2.5 lg:py-3 text-right whitespace-nowrap">
-                    {app.status === 'DOCUMENTS_IN' && (
+                    {canMatchEligibility && app.status === 'DOCUMENTS_IN' && (
                       <button
                         type="button"
                         onClick={() => setEligibilityApp(app)}

@@ -17,6 +17,7 @@ interface Props {
   relationshipManagers?: User[];
   currentUserRole: Role;
   currentUserId?: string;
+  isDedicatedSiteRm?: boolean;
   applications?: LoanApplication[];
   rewardLedger?: RewardLedgerEntry[];
 }
@@ -27,6 +28,7 @@ export default function PartnerComplianceManager({
   relationshipManagers = [],
   currentUserRole,
   currentUserId,
+  isDedicatedSiteRm = false,
   applications = [],
   rewardLedger = [],
 }: Props) {
@@ -332,7 +334,7 @@ export default function PartnerComplianceManager({
         </div>
 
         <div className="flex items-center gap-2 self-start sm:self-auto flex-wrap">
-          {(isAdmin || isSupport || isRM) && (
+          {(isAdmin || (isRM && !isDedicatedSiteRm)) && (
             <button
               type="button"
               onClick={() => setShowSubDsaModal(true)}
@@ -342,7 +344,7 @@ export default function PartnerComplianceManager({
             </button>
           )}
 
-          {(isAdmin || isSupport || isRM) && (
+          {(isAdmin || (isRM && !isDedicatedSiteRm)) && (
             <button
               type="button"
               onClick={() => {
@@ -360,7 +362,8 @@ export default function PartnerComplianceManager({
       </div>
 
       {/* Partner Onboarding Link Banner */}
-      <div className="bg-gradient-to-r from-emerald-50/70 via-white to-slate-50/50 border border-emerald-200 rounded-xl p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 shadow-2xs">
+      {!isDedicatedSiteRm && (
+        <div className="bg-gradient-to-r from-emerald-50/70 via-white to-slate-50/50 border border-emerald-200 rounded-xl p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 shadow-2xs">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl bg-emerald-600 text-white flex items-center justify-center text-lg shrink-0 shadow-xs">
             🤝
@@ -420,6 +423,7 @@ export default function PartnerComplianceManager({
           )}
         </div>
       </div>
+    )}
 
       {/* Filter Tabs */}
       <div className="flex flex-wrap items-center gap-2 border-b border-slate-200 pb-2">

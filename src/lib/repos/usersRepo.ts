@@ -28,6 +28,28 @@ export function getUserByEmail(email: string): User | undefined {
   return row ? mapRowToUser(row) : undefined;
 }
 
+export function isUserDedicatedSiteRm(userOrId: User | string): boolean {
+  if (!userOrId) return false;
+  const user = typeof userOrId === 'string' ? getUserById(userOrId) : userOrId;
+  if (!user || user.role !== 'RELATIONSHIP_MANAGER') return false;
+
+  try {
+    const siteRow = db
+      .prepare("SELECT COUNT(*) as c FROM branches WHERE type = 'SITE' AND dedicated_rm_id = ?")
+      .get(user.id) as { c: number } | undefined;
+    if (siteRow && siteRow.c > 0) return true;
+
+    if (user.branchId) {
+      const bRow = db
+        .prepare('SELECT type FROM branches WHERE id = ?')
+        .get(user.branchId) as { type?: string } | undefined;
+      if (bRow && bRow.type === 'SITE') return true;
+    }
+  } catch {}
+
+  return false;
+}
+
 export function emailExists(email: string, excludeId?: string): boolean {
   const lower = email.trim().toLowerCase();
   const rows = db.prepare('SELECT id, email FROM users').all() as { id: string; email: string }[];

@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { requireUser } from '@/lib/auth';
 import { getPipelineStats, listApplicationsByRole } from '@/lib/repos/applicationsRepo';
 import { listBranchesWithCounts } from '@/lib/repos/branchesRepo';
-import { listPartnersByRm, listPartnersBySubDsa, getUserById } from '@/lib/repos/usersRepo';
+import { listPartnersByRm, listPartnersBySubDsa, getUserById, isUserDedicatedSiteRm } from '@/lib/repos/usersRepo';
 import { getSubDsaEarningsSummary } from '@/lib/repos/commissionsRepo';
 import { formatCurrencyINR, LOAN_TYPE_LABELS, formatDate } from '@/lib/format';
 import StatusBadge from '@/components/StatusBadge';
@@ -30,6 +30,7 @@ export default async function DashboardPage() {
   const isPartner = user.role === 'CHANNEL_PARTNER';
   const isSubDsa = user.role === 'SUB_DSA';
   const isRM = user.role === 'RELATIONSHIP_MANAGER';
+  const isDedicatedSiteRm = isRM ? isUserDedicatedSiteRm(user) : false;
 
   // Sub-DSA Network & Earnings
   const mappedAgents = isSubDsa ? listPartnersBySubDsa(user.id, tenantId) : [];
@@ -37,7 +38,7 @@ export default async function DashboardPage() {
 
   // Compute access-scoped active reports
   const orgReport = isAdmin ? getOrganisationReport(tenantId) : null;
-  const rmReport = isRM ? getRmTerritoryReport(user.id, tenantId) : null;
+  const rmReport = isRM && !isDedicatedSiteRm ? getRmTerritoryReport(user.id, tenantId) : null;
   const supportReport = isSupport ? getSupportOperationalReport(tenantId) : null;
   const partnerPersonalReport = isPartner ? getPartnerPersonalReport(user.id, tenantId) : null;
 
@@ -58,9 +59,9 @@ export default async function DashboardPage() {
     disbursementRate: orgReport ? orgReport.metrics.disbursementRate : disbursementRate,
   };
 
-  const rmPartners = isRM ? listPartnersByRm(user.id, tenantId) : [];
+  const rmPartners = isRM && !isDedicatedSiteRm ? listPartnersByRm(user.id, tenantId) : [];
   const branches = isAdmin || isSupport ? listBranchesWithCounts(tenantId) : [];
-  const hasSideColumn = (isAdmin && branches.length > 0) || (isRM && rmPartners.length > 0);
+  const hasSideColumn = (isAdmin && branches.length > 0) || (isRM && !isDedicatedSiteRm && rmPartners.length > 0);
 
   return (
     <div className="space-y-2.5 min-w-0 max-w-full">

@@ -1,3 +1,4 @@
+import { redirect } from 'next/navigation';
 import { requireUser } from '@/lib/auth';
 import { listBankPolicyCards } from '@/lib/repos/policyCardsRepo';
 import { listApplicationsByRole } from '@/lib/repos/applicationsRepo';
@@ -12,6 +13,10 @@ export const metadata = {
 
 export default async function OpsEligibilityPage() {
   const user = await requireUser();
+  if (user.role !== 'ADMIN' && user.role !== 'OPERATIONS') {
+    redirect('/dashboard');
+  }
+
   const tenantId = user?.tenantId || 'default';
 
   let cards: BankPolicyCard[] = [];
