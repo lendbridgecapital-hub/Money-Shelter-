@@ -536,6 +536,68 @@ export async function approveCaseAction(
   }
 }
 
+// 4b. Reject Loan Case (Operations / Admin)
+export async function rejectCaseAction(
+  applicationId: string,
+  reason: string
+): Promise<ActionResult> {
+  try {
+    const user = await requireUser();
+    if (user.role !== 'OPERATIONS' && user.role !== 'ADMIN' && user.role !== 'CENTRAL_SUPPORT') {
+      return { ok: false, error: 'Only Operations, Central Support, and Admin staff can reject loan cases.' };
+    }
+
+    const application = applicationsRepo.getApplicationById(applicationId);
+    if (!application) {
+      return { ok: false, error: 'Application not found.' };
+    }
+
+    if (!reason || !reason.trim()) {
+      return { ok: false, error: 'Please provide a reason for rejecting the case.' };
+    }
+
+    const rejectNote = reason.trim();
+    applicationsRepo.updateApplicationStatus(applicationId, 'REJECTED');
+
+    statusHistoryRepo.addStatusHistory({
+      applicationId,
+      status: 'REJECTED',
+      note: `Case rejected: ${rejectNote}`,
+      changedById: user.id,
+    });
+
+    workflowRepo.addOperationalRemark({
+      applicationId,
+      authorId: user.id,
+      authorName: user.name,
+      authorRole: user.role,
+      statusChangedTo: 'REJECTED',
+      remark: `Case rejected: ${rejectNote}`,
+    });
+
+    try {
+      await notifyTouchpoint08_LoanRejected(
+        application,
+        rejectNote,
+        { tenantId: application.tenantId }
+      );
+    } catch (e) {
+      console.warn('[rejectCaseAction] Error dispatching Touchpoint 08:', e);
+    }
+
+    revalidatePath('/dashboard');
+    revalidatePath('/branch/requests');
+    revalidatePath(`/branch/requests/${applicationId}`);
+
+    await syncDatabase();
+
+    return { ok: true, message: 'Case has been marked as Rejected.' };
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : 'Failed to reject case.';
+    return { ok: false, error: msg };
+  }
+}
+
 // 5. Customer Accepts Loan Offer
 export async function customerAcceptOfferAction(
   token: string,

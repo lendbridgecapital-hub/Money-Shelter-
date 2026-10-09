@@ -10,6 +10,7 @@ import {
   partnerUploadRequiredDocAction,
   uploadRequiredDocumentFileAction,
   approveCaseAction,
+  rejectCaseAction,
   disburseCaseAction,
 } from '@/actions/workflowActions';
 import { formatCurrencyINR, formatDateTime } from '@/lib/format';
@@ -53,6 +54,9 @@ export default function OperationalWorkflowPanel({
   const [tenureMonths, setTenureMonths] = useState(60);
   const [approveBankId, setApproveBankId] = useState(application.bankId || banks[0]?.id || '');
   const [approveNote, setApproveNote] = useState('');
+
+  const [showRejectModal, setShowRejectModal] = useState(false);
+  const [rejectReason, setRejectReason] = useState('');
 
   const [showDisburseModal, setShowDisburseModal] = useState(false);
   const [disbursedAmount, setDisbursedAmount] = useState(application.approvedAmount || application.loanAmount || 1000000);
@@ -159,6 +163,27 @@ export default function OperationalWorkflowPanel({
       router.refresh();
     } else {
       setFeedback({ type: 'error', message: res.error || 'Failed to approve case.' });
+    }
+  }
+
+  // Handle Reject Case
+  async function handleRejectCase() {
+    if (!rejectReason.trim()) {
+      setFeedback({ type: 'error', message: 'Please provide a reason for rejecting the case.' });
+      return;
+    }
+
+    setLoading(true);
+    setFeedback(null);
+    const res = await rejectCaseAction(application.id, rejectReason.trim());
+    setLoading(false);
+    if (res.ok) {
+      setFeedback({ type: 'success', message: res.message || 'Case marked as rejected.' });
+      setShowRejectModal(false);
+      setRejectReason('');
+      router.refresh();
+    } else {
+      setFeedback({ type: 'error', message: res.error || 'Failed to reject case.' });
     }
   }
 
@@ -271,51 +296,12 @@ export default function OperationalWorkflowPanel({
   const isDocumentsIn = application.status === 'DOCUMENTS_IN';
 
   return (
-    <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden mb-6">
-      {/* Header Tabs - Hide Required Docs, Remarks & Audit Log when in DOCUMENTS_IN */}
-      <div className="border-b border-slate-200 px-5 pt-3 flex items-center justify-between bg-slate-50/50">
-        <div className="flex gap-2">
-          <button
-            onClick={() => setActiveTab('ACTIONS')}
-            className={`pb-3 text-xs font-bold uppercase tracking-wider border-b-2 transition ${
-              activeTab === 'ACTIONS'
-                ? 'border-emerald-600 text-emerald-600'
-                : 'border-transparent text-slate-500 hover:text-slate-800'
-            }`}
-          >
-            ⚡ Operational Workflow
-          </button>
-          {!isDocumentsIn && (
-            <>
-              <button
-                onClick={() => setActiveTab('REQUIRED_DOCS')}
-                className={`pb-3 text-xs font-bold uppercase tracking-wider border-b-2 transition flex items-center gap-1.5 ${
-                  activeTab === 'REQUIRED_DOCS'
-                    ? 'border-emerald-600 text-emerald-600'
-                    : 'border-transparent text-slate-500 hover:text-slate-800'
-                }`}
-              >
-                📂 Required Docs
-                {requiredDocs.filter((d) => d.status === 'PENDING').length > 0 && (
-                  <span className="w-4 h-4 rounded-full bg-amber-500 text-white text-[10px] flex items-center justify-center font-bold">
-                    {requiredDocs.filter((d) => d.status === 'PENDING').length}
-                  </span>
-                )}
-              </button>
-              <button
-                onClick={() => setActiveTab('REMARKS')}
-                className={`pb-3 text-xs font-bold uppercase tracking-wider border-b-2 transition flex items-center gap-1.5 ${
-                  activeTab === 'REMARKS'
-                    ? 'border-emerald-600 text-emerald-600'
-                    : 'border-transparent text-slate-500 hover:text-slate-800'
-                }`}
-              >
-                💬 Remarks & Audit Log
-                <span className="text-[10px] text-slate-400 font-semibold">({remarks.length})</span>
-              </button>
-            </>
-          )}
-        </div>
+    <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden w-full">
+      {/* Header Bar */}
+      <div className="border-b border-slate-200 px-5 pt-3 pb-2.5 flex items-center justify-between bg-slate-50/50">
+        <span className="text-xs font-bold uppercase tracking-wider text-emerald-800 flex items-center gap-1.5">
+          ⚡ Flowchart Action Controls
+        </span>
 
         {/* Role Badge & Quick Edit Button */}
         <div className="flex items-center gap-2 pb-2">
@@ -356,42 +342,6 @@ export default function OperationalWorkflowPanel({
       {/* TAB 1: ACTIONS */}
       {activeTab === 'ACTIONS' && (
         <div className="p-5 space-y-5">
-          {/* Quick Links for Customer - Hidden under DOCUMENTS_IN */}
-          {!isDocumentsIn && (
-            <div className="bg-emerald-50/60 border border-emerald-100 rounded-xl p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-              <div>
-                <p className="text-xs font-bold text-emerald-950">Customer Application Link</p>
-                <p className="text-xs text-slate-500 font-mono truncate max-w-sm mt-0.5">{applyUrl}</p>
-              </div>
-              <div className="flex gap-2 flex-wrap items-center">
-                <button
-                  type="button"
-                  onClick={() => copyToClipboard(applyUrl, 'apply')}
-                  className="px-3 py-1.5 bg-white border border-emerald-200 text-emerald-700 hover:bg-emerald-50 text-xs font-semibold rounded-lg shadow-xs transition"
-                >
-                  {copiedLink === 'apply' ? '✓ Copied Link' : 'Copy Link'}
-                </button>
-                <a
-                  href={`https://api.whatsapp.com/send?text=${encodeURIComponent(
-                    `Hello! I am your financial advisor ${application.channelPartnerName || currentUser.name || 'Financial Advisor'}, Please complete your loan application with Quickfinsure by uploading your documents here:\n\n${applyUrl}`
-                  )}`}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold rounded-lg shadow-xs transition inline-flex items-center gap-1.5"
-                >
-                  <span>WhatsApp</span>
-                </a>
-                <a
-                  href={applyUrl}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="px-3 py-1.5 bg-slate-900 text-white hover:bg-slate-800 text-xs font-semibold rounded-lg shadow-xs transition"
-                >
-                  Open Form ↗
-                </a>
-              </div>
-            </div>
-          )}
 
           {/* Documents Required Banner (Alerts RM, Partner, and Ops) */}
           {application.status === 'DOCUMENTS_REQUIRED' && (
@@ -523,111 +473,57 @@ export default function OperationalWorkflowPanel({
 
           {/* ACTION BUTTONS TOOLBAR */}
           <div className="pt-2">
-            <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3">Flowchart Action Controls</h4>
+            <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3 text-center sm:text-left">Flowchart Action Controls</h4>
 
-            {isDocumentsIn ? (
-              /* Dropdown with only 3 options for DOCUMENTS_IN bucket */
-              <div className="max-w-md bg-slate-50 border border-slate-200/90 rounded-xl p-3.5 space-y-2">
-                <label className="block text-xs font-bold text-slate-800">
-                  Select Stage Action Workflow:
-                </label>
-                <div className="flex items-center gap-2">
-                  <select
-                    defaultValue=""
-                    onChange={(e) => {
-                      const action = e.target.value;
-                      if (action === 'SEND_TO_BANK') {
-                        setShowSendToBank(true);
-                      } else if (action === 'DOC_REQUEST') {
-                        setRemarkStatus('DOCUMENTS_REQUIRED');
-                        setShowRemarkModal(true);
-                      } else if (action === 'REQUEST_MORE_DOCS') {
-                        setRemarkStatus('DOCUMENTS_REQUIRED');
-                        setShowRemarkModal(true);
-                      }
-                      e.target.value = '';
-                    }}
-                    className="flex-1 px-3 py-2 bg-white border border-slate-300 rounded-lg text-xs font-semibold text-slate-800 shadow-xs focus:ring-2 focus:ring-emerald-500 focus:outline-none"
-                  >
-                    <option value="" disabled>-- Select Action --</option>
+            <div className="max-w-md mx-auto sm:mx-0 bg-slate-50 border border-slate-200/90 rounded-xl p-3.5 space-y-2">
+              <label className="block text-xs font-bold text-slate-800">
+                Select Stage Action Workflow:
+              </label>
+              <div className="flex items-center gap-2">
+                <select
+                  defaultValue=""
+                  onChange={(e) => {
+                    const action = e.target.value;
+                    if (action === 'SEND_TO_BANK') {
+                      setShowSendToBank(true);
+                    } else if (action === 'APPROVE_CASE') {
+                      setShowApproveModal(true);
+                    } else if (action === 'DOC_REQUEST') {
+                      setRemarkStatus('DOCUMENTS_REQUIRED');
+                      setShowRemarkModal(true);
+                    } else if (action === 'REJECT_CASE') {
+                      setShowRejectModal(true);
+                    } else if (action === 'DISBURSE_LOAN') {
+                      setShowDisburseModal(true);
+                    }
+                    e.target.value = '';
+                  }}
+                  className="flex-1 px-3 py-2 bg-white border border-slate-300 rounded-lg text-xs font-semibold text-slate-800 shadow-xs focus:ring-2 focus:ring-emerald-500 focus:outline-none"
+                >
+                  <option value="" disabled>-- Select Action --</option>
+                  {isOpsOrAdmin && application.status !== 'SENT_TO_BANK' && application.status !== 'APPROVED' && application.status !== 'CUSTOMER_ACCEPTED' && application.status !== 'DISBURSED' && application.status !== 'REJECTED' && (
                     <option value="SEND_TO_BANK">🏦 Send Details to Bank</option>
+                  )}
+                  {isOpsOrAdmin && application.status === 'SENT_TO_BANK' && (
+                    <option value="APPROVE_CASE">✓ Approve Case</option>
+                  )}
+                  {(isOpsOrAdmin || isRM) && (
                     <option value="DOC_REQUEST">📑 Document Request</option>
-                    <option value="REQUEST_MORE_DOCS">📂 Request More Document</option>
-                  </select>
-                </div>
-                <p className="text-[11px] text-slate-500">
-                  Choose from Send Details to Bank, Document Request, or Request More Document to initiate the required stage step.
-                </p>
+                  )}
+                  {isOpsOrAdmin && application.status !== 'DISBURSED' && application.status !== 'REJECTED' && (
+                    <option value="REJECT_CASE">🚫 Case Reject</option>
+                  )}
+                  {isOpsOrAdmin && (application.status === 'APPROVED' || application.status === 'CUSTOMER_ACCEPTED') && (
+                    <option value="DISBURSE_LOAN">💰 Record Final Disbursement</option>
+                  )}
+                </select>
               </div>
-            ) : (
-              <div className="flex flex-wrap gap-2.5">
-                {/* Operations & Admin: Send to Bank */}
-                {isOpsOrAdmin && (
-                  <button
-                    type="button"
-                    onClick={() => setShowSendToBank(true)}
-                    className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-lg shadow-xs transition flex items-center gap-1.5"
-                  >
-                    🏦 Send Details to Bank
-                  </button>
-                )}
-
-                {/* Operations & Admin: Edit Customer Information (Mandatory Remark Audit) */}
-                {isOpsOrAdmin && (
-                  <button
-                    type="button"
-                    onClick={() => setShowEditCustomerModal(true)}
-                    className="px-4 py-2 bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-700 hover:to-amber-800 text-white text-xs font-bold rounded-lg shadow-xs transition flex items-center gap-1.5 active:scale-95"
-                  >
-                    ✏️ Edit Customer Information
-                  </button>
-                )}
-
-                {/* Operations, Admin, RM: Submit Remark */}
-                {(isOpsOrAdmin || isRM) && (
-                  <button
-                    type="button"
-                    onClick={() => setShowRemarkModal(true)}
-                    className="px-4 py-2 bg-slate-800 hover:bg-slate-900 text-white text-xs font-bold rounded-lg shadow-xs transition flex items-center gap-1.5"
-                  >
-                    💬 Submit Remark & Query
-                  </button>
-                )}
-
-                {/* Operations & Admin: Approve Loan Case */}
-                {isOpsOrAdmin && (
-                  <button
-                    type="button"
-                    onClick={() => setShowApproveModal(true)}
-                    className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-lg shadow-xs transition flex items-center gap-1.5"
-                  >
-                    ✓ Approve Case (Bank Terms)
-                  </button>
-                )}
-
-                {/* Operations & Admin: Disburse Loan */}
-                {isOpsOrAdmin && (
-                  <button
-                    type="button"
-                    onClick={() => setShowDisburseModal(true)}
-                    className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-lg shadow-xs transition flex items-center gap-1.5"
-                  >
-                    💰 Record Final Disbursement
-                  </button>
-                )}
-
-                {/* Channel Partner & RM: Upload Required Documents */}
-                {canUpload && (
-                  <button
-                    type="button"
-                    onClick={() => setActiveTab('REQUIRED_DOCS')}
-                    className="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold rounded-lg shadow-xs transition flex items-center gap-1.5"
-                  >
-                    📂 Upload Requested Documents
-                  </button>
-                )}
-              </div>
-            )}
+              <p className="text-[11px] text-slate-500">
+                {application.status === 'SENT_TO_BANK'
+                  ? 'Choose Approve Case, Document Request, or Case Reject to proceed with this bank submission.'
+                  : 'Choose from the available stage actions above to update and advance this case.'}
+              </p>
+            </div>
           </div>
         </div>
       )}
@@ -1011,6 +907,54 @@ export default function OperationalWorkflowPanel({
                 className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-lg shadow-sm disabled:opacity-50"
               >
                 {loading ? 'Approving…' : 'Approve & Issue Offer'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL 3b: CASE REJECT */}
+      {showRejectModal && (
+        <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4">
+            <div className="flex justify-between items-center">
+              <div>
+                <h3 className="text-base font-bold text-rose-700">Reject Loan Case</h3>
+                <p className="text-xs text-slate-500">Mark application as rejected by bank / operations.</p>
+              </div>
+              <button onClick={() => setShowRejectModal(false)} className="text-slate-400 hover:text-slate-600 font-bold">
+                ✕
+              </button>
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 mb-1">
+                Rejection Reason (Required)
+              </label>
+              <textarea
+                value={rejectReason}
+                onChange={(e) => setRejectReason(e.target.value)}
+                placeholder="e.g. CIBIL score below bank cutoff / Negative internal check / Incomplete documentation..."
+                rows={3}
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg text-xs focus:ring-2 focus:ring-rose-500"
+              />
+            </div>
+
+            <div className="flex justify-end gap-2 pt-2">
+              <button
+                type="button"
+                onClick={() => setShowRejectModal(false)}
+                className="px-3 py-2 border border-slate-200 text-xs font-semibold rounded-lg text-slate-600 hover:bg-slate-50"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleRejectCase}
+                disabled={loading || !rejectReason.trim()}
+                className="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold rounded-lg shadow-sm disabled:opacity-50"
+              >
+                {loading ? 'Rejecting…' : 'Confirm Case Rejection'}
               </button>
             </div>
           </div>

@@ -140,21 +140,10 @@ export default async function RequestDetailPage({ params }: { params: { id: stri
         <StatusTracker status={application.status} />
       </div>
 
-      {/* Main Flowchart Actions & Modals - Hidden for LINK_SHARED */}
-      {application.status !== 'LINK_SHARED' && (
-        <OperationalWorkflowPanel
-          application={application}
-          currentUser={user}
-          banks={banks}
-          requiredDocs={requiredDocs}
-          remarks={remarks}
-          baseUrl={baseUrl}
-        />
-      )}
 
-      {/* Grid Layout: If LINK_SHARED or DOCUMENTS_IN, show full width without Right Column (Lifecycle Audit History) */}
-      <div className={application.status === 'LINK_SHARED' || application.status === 'DOCUMENTS_IN' ? 'space-y-6' : 'grid lg:grid-cols-3 gap-6'}>
-        <div className={application.status === 'LINK_SHARED' || application.status === 'DOCUMENTS_IN' ? 'space-y-6' : 'lg:col-span-2 space-y-6'}>
+      {/* Grid Layout: Displays basic information across buckets per user request */}
+      <div className="space-y-6">
+        <div className="space-y-6">
           {/* Basic Details */}
           <section className="bg-white border border-slate-200 rounded-xl p-5 shadow-xs">
             <h2 className="font-semibold text-slate-900 mb-4">Loan File Overview</h2>
@@ -242,48 +231,37 @@ export default async function RequestDetailPage({ params }: { params: { id: stri
             </section>
           )}
         </div>
-
-        {/* Right Column: Status & Activity History - Hidden for LINK_SHARED and DOCUMENTS_IN */}
-        {application.status !== 'LINK_SHARED' && application.status !== 'DOCUMENTS_IN' && (
-          <div>
-            <section className="bg-white border border-slate-200 rounded-xl p-5 shadow-xs">
-              <h2 className="font-semibold text-slate-900 mb-4">Lifecycle Audit History</h2>
-              <ul className="space-y-3.5">
-                {history.map((h) => (
-                  <li key={h.id} className="flex items-start gap-3 text-xs">
-                    <span className="h-2 w-2 rounded-full bg-emerald-500 mt-1.5 shrink-0" />
-                    <div>
-                      <div className="flex items-center gap-1.5 flex-wrap">
-                        <StatusBadge status={h.status} />
-                        <span className="text-[11px] text-slate-400">{formatDateTime(h.changedAt)}</span>
-                      </div>
-                      {h.note && <p className="text-slate-700 mt-1 leading-snug">{h.note}</p>}
-                      <p className="text-[10px] text-slate-400 mt-0.5">
-                        By: {h.changedByName || 'System / Customer'}
-                      </p>
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            </section>
-          </div>
-        )}
       </div>
 
-      {/* Bottom Navigation Helper for Mobile */}
-      <div className="mt-8 pt-4 border-t border-slate-200 flex items-center justify-between gap-3">
+      {/* Bottom Navigation & Centered Flowchart Action Controls */}
+      <div className="mt-8 pt-6 border-t border-slate-200 flex flex-col md:flex-row items-center justify-between gap-4">
         <Link
           href="/dashboard"
-          className="inline-flex items-center gap-2 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 px-4 py-2.5 rounded-xl shadow-xs active:scale-95 transition"
+          className="inline-flex items-center gap-2 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 px-4 py-2.5 rounded-xl shadow-xs active:scale-95 transition shrink-0"
         >
           <svg className="w-4 h-4 stroke-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.4} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
           </svg>
           <span>Return to Home Dashboard</span>
         </Link>
+
+        {/* Flowchart Action Controls Centered on the row */}
+        {application.status !== 'LINK_SHARED' && (
+          <div className="flex-1 w-full md:max-w-xl mx-auto flex justify-center">
+            <OperationalWorkflowPanel
+              application={application}
+              currentUser={user}
+              banks={banks}
+              requiredDocs={requiredDocs}
+              remarks={remarks}
+              baseUrl={baseUrl}
+            />
+          </div>
+        )}
+
         <Link
           href="/branch/requests"
-          className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-600 hover:text-slate-900 bg-white border border-slate-200 px-3.5 py-2.5 rounded-xl shadow-2xs active:scale-95 transition"
+          className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-600 hover:text-slate-900 bg-white border border-slate-200 px-3.5 py-2.5 rounded-xl shadow-2xs active:scale-95 transition shrink-0"
         >
           <span>All Cases</span>
           <svg className="w-3.5 h-3.5 stroke-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
