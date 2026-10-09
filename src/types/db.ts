@@ -249,6 +249,8 @@ export interface Branch {
   name: string;
   code: string;
   type?: BranchType; // 'BRANCH' | 'SITE' (Direct Company Construction Project)
+  mappedBranchId?: string | null; // Regional operating branch that handles operations for this site
+  mappedBranchName?: string | null;
   address?: string | null;
   phone?: string | null;
   email?: string | null;
@@ -314,6 +316,8 @@ export interface LoanApplication {
   branchId: string;
   branchName?: string;
   branchType?: BranchType;
+  mappedBranchId?: string | null;
+  mappedBranchName?: string | null;
   createdById: string; // Partner who generated link
   createdByName?: string;
   channelPartnerId?: string;

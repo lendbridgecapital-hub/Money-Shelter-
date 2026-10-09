@@ -47,7 +47,10 @@ export default async function RequestDetailPage({ params }: { params: { id: stri
         isAssignedPartnerApp = true;
       }
     }
-    if (!isDirectRM && !isAssignedPartnerApp) {
+    const isOperatingBranchRM =
+      Boolean(user.branchId && (application.mappedBranchId === user.branchId || application.branchId === user.branchId));
+
+    if (!isDirectRM && !isAssignedPartnerApp && !isOperatingBranchRM) {
       notFound();
     }
   }
@@ -93,10 +96,18 @@ export default async function RequestDetailPage({ params }: { params: { id: stri
         </div>
         <div className="flex items-center gap-2 mb-1.5 flex-wrap">
           {application.branchType === 'SITE' ? (
-            <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-900 border border-amber-200">
-              <span>🏗️</span>
-              <span>Site Project: {application.branchName} (Direct Company Operated)</span>
-            </span>
+            <>
+              <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-900 border border-amber-200">
+                <span>🏗️</span>
+                <span>Site Project: {application.branchName} (Direct Company Operated)</span>
+              </span>
+              {application.mappedBranchName && (
+                <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-blue-50 text-blue-800 border border-blue-200">
+                  <span>🏢</span>
+                  <span>Handling Ops Branch: {application.mappedBranchName}</span>
+                </span>
+              )}
+            </>
           ) : (
             <span className="inline-flex items-center gap-1 text-[11px] font-medium text-slate-500">
               <span>🏢</span>

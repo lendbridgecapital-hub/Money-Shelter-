@@ -114,7 +114,8 @@ export async function notifyTouchpoint01_CustomerSubmitted(
   // 3. Email Notification 2: To Branch / Ops Desk
   const branch = application.branchId ? getBranchById(application.branchId) : undefined;
   const branchName = branch?.name || application.branchName || 'Central Branch';
-  const alertRecipient = branch?.email || settings.officialEmail;
+  const handlingBranch = branch?.mappedBranchId ? getBranchById(branch.mappedBranchId) : undefined;
+  const alertRecipient = branch?.email || handlingBranch?.email || settings.officialEmail;
 
   if (alertRecipient) {
     try {
@@ -131,6 +132,7 @@ export async function notifyTouchpoint01_CustomerSubmitted(
               <p style="margin: 4px 0;"><strong>Mobile:</strong> <a href="tel:${application.mobile || ''}">${application.mobile || '—'}</a></p>
               <p style="margin: 4px 0;"><strong>Email:</strong> ${application.email || '—'}</p>
               <p style="margin: 4px 0;"><strong>${branch?.type === 'SITE' ? 'Project Site / Code:' : 'Branch Code / Name:'}</strong> ${branch?.code || '—'} (${branchName})${branch?.type === 'SITE' ? ' — Direct Company Project' : ''}</p>
+              ${branch?.type === 'SITE' && handlingBranch ? `<p style="margin: 4px 0;"><strong>Handling Operating Branch:</strong> ${handlingBranch.name} (${handlingBranch.code})</p>` : ''}
               ${application.relationshipManagerName ? `<p style="margin: 4px 0;"><strong>Dedicated RM:</strong> ${application.relationshipManagerName}</p>` : ''}
               <p style="margin: 4px 0;"><strong>Product Type:</strong> ${loanTypeLabel}</p>
               <p style="margin: 4px 0;"><strong>Requested Amount:</strong> ₹${loanAmount.toLocaleString('en-IN')}</p>
@@ -149,6 +151,39 @@ export async function notifyTouchpoint01_CustomerSubmitted(
       });
     } catch (e) {
       console.warn('[TP01] Failed to send branch/ops alert email:', e);
+    }
+  }
+
+  // Also send to handling branch email if distinct from site email
+  if (handlingBranch?.email && handlingBranch.email !== alertRecipient) {
+    try {
+      await sendMail({
+        to: handlingBranch.email,
+        tenantId,
+        subject: `🔔 Operations Alert: Site Project Application Received — ${fullName} (${branchName})`,
+        html: `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 24px; border: 1px solid #e2e8f0; border-radius: 12px; color: #1e293b; background-color: #ffffff;">
+            <h2 style="color: #059669; margin-top: 0;">Site Operations: New Application Received</h2>
+            <p>Your branch has been assigned to handle underwriting and operations for project site <strong>${branchName}</strong>.</p>
+            <div style="background-color: #eff6ff; border-left: 4px solid #2563eb; padding: 14px 18px; margin: 20px 0; border-radius: 6px;">
+              <p style="margin: 4px 0;"><strong>Applicant Name:</strong> ${fullName}</p>
+              <p style="margin: 4px 0;"><strong>Mobile:</strong> <a href="tel:${application.mobile || ''}">${application.mobile || '—'}</a></p>
+              <p style="margin: 4px 0;"><strong>Project Site:</strong> ${branchName} (${branch?.code || '—'})</p>
+              <p style="margin: 4px 0;"><strong>Handling Branch:</strong> ${handlingBranch.name} (${handlingBranch.code})</p>
+              ${application.relationshipManagerName ? `<p style="margin: 4px 0;"><strong>Dedicated RM:</strong> ${application.relationshipManagerName}</p>` : ''}
+              <p style="margin: 4px 0;"><strong>Product:</strong> ${loanTypeLabel} · ₹${loanAmount.toLocaleString('en-IN')}</p>
+            </div>
+            <p style="margin: 24px 0;">
+              <a href="${applicationUrl}" style="background-color: #2563eb; color: #ffffff; padding: 12px 20px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">
+                Process Site Application File →
+              </a>
+            </p>
+            <p style="color: #64748b; font-size: 13px; margin-top: 24px;">Warm regards,<br/><strong>${companyName} Automated System</strong></p>
+          </div>
+        `,
+      });
+    } catch (e) {
+      console.warn('[TP01] Failed to send mapped handling branch alert email:', e);
     }
   }
 }

@@ -30,6 +30,11 @@ export default function BranchManager({
   const totalUsers = useMemo(() => branches.reduce((acc, b) => acc + (b.userCount || 0), 0), [branches]);
   const totalRequests = useMemo(() => branches.reduce((acc, b) => acc + (b.applicationCount || 0), 0), [branches]);
 
+  const operatingBranches = useMemo(
+    () => branches.filter((b) => b.type !== 'SITE' && (!editingBranch || b.id !== editingBranch.id)),
+    [branches, editingBranch]
+  );
+
   const filteredBranches = useMemo(() => {
     return branches.filter((b) => {
       if (typeFilter === 'BRANCH' && b.type === 'SITE') return false;
@@ -42,7 +47,8 @@ export default function BranchManager({
         const matchAddress = (b.address || '').toLowerCase().includes(q);
         const matchDev = (b.developerName || '').toLowerCase().includes(q);
         const matchRm = (b.dedicatedRmName || '').toLowerCase().includes(q);
-        return matchName || matchCode || matchAddress || matchDev || matchRm;
+        const matchMappedBranch = (b.mappedBranchName || '').toLowerCase().includes(q);
+        return matchName || matchCode || matchAddress || matchDev || matchRm || matchMappedBranch;
       }
       return true;
     });
@@ -305,6 +311,24 @@ export default function BranchManager({
                               🏗️ Builder: {b.developerName}
                             </p>
                           )}
+                          {isSite && b.mappedBranchName && (
+                            <p className="text-[11px] text-blue-700 font-semibold mt-0.5 flex items-center gap-1">
+                              <span>🏢 Handling Branch:</span>
+                              <span className="font-bold">{b.mappedBranchName}</span>
+                            </p>
+                          )}
+                          {!isSite && (() => {
+                            const handledSites = branches.filter((s) => s.type === 'SITE' && s.mappedBranchId === b.id);
+                            if (handledSites.length > 0) {
+                              return (
+                                <p className="text-[11px] text-emerald-700 font-semibold mt-0.5 flex items-center gap-1">
+                                  <span>🏗️ Handles {handledSites.length} {handledSites.length === 1 ? 'Site' : 'Sites'}:</span>
+                                  <span className="truncate max-w-[160px]">{handledSites.map((s) => s.name).join(', ')}</span>
+                                </p>
+                              );
+                            }
+                            return null;
+                          })()}
                           {b.address && (
                             <p className="text-[11px] text-slate-400 mt-0.5 max-w-xs truncate" title={b.address}>
                               {b.address}
@@ -533,6 +557,30 @@ export default function BranchManager({
                   </div>
                 )}
               </div>
+
+              {/* Mapped Operating Branch for SITE */}
+              {formType === 'SITE' && (
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">
+                    Mapped Operating Branch (Handling Operations Desk)
+                  </label>
+                  <select
+                    name="mappedBranchId"
+                    defaultValue={editingBranch?.mappedBranchId || ''}
+                    className="w-full px-3 py-2 text-xs border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white font-medium"
+                  >
+                    <option value="">No Regional Branch (Direct Central Operations)</option>
+                    {operatingBranches.map((ob) => (
+                      <option key={ob.id} value={ob.id}>
+                        🏢 {ob.name} ({ob.code})
+                      </option>
+                    ))}
+                  </select>
+                  <p className="text-[11px] text-slate-400 mt-1">
+                    Select the company branch responsible for underwriting, operational review, document verification, and bank submission for this project site.
+                  </p>
+                </div>
+              )}
 
               {/* Dedicated RM selection for SITE */}
               {formType === 'SITE' && (

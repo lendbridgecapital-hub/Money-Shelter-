@@ -281,8 +281,13 @@ export function listAllApplications(tenantId = 'default'): LoanApplication[] {
 
 export function listApplicationsByBranch(branchId: string): LoanApplication[] {
   const rows = db
-    .prepare('SELECT * FROM loan_applications WHERE branch_id = ? ORDER BY created_at DESC')
-    .all(branchId) as Record<string, unknown>[];
+    .prepare(`
+      SELECT * FROM loan_applications
+      WHERE branch_id = ?
+         OR branch_id IN (SELECT id FROM branches WHERE mapped_branch_id = ?)
+      ORDER BY created_at DESC
+    `)
+    .all(branchId, branchId) as Record<string, unknown>[];
 
   return rows.map(mapRowToApplication);
 }
@@ -298,6 +303,7 @@ export function listApplicationsByPartner(partnerId: string): LoanApplication[] 
 export function listApplicationsForRm(rmId: string, tenantId = 'default'): LoanApplication[] {
   const assignedPartners = listPartnersByRm(rmId, tenantId);
   const partnerIds = new Set(assignedPartners.map((p) => p.id));
+  const rmUser = getUserById(rmId);
 
   const allApps = listAllApplications(tenantId);
   return allApps.filter((app) => {
@@ -310,6 +316,10 @@ export function listApplicationsForRm(rmId: string, tenantId = 'default'): LoanA
       return true;
     }
     if (app.createdById && partnerIds.has(app.createdById)) {
+      return true;
+    }
+    // 3. Belonging to a site that is operated by RM's regional branch
+    if (rmUser?.branchId && (app.mappedBranchId === rmUser.branchId || app.branchId === rmUser.branchId)) {
       return true;
     }
     return false;
@@ -392,12 +402,25 @@ function mapRowToApplication(row: Record<string, unknown>): LoanApplication {
   const branchId = String(row.branch_id || row.branchId);
   let branchName = row.branch_name || row.branchName ? String(row.branch_name || row.branchName) : undefined;
   let branchType: 'BRANCH' | 'SITE' | undefined = (row.branch_type || row.branchType) as 'BRANCH' | 'SITE' | undefined;
+  let mappedBranchId: string | null | undefined = undefined;
+  let mappedBranchName: string | null | undefined = undefined;
+
   if (branchId) {
     try {
-      const bRow = db.prepare('SELECT name, type FROM branches WHERE id = ?').get(branchId) as { name?: string; type?: string } | undefined;
+      const bRow = db
+        .prepare('SELECT name, type, mapped_branch_id, mapped_branch_name FROM branches WHERE id = ?')
+        .get(branchId) as {
+          name?: string;
+          type?: string;
+          mapped_branch_id?: string;
+          mapped_branch_name?: string;
+        } | undefined;
+
       if (bRow) {
         if (!branchName && bRow.name) branchName = String(bRow.name);
         if (!branchType && bRow.type) branchType = bRow.type === 'SITE' ? 'SITE' : 'BRANCH';
+        mappedBranchId = bRow.mapped_branch_id || null;
+        mappedBranchName = bRow.mapped_branch_name || null;
       }
     } catch {}
   }
@@ -409,6 +432,8 @@ function mapRowToApplication(row: Record<string, unknown>): LoanApplication {
     branchId,
     branchName,
     branchType,
+    mappedBranchId,
+    mappedBranchName,
     createdById: String(row.created_by_id || row.createdById),
     createdByName: row.created_by_name || row.createdByName ? String(row.created_by_name || row.createdByName) : undefined,
     channelPartnerId: row.channel_partner_id || row.channelPartnerId ? String(row.channel_partner_id || row.channelPartnerId) : undefined,

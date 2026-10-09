@@ -22,12 +22,21 @@ export async function createBranchAction(formData: FormData): Promise<ActionResu
     const email = String(formData.get('email') || '').trim();
     const developerName = String(formData.get('developerName') || '').trim();
     const dedicatedRmId = String(formData.get('dedicatedRmId') || '').trim() || null;
+    const mappedBranchId = String(formData.get('mappedBranchId') || '').trim() || null;
 
     let dedicatedRmName: string | null = null;
     if (dedicatedRmId) {
       const rm = usersRepo.getUserById(dedicatedRmId);
       if (rm) {
         dedicatedRmName = rm.name;
+      }
+    }
+
+    let mappedBranchName: string | null = null;
+    if (mappedBranchId) {
+      const parentB = branchesRepo.getBranchById(mappedBranchId);
+      if (parentB) {
+        mappedBranchName = parentB.name;
       }
     }
 
@@ -39,6 +48,8 @@ export async function createBranchAction(formData: FormData): Promise<ActionResu
       name,
       code,
       type,
+      mappedBranchId,
+      mappedBranchName,
       address: address || null,
       phone: phone || null,
       email: email || null,
@@ -72,6 +83,8 @@ export async function updateBranchAction(id: string, formData: FormData): Promis
     const developerName = String(formData.get('developerName') || '').trim();
     const dedicatedRmIdRaw = formData.get('dedicatedRmId');
     const dedicatedRmId = dedicatedRmIdRaw !== null ? (String(dedicatedRmIdRaw).trim() || null) : undefined;
+    const mappedBranchIdRaw = formData.get('mappedBranchId');
+    const mappedBranchId = mappedBranchIdRaw !== null ? (String(mappedBranchIdRaw).trim() || null) : undefined;
 
     let dedicatedRmName: string | null | undefined = undefined;
     if (dedicatedRmId !== undefined) {
@@ -83,6 +96,16 @@ export async function updateBranchAction(id: string, formData: FormData): Promis
       }
     }
 
+    let mappedBranchName: string | null | undefined = undefined;
+    if (mappedBranchId !== undefined) {
+      if (mappedBranchId) {
+        const parentB = branchesRepo.getBranchById(mappedBranchId);
+        mappedBranchName = parentB ? parentB.name : null;
+      } else {
+        mappedBranchName = null;
+      }
+    }
+
     if (code && branchesRepo.branchCodeExists(code, id)) {
       return { ok: false, error: `Code "${code.toUpperCase()}" is already in use.` };
     }
@@ -91,6 +114,8 @@ export async function updateBranchAction(id: string, formData: FormData): Promis
       name: name || undefined,
       code: code || undefined,
       type,
+      mappedBranchId,
+      mappedBranchName,
       address,
       phone,
       email,

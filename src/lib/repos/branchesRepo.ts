@@ -52,6 +52,8 @@ export function createBranch(data: {
   name: string;
   code: string;
   type?: Branch['type'];
+  mappedBranchId?: string | null;
+  mappedBranchName?: string | null;
   address?: string | null;
   phone?: string | null;
   email?: string | null;
@@ -67,15 +69,26 @@ export function createBranch(data: {
   const code = data.code.trim().toUpperCase();
   const type = data.type || 'BRANCH';
 
+  let mappedBranchId = data.mappedBranchId || null;
+  let mappedBranchName = data.mappedBranchName || null;
+  if (mappedBranchId && !mappedBranchName) {
+    const parentBranch = getBranchById(mappedBranchId);
+    if (parentBranch) {
+      mappedBranchName = parentBranch.name;
+    }
+  }
+
   db.prepare(
-    `INSERT INTO branches (id, tenant_id, name, code, type, address, phone, email, dedicated_rm_id, dedicated_rm_name, developer_name, created_at, updated_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+    `INSERT INTO branches (id, tenant_id, name, code, type, mapped_branch_id, mapped_branch_name, address, phone, email, dedicated_rm_id, dedicated_rm_name, developer_name, created_at, updated_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
   ).run(
     id,
     tenantId,
     data.name.trim(),
     code,
     type,
+    mappedBranchId,
+    mappedBranchName,
     data.address || null,
     data.phone || null,
     data.email || null,
@@ -92,6 +105,8 @@ export function createBranch(data: {
     name: data.name.trim(),
     code,
     type,
+    mappedBranchId,
+    mappedBranchName,
     address: data.address || null,
     phone: data.phone || null,
     email: data.email || null,
@@ -118,6 +133,22 @@ export function updateBranch(id: string, data: Partial<Branch>): void {
   if (data.type !== undefined) {
     updates.push('type = ?');
     params.push(data.type);
+  }
+  if (data.mappedBranchId !== undefined) {
+    updates.push('mapped_branch_id = ?');
+    params.push(data.mappedBranchId || null);
+
+    if (data.mappedBranchName !== undefined) {
+      updates.push('mapped_branch_name = ?');
+      params.push(data.mappedBranchName || null);
+    } else if (data.mappedBranchId) {
+      const parentBranch = getBranchById(data.mappedBranchId);
+      updates.push('mapped_branch_name = ?');
+      params.push(parentBranch?.name || null);
+    } else {
+      updates.push('mapped_branch_name = ?');
+      params.push(null);
+    }
   }
   if (data.address !== undefined) {
     updates.push('address = ?');
@@ -174,6 +205,8 @@ function mapRowToBranch(row: Record<string, unknown>): Branch {
     name: String(row.name),
     code: String(row.code),
     type: (row.type as Branch['type']) || 'BRANCH',
+    mappedBranchId: row.mapped_branch_id || row.mappedBranchId ? String(row.mapped_branch_id || row.mappedBranchId) : null,
+    mappedBranchName: row.mapped_branch_name || row.mappedBranchName ? String(row.mapped_branch_name || row.mappedBranchName) : null,
     address: row.address ? String(row.address) : null,
     phone: row.phone ? String(row.phone) : null,
     email: row.email ? String(row.email) : null,

@@ -225,6 +225,12 @@ export default function RequestTable({ applications, showBranchColumn = false }:
                       </svg>
                       <span className="truncate">{app.mobile || app.email || 'Awaiting Details'}</span>
                     </div>
+                    {app.branchType === 'SITE' && (
+                      <div className="flex items-center gap-1 text-[10px] font-bold text-amber-900 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-200/80 mt-1 max-w-fit">
+                        <span>🏗️ {app.branchName}</span>
+                        {app.mappedBranchName && <span className="text-blue-700 font-semibold">· Ops: {app.mappedBranchName}</span>}
+                      </div>
+                    )}
                   </div>
                 </div>
 
@@ -356,10 +362,17 @@ export default function RequestTable({ applications, showBranchColumn = false }:
                   {showBranchColumn && (
                     <td className="px-2.5 lg:px-4 py-2.5 lg:py-3 text-[11px] lg:text-xs whitespace-nowrap">
                       {app.branchType === 'SITE' ? (
-                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full font-bold bg-amber-50 text-amber-900 border border-amber-200">
-                          <span>🏗️</span>
-                          <span className="truncate max-w-[130px]">{app.branchName || 'Site Project'}</span>
-                        </span>
+                        <div>
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full font-bold bg-amber-50 text-amber-900 border border-amber-200">
+                            <span>🏗️</span>
+                            <span className="truncate max-w-[130px]">{app.branchName || 'Site Project'}</span>
+                          </span>
+                          {app.mappedBranchName && (
+                            <p className="text-[10px] text-blue-700 font-semibold mt-0.5 truncate max-w-[130px]" title={`Handling Ops Branch: ${app.mappedBranchName}`}>
+                              Ops: {app.mappedBranchName}
+                            </p>
+                          )}
+                        </div>
                       ) : (
                         <span className="inline-flex items-center gap-1 text-slate-600">
                           <span>🏢</span>
