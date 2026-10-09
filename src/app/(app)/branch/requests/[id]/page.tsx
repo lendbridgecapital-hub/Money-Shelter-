@@ -12,6 +12,8 @@ import StatusTracker from '@/components/StatusTracker';
 import StatusBadge from '@/components/StatusBadge';
 import OperationalWorkflowPanel from '@/components/OperationalWorkflowPanel';
 import CaseMatchEligibilityBanner from '@/components/CaseMatchEligibilityBanner';
+import CaseTopActionBanners from '@/components/CaseTopActionBanners';
+import CaseEditCustomerButton from '@/components/CaseEditCustomerButton';
 
 const CATEGORY_TITLES: Record<string, string> = {
   PAN_CARD: 'PAN Card',
@@ -147,12 +149,26 @@ export default async function RequestDetailPage({ params }: { params: { id: stri
         isOpsOrAdmin={user.role === 'OPERATIONS' || user.role === 'ADMIN' || user.role === 'CENTRAL_SUPPORT'}
       />
 
+      {/* Stage Action Information on Top (e.g. Documents Required checklist & upload, Sanction Acceptance, Customer Offer Link, Disbursed Summary) */}
+      <CaseTopActionBanners
+        application={application}
+        currentUser={user}
+        requiredDocs={requiredDocs}
+        baseUrl={baseUrl}
+      />
+
       {/* Grid Layout: Displays basic information across buckets per user request */}
       <div className="space-y-6">
         <div className="space-y-6">
           {/* Basic Details */}
           <section className="bg-white border border-slate-200 rounded-xl p-5 shadow-xs">
-            <h2 className="font-semibold text-slate-900 mb-4">Loan File Overview</h2>
+            <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
+              <h2 className="font-semibold text-slate-900">Loan File Overview</h2>
+              <CaseEditCustomerButton
+                application={application}
+                isOpsOrAdmin={user.role === 'OPERATIONS' || user.role === 'ADMIN' || user.role === 'CENTRAL_SUPPORT'}
+              />
+            </div>
             <dl className="grid sm:grid-cols-2 gap-4 text-sm">
               <Field label="Full Name" value={application.fullName} />
               <Field label="Mobile" value={application.mobile} />
@@ -253,7 +269,7 @@ export default async function RequestDetailPage({ params }: { params: { id: stri
 
         {/* Flowchart Action Controls Centered on the row */}
         {application.status !== 'LINK_SHARED' && (
-          <div className="flex-1 w-full md:max-w-xl mx-auto flex justify-center">
+          <div className="flex-1 w-full md:max-w-md mx-auto flex justify-center">
             <OperationalWorkflowPanel
               application={application}
               currentUser={user}
