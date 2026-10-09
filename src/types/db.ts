@@ -322,6 +322,8 @@ export interface LoanApplication {
   createdByName?: string;
   channelPartnerId?: string;
   channelPartnerName?: string;
+  channelPartnerPhone?: string | null;
+  channelPartnerMobile?: string | null;
   relationshipManagerId?: string | null;
   relationshipManagerName?: string | null;
   status: ApplicationStatus;

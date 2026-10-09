@@ -4,7 +4,7 @@ import React, { useState, useMemo } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import type { LoanApplication, ApplicationStatus } from '@/types/db';
-import { LOAN_TYPE_LABELS, formatCurrencyINR, formatDate } from '@/lib/format';
+import { LOAN_TYPE_LABELS, formatCurrencyINR, formatDate, formatDateTime } from '@/lib/format';
 import StatusBadge from '@/components/StatusBadge';
 import LoanEligibilityMatchModal from '@/components/LoanEligibilityMatchModal';
 
@@ -48,6 +48,7 @@ export default function RequestTable({
         const matchesToken = (app.token || '').toLowerCase().includes(q);
         const matchesBranch = (app.branchName || '').toLowerCase().includes(q);
         const matchesPartner = (app.channelPartnerName || app.createdByName || '').toLowerCase().includes(q);
+        const matchesPartnerPhone = (app.channelPartnerMobile || app.channelPartnerPhone || '').includes(q);
         const matchesBank = (app.bankName || '').toLowerCase().includes(q);
         if (
           !matchesName &&
@@ -56,6 +57,7 @@ export default function RequestTable({
           !matchesToken &&
           !matchesBranch &&
           !matchesPartner &&
+          !matchesPartnerPhone &&
           !matchesBank
         ) {
           return false;
@@ -312,26 +314,35 @@ export default function RequestTable({
         <table className="w-full text-xs lg:text-sm">
           <thead>
             <tr className="bg-slate-50 text-left text-[11px] lg:text-xs font-semibold text-slate-500 uppercase tracking-wide border-b border-slate-200">
+              <th className="px-3 lg:px-4 py-2.5 lg:py-3 whitespace-nowrap">Created</th>
               <th className="px-3 lg:px-4 py-2.5 lg:py-3 whitespace-nowrap">Applicant / Customer</th>
-              <th className="px-2.5 lg:px-4 py-2.5 lg:py-3 whitespace-nowrap">Loan Product</th>
-              <th className="px-2.5 lg:px-4 py-2.5 lg:py-3 whitespace-nowrap">Amount</th>
+              <th className="px-2.5 lg:px-4 py-2.5 lg:py-3 whitespace-nowrap">Loan Product & Amount</th>
               <th className="px-2.5 lg:px-4 py-2.5 lg:py-3 whitespace-nowrap">Partner / Bank</th>
-              {showBranchColumn && <th className="px-2.5 lg:px-4 py-2.5 lg:py-3 whitespace-nowrap">Branch</th>}
-              <th className="px-2.5 lg:px-4 py-2.5 lg:py-3 whitespace-nowrap">Status</th>
-              <th className="px-2.5 lg:px-4 py-2.5 lg:py-3 whitespace-nowrap">Created</th>
+              <th className="px-2.5 lg:px-4 py-2.5 lg:py-3 whitespace-nowrap">Branch & Status</th>
               <th className="px-3 lg:px-4 py-2.5 lg:py-3 text-right whitespace-nowrap">Action</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
             {filtered.length === 0 ? (
               <tr>
-                <td colSpan={showBranchColumn ? 8 : 7} className="px-4 py-12 text-center text-slate-400 text-sm">
+                <td colSpan={6} className="px-4 py-12 text-center text-slate-400 text-sm">
                   No loan requests found matching the current filter.
                 </td>
               </tr>
             ) : (
               filtered.map((app) => (
                 <tr key={app.id} className="hover:bg-slate-50/70 transition-colors">
+                  {/* 1. Created (Timestamp shifted to first before Applicant) */}
+                  <td className="px-3 lg:px-4 py-2.5 lg:py-3 whitespace-nowrap">
+                    <p className="font-semibold text-slate-800 text-xs">
+                      {formatDate(app.createdAt)}
+                    </p>
+                    <p className="text-[10px] lg:text-[11px] text-slate-400 mt-0.5">
+                      {formatDateTime(app.createdAt).split(',')[1]?.trim() || ''}
+                    </p>
+                  </td>
+
+                  {/* 2. Applicant / Customer */}
                   <td className="px-3 lg:px-4 py-2.5 lg:py-3">
                     {app.fullName ? (
                       <div>
@@ -347,50 +358,65 @@ export default function RequestTable({
                       </div>
                     )}
                   </td>
-                  <td className="px-2.5 lg:px-4 py-2.5 lg:py-3 text-[11px] lg:text-xs text-slate-700 font-medium whitespace-nowrap">
-                    {app.loanType ? LOAN_TYPE_LABELS[app.loanType] : '—'}
-                  </td>
-                  <td className="px-2.5 lg:px-4 py-2.5 lg:py-3 text-[11px] lg:text-xs font-semibold text-slate-900 whitespace-nowrap">
-                    {app.approvedAmount
-                      ? formatCurrencyINR(app.approvedAmount)
-                      : app.loanAmount
-                      ? formatCurrencyINR(app.loanAmount)
-                      : '—'}
-                  </td>
-                  <td className="px-2.5 lg:px-4 py-2.5 lg:py-3 text-[11px] lg:text-xs">
-                    <p className="font-medium text-slate-800 truncate max-w-[120px] xl:max-w-none">
-                      {app.channelPartnerName || app.createdByName || 'Direct'}
+
+                  {/* 3. Loan Product & Amount (Merged) */}
+                  <td className="px-2.5 lg:px-4 py-2.5 lg:py-3 text-[11px] lg:text-xs whitespace-nowrap">
+                    <p className="font-semibold text-slate-900">
+                      {app.approvedAmount
+                        ? formatCurrencyINR(app.approvedAmount)
+                        : app.loanAmount
+                        ? formatCurrencyINR(app.loanAmount)
+                        : '—'}
                     </p>
-                    <p className="text-[10px] lg:text-[11px] text-slate-400 truncate max-w-[120px] xl:max-w-none">{app.bankName || 'Not assigned'}</p>
+                    <p className="text-[10px] lg:text-[11px] text-slate-500 font-medium mt-0.5">
+                      {app.loanType ? LOAN_TYPE_LABELS[app.loanType] : 'General Loan'}
+                    </p>
                   </td>
-                  {showBranchColumn && (
-                    <td className="px-2.5 lg:px-4 py-2.5 lg:py-3 text-[11px] lg:text-xs whitespace-nowrap">
-                      {app.branchType === 'SITE' ? (
-                        <div>
-                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full font-bold bg-amber-50 text-amber-900 border border-amber-200">
-                            <span>🏗️</span>
-                            <span className="truncate max-w-[130px]">{app.branchName || 'Site Project'}</span>
-                          </span>
-                          {app.mappedBranchName && (
-                            <p className="text-[10px] text-blue-700 font-semibold mt-0.5 truncate max-w-[130px]" title={`Handling Ops Branch: ${app.mappedBranchName}`}>
-                              Ops: {app.mappedBranchName}
-                            </p>
-                          )}
-                        </div>
-                      ) : (
-                        <span className="inline-flex items-center gap-1 text-slate-600">
-                          <span>🏢</span>
-                          <span className="truncate max-w-[130px]">{app.branchName || 'Head Office'}</span>
-                        </span>
+
+                  {/* 4. Partner / Bank (With Partner Mobile Number) */}
+                  <td className="px-2.5 lg:px-4 py-2.5 lg:py-3 text-[11px] lg:text-xs">
+                    <div>
+                      <p className="font-semibold text-slate-800 truncate max-w-[140px] xl:max-w-none">
+                        {app.channelPartnerName || app.createdByName || 'Direct'}
+                      </p>
+                      {(app.channelPartnerMobile || app.channelPartnerPhone) && (
+                        <p className="text-[11px] text-emerald-700 font-medium font-mono flex items-center gap-1 mt-0.5">
+                          <span>📞</span>
+                          <span>{app.channelPartnerMobile || app.channelPartnerPhone}</span>
+                        </p>
                       )}
-                    </td>
-                  )}
-                  <td className="px-2.5 lg:px-4 py-2.5 lg:py-3 whitespace-nowrap">
-                    <StatusBadge status={app.status as ApplicationStatus} />
+                      <p className="text-[10px] lg:text-[11px] text-slate-400 truncate max-w-[140px] xl:max-w-none mt-0.5">
+                        Bank: <strong className="text-slate-600">{app.bankName || 'Not assigned'}</strong>
+                      </p>
+                    </div>
                   </td>
-                  <td className="px-2.5 lg:px-4 py-2.5 lg:py-3 text-[11px] lg:text-xs text-slate-400 whitespace-nowrap">
-                    {formatDate(app.createdAt)}
+
+                  {/* 5. Branch & Status (Merged) */}
+                  <td className="px-2.5 lg:px-4 py-2.5 lg:py-3 text-[11px] lg:text-xs whitespace-nowrap space-y-1.5">
+                    <div>
+                      <StatusBadge status={app.status as ApplicationStatus} size="sm" />
+                    </div>
+                    {app.branchType === 'SITE' ? (
+                      <div>
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full font-bold bg-amber-50 text-amber-900 border border-amber-200 text-[10px]">
+                          <span>🏗️</span>
+                          <span className="truncate max-w-[130px]">{app.branchName || 'Site Project'}</span>
+                        </span>
+                        {app.mappedBranchName && (
+                          <p className="text-[10px] text-blue-700 font-semibold mt-0.5 truncate max-w-[130px]" title={`Handling Ops Branch: ${app.mappedBranchName}`}>
+                            Ops: {app.mappedBranchName}
+                          </p>
+                        )}
+                      </div>
+                    ) : (
+                      <span className="inline-flex items-center gap-1 text-slate-600 text-[11px]">
+                        <span>🏢</span>
+                        <span className="truncate max-w-[130px]">{app.branchName || 'Head Office'}</span>
+                      </span>
+                    )}
                   </td>
+
+                  {/* 6. Action */}
                   <td className="px-3 lg:px-4 py-2.5 lg:py-3 text-right whitespace-nowrap">
                     {canMatchEligibility && app.status === 'DOCUMENTS_IN' && (
                       <button

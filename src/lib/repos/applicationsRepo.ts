@@ -438,6 +438,30 @@ function mapRowToApplication(row: Record<string, unknown>): LoanApplication {
     createdByName: row.created_by_name || row.createdByName ? String(row.created_by_name || row.createdByName) : undefined,
     channelPartnerId: row.channel_partner_id || row.channelPartnerId ? String(row.channel_partner_id || row.channelPartnerId) : undefined,
     channelPartnerName: row.channel_partner_name || row.channelPartnerName ? String(row.channel_partner_name || row.channelPartnerName) : undefined,
+    channelPartnerPhone: (() => {
+      const pId = row.channel_partner_id || row.channelPartnerId || row.created_by_id || row.createdById;
+      if (pId) {
+        try {
+          const u = db.prepare('SELECT phone FROM users WHERE id = ?').get(String(pId)) as { phone?: string } | undefined;
+          return u?.phone || null;
+        } catch {
+          return null;
+        }
+      }
+      return null;
+    })(),
+    channelPartnerMobile: (() => {
+      const pId = row.channel_partner_id || row.channelPartnerId || row.created_by_id || row.createdById;
+      if (pId) {
+        try {
+          const u = db.prepare('SELECT phone FROM users WHERE id = ?').get(String(pId)) as { phone?: string } | undefined;
+          return u?.phone || null;
+        } catch {
+          return null;
+        }
+      }
+      return null;
+    })(),
     relationshipManagerId: row.relationship_manager_id || row.relationshipManagerId ? String(row.relationship_manager_id || row.relationshipManagerId) : null,
     relationshipManagerName: row.relationship_manager_name || row.relationshipManagerName ? String(row.relationship_manager_name || row.relationshipManagerName) : null,
     status: (row.status as ApplicationStatus) || 'LINK_SHARED',
