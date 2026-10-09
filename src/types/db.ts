@@ -241,14 +241,20 @@ export interface CompanySettings {
   smtpFromName?: string;
 }
 
+export type BranchType = 'BRANCH' | 'SITE';
+
 export interface Branch {
   id: string;
   tenantId?: string;
   name: string;
   code: string;
+  type?: BranchType; // 'BRANCH' | 'SITE' (Direct Company Construction Project)
   address?: string | null;
   phone?: string | null;
   email?: string | null;
+  dedicatedRmId?: string | null;
+  dedicatedRmName?: string | null;
+  developerName?: string | null;
   createdAt: string;
   updatedAt?: string;
 }
@@ -307,6 +313,7 @@ export interface LoanApplication {
   token: string;
   branchId: string;
   branchName?: string;
+  branchType?: BranchType;
   createdById: string; // Partner who generated link
   createdByName?: string;
   channelPartnerId?: string;

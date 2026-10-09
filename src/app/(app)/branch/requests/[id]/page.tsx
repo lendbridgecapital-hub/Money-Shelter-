@@ -91,9 +91,31 @@ export default async function RequestDetailPage({ params }: { params: { id: stri
             <span>All Cases</span>
           </Link>
         </div>
-        <p className="text-xs text-slate-400 mb-1">
-          {application.branchName || 'Branch'} · Originated by {application.channelPartnerName || application.createdByName || 'Channel Partner'}
-        </p>
+        <div className="flex items-center gap-2 mb-1.5 flex-wrap">
+          {application.branchType === 'SITE' ? (
+            <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-900 border border-amber-200">
+              <span>🏗️</span>
+              <span>Site Project: {application.branchName} (Direct Company Operated)</span>
+            </span>
+          ) : (
+            <span className="inline-flex items-center gap-1 text-[11px] font-medium text-slate-500">
+              <span>🏢</span>
+              <span>Branch: {application.branchName || 'Head Office'}</span>
+            </span>
+          )}
+          <span className="text-slate-300">•</span>
+          <span className="text-xs text-slate-500">
+            Originated by: <strong>{application.channelPartnerName || application.createdByName || 'Channel Partner'}</strong>
+          </span>
+          {application.relationshipManagerName && (
+            <>
+              <span className="text-slate-300">•</span>
+              <span className="text-xs text-emerald-800 font-semibold bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200/80">
+                👤 Dedicated RM: {application.relationshipManagerName}
+              </span>
+            </>
+          )}
+        </div>
         <div className="flex items-center gap-3 flex-wrap">
           <h1 className="text-xl font-semibold text-slate-900">
             {application.fullName || 'Awaiting customer submission'}
@@ -136,6 +158,18 @@ export default async function RequestDetailPage({ params }: { params: { id: stri
               {application.existingEmi !== undefined && application.existingEmi !== null && (
                 <Field label="Existing Monthly EMI(s)" value={formatCurrencyINR(application.existingEmi)} />
               )}
+              <Field
+                label="Location / Desk"
+                value={
+                  application.branchType === 'SITE'
+                    ? `🏗️ ${application.branchName || 'Site Project'} (Direct Company Project)`
+                    : `🏢 ${application.branchName || 'Head Office'}`
+                }
+              />
+              <Field
+                label="Dedicated Relationship Manager"
+                value={application.relationshipManagerName || 'Head Office Direct'}
+              />
               <Field label="Submitted On" value={application.submittedAt ? formatDateTime(application.submittedAt) : null} />
               <Field label="Channel Partner" value={application.channelPartnerName || application.createdByName} />
               <Field label="Lending Bank" value={application.bankName} />

@@ -354,8 +354,18 @@ export default function RequestTable({ applications, showBranchColumn = false }:
                     <p className="text-[10px] lg:text-[11px] text-slate-400 truncate max-w-[120px] xl:max-w-none">{app.bankName || 'Not assigned'}</p>
                   </td>
                   {showBranchColumn && (
-                    <td className="px-2.5 lg:px-4 py-2.5 lg:py-3 text-[11px] lg:text-xs text-slate-600 whitespace-nowrap">
-                      {app.branchName || 'Head Office'}
+                    <td className="px-2.5 lg:px-4 py-2.5 lg:py-3 text-[11px] lg:text-xs whitespace-nowrap">
+                      {app.branchType === 'SITE' ? (
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full font-bold bg-amber-50 text-amber-900 border border-amber-200">
+                          <span>🏗️</span>
+                          <span className="truncate max-w-[130px]">{app.branchName || 'Site Project'}</span>
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 text-slate-600">
+                          <span>🏢</span>
+                          <span className="truncate max-w-[130px]">{app.branchName || 'Head Office'}</span>
+                        </span>
+                      )}
                     </td>
                   )}
                   <td className="px-2.5 lg:px-4 py-2.5 lg:py-3 whitespace-nowrap">

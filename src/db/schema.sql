@@ -55,9 +55,13 @@ CREATE TABLE IF NOT EXISTS branches (
   tenant_id TEXT DEFAULT 'default',
   name TEXT NOT NULL,
   code TEXT NOT NULL,
+  type TEXT NOT NULL DEFAULT 'BRANCH', -- 'BRANCH' or 'SITE'
   address TEXT,
   phone TEXT,
   email TEXT,
+  dedicated_rm_id TEXT,
+  dedicated_rm_name TEXT,
+  developer_name TEXT,
   created_at TEXT NOT NULL,
   updated_at TEXT NOT NULL
 );

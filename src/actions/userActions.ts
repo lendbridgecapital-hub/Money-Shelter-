@@ -6,7 +6,7 @@ import { requireRole, requireUser } from '@/lib/auth';
 import { saveUploadedFile } from '@/lib/uploads';
 import { syncDatabase } from '@/lib/db';
 import * as usersRepo from '@/lib/repos/usersRepo';
-import { listBranches } from '@/lib/repos/branchesRepo';
+import * as branchesRepo from '@/lib/repos/branchesRepo';
 import type { Role } from '@/types/db';
 import type { ActionResult } from '@/actions/settingsActions';
 
@@ -31,17 +31,23 @@ export async function createUserAction(formData: FormData): Promise<ActionResult
     if (usersRepo.emailExists(email)) return { ok: false, error: 'A user with this email already exists.' };
 
     const passwordHash = await bcrypt.hash(password, 10);
-    const assignedRmId = formData.get('assignedRmId') ? String(formData.get('assignedRmId')) : undefined;
-    const panNumber = formData.get('panNumber') ? String(formData.get('panNumber')) : undefined;
-    const aadhaarNumber = formData.get('aadhaarNumber') ? String(formData.get('aadhaarNumber')) : undefined;
-    const commissionRate = formData.get('commissionRate') ? Number(formData.get('commissionRate')) : undefined;
-
+    const branch = branchesRepo.getBranchById(branchId);
+    let assignedRmId = formData.get('assignedRmId') ? String(formData.get('assignedRmId')).trim() || undefined : undefined;
     let assignedRmName: string | undefined = undefined;
-    if (assignedRmId) {
+
+    // If assigned to a direct company construction SITE and no RM explicitly selected, auto-assign the site's dedicated RM
+    if (!assignedRmId && branch?.type === 'SITE' && branch.dedicatedRmId) {
+      assignedRmId = branch.dedicatedRmId;
+      assignedRmName = branch.dedicatedRmName || undefined;
+    } else if (assignedRmId) {
       const rms = usersRepo.listRelationshipManagers();
       const matched = rms.find((r) => r.id === assignedRmId);
       if (matched) assignedRmName = matched.name;
     }
+
+    const panNumber = formData.get('panNumber') ? String(formData.get('panNumber')) : undefined;
+    const aadhaarNumber = formData.get('aadhaarNumber') ? String(formData.get('aadhaarNumber')) : undefined;
+    const commissionRate = formData.get('commissionRate') ? Number(formData.get('commissionRate')) : undefined;
 
     usersRepo.createUser({
       name,
@@ -128,7 +134,7 @@ export async function bulkCreateRmAction(
       return { ok: false, error: 'No Relationship Manager records provided for creation.' };
     }
 
-    const branches = listBranches();
+    const branches = branchesRepo.listBranches();
     const fallbackBranchId = defaultBranchId || branches[0]?.id || 'branch_default';
     const fallbackPassword =
       defaultPassword?.trim() && defaultPassword.trim().length >= 8

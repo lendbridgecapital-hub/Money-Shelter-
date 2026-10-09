@@ -70,6 +70,25 @@ export default function CustomerApplicationForm({ token, settings, branch, initi
           </div>
         </div>
 
+        {branch?.type === 'SITE' && (
+          <div className="mb-5 p-3.5 rounded-xl bg-gradient-to-r from-amber-50 to-orange-50/50 border border-amber-200 text-amber-900 text-xs flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <div className="flex items-center gap-2.5">
+              <span className="text-lg">🏗️</span>
+              <div>
+                <span className="font-bold">Direct Construction Project: {branch.name}</span>
+                {branch.dedicatedRmName && (
+                  <p className="text-[11px] text-amber-800 mt-0.5">
+                    Assigned Relationship Manager: <strong>{branch.dedicatedRmName}</strong>
+                  </p>
+                )}
+              </div>
+            </div>
+            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-200 text-amber-900 uppercase self-start sm:self-auto">
+              Company Site Desk
+            </span>
+          </div>
+        )}
+
         <div className="grid sm:grid-cols-2 gap-5">
           <div className="sm:col-span-2">
             <label className="block text-xs font-semibold text-slate-700 mb-1.5">

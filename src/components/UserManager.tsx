@@ -320,11 +320,24 @@ export default function UserManager({
                       onChange={(e) => handleBranchChange(u.id, u.role, e.target.value)}
                       className="text-xs font-medium border border-slate-200 rounded-md px-2 py-1 bg-white focus:ring-1 focus:ring-emerald-500"
                     >
-                      {branches.map((b) => (
-                        <option key={b.id} value={b.id}>
-                          {b.name} ({b.code})
-                        </option>
-                      ))}
+                      <optgroup label="🏢 Branches">
+                        {branches
+                          .filter((b) => b.type !== 'SITE')
+                          .map((b) => (
+                            <option key={b.id} value={b.id}>
+                              {b.name} ({b.code})
+                            </option>
+                          ))}
+                      </optgroup>
+                      <optgroup label="🏗️ Construction Sites">
+                        {branches
+                          .filter((b) => b.type === 'SITE')
+                          .map((b) => (
+                            <option key={b.id} value={b.id}>
+                              {b.name} ({b.code})
+                            </option>
+                          ))}
+                      </optgroup>
                     </select>
                   </td>
                   <td className="px-4 py-3">
@@ -484,18 +497,34 @@ export default function UserManager({
               )}
 
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">Assigned Branch *</label>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">Assigned Branch / Construction Site *</label>
                 <select
                   name="branchId"
                   required
                   className="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white font-medium"
                 >
-                  {branches.map((b) => (
-                    <option key={b.id} value={b.id}>
-                      {b.name} ({b.code})
-                    </option>
-                  ))}
+                  <optgroup label="🏢 Regional Branches / Offices">
+                    {branches
+                      .filter((b) => b.type !== 'SITE')
+                      .map((b) => (
+                        <option key={b.id} value={b.id}>
+                          {b.name} ({b.code})
+                        </option>
+                      ))}
+                  </optgroup>
+                  <optgroup label="🏗️ Construction Sites (Direct Company Projects)">
+                    {branches
+                      .filter((b) => b.type === 'SITE')
+                      .map((b) => (
+                        <option key={b.id} value={b.id}>
+                          {b.name} ({b.code}){b.dedicatedRmName ? ` — Dedicated RM: ${b.dedicatedRmName}` : ''}
+                        </option>
+                      ))}
+                  </optgroup>
                 </select>
+                <p className="text-[11px] text-slate-400 mt-1">
+                  Selecting a Construction Site will deploy this manpower under that project, auto-mapping their customer applications to the project and dedicated RM.
+                </p>
               </div>
 
               <div className="flex justify-end gap-2 pt-2">

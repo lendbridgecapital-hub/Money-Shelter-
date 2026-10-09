@@ -113,6 +113,18 @@ export default function MobileDrawer({
       show: isAdmin,
     },
     {
+      label: 'Branches',
+      href: '/admin/branches',
+      icon: '🏢',
+      show: isAdmin || isSupport,
+    },
+    {
+      label: 'Sites (Projects)',
+      href: '/admin/sites',
+      icon: '🏗️',
+      show: isAdmin || isSupport,
+    },
+    {
       label: 'User & RM Management',
       href: '/admin/users',
       icon: '👥',

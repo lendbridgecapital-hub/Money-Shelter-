@@ -244,8 +244,12 @@ export default async function CustomerApplyPage({
               <h1 className="font-bold text-slate-900 text-sm sm:text-base leading-tight">
                 {settings.companyName}
               </h1>
-              <p className="text-[11px] text-slate-400">
-                {branch ? `${branch.name} Branch` : 'Digital Loan Origination Desk'}
+              <p className="text-[11px] text-slate-500">
+                {branch
+                  ? branch.type === 'SITE'
+                    ? `🏗️ ${branch.name} — Direct Project Desk`
+                    : `${branch.name} Branch`
+                  : 'Digital Loan Origination Desk'}
               </p>
             </div>
           </div>
@@ -263,19 +267,46 @@ export default async function CustomerApplyPage({
       {/* Hero Banner */}
       <div className="bg-white border-b border-slate-200/60 py-8 mb-8">
         <div className="max-w-4xl mx-auto px-4 sm:px-6">
-          <span
-            className="inline-block text-[11px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full mb-2"
-            style={{ backgroundColor: `${settings.primaryColor}15`, color: settings.primaryColor }}
-          >
-            Digital Loan Origination
-          </span>
+          <div className="flex items-center gap-2 mb-2 flex-wrap">
+            <span
+              className="inline-block text-[11px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full"
+              style={{ backgroundColor: `${settings.primaryColor}15`, color: settings.primaryColor }}
+            >
+              Digital Loan Origination
+            </span>
+            {branch?.type === 'SITE' && (
+              <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-900 border border-amber-200">
+                <span>🏗️</span>
+                <span>{branch.name} — Direct Project</span>
+              </span>
+            )}
+          </div>
           <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
             Apply for Your Loan in Minutes
           </h2>
           <p className="text-xs sm:text-sm text-slate-500 mt-1 max-w-2xl">
-            Please fill in your primary details and upload the requested KYC and income documents. Our lending team will
-            process your file with partner banks.
+            {branch?.type === 'SITE'
+              ? `Submit your loan documents directly for ${branch.name}. All information will be securely reviewed by our dedicated project desk.`
+              : 'Submit your loan requirements and KYC documents in our encrypted portal. Fast approval with top lending banks.'}
           </p>
+
+          {branch?.type === 'SITE' && (
+            <div className="mt-4 p-3.5 bg-gradient-to-r from-amber-50 to-orange-50/40 border border-amber-200 rounded-2xl flex items-center gap-3 max-w-2xl">
+              <div className="w-8 h-8 rounded-xl bg-amber-500 text-white font-bold flex items-center justify-center shrink-0 text-sm shadow-2xs">
+                🏗️
+              </div>
+              <div>
+                <p className="text-xs font-bold text-amber-950">
+                  Direct Company Operated Construction Project
+                </p>
+                <p className="text-[11px] text-slate-600 mt-0.5">
+                  Project: <strong>{branch.name}</strong>
+                  {branch.developerName ? ` (${branch.developerName})` : ''}
+                  {branch.dedicatedRmName ? ` • Dedicated RM: ${branch.dedicatedRmName}` : ''}
+                </p>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 

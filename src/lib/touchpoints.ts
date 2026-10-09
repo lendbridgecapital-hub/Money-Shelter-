@@ -130,7 +130,8 @@ export async function notifyTouchpoint01_CustomerSubmitted(
               <p style="margin: 4px 0;"><strong>Applicant Name:</strong> ${fullName}</p>
               <p style="margin: 4px 0;"><strong>Mobile:</strong> <a href="tel:${application.mobile || ''}">${application.mobile || '—'}</a></p>
               <p style="margin: 4px 0;"><strong>Email:</strong> ${application.email || '—'}</p>
-              <p style="margin: 4px 0;"><strong>Branch Code / Name:</strong> ${branch?.code || '—'} (${branchName})</p>
+              <p style="margin: 4px 0;"><strong>${branch?.type === 'SITE' ? 'Project Site / Code:' : 'Branch Code / Name:'}</strong> ${branch?.code || '—'} (${branchName})${branch?.type === 'SITE' ? ' — Direct Company Project' : ''}</p>
+              ${application.relationshipManagerName ? `<p style="margin: 4px 0;"><strong>Dedicated RM:</strong> ${application.relationshipManagerName}</p>` : ''}
               <p style="margin: 4px 0;"><strong>Product Type:</strong> ${loanTypeLabel}</p>
               <p style="margin: 4px 0;"><strong>Requested Amount:</strong> ₹${loanAmount.toLocaleString('en-IN')}</p>
               ${application.monthlyIncome ? `<p style="margin: 4px 0;"><strong>Monthly Income:</strong> ₹${Number(application.monthlyIncome).toLocaleString('en-IN')}</p>` : ''}

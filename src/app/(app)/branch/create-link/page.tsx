@@ -1,5 +1,6 @@
 import { requireUser } from '@/lib/auth';
 import { getCompanySettings } from '@/lib/settings';
+import { listBranches, getBranchById } from '@/lib/repos/branchesRepo';
 import CreateLinkPanel from '@/components/CreateLinkPanel';
 import PartnerOnboardingStatusGuard from '@/components/PartnerOnboardingStatusGuard';
 import Link from 'next/link';
@@ -7,6 +8,8 @@ import Link from 'next/link';
 export default async function CreateLinkPage() {
   const user = await requireUser();
   const settings = await getCompanySettings();
+  const branches = listBranches(user.tenantId || 'default');
+  const userBranch = user.branchId ? getBranchById(user.branchId) : undefined;
 
   // Guard: If partner has not yet been approved by Central Support, enforce approval lock
   if ((user.role === 'CHANNEL_PARTNER' || user.role === 'SUB_DSA') && user.partnerStatus !== 'APPROVED') {
@@ -109,6 +112,8 @@ export default async function CreateLinkPage() {
         companyName={settings.companyName}
         partnerName={user.name}
         userRole={user.role}
+        userBranch={userBranch}
+        branches={branches}
       />
     </div>
   );

@@ -51,29 +51,53 @@ export function branchCodeExists(code: string, excludeId?: string): boolean {
 export function createBranch(data: {
   name: string;
   code: string;
+  type?: Branch['type'];
   address?: string | null;
   phone?: string | null;
   email?: string | null;
+  dedicatedRmId?: string | null;
+  dedicatedRmName?: string | null;
+  developerName?: string | null;
   tenantId?: string;
 }): Branch {
-  const id = `br_${crypto.randomBytes(8).toString('hex')}`;
+  const isSite = data.type === 'SITE';
+  const id = isSite ? `site_${crypto.randomBytes(8).toString('hex')}` : `br_${crypto.randomBytes(8).toString('hex')}`;
   const now = new Date().toISOString();
   const tenantId = data.tenantId || 'default';
   const code = data.code.trim().toUpperCase();
+  const type = data.type || 'BRANCH';
 
   db.prepare(
-    `INSERT INTO branches (id, tenant_id, name, code, address, phone, email, created_at, updated_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
-  ).run(id, tenantId, data.name.trim(), code, data.address || null, data.phone || null, data.email || null, now, now);
+    `INSERT INTO branches (id, tenant_id, name, code, type, address, phone, email, dedicated_rm_id, dedicated_rm_name, developer_name, created_at, updated_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+  ).run(
+    id,
+    tenantId,
+    data.name.trim(),
+    code,
+    type,
+    data.address || null,
+    data.phone || null,
+    data.email || null,
+    data.dedicatedRmId || null,
+    data.dedicatedRmName || null,
+    data.developerName || null,
+    now,
+    now
+  );
 
   return {
     id,
     tenantId,
     name: data.name.trim(),
     code,
+    type,
     address: data.address || null,
     phone: data.phone || null,
     email: data.email || null,
+    dedicatedRmId: data.dedicatedRmId || null,
+    dedicatedRmName: data.dedicatedRmName || null,
+    developerName: data.developerName || null,
     createdAt: now,
     updatedAt: now,
   };
@@ -91,6 +115,10 @@ export function updateBranch(id: string, data: Partial<Branch>): void {
     updates.push('code = ?');
     params.push(data.code.trim().toUpperCase());
   }
+  if (data.type !== undefined) {
+    updates.push('type = ?');
+    params.push(data.type);
+  }
   if (data.address !== undefined) {
     updates.push('address = ?');
     params.push(data.address || null);
@@ -102,6 +130,18 @@ export function updateBranch(id: string, data: Partial<Branch>): void {
   if (data.email !== undefined) {
     updates.push('email = ?');
     params.push(data.email || null);
+  }
+  if (data.dedicatedRmId !== undefined) {
+    updates.push('dedicated_rm_id = ?');
+    params.push(data.dedicatedRmId || null);
+  }
+  if (data.dedicatedRmName !== undefined) {
+    updates.push('dedicated_rm_name = ?');
+    params.push(data.dedicatedRmName || null);
+  }
+  if (data.developerName !== undefined) {
+    updates.push('developer_name = ?');
+    params.push(data.developerName || null);
   }
 
   updates.push('updated_at = ?');
@@ -133,9 +173,13 @@ function mapRowToBranch(row: Record<string, unknown>): Branch {
     tenantId: String(row.tenant_id || row.tenantId || 'default'),
     name: String(row.name),
     code: String(row.code),
+    type: (row.type as Branch['type']) || 'BRANCH',
     address: row.address ? String(row.address) : null,
     phone: row.phone ? String(row.phone) : null,
     email: row.email ? String(row.email) : null,
+    dedicatedRmId: row.dedicated_rm_id || row.dedicatedRmId ? String(row.dedicated_rm_id || row.dedicatedRmId) : null,
+    dedicatedRmName: row.dedicated_rm_name || row.dedicatedRmName ? String(row.dedicated_rm_name || row.dedicatedRmName) : null,
+    developerName: row.developer_name || row.developerName ? String(row.developer_name || row.developerName) : null,
     createdAt: String(row.created_at || row.createdAt || ''),
     updatedAt: String(row.updated_at || row.updatedAt || ''),
   };

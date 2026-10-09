@@ -20,6 +20,19 @@ export function createApplicationLink(data: {
   const partnerId = data.channelPartnerId || data.createdById;
   const partnerName = data.channelPartnerName || 'Channel Partner';
 
+  // Check branch / site details for auto-tagging
+  let rmId = data.relationshipManagerId || null;
+  let rmName = data.relationshipManagerName || null;
+  if (!rmId && data.branchId) {
+    try {
+      const bRow = db.prepare('SELECT type, dedicated_rm_id, dedicated_rm_name FROM branches WHERE id = ?').get(data.branchId) as { type?: string; dedicated_rm_id?: string; dedicated_rm_name?: string } | undefined;
+      if (bRow && bRow.dedicated_rm_id) {
+        rmId = bRow.dedicated_rm_id;
+        rmName = bRow.dedicated_rm_name || null;
+      }
+    } catch {}
+  }
+
   db.prepare(
     `INSERT INTO loan_applications (
       id, tenant_id, token, branch_id, created_by_id, channel_partner_id, channel_partner_name,
@@ -33,8 +46,8 @@ export function createApplicationLink(data: {
     data.createdById,
     partnerId,
     partnerName,
-    data.relationshipManagerId || null,
-    data.relationshipManagerName || null,
+    rmId,
+    rmName,
     'LINK_SHARED',
     now,
     now
@@ -376,12 +389,26 @@ export function branchStats(branchId?: string, tenantId = 'default') {
 }
 
 function mapRowToApplication(row: Record<string, unknown>): LoanApplication {
+  const branchId = String(row.branch_id || row.branchId);
+  let branchName = row.branch_name || row.branchName ? String(row.branch_name || row.branchName) : undefined;
+  let branchType: 'BRANCH' | 'SITE' | undefined = (row.branch_type || row.branchType) as 'BRANCH' | 'SITE' | undefined;
+  if (branchId) {
+    try {
+      const bRow = db.prepare('SELECT name, type FROM branches WHERE id = ?').get(branchId) as { name?: string; type?: string } | undefined;
+      if (bRow) {
+        if (!branchName && bRow.name) branchName = String(bRow.name);
+        if (!branchType && bRow.type) branchType = bRow.type === 'SITE' ? 'SITE' : 'BRANCH';
+      }
+    } catch {}
+  }
+
   return {
     id: String(row.id),
     tenantId: String(row.tenant_id || row.tenantId || 'default'),
     token: String(row.token),
-    branchId: String(row.branch_id || row.branchId),
-    branchName: row.branch_name || row.branchName ? String(row.branch_name || row.branchName) : undefined,
+    branchId,
+    branchName,
+    branchType,
     createdById: String(row.created_by_id || row.createdById),
     createdByName: row.created_by_name || row.createdByName ? String(row.created_by_name || row.createdByName) : undefined,
     channelPartnerId: row.channel_partner_id || row.channelPartnerId ? String(row.channel_partner_id || row.channelPartnerId) : undefined,

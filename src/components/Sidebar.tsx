@@ -206,6 +206,12 @@ export default function Sidebar({
       show: isAdmin || isSupport,
     },
     {
+      label: 'Sites (Projects)',
+      href: '/admin/sites',
+      icon: '🏗️',
+      show: isAdmin || isSupport,
+    },
+    {
       label: 'Team & Staff Users',
       href: '/admin/users',
       icon: '👥',
