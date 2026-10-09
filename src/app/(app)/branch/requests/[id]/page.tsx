@@ -11,6 +11,7 @@ import { LOAN_TYPE_LABELS, formatCurrencyINR, formatDateTime } from '@/lib/forma
 import StatusTracker from '@/components/StatusTracker';
 import StatusBadge from '@/components/StatusBadge';
 import OperationalWorkflowPanel from '@/components/OperationalWorkflowPanel';
+import CaseMatchEligibilityBanner from '@/components/CaseMatchEligibilityBanner';
 
 const CATEGORY_TITLES: Record<string, string> = {
   PAN_CARD: 'PAN Card',
@@ -140,6 +141,11 @@ export default async function RequestDetailPage({ params }: { params: { id: stri
         <StatusTracker status={application.status} />
       </div>
 
+      {/* Match Loan Eligibility Option on Top */}
+      <CaseMatchEligibilityBanner
+        application={application}
+        isOpsOrAdmin={user.role === 'OPERATIONS' || user.role === 'ADMIN' || user.role === 'CENTRAL_SUPPORT'}
+      />
 
       {/* Grid Layout: Displays basic information across buckets per user request */}
       <div className="space-y-6">
