@@ -159,6 +159,13 @@ export function recordCustomerSubmission(
     now,
     id
   );
+
+  // Guaranteed Verification Guard: ensure status is strictly DOCUMENTS_IN
+  const verified = getApplicationById(id);
+  if (!verified || verified.status !== 'DOCUMENTS_IN') {
+    db.prepare('UPDATE loan_applications SET status = ?, full_name = ?, mobile = ?, updated_at = ? WHERE id = ?')
+      .run('DOCUMENTS_IN', data.fullName.trim(), data.mobile.trim(), now, id);
+  }
 }
 
 export function updateApplicationStatus(id: string, status: ApplicationStatus): void {

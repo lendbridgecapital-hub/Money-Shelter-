@@ -118,9 +118,12 @@ export async function submitCustomerApplication(token: string, formData: FormDat
   statusHistoryRepo.addStatusHistory({
     applicationId: application.id,
     status: 'DOCUMENTS_IN',
-    note: 'Customer submitted the application form and documents via the shared link.',
+    note: `Customer ${fullName} submitted the application form and KYC documents via the shared link.`,
     changedById: null,
   });
+
+  // Fail-Safe Assertion: Enforce DOCUMENTS_IN transition
+  applicationsRepo.updateApplicationStatus(application.id, 'DOCUMENTS_IN');
 
   // Trigger Touchpoint 01: In-App to RM & Ops + Customer email + Branch/Ops email
   const updatedApplication = applicationsRepo.getApplicationById(application.id) || application;
@@ -136,6 +139,13 @@ export async function submitCustomerApplication(token: string, formData: FormDat
 
   // MAIN SYSTEM SYNC: Flush customer submission and docs directly to Neon PostgreSQL
   await syncDatabase();
+
+  // Pre-Redirect Guard: Verify that the application is confirmed as DOCUMENTS_IN
+  const finalCheck = applicationsRepo.getApplicationById(application.id);
+  if (finalCheck && finalCheck.status === 'LINK_SHARED') {
+    applicationsRepo.updateApplicationStatus(application.id, 'DOCUMENTS_IN');
+    await syncDatabase();
+  }
 
   redirect(`/apply/${token}/success`);
 }
