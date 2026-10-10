@@ -136,9 +136,14 @@ export function recordCustomerSubmission(
   }
 ): void {
   const now = new Date().toISOString();
+  const existing = getApplicationById(id);
+  const tenure = data.tenureMonths !== undefined && data.tenureMonths !== null
+    ? data.tenureMonths
+    : (existing?.tenureMonths || null);
+
   db.prepare(
     `UPDATE loan_applications
-     SET full_name = ?, mobile = ?, email = ?, loan_type = ?, loan_amount = ?, monthly_income = ?, existing_emi = ?, tenure_months = COALESCE(?, tenure_months), status = ?, submitted_at = ?, updated_at = ?
+     SET full_name = ?, mobile = ?, email = ?, loan_type = ?, loan_amount = ?, monthly_income = ?, existing_emi = ?, tenure_months = ?, status = ?, submitted_at = ?, updated_at = ?
      WHERE id = ?`
   ).run(
     data.fullName.trim(),
@@ -148,7 +153,7 @@ export function recordCustomerSubmission(
     data.loanAmount,
     data.monthlyIncome || null,
     data.existingEmi !== undefined && data.existingEmi !== null ? data.existingEmi : null,
-    data.tenureMonths || null,
+    tenure,
     'DOCUMENTS_IN',
     now,
     now,

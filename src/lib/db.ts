@@ -616,6 +616,14 @@ function createPortableStorage(storageFilePath: string): DatabaseAdapter {
                 if (rawVal === '?') {
                   setAssignments.push({ col, val: params[paramIdx] });
                   paramIdx++;
+                } else if (/^COALESCE\s*\(\s*\?\s*,\s*([a-zA-Z0-9_]+)\s*\)$/i.test(rawVal)) {
+                  const paramVal = params[paramIdx];
+                  paramIdx++;
+                  setAssignments.push({ col, val: paramVal, isCoalesce: true } as any);
+                } else if (rawVal.includes('?')) {
+                  const paramVal = params[paramIdx];
+                  paramIdx++;
+                  setAssignments.push({ col, val: paramVal });
                 } else if (/^['"].*['"]$/.test(rawVal)) {
                   setAssignments.push({ col, val: rawVal.slice(1, -1) });
                 } else if (/^\d+$/.test(rawVal)) {
@@ -637,8 +645,15 @@ function createPortableStorage(storageFilePath: string): DatabaseAdapter {
               }
 
               targetRows.forEach((row) => {
-                setAssignments.forEach(({ col, val }) => {
-                  row[col] = val;
+                setAssignments.forEach((assignment: any) => {
+                  const { col, val, isCoalesce } = assignment;
+                  if (isCoalesce) {
+                    if (val !== undefined && val !== null) {
+                      row[col] = val;
+                    }
+                  } else {
+                    row[col] = val;
+                  }
                 });
                 changes++;
               });
