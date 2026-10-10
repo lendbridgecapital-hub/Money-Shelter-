@@ -106,13 +106,61 @@ export async function GET(req: NextRequest) {
     emailLogs = (db.prepare('SELECT id, to_email, subject, status, created_at FROM email_logs ORDER BY created_at DESC').all() || []) as Record<string, unknown>[];
   } catch {}
 
+  // Direct Neon PostgreSQL inspection
+  let neonTables: string[] = [];
+  let neonStoreRows: Record<string, unknown>[] = [];
+  let neonRelationalApps: Record<string, unknown>[] = [];
+  let neonRelationalUsers: Record<string, unknown>[] = [];
+
+  const dbUrl = process.env.DATABASE_URL || process.env.POSTGRES_URL;
+  if (dbUrl) {
+    try {
+      const { neon } = require('@neondatabase/serverless');
+      const sql = neon(dbUrl);
+      const queryFn = sql.query ? sql.query.bind(sql) : sql;
+
+      try {
+        const tRows = await queryFn(`SELECT table_name FROM information_schema.tables WHERE table_schema = 'public' ORDER BY table_name;`);
+        neonTables = (tRows || []).map((r: any) => String(r.table_name || r.TABLE_NAME || ''));
+      } catch {}
+
+      try {
+        const sRows = await queryFn(`SELECT key, updated_at, length(value::text) as size_bytes FROM quickfinsure_store;`);
+        neonStoreRows = sRows || [];
+      } catch {}
+
+      if (neonTables.includes('loan_applications')) {
+        try {
+          const aRows = await queryFn(`SELECT id, full_name, mobile, loan_amount, status, created_at FROM loan_applications ORDER BY created_at DESC LIMIT 50;`);
+          neonRelationalApps = aRows || [];
+        } catch {}
+      }
+
+      if (neonTables.includes('users')) {
+        try {
+          const uRows = await queryFn(`SELECT id, email, role, created_at FROM users ORDER BY created_at DESC LIMIT 50;`);
+          neonRelationalUsers = uRows || [];
+        } catch {}
+      }
+    } catch (nErr) {
+      neonError = (nErr as Error).message;
+    }
+  }
+
   return NextResponse.json({
-    version: 'v8-neon-sync',
+    version: 'v9-neon-sync-priority',
     neonDirectWrite,
     neonError,
-    databaseUrlSet: !!(process.env.DATABASE_URL || process.env.POSTGRES_URL),
+    databaseUrlSet: !!dbUrl,
     nextAuthUrl: process.env.NEXTAUTH_URL || 'NOT_SET',
     renderUrl: process.env.RENDER_EXTERNAL_URL || 'NOT_SET',
+    neonInspection: {
+      tables: neonTables,
+      storeRows: neonStoreRows,
+      relationalAppsCount: neonRelationalApps.length,
+      relationalApps: neonRelationalApps.slice(0, 15),
+      relationalUsersCount: neonRelationalUsers.length,
+    },
     totalUsers: users.length,
     userEmails: users.map((u) => ({ email: u.email, role: u.role, active: u.active })),
     adminFound: !!admin,

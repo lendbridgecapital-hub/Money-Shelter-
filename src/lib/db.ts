@@ -367,7 +367,40 @@ function createPortableStorage(storageFilePath: string): DatabaseAdapter {
 
   function loadData(): StorageData {
     const dbUrl = getDbUrl();
-    // 1. If storage file on disk has changed, reload it immediately
+
+    // 1. If Neon PostgreSQL is configured, ALWAYS pull fresh database snapshot on startup first!
+    if (dbUrl && !hasHydratedFromNeon) {
+      hasHydratedFromNeon = true;
+      try {
+        const helperPath = path.resolve(process.cwd(), 'scripts/sync-neon.js');
+        if (fs.existsSync(helperPath)) {
+          // eslint-disable-next-line @typescript-eslint/no-var-requires
+          const { spawnSync } = require('child_process');
+          const res = spawnSync(process.execPath, [helperPath, 'pull'], {
+            env: process.env,
+            encoding: 'utf8',
+            timeout: 10000,
+          });
+          if (res.stdout) {
+            let parsed = JSON.parse(res.stdout);
+            if (parsed && parsed.default) parsed = parsed.default;
+            if (parsed && typeof parsed === 'object' && Array.isArray(parsed.users) && parsed.users.length > 0) {
+              sanitizeBlobs(parsed);
+              cachedData = { ...defaultData, ...parsed };
+              try {
+                fs.writeFileSync(storageFilePath, JSON.stringify(cachedData, null, 2), 'utf8');
+                fs.writeFileSync(path.resolve(process.cwd(), 'data/initial-data.json'), JSON.stringify(cachedData, null, 2), 'utf8');
+              } catch {}
+              return cachedData;
+            }
+          }
+        }
+      } catch (neonErr) {
+        console.warn('[db] Note: Initial Neon sync failed, falling back to local files:', (neonErr as Error).message);
+      }
+    }
+
+    // 2. If storage file on disk has changed, reload it immediately
     if (fs.existsSync(storageFilePath)) {
       try {
         const stats = fs.statSync(storageFilePath);
@@ -390,7 +423,7 @@ function createPortableStorage(storageFilePath: string): DatabaseAdapter {
       return cachedData;
     }
 
-    // 1b. Check if initial-data.json has existing valid data
+    // 3. Fallback to initial-data.json ONLY if Neon is unavailable or empty
     const initialSeedFilePath = path.resolve(process.cwd(), 'data/initial-data.json');
     if (fs.existsSync(initialSeedFilePath)) {
       try {
@@ -400,45 +433,12 @@ function createPortableStorage(storageFilePath: string): DatabaseAdapter {
         if (parsed && typeof parsed === 'object' && Array.isArray(parsed.users) && parsed.users.length > 0) {
           sanitizeBlobs(parsed);
           cachedData = { ...defaultData, ...parsed };
-          hasHydratedFromNeon = true;
           return cachedData;
         }
       } catch {}
     }
 
-    // 2. If Neon PostgreSQL is configured, pull fresh database snapshot on startup
-    if (dbUrl && !hasHydratedFromNeon) {
-      hasHydratedFromNeon = true;
-      try {
-        const helperPath = path.resolve(process.cwd(), 'scripts/sync-neon.js');
-        if (fs.existsSync(helperPath)) {
-          // eslint-disable-next-line @typescript-eslint/no-var-requires
-          const { spawnSync } = require('child_process');
-          const res = spawnSync(process.execPath, [helperPath, 'pull'], {
-            env: process.env,
-            encoding: 'utf8',
-            timeout: 10000,
-          });
-          if (res.stdout) {
-            let parsed = JSON.parse(res.stdout);
-            if (parsed && parsed.default) parsed = parsed.default;
-            if (parsed && typeof parsed === 'object' && Array.isArray(parsed.users) && parsed.users.length > 0) {
-              sanitizeBlobs(parsed);
-              cachedData = { ...defaultData, ...parsed };
-              try {
-                fs.writeFileSync(storageFilePath, JSON.stringify(cachedData, null, 2), 'utf8');
-                fs.writeFileSync(initialSeedFilePath, JSON.stringify(cachedData, null, 2), 'utf8');
-              } catch {}
-              return cachedData;
-            }
-          }
-        }
-      } catch (neonErr) {
-        console.warn('[db] Note: Initial Neon sync failed, falling back to bundled snapshot:', (neonErr as Error).message);
-      }
-    }
-
-    // 3. Fallback to bundled initial seed snapshot
+    // 4. Fallback to bundled initial seed snapshot
     cachedData = { ...defaultData };
     return cachedData;
   }
