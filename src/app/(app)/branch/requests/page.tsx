@@ -45,8 +45,8 @@ export default async function RequestsPage() {
       <div className="hidden md:grid grid-cols-3 xl:grid-cols-6 gap-2 sm:gap-2.5 min-w-0">
         <CompactStageCard label="Link Shared" value={stats.linkShared} colorClass="text-emerald-700" href="/branch/requests?status=LINK_SHARED" />
         <CompactStageCard label="Docs In" value={stats.documentsIn} colorClass="text-slate-800" href="/branch/requests?status=DOCUMENTS_IN" />
-        <CompactStageCard label="Sent to Bank" value={stats.sentToBank} colorClass="text-indigo-700" href="/branch/requests?status=SENT_TO_BANK" />
         <CompactStageCard label="Docs Required" value={stats.documentsRequired} colorClass="text-amber-700" href="/branch/requests?status=DOCUMENTS_REQUIRED" />
+        <CompactStageCard label="Sent to Bank" value={stats.sentToBank} colorClass="text-indigo-700" href="/branch/requests?status=SENT_TO_BANK" />
         <CompactStageCard label="Approved" value={stats.approved} colorClass="text-emerald-600" href="/branch/requests?status=APPROVED" />
         <CompactStageCard label="Disbursed" value={stats.disbursed} colorClass="text-teal-700" href="/branch/requests?status=DISBURSED" />
       </div>

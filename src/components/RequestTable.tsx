@@ -78,14 +78,14 @@ export default function RequestTable({
       count: applications.filter((a) => a.status === 'DOCUMENTS_IN').length,
     },
     {
-      key: 'SENT_TO_BANK',
-      label: 'Sent to Bank',
-      count: applications.filter((a) => a.status === 'SENT_TO_BANK').length,
-    },
-    {
       key: 'DOCUMENTS_REQUIRED',
       label: 'Docs Required',
       count: applications.filter((a) => a.status === 'DOCUMENTS_REQUIRED').length,
+    },
+    {
+      key: 'SENT_TO_BANK',
+      label: 'Sent to Bank',
+      count: applications.filter((a) => a.status === 'SENT_TO_BANK').length,
     },
     {
       key: 'APPROVED',
