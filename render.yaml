@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: quickfinsure
+    name: money-shelter
     runtime: node
     plan: free
     region: oregon
