@@ -4,23 +4,23 @@ import type { CompanySettings } from '@/types/db';
 export const DEFAULT_SETTINGS: CompanySettings = {
   id: 'default',
   tenantId: 'default',
-  companyName: 'Quickfinsure',
-  tagline: 'Your Trusted Multi-Branch Loan Origination & Partner Platform',
+  companyName: 'Money Shelter Pvt. Ltd.',
+  tagline: 'WHERE MONEY MEETS TRUST',
   logoUrl: '',
   faviconUrl: '',
-  primaryColor: '#16a34a', // Quickfinsure Emerald Green Brand Theme
-  accentColor: '#1e293b',  // Quickfinsure Corporate Navy Accent
-  officialEmail: 'contact@quickfinsure.com',
-  supportPhone: '+91 98765 43210',
-  websiteUrl: 'https://quickfinsure.com',
-  footerText: '© 2026 Quickfinsure. All rights reserved. Licensed DSA Partner.',
-  portalTitle: 'Quickfinsure — Loan Origination Portal',
+  primaryColor: '#0e7490', // Corporate Deep Cyan / Teal
+  accentColor: '#d97706',  // Warm Gold Accent
+  officialEmail: 'info@moneyshelter.in',
+  supportPhone: '+91 20 4000 1100',
+  websiteUrl: 'https://moneyshelter.in',
+  footerText: '© 2026 Money Shelter Pvt. Ltd. All rights reserved. Where Money Meets Trust.',
+  portalTitle: 'Money Shelter — Where Money Meets Trust',
   smtpHost: '',
   smtpPort: 587,
   smtpSecure: false,
   smtpUser: '',
   smtpPassword: '',
-  smtpFromName: 'Quickfinsure Notifications',
+  smtpFromName: 'Money Shelter Notifications',
 };
 
 export async function getCompanySettings(tenantId = 'default'): Promise<CompanySettings> {

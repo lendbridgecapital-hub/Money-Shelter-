@@ -305,3 +305,57 @@ export async function uploadCustomerRequiredDocumentAction(
     return { ok: false, error: err instanceof Error ? err.message : 'Upload failed.' };
   }
 }
+
+export async function submitGeneralWebsiteInquiryAction(
+  formData: FormData
+): Promise<{ ok: boolean; error?: string; message?: string }> {
+  try {
+    const fullName = String(formData.get('fullName') || '').trim();
+    const mobile = String(formData.get('mobile') || '').trim();
+    const email = String(formData.get('email') || '').trim().toLowerCase();
+    const loanType = (formData.get('loanType') || 'HOME_LOAN') as LoanType;
+    const loanAmount = Number(formData.get('loanAmount') || 0);
+    const city = String(formData.get('city') || '').trim();
+    const notes = String(formData.get('notes') || '').trim();
+
+    if (!fullName) return { ok: false, error: 'Please enter your full name.' };
+    const cleanMobile = mobile.replace(/[^0-9]/g, '');
+    if (!cleanMobile || cleanMobile.length < 10) {
+      return { ok: false, error: 'Please enter a valid 10-digit mobile number.' };
+    }
+
+    // Assign to active admin or first staff user
+    const users = usersRepo.listUsers();
+    const staffUser = users.find((u) => u.role === 'ADMIN' || u.role === 'OPERATIONS' || u.role === 'RELATIONSHIP_MANAGER') || users[0];
+
+    const app = applicationsRepo.createInquiryFromCard({
+      advisorId: staffUser ? staffUser.id : 'usr_default_admin',
+      fullName,
+      mobile: cleanMobile,
+      email: email || undefined,
+      loanType,
+      loanAmount: loanAmount > 0 ? loanAmount : undefined,
+      city: city || undefined,
+      notes: notes || `Direct website inquiry for ${loanType.replace(/_/g, ' ')} (${city || 'Maharashtra'})`,
+    });
+
+    statusHistoryRepo.addStatusHistory({
+      applicationId: app.id,
+      status: 'LINK_SHARED',
+      note: `Inquiry submitted via Money Shelter website (${fullName} • ${cleanMobile} • ${loanType.replace(/_/g, ' ')} • City: ${city || 'Pune/Maharashtra'}).`,
+      changedById: staffUser?.id || null,
+    });
+
+    revalidatePath('/branch/requests');
+    revalidatePath('/dashboard');
+
+    await syncDatabase();
+
+    return {
+      ok: true,
+      message: `Thank you, ${fullName}! Your financial inquiry has been received. Our senior advisor will contact you within 2 business hours on ${cleanMobile}.`,
+    };
+  } catch (err: unknown) {
+    return { ok: false, error: err instanceof Error ? err.message : 'Failed to submit inquiry. Please try again.' };
+  }
+}
