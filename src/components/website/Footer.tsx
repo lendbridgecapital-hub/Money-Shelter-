@@ -106,16 +106,16 @@ export function Footer() {
           {/* Quick Links */}
           <div>
             <h4 className="text-white font-bold text-sm font-serif uppercase tracking-wider mb-4">
-              Financing
+              Financing Solutions
             </h4>
             <ul className="space-y-2.5">
-              <li><a href="#capabilities" className="hover:text-cyan-400 transition-colors">Home Loans</a></li>
-              <li><a href="#capabilities" className="hover:text-cyan-400 transition-colors">Loan Against Property</a></li>
-              <li><a href="#capabilities" className="hover:text-cyan-400 transition-colors">Working Capital (OD/CC)</a></li>
-              <li><a href="#capabilities" className="hover:text-cyan-400 transition-colors">Unsecured Business Loans</a></li>
-              <li><a href="#builder-apf" className="hover:text-cyan-400 transition-colors">Builder Project Finance</a></li>
-              <li><a href="#builder-apf" className="hover:text-cyan-400 transition-colors">Master Site Approvals (APF)</a></li>
-              <li><a href="#capabilities" className="hover:text-cyan-400 transition-colors">General & Life Insurance</a></li>
+              <li><Link href="/retail-loans#home-loans" className="hover:text-cyan-400 transition-colors">Home Loans</Link></li>
+              <li><Link href="/retail-loans#lap" className="hover:text-cyan-400 transition-colors">Loan Against Property</Link></li>
+              <li><Link href="/sme-finance#working-capital" className="hover:text-cyan-400 transition-colors">Working Capital (OD/CC)</Link></li>
+              <li><Link href="/sme-finance#business-loans" className="hover:text-cyan-400 transition-colors">Unsecured Business Loans</Link></li>
+              <li><Link href="/builder-apf" className="hover:text-cyan-400 transition-colors">Builder Project Finance</Link></li>
+              <li><Link href="/builder-apf#apf" className="hover:text-cyan-400 transition-colors">Master Site Approvals (APF)</Link></li>
+              <li><Link href="/retail-loans" className="hover:text-cyan-400 transition-colors">All Retail Solutions</Link></li>
             </ul>
           </div>
 
@@ -125,12 +125,12 @@ export function Footer() {
               Company
             </h4>
             <ul className="space-y-2.5">
-              <li><a href="#about" className="hover:text-cyan-400 transition-colors">Company At A Glance</a></li>
-              <li><a href="#operating-model" className="hover:text-cyan-400 transition-colors">5-Step Case Journey</a></li>
-              <li><a href="#lenders" className="hover:text-cyan-400 transition-colors">Banking Network</a></li>
-              <li><a href="#leadership" className="hover:text-cyan-400 transition-colors">Leadership: Sachin Sarode</a></li>
-              <li><a href="#calculator" className="hover:text-cyan-400 transition-colors">Loan EMI Calculator</a></li>
-              <li><a href="#branches" className="hover:text-cyan-400 transition-colors">Branch Locations</a></li>
+              <li><Link href="/about-us" className="hover:text-cyan-400 transition-colors">About Money Shelter</Link></li>
+              <li><Link href="/about-us#leadership" className="hover:text-cyan-400 transition-colors">Leadership: Sachin Sarode</Link></li>
+              <li><Link href="/#operating-model" className="hover:text-cyan-400 transition-colors">5-Step Case Journey</Link></li>
+              <li><Link href="/#lenders" className="hover:text-cyan-400 transition-colors">Institutional Network</Link></li>
+              <li><Link href="/#calculator" className="hover:text-cyan-400 transition-colors">Loan EMI Calculator</Link></li>
+              <li><Link href="/contact" className="hover:text-cyan-400 transition-colors">Branch Locations & Contact</Link></li>
             </ul>
           </div>
 
