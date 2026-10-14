@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { MoneyShelterLogo } from '@/components/MoneyShelterLogo';
@@ -16,144 +16,374 @@ interface NavbarProps {
 export function Navbar({ userSession }: NavbarProps) {
   const pathname = usePathname();
   const [isScrolled, setIsScrolled] = useState(false);
+  const [openDropdown, setOpenDropdown] = useState<string | null>(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     const handleScroll = () => {
-      setIsScrolled(window.scrollY > 20);
+      setIsScrolled(window.scrollY > 15);
     };
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  const navLinks = [
-    { label: 'Home', href: '/' },
-    { label: 'Retail Loans', href: '/retail-loans' },
-    { label: 'SME Finance', href: '/sme-finance' },
-    { label: 'Builder APF', href: '/builder-apf' },
-    { label: 'About Us', href: '/about-us' },
-    { label: 'Contact', href: '/contact' },
+  const handleMouseEnter = (menu: string) => {
+    if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    setOpenDropdown(menu);
+  };
+
+  const handleMouseLeave = () => {
+    timeoutRef.current = setTimeout(() => {
+      setOpenDropdown(null);
+    }, 150);
+  };
+
+  // Structured Urban Money style navigation groupings
+  const loanCategories = [
+    {
+      title: 'Retail Assets',
+      items: [
+        { name: 'Home Loans', desc: 'Starting @ 8.35% • Fresh & Resale', href: '/retail-loans#home-loan', tag: 'Popular' },
+        { name: 'Loan Against Property', desc: 'Up to ₹25 Cr against property', href: '/retail-loans#lap', tag: 'High Value' },
+        { name: 'Personal Loans', desc: 'Instant sanction, zero collateral', href: '/retail-loans#personal-loan' },
+        { name: 'Auto & Education Loans', desc: 'Fast approvals with leading rates', href: '/retail-loans#auto-loan' },
+      ],
+    },
+    {
+      title: 'Commercial & Corporate',
+      items: [
+        { name: 'SME Business Loans', desc: 'Working capital & unsecured growth', href: '/sme-finance#business-loan', tag: 'Fast' },
+        { name: 'Working Capital (OD / CC)', desc: 'Optimized operational cash flow', href: '/sme-finance#od-cc' },
+        { name: 'Project & Structured Finance', desc: 'Consortium & syndication funding', href: '/sme-finance#project-finance' },
+        { name: 'Lease Rental Discounting', desc: 'Liquidity against lease cash flows', href: '/sme-finance#lrd' },
+      ],
+    },
   ];
 
-  const isActive = (href: string) => {
-    if (href === '/') return pathname === '/';
-    return pathname.startsWith(href);
-  };
+  const builderOfferings = [
+    { name: 'Master Site APF Approvals', desc: 'Pre-sanctioned site code with 20+ partner banks', href: '/builder-apf', badge: 'Flagship' },
+    { name: 'Builder Project Finance', desc: 'Construction & greenfield project financing', href: '/builder-apf#construction' },
+    { name: 'On-Site Home Loan Desk', desc: 'Turnkey buyer sanction desk at sales gallery', href: '/builder-apf#desk' },
+    { name: 'Case Journey Tracker', desc: 'Real-time disbursement milestone updates', href: '/builder-apf#tracker' },
+  ];
+
+  const calculatorLinks = [
+    { name: 'Home Loan EMI Calculator', desc: 'Calculate monthly outflow & amortization', href: '/#calculator' },
+    { name: 'Loan Against Property Calculator', desc: 'Check eligibility on commercial/residential value', href: '/#calculator' },
+    { name: 'Business Loan Eligibility Tool', desc: 'Fast eligibility estimate for MSMEs', href: '/#calculator' },
+  ];
+
+  const companyLinks = [
+    { name: 'About Money Shelter', desc: 'A decade of trust & capital execution since 2014', href: '/about-us' },
+    { name: 'Leadership Profile', desc: 'Led by Sachin Sarode (Director • MBA)', href: '/about-us#leadership' },
+    { name: 'Maharashtra Footprint', desc: 'Pune HQ, Chinchwad, Baramati, PCMC & Navi Mumbai', href: '/about-us#presence' },
+    { name: 'Institutional Network', desc: 'Direct empanelment with 20+ top banks & NBFCs', href: '/about-us#lenders' },
+  ];
 
   return (
     <>
-      {/* Top Corporate Strip */}
-      <div className="bg-slate-950 text-slate-300 text-xs py-2 px-4 border-b border-slate-800 transition-colors">
-        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-2">
+      {/* Top Utility Announcement Bar (Urban Money clean aesthetic) */}
+      <div className="bg-slate-900 text-slate-300 text-xs border-b border-slate-800">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-1.5 flex justify-between items-center text-[11px] sm:text-xs">
           <div className="flex items-center gap-3">
-            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-cyan-900/60 text-cyan-300 border border-cyan-700/50">
-              Est. 2014 • Pune, Maharashtra
+            <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-cyan-900/60 text-cyan-300 font-semibold border border-cyan-700/50">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+              Pune HQ • Maharashtra
             </span>
             <span className="hidden md:inline text-slate-400">
-              ₹2,500+ Cr Cumulative Disbursements • 30,000+ Customers Served
+              <strong className="text-white">₹2,500+ Cr</strong> Disbursed • <strong className="text-white">30,000+</strong> Happy Customers
             </span>
           </div>
 
-          <div className="flex items-center gap-4 text-slate-400">
+          <div className="flex items-center gap-4 text-slate-300">
             <a
               href="tel:+912040001100"
-              className="hover:text-amber-400 transition-colors flex items-center gap-1 font-medium"
+              className="hover:text-amber-400 transition-colors flex items-center gap-1 font-semibold"
             >
               <svg className="w-3.5 h-3.5 text-amber-400" fill="currentColor" viewBox="0 0 20 20">
                 <path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.037 11.037 0 006.105 6.105l.774-1.548a1 1 0 011.059-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 4V3z" />
               </svg>
               <span>+91 20 4000 1100</span>
             </a>
-            <span className="hidden sm:inline text-slate-700">|</span>
-            <a
-              href="mailto:info@moneyshelter.in"
-              className="hover:text-cyan-400 transition-colors flex items-center gap-1 font-medium"
+            <span className="text-slate-700 hidden sm:inline">|</span>
+            <Link
+              href="/partner/register"
+              className="hover:text-cyan-300 font-medium hidden sm:inline-flex items-center gap-1"
             >
-              <svg className="w-3.5 h-3.5 text-cyan-400" fill="currentColor" viewBox="0 0 20 20">
-                <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z" />
-                <path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z" />
-              </svg>
-              <span>info@moneyshelter.in</span>
-            </a>
+              <span>DSA / Partner Desk</span>
+            </Link>
           </div>
         </div>
       </div>
 
-      {/* Main Sticky Navbar */}
+      {/* Main Clean Modern Navbar (Urban Money Pure White Background) */}
       <header
-        className={`sticky top-0 z-50 transition-all duration-300 ${
-          isScrolled
-            ? 'bg-slate-950/95 backdrop-blur-md shadow-xl border-b border-cyan-900/40 py-2.5'
-            : 'bg-slate-950 border-b border-slate-800 py-3.5'
+        className={`sticky top-0 z-50 bg-white transition-all duration-200 border-b ${
+          isScrolled ? 'shadow-md border-slate-200/80 py-2.5' : 'border-slate-100 py-3.5'
         }`}
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between">
-          {/* Logo with Light variant for Dark Theme Navbar */}
-          <Link href="/" className="flex items-center group">
-            <MoneyShelterLogo variant="light" size="md" />
+          {/* Brand Logo - Crisp & High Contrast */}
+          <Link href="/" className="flex items-center group flex-shrink-0">
+            <MoneyShelterLogo variant="dark" size="md" />
           </Link>
 
-          {/* Desktop Nav Links */}
-          <nav className="hidden lg:flex items-center gap-6 text-[14px] font-semibold text-slate-300">
-            {navLinks.map((item) => {
-              const active = isActive(item.href);
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className={`py-1.5 transition-all relative ${
-                    active
-                      ? 'text-amber-400 font-bold after:absolute after:bottom-0 after:left-0 after:w-full after:h-0.5 after:bg-amber-400'
-                      : 'hover:text-cyan-300 after:absolute after:bottom-0 after:left-0 after:w-0 hover:after:w-full after:h-0.5 after:bg-cyan-400 after:transition-all'
-                  }`}
-                >
-                  {item.label}
-                </Link>
-              );
-            })}
-          </nav>
-
-          {/* Right Action Buttons */}
-          <div className="hidden sm:flex items-center gap-3">
-            <Link
-              href="/#calculator"
-              className="px-3.5 py-2 text-xs font-semibold text-slate-300 hover:text-white bg-slate-900 hover:bg-slate-800 border border-slate-700 rounded-lg transition-colors"
+          {/* Desktop Navigation Links with Clean Dropdowns */}
+          <nav className="hidden lg:flex items-center gap-1 xl:gap-2">
+            {/* LOANS MEGA DROPDOWN */}
+            <div
+              className="relative"
+              onMouseEnter={() => handleMouseEnter('loans')}
+              onMouseLeave={handleMouseLeave}
             >
-              EMI Calculator
-            </Link>
+              <button
+                className={`px-3.5 py-2 text-[14px] font-semibold rounded-lg flex items-center gap-1.5 transition-colors ${
+                  openDropdown === 'loans'
+                    ? 'text-cyan-700 bg-cyan-50'
+                    : 'text-slate-700 hover:text-cyan-700 hover:bg-slate-50'
+                }`}
+              >
+                <span>Loans</span>
+                <svg
+                  className={`w-4 h-4 transition-transform duration-200 ${
+                    openDropdown === 'loans' ? 'rotate-180 text-cyan-700' : 'text-slate-400'
+                  }`}
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
 
+              {openDropdown === 'loans' && (
+                <div className="absolute top-full left-0 w-[580px] bg-white rounded-2xl shadow-2xl border border-slate-100 p-6 grid grid-cols-2 gap-6 animate-in fade-in-50 slide-in-from-top-2 duration-150 z-50">
+                  {loanCategories.map((cat, idx) => (
+                    <div key={idx} className="space-y-3">
+                      <div className="text-[11px] font-bold uppercase tracking-wider text-cyan-800 bg-cyan-50 px-2.5 py-1 rounded-md inline-block">
+                        {cat.title}
+                      </div>
+                      <div className="space-y-1">
+                        {cat.items.map((item, i) => (
+                          <Link
+                            key={i}
+                            href={item.href}
+                            onClick={() => setOpenDropdown(null)}
+                            className="p-2.5 rounded-xl hover:bg-slate-50 transition-colors block group"
+                          >
+                            <div className="flex items-center justify-between">
+                              <span className="text-sm font-bold text-slate-800 group-hover:text-cyan-700 transition-colors">
+                                {item.name}
+                              </span>
+                              {item.tag && (
+                                <span className="text-[10px] font-bold bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded">
+                                  {item.tag}
+                                </span>
+                              )}
+                            </div>
+                            <p className="text-xs text-slate-500 mt-0.5 leading-snug">{item.desc}</p>
+                          </Link>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* BUILDER SOLUTIONS DROPDOWN */}
+            <div
+              className="relative"
+              onMouseEnter={() => handleMouseEnter('builder')}
+              onMouseLeave={handleMouseLeave}
+            >
+              <button
+                className={`px-3.5 py-2 text-[14px] font-semibold rounded-lg flex items-center gap-1.5 transition-colors ${
+                  openDropdown === 'builder'
+                    ? 'text-cyan-700 bg-cyan-50'
+                    : 'text-slate-700 hover:text-cyan-700 hover:bg-slate-50'
+                }`}
+              >
+                <span>Builder APF</span>
+                <span className="text-[10px] font-bold bg-amber-500/15 text-amber-800 border border-amber-500/30 px-1.5 py-0.2 rounded">
+                  Specialist
+                </span>
+                <svg
+                  className={`w-4 h-4 transition-transform duration-200 ${
+                    openDropdown === 'builder' ? 'rotate-180 text-cyan-700' : 'text-slate-400'
+                  }`}
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+
+              {openDropdown === 'builder' && (
+                <div className="absolute top-full left-0 w-[360px] bg-white rounded-2xl shadow-2xl border border-slate-100 p-4 space-y-1 animate-in fade-in-50 slide-in-from-top-2 duration-150 z-50">
+                  <div className="p-2 border-b border-slate-100 mb-2">
+                    <span className="text-xs font-bold text-slate-900 block">Real Estate Developer Suite</span>
+                    <span className="text-[11px] text-slate-500">Accelerating project clearances & retail buyer loans</span>
+                  </div>
+                  {builderOfferings.map((item, idx) => (
+                    <Link
+                      key={idx}
+                      href={item.href}
+                      onClick={() => setOpenDropdown(null)}
+                      className="p-2.5 rounded-xl hover:bg-slate-50 transition-colors block group"
+                    >
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-bold text-slate-800 group-hover:text-cyan-700 transition-colors">
+                          {item.name}
+                        </span>
+                        {item.badge && (
+                          <span className="text-[10px] font-bold bg-cyan-100 text-cyan-800 px-1.5 py-0.5 rounded">
+                            {item.badge}
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-xs text-slate-500 mt-0.5 leading-snug">{item.desc}</p>
+                    </Link>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* CALCULATORS DROPDOWN */}
+            <div
+              className="relative"
+              onMouseEnter={() => handleMouseEnter('calculators')}
+              onMouseLeave={handleMouseLeave}
+            >
+              <button
+                className={`px-3.5 py-2 text-[14px] font-semibold rounded-lg flex items-center gap-1.5 transition-colors ${
+                  openDropdown === 'calculators'
+                    ? 'text-cyan-700 bg-cyan-50'
+                    : 'text-slate-700 hover:text-cyan-700 hover:bg-slate-50'
+                }`}
+              >
+                <span>Calculators</span>
+                <svg
+                  className={`w-4 h-4 transition-transform duration-200 ${
+                    openDropdown === 'calculators' ? 'rotate-180 text-cyan-700' : 'text-slate-400'
+                  }`}
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+
+              {openDropdown === 'calculators' && (
+                <div className="absolute top-full left-0 w-[340px] bg-white rounded-2xl shadow-2xl border border-slate-100 p-4 space-y-1 animate-in fade-in-50 slide-in-from-top-2 duration-150 z-50">
+                  {calculatorLinks.map((calc, idx) => (
+                    <Link
+                      key={idx}
+                      href={calc.href}
+                      onClick={() => setOpenDropdown(null)}
+                      className="p-2.5 rounded-xl hover:bg-slate-50 transition-colors block group"
+                    >
+                      <div className="text-sm font-bold text-slate-800 group-hover:text-cyan-700 transition-colors">
+                        {calc.name}
+                      </div>
+                      <p className="text-xs text-slate-500 mt-0.5 leading-snug">{calc.desc}</p>
+                    </Link>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* COMPANY DROPDOWN */}
+            <div
+              className="relative"
+              onMouseEnter={() => handleMouseEnter('company')}
+              onMouseLeave={handleMouseLeave}
+            >
+              <button
+                className={`px-3.5 py-2 text-[14px] font-semibold rounded-lg flex items-center gap-1.5 transition-colors ${
+                  openDropdown === 'company'
+                    ? 'text-cyan-700 bg-cyan-50'
+                    : 'text-slate-700 hover:text-cyan-700 hover:bg-slate-50'
+                }`}
+              >
+                <span>Company</span>
+                <svg
+                  className={`w-4 h-4 transition-transform duration-200 ${
+                    openDropdown === 'company' ? 'rotate-180 text-cyan-700' : 'text-slate-400'
+                  }`}
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+
+              {openDropdown === 'company' && (
+                <div className="absolute top-full left-0 w-[350px] bg-white rounded-2xl shadow-2xl border border-slate-100 p-4 space-y-1 animate-in fade-in-50 slide-in-from-top-2 duration-150 z-50">
+                  {companyLinks.map((comp, idx) => (
+                    <Link
+                      key={idx}
+                      href={comp.href}
+                      onClick={() => setOpenDropdown(null)}
+                      className="p-2.5 rounded-xl hover:bg-slate-50 transition-colors block group"
+                    >
+                      <div className="text-sm font-bold text-slate-800 group-hover:text-cyan-700 transition-colors">
+                        {comp.name}
+                      </div>
+                      <p className="text-xs text-slate-500 mt-0.5 leading-snug">{comp.desc}</p>
+                    </Link>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* CONTACT LINK */}
             <Link
               href="/contact"
-              className="px-4 py-2 text-xs font-bold text-slate-950 bg-gradient-to-r from-amber-400 to-yellow-400 hover:from-amber-300 hover:to-yellow-300 rounded-lg shadow-md hover:shadow-amber-500/20 transition-all transform active:scale-95"
+              className="px-3.5 py-2 text-[14px] font-semibold text-slate-700 hover:text-cyan-700 hover:bg-slate-50 rounded-lg transition-colors"
             >
-              Apply Online
+              Contact Us
+            </Link>
+          </nav>
+
+          {/* Right High-Conversion Action Buttons (Urban Money Style) */}
+          <div className="hidden sm:flex items-center gap-3">
+            <Link
+              href="/#apply"
+              className="px-4 py-2 text-xs sm:text-sm font-bold text-white bg-gradient-to-r from-cyan-600 via-cyan-700 to-teal-700 hover:from-cyan-500 hover:to-teal-600 rounded-xl shadow-md hover:shadow-cyan-600/25 transition-all transform hover:-translate-y-0.5"
+            >
+              Apply for Loan
             </Link>
 
             {userSession ? (
               <Link
                 href="/dashboard"
-                className="px-3 py-2 text-xs font-semibold text-slate-200 bg-slate-800 hover:bg-slate-700 rounded-lg border border-slate-700 flex items-center gap-1.5 transition-colors"
+                className="px-3.5 py-2 text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-xl flex items-center gap-1.5 transition-colors"
               >
-                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
                 <span>Dashboard</span>
               </Link>
             ) : (
               <Link
                 href="/login"
-                className="px-3 py-2 text-xs font-semibold text-cyan-300 hover:text-white bg-cyan-950/70 hover:bg-cyan-900/80 border border-cyan-800/80 rounded-lg transition-colors flex items-center gap-1.5"
+                className="px-3.5 py-2 text-xs font-bold text-slate-700 hover:text-cyan-700 border border-slate-300 hover:border-cyan-600 rounded-xl transition-colors flex items-center gap-1.5"
               >
-                <svg className="w-3.5 h-3.5 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
+                <svg className="w-3.5 h-3.5 text-cyan-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                 </svg>
-                <span>Portal Login</span>
+                <span>Partner Login</span>
               </Link>
             )}
           </div>
 
-          {/* Mobile Hamburger Toggle */}
+          {/* Mobile Menu Hamburger */}
           <button
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            className="lg:hidden p-2 rounded-lg text-slate-300 hover:text-white hover:bg-slate-800 focus:outline-none"
+            className="lg:hidden p-2 rounded-xl text-slate-700 hover:bg-slate-100 focus:outline-none"
             aria-label="Toggle menu"
           >
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -166,61 +396,69 @@ export function Navbar({ userSession }: NavbarProps) {
           </button>
         </div>
 
-        {/* Mobile Dropdown Menu */}
+        {/* Mobile Navigation Drawer */}
         {isMobileMenuOpen && (
-          <div className="lg:hidden bg-slate-900 border-b border-slate-800 px-4 pt-3 pb-6 space-y-3 shadow-2xl animate-in slide-in-from-top-2 duration-200 text-white">
-            <div className="grid grid-cols-2 gap-2 text-sm font-semibold">
-              {navLinks.map((item) => {
-                const active = isActive(item.href);
-                return (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    onClick={() => setIsMobileMenuOpen(false)}
-                    className={`px-3 py-2.5 rounded-lg transition-colors ${
-                      active
-                        ? 'bg-amber-400/20 text-amber-300 border border-amber-400/40'
-                        : 'text-slate-300 hover:bg-slate-800 hover:text-white'
-                    }`}
-                  >
-                    {item.label}
-                  </Link>
-                );
-              })}
-            </div>
-
-            <div className="pt-3 border-t border-slate-800 flex flex-col gap-2.5">
+          <div className="lg:hidden bg-white border-t border-slate-200 px-4 pt-3 pb-6 space-y-4 shadow-xl">
+            <div className="space-y-1">
               <Link
-                href="/contact"
+                href="/retail-loans"
                 onClick={() => setIsMobileMenuOpen(false)}
-                className="w-full text-center py-2.5 text-sm font-bold text-slate-950 bg-amber-400 hover:bg-amber-300 rounded-lg shadow-sm"
+                className="block px-3 py-2.5 rounded-lg text-sm font-bold text-slate-800 hover:bg-cyan-50 hover:text-cyan-700"
               >
-                Apply Online
+                Retail Loans (Home, LAP, Personal)
+              </Link>
+              <Link
+                href="/sme-finance"
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="block px-3 py-2.5 rounded-lg text-sm font-bold text-slate-800 hover:bg-cyan-50 hover:text-cyan-700"
+              >
+                SME & Business Finance
+              </Link>
+              <Link
+                href="/builder-apf"
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="block px-3 py-2.5 rounded-lg text-sm font-bold text-cyan-800 bg-cyan-50/50"
+              >
+                Builder APF & Project Solutions
               </Link>
               <Link
                 href="/#calculator"
                 onClick={() => setIsMobileMenuOpen(false)}
-                className="w-full text-center py-2 text-sm font-semibold text-slate-300 bg-slate-800 hover:bg-slate-700 rounded-lg border border-slate-700"
+                className="block px-3 py-2.5 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50"
               >
-                EMI Calculator
+                EMI & Eligibility Calculators
               </Link>
-              {userSession ? (
-                <Link
-                  href="/dashboard"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                  className="w-full text-center py-2 text-sm font-semibold text-slate-200 bg-slate-800 rounded-lg border border-slate-700"
-                >
-                  Go to Portal Dashboard
-                </Link>
-              ) : (
-                <Link
-                  href="/login"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                  className="w-full text-center py-2 text-sm font-semibold text-cyan-300 bg-cyan-950/70 border border-cyan-800/80 rounded-lg"
-                >
-                  Partner / Staff Login
-                </Link>
-              )}
+              <Link
+                href="/about-us"
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="block px-3 py-2.5 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50"
+              >
+                About Money Shelter
+              </Link>
+              <Link
+                href="/contact"
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="block px-3 py-2.5 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50"
+              >
+                Contact & Branches
+              </Link>
+            </div>
+
+            <div className="pt-3 border-t border-slate-100 flex flex-col gap-2.5">
+              <Link
+                href="/#apply"
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="w-full text-center py-3 text-sm font-bold text-white bg-cyan-600 hover:bg-cyan-700 rounded-xl shadow-md"
+              >
+                Apply for Loan
+              </Link>
+              <Link
+                href="/login"
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="w-full text-center py-2.5 text-sm font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-xl"
+              >
+                Partner / Staff Login
+              </Link>
             </div>
           </div>
         )}
