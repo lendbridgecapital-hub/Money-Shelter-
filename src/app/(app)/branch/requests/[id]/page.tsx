@@ -139,28 +139,30 @@ export default async function RequestDetailPage({ params }: { params: { id: stri
                 {application.fullName || 'Awaiting customer submission'}
               </h1>
               <StatusBadge status={application.status} />
-              {/* Live Bucket Timer Badge */}
-              <span
-                className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-bold border shadow-xs ${sla.badgeClass}`}
-                title={sla.statusMessage}
-              >
-                <span className={`w-2 h-2 rounded-full ${sla.badgeDotClass}`} />
-                <span>⏱️ {sla.elapsedFormatted} in current bucket</span>
-                {sla.standardTatFormatted && (
-                  <span className="opacity-80 font-normal">/ TAT: {sla.standardTatFormatted}</span>
-                )}
-                {sla.severity === 'ORANGE' && <span className="ml-1 text-amber-950 font-black">⚠️ TAT Exceeded</span>}
-                {sla.severity === 'RED' && <span className="ml-1 text-white bg-rose-700 px-1.5 py-0.5 rounded font-black animate-pulse">🚨 Admin Warning Alarm</span>}
-              </span>
+              {/* Live Bucket Timer Badge (Hidden in Disbursed and Rejected/Expired) */}
+              {sla.showTimer && (
+                <span
+                  className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-bold border shadow-xs ${sla.badgeClass}`}
+                  title={sla.statusMessage}
+                >
+                  <span className={`w-2 h-2 rounded-full ${sla.badgeDotClass}`} />
+                  <span>⏱️ {sla.elapsedFormatted} in current bucket</span>
+                  {sla.standardTatFormatted && (
+                    <span className="opacity-80 font-normal">/ TAT: {sla.standardTatFormatted}</span>
+                  )}
+                  {sla.severity === 'ORANGE' && <span className="ml-1 text-amber-950 font-black">⚠️ TAT Exceeded</span>}
+                  {sla.severity === 'RED' && <span className="ml-1 text-white bg-rose-700 px-1.5 py-0.5 rounded font-black animate-pulse">🚨 Admin Warning Alarm</span>}
+                </span>
+              )}
             </div>
           );
         })()}
       </div>
 
-      {/* SLA Alert Banner for breached cases */}
+      {/* SLA Alert Banner for breached cases (Hidden in Disbursed and Rejected/Expired) */}
       {(() => {
         const sla = calculateCaseSla(application);
-        if (sla.severity === 'NORMAL') return null;
+        if (!sla.showTimer || sla.severity === 'NORMAL') return null;
         return (
           <div
             className={`p-4 rounded-xl border mb-5 flex items-center justify-between gap-3 ${

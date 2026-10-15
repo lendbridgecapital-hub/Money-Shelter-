@@ -42,7 +42,7 @@ export default function MobileDashboardSlider({
     { label: 'Docs Req.', count: stats.documentsRequired, href: '/branch/requests?status=DOCUMENTS_REQUIRED', dot: 'bg-amber-400' },
     { label: 'Approved', count: stats.approved, href: '/branch/requests?status=APPROVED', dot: 'bg-emerald-400' },
     { label: 'Disbursed', count: stats.disbursed, href: '/branch/requests?status=DISBURSED', dot: 'bg-emerald-300' },
-    { label: 'Failed', count: stats.failed, href: '/branch/requests?status=FAILED', dot: 'bg-rose-400' },
+    { label: 'Rejected', count: stats.rejected, href: '/branch/requests?status=REJECTED', dot: 'bg-rose-400' },
   ];
 
   return (

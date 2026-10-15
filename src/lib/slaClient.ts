@@ -10,6 +10,7 @@ export interface SlaInfo {
   standardTatFormatted: string | null;
   severity: TatSeverity;
   isBreached: boolean;
+  showTimer: boolean;
   statusMessage: string;
   badgeClass: string;
   badgeDotClass: string;
@@ -67,7 +68,7 @@ export function calculateCaseSla(app: LoanApplication, referenceTime = new Date(
     standardTatFormatted = formatElapsedDuration(standardTatMs);
   }
 
-  // Terminal states: closed, no TAT breach
+  // Terminal states: closed, no TAT breach, NO TIMER in Disbursed, Rejected, or Expired bucket
   if (status === 'DISBURSED' || status === 'REJECTED' || status === 'FAILED') {
     return {
       status,
@@ -77,24 +78,21 @@ export function calculateCaseSla(app: LoanApplication, referenceTime = new Date(
       standardTatFormatted: null,
       severity: 'NORMAL',
       isBreached: false,
+      showTimer: false,
       statusMessage:
         status === 'DISBURSED'
           ? 'Disbursed (Completed)'
           : status === 'FAILED'
-          ? 'Failed / Expired after 7d'
+          ? 'Rejected (Expired link)'
           : 'Rejected',
       badgeClass:
-        status === 'FAILED'
-          ? 'bg-rose-50 text-rose-800 border-rose-200'
-          : status === 'DISBURSED'
+        status === 'DISBURSED'
           ? 'bg-purple-50 text-purple-800 border-purple-200'
-          : 'bg-slate-100 text-slate-600 border-slate-200',
+          : 'bg-rose-50 text-rose-800 border-rose-200',
       badgeDotClass:
-        status === 'FAILED'
-          ? 'bg-rose-500'
-          : status === 'DISBURSED'
+        status === 'DISBURSED'
           ? 'bg-purple-500'
-          : 'bg-slate-400',
+          : 'bg-rose-500',
       cardBorderClass: 'border-slate-200/90',
       cardBgClass: 'bg-white',
     };
@@ -114,7 +112,8 @@ export function calculateCaseSla(app: LoanApplication, referenceTime = new Date(
         standardTatFormatted: '7d',
         severity: 'RED',
         isBreached: true,
-        statusMessage: 'Expired (>7d in Link Shared) — Moving to Failed',
+        showTimer: true,
+        statusMessage: 'Expired (>7d in Link Shared) — Moving to Rejected bucket',
         badgeClass: 'bg-rose-100 text-rose-900 border-rose-300 font-bold',
         badgeDotClass: 'bg-rose-600 animate-pulse',
         cardBorderClass: 'border-rose-400 ring-1 ring-rose-300',
@@ -131,6 +130,7 @@ export function calculateCaseSla(app: LoanApplication, referenceTime = new Date(
         standardTatFormatted: '7d',
         severity: 'ORANGE',
         isBreached: false,
+        showTimer: true,
         statusMessage: `Expiring soon (${elapsedFormatted} in Link Shared)`,
         badgeClass: 'bg-amber-100 text-amber-900 border-amber-300 font-semibold',
         badgeDotClass: 'bg-amber-500',
@@ -147,6 +147,7 @@ export function calculateCaseSla(app: LoanApplication, referenceTime = new Date(
       standardTatFormatted: '7d',
       severity: 'NORMAL',
       isBreached: false,
+      showTimer: true,
       statusMessage: `Active in Link Shared (${elapsedFormatted})`,
       badgeClass: 'bg-emerald-50 text-emerald-800 border-emerald-200',
       badgeDotClass: 'bg-emerald-500',
@@ -166,6 +167,7 @@ export function calculateCaseSla(app: LoanApplication, referenceTime = new Date(
         standardTatFormatted: '30m',
         severity: 'RED',
         isBreached: true,
+        showTimer: true,
         statusMessage: `🚨 Critical TAT Breach: >60m in Docs In (${elapsedFormatted}) — Escalated to Admin`,
         badgeClass: 'bg-rose-600 text-white border-rose-700 font-bold shadow-xs animate-pulse',
         badgeDotClass: 'bg-white animate-ping',
@@ -183,6 +185,7 @@ export function calculateCaseSla(app: LoanApplication, referenceTime = new Date(
         standardTatFormatted: '30m',
         severity: 'ORANGE',
         isBreached: true,
+        showTimer: true,
         statusMessage: `⚠️ Standard 30m TAT Exceeded (${elapsedFormatted}) — Ops Action Required`,
         badgeClass: 'bg-amber-500 text-white border-amber-600 font-bold shadow-xs',
         badgeDotClass: 'bg-white',
@@ -200,6 +203,7 @@ export function calculateCaseSla(app: LoanApplication, referenceTime = new Date(
       standardTatFormatted: '30m',
       severity: 'NORMAL',
       isBreached: false,
+      showTimer: true,
       statusMessage: `Within 30m TAT (${remainingMins}m remaining)`,
       badgeClass: 'bg-blue-50 text-blue-800 border-blue-200',
       badgeDotClass: 'bg-blue-500',
@@ -220,6 +224,7 @@ export function calculateCaseSla(app: LoanApplication, referenceTime = new Date(
         standardTatFormatted: '12h',
         severity: 'ORANGE',
         isBreached: true,
+        showTimer: true,
         statusMessage: `⚠️ Follow-up Needed: >12h in Docs Required (${elapsedFormatted})`,
         badgeClass: 'bg-amber-500 text-white border-amber-600 font-bold shadow-xs',
         badgeDotClass: 'bg-white',
@@ -236,6 +241,7 @@ export function calculateCaseSla(app: LoanApplication, referenceTime = new Date(
       standardTatFormatted: '12h',
       severity: 'NORMAL',
       isBreached: false,
+      showTimer: true,
       statusMessage: `Docs Requested (${elapsedFormatted} in bucket)`,
       badgeClass: 'bg-amber-50 text-amber-800 border-amber-200',
       badgeDotClass: 'bg-amber-500',
@@ -256,6 +262,7 @@ export function calculateCaseSla(app: LoanApplication, referenceTime = new Date(
         standardTatFormatted: '48h',
         severity: 'ORANGE',
         isBreached: true,
+        showTimer: true,
         statusMessage: `⚠️ Bank Follow-Up Required: >48h at Bank (${elapsedFormatted})`,
         badgeClass: 'bg-amber-500 text-white border-amber-600 font-bold shadow-xs',
         badgeDotClass: 'bg-white',
@@ -272,6 +279,7 @@ export function calculateCaseSla(app: LoanApplication, referenceTime = new Date(
       standardTatFormatted: '48h',
       severity: 'NORMAL',
       isBreached: false,
+      showTimer: true,
       statusMessage: `Under Bank Review (${elapsedFormatted})`,
       badgeClass: 'bg-indigo-50 text-indigo-800 border-indigo-200',
       badgeDotClass: 'bg-indigo-500',
@@ -293,6 +301,7 @@ export function calculateCaseSla(app: LoanApplication, referenceTime = new Date(
       standardTatFormatted: '12h',
       severity: 'ORANGE',
       isBreached: true,
+      showTimer: true,
       statusMessage: `⚠️ Standard 12h TAT Exceeded (${elapsedFormatted})`,
       badgeClass: 'bg-amber-500 text-white border-amber-600 font-bold shadow-xs',
       badgeDotClass: 'bg-white',
@@ -309,6 +318,7 @@ export function calculateCaseSla(app: LoanApplication, referenceTime = new Date(
     standardTatFormatted: '12h',
     severity: 'NORMAL',
     isBreached: false,
+    showTimer: true,
     statusMessage: `In stage: ${elapsedFormatted}`,
     badgeClass: 'bg-emerald-50 text-emerald-800 border-emerald-200',
     badgeDotClass: 'bg-emerald-500',

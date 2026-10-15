@@ -43,8 +43,14 @@ export default function RequestTable({
   const filtered = useMemo(() => {
     return applications.filter((app) => {
       // Status filter
-      if (statusFilter !== 'ALL' && app.status !== statusFilter) {
-        return false;
+      if (statusFilter !== 'ALL') {
+        if (statusFilter === 'REJECTED') {
+          if (app.status !== 'REJECTED' && app.status !== 'FAILED') {
+            return false;
+          }
+        } else if (app.status !== statusFilter) {
+          return false;
+        }
       }
 
       // Search term
@@ -115,12 +121,7 @@ export default function RequestTable({
     {
       key: 'REJECTED',
       label: 'Rejected',
-      count: applications.filter((a) => a.status === 'REJECTED').length,
-    },
-    {
-      key: 'FAILED',
-      label: 'Failed / Expired',
-      count: applications.filter((a) => a.status === 'FAILED').length,
+      count: applications.filter((a) => a.status === 'REJECTED' || a.status === 'FAILED').length,
     },
   ];
 
@@ -234,26 +235,28 @@ export default function RequestTable({
                   </div>
                 </div>
 
-                {/* Live SLA Bucket Timer & Warning Pill */}
-                <div className="flex flex-wrap items-center gap-1.5 mb-2.5">
-                  <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[10px] font-semibold border ${sla.badgeClass}`}>
-                    <span className={`w-1.5 h-1.5 rounded-full ${sla.badgeDotClass}`} />
-                    <span>⏱️ {sla.elapsedFormatted} in bucket</span>
-                    {sla.standardTatFormatted && (
-                      <span className="opacity-75">/ TAT {sla.standardTatFormatted}</span>
+                {/* Live SLA Bucket Timer & Warning Pill (Only for active stages; hidden in Disbursed and Rejected/Expired) */}
+                {sla.showTimer && (
+                  <div className="flex flex-wrap items-center gap-1.5 mb-2.5">
+                    <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[10px] font-semibold border ${sla.badgeClass}`}>
+                      <span className={`w-1.5 h-1.5 rounded-full ${sla.badgeDotClass}`} />
+                      <span>⏱️ {sla.elapsedFormatted} in bucket</span>
+                      {sla.standardTatFormatted && (
+                        <span className="opacity-75">/ TAT {sla.standardTatFormatted}</span>
+                      )}
+                    </span>
+                    {sla.severity === 'ORANGE' && (
+                      <span className="text-[10px] font-bold text-amber-900 bg-amber-100 px-1.5 py-0.5 rounded border border-amber-300">
+                        ⚠️ TAT Exceeded
+                      </span>
                     )}
-                  </span>
-                  {sla.severity === 'ORANGE' && (
-                    <span className="text-[10px] font-bold text-amber-900 bg-amber-100 px-1.5 py-0.5 rounded border border-amber-300">
-                      ⚠️ TAT Exceeded
-                    </span>
-                  )}
-                  {sla.severity === 'RED' && (
-                    <span className="text-[10px] font-bold text-white bg-rose-600 px-1.5 py-0.5 rounded shadow-xs animate-pulse">
-                      🚨 Admin Alert
-                    </span>
-                  )}
-                </div>
+                    {sla.severity === 'RED' && (
+                      <span className="text-[10px] font-bold text-white bg-rose-600 px-1.5 py-0.5 rounded shadow-xs animate-pulse">
+                        🚨 Admin Alert
+                      </span>
+                    )}
+                  </div>
+                )}
 
               {/* Amount & Loan Type Tile */}
               <div className="p-3 bg-slate-50/90 rounded-xl border border-slate-100 flex items-center justify-between mb-2.5">
@@ -404,18 +407,20 @@ export default function RequestTable({
                         <StatusBadge status={app.status as ApplicationStatus} size="sm" />
                       </div>
 
-                      {/* Live SLA Bucket Timer Widget */}
-                      <div>
-                        <span
-                          className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[10px] font-semibold border ${sla.badgeClass}`}
-                          title={sla.statusMessage}
-                        >
-                          <span className={`w-1.5 h-1.5 rounded-full ${sla.badgeDotClass}`} />
-                          <span>⏱️ {sla.elapsedFormatted} in bucket</span>
-                          {sla.severity === 'ORANGE' && <span className="font-bold">(TAT Exceeded)</span>}
-                          {sla.severity === 'RED' && <span className="font-bold">🚨 (Alarm)</span>}
-                        </span>
-                      </div>
+                      {/* Live SLA Bucket Timer Widget (Hidden in Disbursed and Rejected/Expired) */}
+                      {sla.showTimer && (
+                        <div>
+                          <span
+                            className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[10px] font-semibold border ${sla.badgeClass}`}
+                            title={sla.statusMessage}
+                          >
+                            <span className={`w-1.5 h-1.5 rounded-full ${sla.badgeDotClass}`} />
+                            <span>⏱️ {sla.elapsedFormatted} in bucket</span>
+                            {sla.severity === 'ORANGE' && <span className="font-bold">(TAT Exceeded)</span>}
+                            {sla.severity === 'RED' && <span className="font-bold">🚨 (Alarm)</span>}
+                          </span>
+                        </div>
+                      )}
 
                       {app.branchType === 'SITE' ? (
                         <div>

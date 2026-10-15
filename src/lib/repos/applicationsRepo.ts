@@ -401,8 +401,8 @@ export function getPipelineStats(user?: User, tenantId = 'default'): PipelineSta
     approved: apps.filter((a) => norm(a.status) === 'APPROVED' || norm(a.status) === 'LOAN_APPROVED').length,
     customerAccepted: apps.filter((a) => norm(a.status) === 'CUSTOMER_ACCEPTED').length,
     disbursed: apps.filter((a) => norm(a.status) === 'DISBURSED' || norm(a.status) === 'LOAN_DISBURSED').length,
-    rejected: apps.filter((a) => norm(a.status) === 'REJECTED' || norm(a.status) === 'LOAN_REJECTED').length,
-    failed: apps.filter((a) => norm(a.status) === 'FAILED').length,
+    rejected: apps.filter((a) => norm(a.status) === 'REJECTED' || norm(a.status) === 'LOAN_REJECTED' || norm(a.status) === 'FAILED').length,
+    failed: 0,
   };
 }
 
@@ -415,9 +415,9 @@ export function branchStats(branchId?: string, tenantId = 'default') {
     linkShared: apps.filter((a) => norm(a.status) === 'LINK_SHARED').length,
     documentReceived: apps.filter((a) => norm(a.status) === 'DOCUMENTS_IN' || norm(a.status) === 'DOCUMENT_RECEIVED').length,
     approved: apps.filter((a) => norm(a.status) === 'APPROVED' || norm(a.status) === 'LOAN_APPROVED').length,
-    rejected: apps.filter((a) => norm(a.status) === 'REJECTED' || norm(a.status) === 'LOAN_REJECTED').length,
+    rejected: apps.filter((a) => norm(a.status) === 'REJECTED' || norm(a.status) === 'LOAN_REJECTED' || norm(a.status) === 'FAILED').length,
     disbursed: apps.filter((a) => norm(a.status) === 'DISBURSED' || norm(a.status) === 'LOAN_DISBURSED').length,
-    failed: apps.filter((a) => norm(a.status) === 'FAILED').length,
+    failed: 0,
   };
 }
 

@@ -46,7 +46,7 @@ export default function StatusTracker({ status }: StatusTrackerProps) {
     <div className="w-full min-w-[650px] py-3">
       {isFailed && (
         <div className="mb-3 px-3 py-1.5 bg-rose-50 border border-rose-200 text-rose-800 rounded-lg text-xs font-semibold flex items-center justify-between">
-          <span>❌ This application link expired after 7 days of customer inactivity and was moved to the Failed bucket.</span>
+          <span>❌ This application link expired after 7 days of customer inactivity and was moved to the Rejected bucket.</span>
           <span className="uppercase text-[10px] bg-rose-200/80 text-rose-900 px-2 py-0.5 rounded font-bold">Link Expired</span>
         </div>
       )}
