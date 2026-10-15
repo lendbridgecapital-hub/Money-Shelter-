@@ -83,33 +83,33 @@ export function Navbar({ userSession }: NavbarProps) {
 
   return (
     <>
-      {/* Top Utility Announcement Bar (Urban Money clean aesthetic) */}
-      <div className="bg-slate-900 text-slate-300 text-xs border-b border-slate-800">
+      {/* Top Utility Announcement Bar (Urban Money clean aesthetic - Pure White / Light) */}
+      <div className="bg-slate-50 text-slate-600 text-xs border-b border-slate-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-1.5 flex justify-between items-center text-[11px] sm:text-xs">
           <div className="flex items-center gap-3">
-            <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-cyan-900/60 text-cyan-300 font-semibold border border-cyan-700/50">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-cyan-50 text-cyan-800 font-bold border border-cyan-200">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
               Pune HQ • Maharashtra
             </span>
-            <span className="hidden md:inline text-slate-400">
-              <strong className="text-white">₹2,500+ Cr</strong> Disbursed • <strong className="text-white">30,000+</strong> Happy Customers
+            <span className="hidden md:inline text-slate-500 font-medium">
+              <strong className="text-slate-900 font-bold">₹2,500+ Cr</strong> Disbursed • <strong className="text-slate-900 font-bold">30,000+</strong> Happy Customers
             </span>
           </div>
 
-          <div className="flex items-center gap-4 text-slate-300">
+          <div className="flex items-center gap-4 text-slate-600">
             <a
               href="tel:+912040001100"
-              className="hover:text-amber-400 transition-colors flex items-center gap-1 font-semibold"
+              className="hover:text-amber-600 transition-colors flex items-center gap-1 font-bold text-slate-800"
             >
-              <svg className="w-3.5 h-3.5 text-amber-400" fill="currentColor" viewBox="0 0 20 20">
+              <svg className="w-3.5 h-3.5 text-amber-500" fill="currentColor" viewBox="0 0 20 20">
                 <path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.037 11.037 0 006.105 6.105l.774-1.548a1 1 0 011.059-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 4V3z" />
               </svg>
               <span>+91 20 4000 1100</span>
             </a>
-            <span className="text-slate-700 hidden sm:inline">|</span>
+            <span className="text-slate-300 hidden sm:inline">|</span>
             <Link
               href="/partner/register"
-              className="hover:text-cyan-300 font-medium hidden sm:inline-flex items-center gap-1"
+              className="hover:text-cyan-700 font-semibold text-slate-600 hidden sm:inline-flex items-center gap-1"
             >
               <span>DSA / Partner Desk</span>
             </Link>

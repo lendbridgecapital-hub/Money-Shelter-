@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { signIn } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 
@@ -44,19 +45,23 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
-      <div className="sm:mx-auto sm:w-full sm:max-w-md">
-        {/* Brand Monogram */}
-        <div
-          className="w-14 h-14 rounded-2xl mx-auto flex items-center justify-center text-white font-extrabold text-2xl shadow-md"
-          style={{ backgroundColor: 'var(--color-primary)' }}
-        >
-          Q
-        </div>
+      <div className="sm:mx-auto sm:w-full sm:max-w-md text-center">
+        {/* Official Money Shelter Logo */}
+        <Link href="/" className="inline-block hover:opacity-95 transition-opacity mb-2">
+          <Image
+            src="/money-shelter-logo.png"
+            alt="Money Shelter Pvt. Ltd. — Where Money Meets Trust"
+            width={220}
+            height={135}
+            priority
+            className="mx-auto h-20 w-auto object-contain"
+          />
+        </Link>
 
-        <h2 className="mt-4 text-center text-2xl font-extrabold text-slate-900 tracking-tight">
-          Quickfinsure
+        <h2 className="mt-2 text-center text-2xl font-black text-slate-900 tracking-tight">
+          Money Shelter Portal Login
         </h2>
-        <p className="mt-1 text-center text-xs text-slate-500">
+        <p className="mt-1 text-center text-xs font-semibold text-slate-500 uppercase tracking-wider">
           Multi-Branch Loan Origination & Partner Platform
         </p>
       </div>
@@ -78,8 +83,8 @@ export default function LoginPage() {
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="admin@quickfinsure.com"
-                className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                placeholder="admin@moneyshelter.in"
+                className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-cyan-600"
               />
             </div>
 
@@ -91,7 +96,7 @@ export default function LoginPage() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••••••"
-                className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-cyan-600"
               />
             </div>
 
@@ -99,14 +104,14 @@ export default function LoginPage() {
               <button
                 type="submit"
                 disabled={isLoading}
-                className="w-full btn-primary py-3 px-4 rounded-xl text-sm font-bold shadow-md hover:opacity-95 disabled:opacity-50 transition-opacity"
+                className="w-full py-3 px-4 rounded-xl text-sm font-bold text-white bg-gradient-to-r from-cyan-600 via-cyan-700 to-teal-700 hover:from-cyan-500 hover:to-teal-600 shadow-md hover:shadow-cyan-600/20 disabled:opacity-50 transition-all"
               >
                 {isLoading ? 'Signing In…' : 'Sign In to Portal'}
               </button>
             </div>
           </form>
 
-          {/* Quick Demo Logins for All 4 Roles */}
+          {/* Quick Demo Logins for All Roles */}
           <div className="mt-8 pt-6 border-t border-slate-100">
             <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2.5 text-center">
               Quick Role-Based Sign-Ins
@@ -125,7 +130,7 @@ export default function LoginPage() {
                 onClick={() => handleQuickFill('support@quickfinsure.com')}
                 className="py-2 px-2.5 bg-amber-50/60 hover:bg-amber-100/70 border border-amber-300 rounded-lg text-xs font-bold text-amber-900 transition-colors text-left flex flex-col"
               >
-                <span>🛡️ Central Support</span>
+                <span>🛡️ Support Desk</span>
                 <span className="text-[10px] font-normal text-amber-700">support@quickfinsure.com</span>
               </button>
               <button
@@ -162,12 +167,12 @@ export default function LoginPage() {
         {/* Partner Onboarding Link */}
         <div className="mt-5 text-center">
           <p className="text-xs text-slate-500">
-            Want to become a referral partner?{' '}
+            Want to become a Money Shelter partner?{' '}
             <Link
               href="/partner/onboard"
-              className="font-bold text-emerald-700 hover:text-emerald-900 transition-colors"
+              className="font-bold text-cyan-700 hover:text-cyan-900 transition-colors"
             >
-              Onboard & Sign Sub-DSA Agreement →
+              Onboard & Sign Partner Agreement →
             </Link>
           </p>
         </div>

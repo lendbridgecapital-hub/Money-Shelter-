@@ -6,8 +6,8 @@ export const DEFAULT_SETTINGS: CompanySettings = {
   tenantId: 'default',
   companyName: 'Money Shelter Pvt. Ltd.',
   tagline: 'WHERE MONEY MEETS TRUST',
-  logoUrl: '',
-  faviconUrl: '',
+  logoUrl: '/money-shelter-logo.png',
+  faviconUrl: '/money-shelter-logo.png',
   primaryColor: '#0e7490', // Corporate Deep Cyan / Teal
   accentColor: '#d97706',  // Warm Gold Accent
   officialEmail: 'info@moneyshelter.in',

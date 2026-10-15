@@ -6,16 +6,16 @@ import { MoneyShelterLogo } from '@/components/MoneyShelterLogo';
 
 export function Footer() {
   return (
-    <footer id="branches" className="bg-slate-950 text-slate-400 text-xs border-t border-slate-800">
+    <footer id="branches" className="bg-slate-900 text-slate-400 text-xs border-t border-slate-800">
       {/* Branch Network Showcase Bar */}
-      <div className="border-b border-slate-800/80 bg-slate-900/60 py-12">
+      <div className="border-b border-slate-800 bg-slate-950/60 py-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
             <div>
               <span className="text-[11px] font-bold text-cyan-400 uppercase tracking-widest">
                 GEOGRAPHIC REACH
               </span>
-              <h3 className="text-xl sm:text-2xl font-bold text-white font-serif mt-1">
+              <h3 className="text-xl sm:text-2xl font-bold text-white font-sans mt-1">
                 Maharashtra Branch & Corporate Network
               </h3>
             </div>
@@ -26,11 +26,11 @@ export function Footer() {
 
           <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-6">
             {/* Pune Head Office */}
-            <div className="p-4 rounded-2xl bg-slate-950/80 border border-cyan-800/60">
+            <div className="p-4 rounded-2xl bg-slate-900/90 border border-cyan-800/60 shadow-sm">
               <span className="px-2 py-0.5 rounded text-[10px] font-extrabold bg-cyan-700 text-white">
                 HEAD OFFICE
               </span>
-              <div className="font-bold text-white text-sm font-serif mt-2">Pune (HQ)</div>
+              <div className="font-bold text-white text-sm font-sans mt-2">Pune (HQ)</div>
               <p className="text-slate-400 text-[11px] mt-1">
                 Bavdhan & Central Corporate Hub, Pune, Maharashtra - 411021
               </p>
@@ -38,11 +38,11 @@ export function Footer() {
             </div>
 
             {/* Nashik Branch */}
-            <div className="p-4 rounded-2xl bg-slate-950/80 border border-slate-800">
+            <div className="p-4 rounded-2xl bg-slate-900/90 border border-slate-800 shadow-sm">
               <span className="px-2 py-0.5 rounded text-[10px] font-extrabold bg-cyan-700 text-white">
                 BRANCH
               </span>
-              <div className="font-bold text-white text-sm font-serif mt-2">Nashik</div>
+              <div className="font-bold text-white text-sm font-sans mt-2">Nashik</div>
               <p className="text-slate-400 text-[11px] mt-1">
                 College Road Commercial Area, Nashik, Maharashtra - 422005
               </p>
@@ -50,11 +50,11 @@ export function Footer() {
             </div>
 
             {/* Satara Branch */}
-            <div className="p-4 rounded-2xl bg-slate-950/80 border border-slate-800">
+            <div className="p-4 rounded-2xl bg-slate-900/90 border border-slate-800 shadow-sm">
               <span className="px-2 py-0.5 rounded text-[10px] font-extrabold bg-cyan-700 text-white">
                 BRANCH
               </span>
-              <div className="font-bold text-white text-sm font-serif mt-2">Satara</div>
+              <div className="font-bold text-white text-sm font-sans mt-2">Satara</div>
               <p className="text-slate-400 text-[11px] mt-1">
                 Powai Naka Business Complex, Satara, Maharashtra - 415001
               </p>
@@ -62,11 +62,11 @@ export function Footer() {
             </div>
 
             {/* Mumbai Planned */}
-            <div className="p-4 rounded-2xl bg-slate-950/80 border border-slate-800/80">
+            <div className="p-4 rounded-2xl bg-slate-900/90 border border-slate-800/80 shadow-sm">
               <span className="px-2 py-0.5 rounded text-[10px] font-extrabold bg-amber-600 text-white">
                 PLANNED
               </span>
-              <div className="font-bold text-white text-sm font-serif mt-2">Mumbai</div>
+              <div className="font-bold text-white text-sm font-sans mt-2">Mumbai</div>
               <p className="text-slate-400 text-[11px] mt-1">
                 BKC & Western Suburbs Corporate Syndication Desk
               </p>
@@ -74,11 +74,11 @@ export function Footer() {
             </div>
 
             {/* Kolhapur Planned */}
-            <div className="p-4 rounded-2xl bg-slate-950/80 border border-slate-800/80">
+            <div className="p-4 rounded-2xl bg-slate-900/90 border border-slate-800/80 shadow-sm">
               <span className="px-2 py-0.5 rounded text-[10px] font-extrabold bg-amber-600 text-white">
                 PLANNED
               </span>
-              <div className="font-bold text-white text-sm font-serif mt-2">Kolhapur</div>
+              <div className="font-bold text-white text-sm font-sans mt-2">Kolhapur</div>
               <p className="text-slate-400 text-[11px] mt-1">
                 Regional Commercial & Agriculture Lending Hub
               </p>
@@ -93,7 +93,9 @@ export function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-10">
           {/* Brand Col */}
           <div className="lg:col-span-2 space-y-4">
-            <MoneyShelterLogo variant="light" size="lg" />
+            <div className="p-3 bg-white inline-block rounded-2xl shadow-md border border-slate-200">
+              <MoneyShelterLogo variant="dark" size="lg" />
+            </div>
             <p className="text-slate-400 text-xs sm:text-sm leading-relaxed max-w-sm mt-3">
               Money Shelter Pvt. Ltd. connects borrowers, businesses, and builders with premier banks and NBFCs across Maharashtra. Where Money Meets Trust since 2014.
             </p>
@@ -105,7 +107,7 @@ export function Footer() {
 
           {/* Quick Links */}
           <div>
-            <h4 className="text-white font-bold text-sm font-serif uppercase tracking-wider mb-4">
+            <h4 className="text-white font-bold text-sm uppercase tracking-wider mb-4">
               Financing Solutions
             </h4>
             <ul className="space-y-2.5">
@@ -121,7 +123,7 @@ export function Footer() {
 
           {/* Company & Model */}
           <div>
-            <h4 className="text-white font-bold text-sm font-serif uppercase tracking-wider mb-4">
+            <h4 className="text-white font-bold text-sm uppercase tracking-wider mb-4">
               Company
             </h4>
             <ul className="space-y-2.5">
@@ -136,14 +138,14 @@ export function Footer() {
 
           {/* Partner & Portal */}
           <div>
-            <h4 className="text-white font-bold text-sm font-serif uppercase tracking-wider mb-4">
+            <h4 className="text-white font-bold text-sm uppercase tracking-wider mb-4">
               Portal Access
             </h4>
             <ul className="space-y-2.5">
               <li>
-                <Link href="/login" className="hover:text-cyan-400 transition-colors flex items-center gap-1.5">
+                <Link href="/login" className="hover:text-cyan-400 transition-colors flex items-center gap-1.5 font-bold text-cyan-300">
                   <span className="w-1.5 h-1.5 rounded-full bg-cyan-400" />
-                  <span>Partner & Staff Login</span>
+                  <span>Money Shelter Portal Login</span>
                 </Link>
               </li>
               <li>
@@ -158,30 +160,25 @@ export function Footer() {
                 </a>
               </li>
               <li>
-                <a href="tel:+912040001100" className="hover:text-cyan-400 transition-colors">
-                  Support: +91 20 4000 1100
-                </a>
+                <Link href="/partner/onboard" className="hover:text-cyan-400 transition-colors">
+                  DSA Sub-Agent Registration
+                </Link>
               </li>
             </ul>
           </div>
         </div>
 
-        {/* Bottom Disclaimers */}
-        <div className="mt-14 pt-8 border-t border-slate-800 text-[11px] text-slate-500 leading-relaxed">
-          <p>
-            <strong>Disclaimer:</strong> Money Shelter Pvt. Ltd. acts as an authorized marketing, distribution, and corporate financial syndication partner connecting loan applicants and project developers with RBI-regulated banks, HFCs, and NBFCs. Credit approval, sanction terms, interest rates, and loan disbursal are at the sole discretion of the respective lending institutions. We strictly adhere to standard DSA codes of conduct and do not charge upfront borrower processing fees on behalf of banks.
-          </p>
-          <div className="mt-4 flex flex-col sm:flex-row justify-between items-center gap-2 text-slate-400">
-            <div>
-              © 2014–2026 Money Shelter Pvt. Ltd. All rights reserved. Where Money Meets Trust.
-            </div>
-            <div className="flex items-center gap-4">
-              <span>Privacy Policy</span>
-              <span>•</span>
-              <span>Terms of Service</span>
-              <span>•</span>
-              <span>DSA Ethics</span>
-            </div>
+        {/* Bottom Bar */}
+        <div className="mt-12 pt-8 border-t border-slate-800 flex flex-col sm:flex-row justify-between items-center gap-4 text-slate-500">
+          <div>
+            &copy; 2014&ndash;2026 Money Shelter Pvt. Ltd. All rights reserved. Where Money Meets Trust.
+          </div>
+          <div className="flex items-center gap-6 text-[11px]">
+            <span>Privacy Policy</span>
+            <span>&bull;</span>
+            <span>Terms of Service</span>
+            <span>&bull;</span>
+            <span>Fair Practices Code</span>
           </div>
         </div>
       </div>
