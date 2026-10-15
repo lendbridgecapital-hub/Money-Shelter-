@@ -1,0 +1,966 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Quickfinsure - Corporate Profile | Finance Simplified</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              navy: '#273C4F',
+              slate: '#1E2D3B',
+              dark: '#0E1726',
+              green: '#00D04B',
+              greenDark: '#05A83D',
+              lightGreen: '#E6FAF0',
+              gray: '#F8FAFC',
+              border: '#E2E8F0'
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      scroll-behavior: smooth;
+    }
+    .gradient-hero {
+      background: linear-gradient(135deg, #1E2D3B 0%, #273C4F 60%, #17382F 100%);
+    }
+    .badge-glow {
+      box-shadow: 0 0 15px rgba(0, 208, 75, 0.35);
+    }
+    @media print {
+      .no-print { display: none !important; }
+      body { background: white !important; color: black !important; }
+      .page-break { page-break-after: always; }
+      .shadow-xl, .shadow-2xl, .shadow-md { box-shadow: none !important; }
+    }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-800 antialiased selection:bg-brand-green selection:text-white">
+
+  <!-- TOP BRAND NOTIFICATION BAR -->
+  <div class="bg-brand-dark text-slate-300 py-2.5 px-4 text-xs font-medium border-b border-slate-700/60 no-print">
+    <div class="max-w-7xl mx-auto flex flex-wrap justify-between items-center gap-2">
+      <div class="flex items-center gap-2">
+        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-500/20 text-brand-green border border-emerald-500/30">
+          Corporate Announcement
+        </span>
+        <span>A Sister Company of <strong>Quickinsure</strong> (Since 2016 | ₹400 Cr+ Insurtech Leader | 50,000+ Active Agents)</span>
+      </div>
+      <div class="flex items-center gap-4 text-slate-400">
+        <span>📍 Headquarters: Pune, Maharashtra</span>
+        <button onclick="window.print()" class="text-brand-green hover:underline flex items-center gap-1 font-semibold">
+          🖨️ Print / Save as PDF
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- NAVIGATION HEADER -->
+  <header class="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-slate-200 no-print">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5 flex justify-between items-center">
+      <div class="flex items-center gap-4">
+        <!-- Logo -->
+        <img src="quickfinsure_logo.png" alt="Quickfinsure Logo" class="h-10 sm:h-12 object-contain" />
+        <div class="hidden sm:block border-l border-slate-300 pl-3">
+          <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Direct Selling Agent</p>
+          <p class="text-xs font-bold text-brand-navy">National Loan Distribution</p>
+        </div>
+      </div>
+
+      <nav class="hidden md:flex items-center gap-6 text-sm font-semibold text-slate-600">
+        <a href="#overview" class="hover:text-brand-green transition-colors">Overview</a>
+        <a href="#heritage" class="hover:text-brand-green transition-colors">Heritage</a>
+        <a href="#benchmark" class="hover:text-brand-green transition-colors">Benchmarking</a>
+        <a href="#advisor-advantage" class="hover:text-brand-green transition-colors">50,000+ Advisors</a>
+        <a href="#products" class="hover:text-brand-green transition-colors">Loan Products</a>
+        <a href="#technology" class="hover:text-brand-green transition-colors">Technology</a>
+        <a href="#partners" class="hover:text-brand-green transition-colors">Lending Partners</a>
+      </nav>
+
+      <div class="flex items-center gap-3">
+        <a href="#contact" class="px-4 py-2 text-xs sm:text-sm font-bold rounded-xl bg-brand-green hover:bg-brand-greenDark text-white shadow-md shadow-emerald-500/20 transition-all">
+          Partner With Us
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <!-- HERO SECTION -->
+  <section class="gradient-hero text-white pt-16 pb-20 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
+    <div class="absolute -right-20 -top-20 w-96 h-96 bg-brand-green/10 rounded-full blur-3xl pointer-events-none"></div>
+    <div class="absolute left-1/3 bottom-0 w-80 h-80 bg-blue-500/10 rounded-full blur-3xl pointer-events-none"></div>
+
+    <div class="max-w-7xl mx-auto relative z-10">
+      <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/10 backdrop-blur border border-white/20 text-xs font-semibold text-brand-green mb-6">
+        <span class="w-2 h-2 rounded-full bg-brand-green animate-pulse"></span>
+        Established Sept. 2026 | Next-Gen Phygital Loan Distribution
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+        <div class="lg:col-span-7">
+          <h1 class="text-3xl sm:text-5xl font-extrabold tracking-tight leading-tight text-white mb-4">
+            Transforming Loan Distribution with India’s <span class="text-brand-green">50,000+ Advisor Powerhouse</span>
+          </h1>
+          <p class="text-base sm:text-lg text-slate-300 leading-relaxed mb-8">
+            <strong>Quickfinsure</strong> is a high-impact Direct Selling Agent (DSA) firm backed by the trusted 10-year pedigree of <strong>Quickinsure</strong> (₹400 Cr+ turnover). We combine deep customer trust, cutting-edge lending technology, and a ready 50,000+ advisor force to deliver seamless credit across India.
+          </p>
+
+          <div class="flex flex-wrap gap-4 items-center">
+            <a href="#benchmark" class="px-6 py-3.5 rounded-xl bg-brand-green text-white font-bold text-sm hover:bg-brand-greenDark transition-all shadow-lg shadow-emerald-500/30 flex items-center gap-2">
+              View Market Benchmarking &rarr;
+            </a>
+            <a href="#products" class="px-6 py-3.5 rounded-xl bg-white/10 border border-white/20 text-white font-bold text-sm hover:bg-white/20 transition-all">
+              Explore Loan Basket
+            </a>
+          </div>
+        </div>
+
+        <div class="lg:col-span-5">
+          <!-- KPI Highlights Glass Card -->
+          <div class="bg-white/10 backdrop-blur-xl border border-white/20 rounded-3xl p-6 sm:p-8 shadow-2xl">
+            <div class="flex items-center justify-between border-b border-white/15 pb-4 mb-6">
+              <div>
+                <span class="text-xs uppercase tracking-wider text-slate-300 font-bold">Group Pedigree</span>
+                <h4 class="text-xl font-bold text-white">Quickfinsure at a Glance</h4>
+              </div>
+              <span class="px-2.5 py-1 rounded-lg bg-emerald-500/20 text-brand-green border border-emerald-500/30 text-xs font-bold">
+                Tier-1 Scale
+              </span>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+              <div class="bg-slate-900/40 p-4 rounded-2xl border border-white/10">
+                <p class="text-2xl sm:text-3xl font-extrabold text-brand-green">50,000+</p>
+                <p class="text-xs text-slate-300 font-medium mt-1">Pre-Active Advisors Ready for Loan Sourcing</p>
+              </div>
+
+              <div class="bg-slate-900/40 p-4 rounded-2xl border border-white/10">
+                <p class="text-2xl sm:text-3xl font-extrabold text-white">₹400 Cr+</p>
+                <p class="text-xs text-slate-300 font-medium mt-1">Quickinsure Annual Turnover Base</p>
+              </div>
+
+              <div class="bg-slate-900/40 p-4 rounded-2xl border border-white/10">
+                <p class="text-2xl sm:text-3xl font-extrabold text-white">75+</p>
+                <p class="text-xs text-slate-300 font-medium mt-1">Bank, NBFC & HFC Lending Alliances</p>
+              </div>
+
+              <div class="bg-slate-900/40 p-4 rounded-2xl border border-white/10">
+                <p class="text-2xl sm:text-3xl font-extrabold text-brand-green">1,000+</p>
+                <p class="text-xs text-slate-300 font-medium mt-1">Cities & Towns Pan-India Footprint</p>
+              </div>
+            </div>
+
+            <div class="mt-6 pt-4 border-t border-white/15 flex items-center justify-between text-xs text-slate-300">
+              <span>⚡ Fast 24-48 Hour In-Principle Sanctions</span>
+              <span class="text-brand-green font-bold">● 100% Digital Pipeline</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SECTION 1: CORPORATE OVERVIEW & HERITAGE -->
+  <section id="overview" class="py-16 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+    <div class="text-center max-w-3xl mx-auto mb-12">
+      <span class="text-xs font-bold uppercase tracking-wider text-brand-green">Corporate Architecture</span>
+      <h2 class="text-3xl font-bold text-brand-navy mt-1">Backed by 10 Years of Institutional Excellence</h2>
+      <p class="text-slate-600 mt-2 text-sm sm:text-base">
+        Quickfinsure bridges credit borrowers and India's leading banks by unleashing the untapped potential of insurance distribution channels.
+      </p>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-8 items-stretch">
+      <!-- Quickinsure Card -->
+      <div class="bg-white rounded-3xl p-8 border border-slate-200 shadow-lg relative overflow-hidden flex flex-col justify-between">
+        <div class="absolute top-0 right-0 bg-slate-100 text-slate-600 text-xs font-bold px-4 py-1.5 rounded-bl-2xl">
+          Founding Heritage (Est. 2016)
+        </div>
+        <div>
+          <div class="flex items-center gap-3 mb-6">
+            <div class="h-12 w-12 rounded-2xl bg-blue-50 flex items-center justify-center text-blue-600 font-black text-xl">
+              🛡️
+            </div>
+            <div>
+              <h3 class="text-xl font-bold text-brand-navy">Quickinsure</h3>
+              <p class="text-xs text-slate-500 font-semibold">Quickinsure Insurance Brokers Pvt. Ltd.</p>
+            </div>
+          </div>
+
+          <p class="text-sm text-slate-600 leading-relaxed mb-6">
+            Founded in 2016 and headquartered in Pune, Quickinsure has emerged as one of India's preeminent IRDAI-licensed insurance brokerages. Operating India’s premier insurtech portal, Quickinsure commands an annual turnover of <strong>₹400+ Crores</strong> with a battle-tested network of <strong>50,000+ active POSP agents</strong> serving 2.5 million+ policyholders.
+          </p>
+
+          <ul class="space-y-2.5 text-xs text-slate-700 font-medium">
+            <li class="flex items-center gap-2">
+              <span class="text-brand-green font-bold text-base">✓</span> 10+ Years of regulated compliance & governance
+            </li>
+            <li class="flex items-center gap-2">
+              <span class="text-brand-green font-bold text-base">✓</span> Partnerships with 35+ top General & Life insurers
+            </li>
+            <li class="flex items-center gap-2">
+              <span class="text-brand-green font-bold text-base">✓</span> Unbroken track record of customer retention and renewals
+            </li>
+          </ul>
+        </div>
+
+        <div class="mt-8 pt-4 border-t border-slate-100 flex items-center justify-between text-xs font-bold text-slate-500">
+          <span>Turnover: ₹400 Cr+</span>
+          <span class="text-blue-600">Insurance Simplified</span>
+        </div>
+      </div>
+
+      <!-- Quickfinsure Card -->
+      <div class="bg-gradient-to-br from-brand-slate to-brand-navy text-white rounded-3xl p-8 border border-slate-700 shadow-xl relative overflow-hidden flex flex-col justify-between">
+        <div class="absolute top-0 right-0 bg-brand-green text-brand-dark text-xs font-extrabold px-4 py-1.5 rounded-bl-2xl">
+          Launched Sept. 2026
+        </div>
+        <div>
+          <div class="flex items-center gap-3 mb-6">
+            <div class="h-12 w-12 rounded-2xl bg-brand-green/20 border border-brand-green/40 flex items-center justify-center text-brand-green font-black text-xl">
+              ⚡
+            </div>
+            <div>
+              <h3 class="text-xl font-bold text-white">Quickfinsure</h3>
+              <p class="text-xs text-brand-green font-semibold">Quickfinsure Private Limited</p>
+            </div>
+          </div>
+
+          <p class="text-sm text-slate-300 leading-relaxed mb-6">
+            The dedicated credit and loan distribution entity established to capitalize on the massive cross-selling synergy between insurance protection and credit origination. Quickfinsure activates the <strong>50,000+ insurance advisors</strong> with digital lending rails, multi-bank tie-ups, and automated loan fulfillment.
+          </p>
+
+          <ul class="space-y-2.5 text-xs text-slate-200 font-medium">
+            <li class="flex items-center gap-2">
+              <span class="text-brand-green font-bold text-base">✓</span> Ready-to-deploy nationwide sales force on Day 1
+            </li>
+            <li class="flex items-center gap-2">
+              <span class="text-brand-green font-bold text-base">✓</span> White-label digital platform with paperless customer link generation
+            </li>
+            <li class="flex items-center gap-2">
+              <span class="text-brand-green font-bold text-base">✓</span> Targeting ₹5,000 Crores in loan disbursals by 2029
+            </li>
+          </ul>
+        </div>
+
+        <div class="mt-8 pt-4 border-t border-slate-700/80 flex items-center justify-between text-xs font-bold text-slate-300">
+          <span>Target: ₹5,000 Cr Disbursal</span>
+          <span class="text-brand-green">Finance Simplified</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SECTION 2: INDUSTRY BENCHMARKING (ANDROMEDA & APNARUPEE) -->
+  <section id="benchmark" class="py-16 bg-slate-100 border-y border-slate-200">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="text-center max-w-3xl mx-auto mb-12">
+        <span class="text-xs font-bold uppercase tracking-wider text-brand-green">Strategic Market Positioning</span>
+        <h2 class="text-3xl font-bold text-brand-navy mt-1">Benchmarked Against India’s DSA Leaders</h2>
+        <p class="text-slate-600 mt-2 text-sm sm:text-base">
+          How Quickfinsure compares against established loan distribution giants like <strong>Andromeda Loans</strong> and <strong>ApnaRupee Fin India</strong>.
+        </p>
+      </div>
+
+      <!-- Comparative Table -->
+      <div class="bg-white rounded-3xl shadow-lg border border-slate-200 overflow-hidden">
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-sm text-slate-600">
+            <thead class="bg-brand-navy text-white text-xs uppercase tracking-wider font-semibold">
+              <tr>
+                <th scope="col" class="py-4 px-6">Strategic Metrics</th>
+                <th scope="col" class="py-4 px-6 text-slate-300">Andromeda Loans</th>
+                <th scope="col" class="py-4 px-6 text-slate-300">ApnaRupee Fin India</th>
+                <th scope="col" class="py-4 px-6 text-brand-green bg-slate-900/50">Quickfinsure (Our Edge)</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100">
+              <tr class="hover:bg-slate-50 transition-colors">
+                <td class="py-4 px-6 font-bold text-slate-800">Establishment & Background</td>
+                <td class="py-4 px-6">Founded 1991 (~35 yrs)<br/><span class="text-xs text-slate-400">Pioneer DSA model</span></td>
+                <td class="py-4 px-6">Founded 2009 (~17 yrs)<br/><span class="text-xs text-slate-400">Regional DSA aggregator</span></td>
+                <td class="py-4 px-6 bg-emerald-50/40 font-bold text-brand-navy">
+                  Sept. 2026<br/>
+                  <span class="text-xs text-emerald-700 font-semibold">Backed by 2016 Quickinsure Pedigree (10+ Yrs)</span>
+                </td>
+              </tr>
+              <tr class="hover:bg-slate-50 transition-colors">
+                <td class="py-4 px-6 font-bold text-slate-800">Active Partner / Advisor Network</td>
+                <td class="py-4 px-6">~25,000+ Partners<br/><span class="text-xs text-slate-400">Built incrementally over 30+ yrs</span></td>
+                <td class="py-4 px-6">Regional Partner Network<br/><span class="text-xs text-slate-400">Sub-DSA referral base</span></td>
+                <td class="py-4 px-6 bg-emerald-50/40 font-extrabold text-brand-green">
+                  50,000+ Active Advisors on Day 1<br/>
+                  <span class="text-xs text-slate-600 font-normal">Immediate pan-India cross-sell capability</span>
+                </td>
+              </tr>
+              <tr class="hover:bg-slate-50 transition-colors">
+                <td class="py-4 px-6 font-bold text-slate-800">Client Sourcing Moat</td>
+                <td class="py-4 px-6">Cold outbound, real estate channels, walk-ins</td>
+                <td class="py-4 px-6">Branch relationships & sub-agents</td>
+                <td class="py-4 px-6 bg-emerald-50/40 font-bold text-brand-navy">
+                  High-Trust Insurance Client Base<br/>
+                  <span class="text-xs text-slate-600 font-normal">Direct access to 2.5M+ pre-insured customers</span>
+                </td>
+              </tr>
+              <tr class="hover:bg-slate-50 transition-colors">
+                <td class="py-4 px-6 font-bold text-slate-800">Technology & Digital Rails</td>
+                <td class="py-4 px-6">OneAndro App & Partner Dashboard</td>
+                <td class="py-4 px-6">Web Portal & Calculators</td>
+                <td class="py-4 px-6 bg-emerald-50/40 font-bold text-brand-navy">
+                  Proprietary Phygital Lending Stack<br/>
+                  <span class="text-xs text-slate-600 font-normal">Paperless link generator, Account Aggregator, Instant Payouts</span>
+                </td>
+              </tr>
+              <tr class="hover:bg-slate-50 transition-colors">
+                <td class="py-4 px-6 font-bold text-slate-800">Turnaround Time (TAT)</td>
+                <td class="py-4 px-6">3 to 7 Days (Lender standard)</td>
+                <td class="py-4 px-6">3 to 6 Days</td>
+                <td class="py-4 px-6 bg-emerald-50/40 font-bold text-emerald-600">
+                  24 to 48 Hours<br/>
+                  <span class="text-xs text-slate-600 font-normal">Pre-scrutinized dossiers cut rejection rates by 40%</span>
+                </td>
+              </tr>
+              <tr class="hover:bg-slate-50 transition-colors">
+                <td class="py-4 px-6 font-bold text-slate-800">Advisor Earnings Potential</td>
+                <td class="py-4 px-6">Loan payout commission only</td>
+                <td class="py-4 px-6">Credit payout commission only</td>
+                <td class="py-4 px-6 bg-emerald-50/40 font-bold text-brand-green">
+                  Dual-Engine Compounding Revenue<br/>
+                  <span class="text-xs text-slate-600 font-normal">Earn on General/Life Insurance + Loans on same client</span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Key Takeaways -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8">
+        <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+          <span class="text-2xl">⚡</span>
+          <h4 class="font-bold text-brand-navy mt-2 mb-1">Instant Day-1 Scale</h4>
+          <p class="text-xs text-slate-600 leading-relaxed">
+            While Andromeda spent 30+ years cultivating 25,000 agents, Quickfinsure launches with 50,000+ active advisors nationwide from day one.
+          </p>
+        </div>
+        <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+          <span class="text-2xl">🤝</span>
+          <h4 class="font-bold text-brand-navy mt-2 mb-1">High-Trust Relationship Moat</h4>
+          <p class="text-xs text-slate-600 leading-relaxed">
+            Insurance advisors are trusted family advisers. Selling a home or business loan to an existing insurance client converts at 3x the industry average.
+          </p>
+        </div>
+        <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+          <span class="text-2xl">📱</span>
+          <h4 class="font-bold text-brand-navy mt-2 mb-1">Insurtech-Grade Technology</h4>
+          <p class="text-xs text-slate-600 leading-relaxed">
+            Quickfinsure inherits Quickinsure's proven digital infrastructure: frictionless mobile onboarding, automated credit checks, and real-time commission disbursements.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SECTION 3: THE 50,000+ ADVISOR ARMY & CROSS-SELL MATRIX -->
+  <section id="advisor-advantage" class="py-16 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+    <div class="text-center max-w-3xl mx-auto mb-12">
+      <span class="text-xs font-bold uppercase tracking-wider text-brand-green">The Distribution Engine</span>
+      <h2 class="text-3xl font-bold text-brand-navy mt-1">The 50,000+ Advisor Army Advantage</h2>
+      <p class="text-slate-600 mt-2 text-sm sm:text-base">
+        Every insurance transaction naturally reveals an urgent, qualified credit requirement. Our advisors turn everyday protection conversations into lucrative loan disbursements.
+      </p>
+    </div>
+
+    <!-- Cross Sell Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <!-- Item 1 -->
+      <div class="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm hover:shadow-md transition-all group">
+        <div class="w-12 h-12 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center font-bold text-xl mb-4 group-hover:scale-110 transition-transform">
+          🚗
+        </div>
+        <span class="text-[11px] font-bold uppercase tracking-wider text-blue-600 bg-blue-50 px-2 py-0.5 rounded">Motor Insurance Trigger</span>
+        <h4 class="font-bold text-slate-800 text-base mt-2 mb-2">New & Used Car Loans</h4>
+        <p class="text-xs text-slate-500 leading-relaxed">
+          When advisors renew vehicle insurance, they identify clients upgrading their car or seeking liquidity via used-car refinancing.
+        </p>
+        <div class="mt-4 pt-3 border-t border-slate-100 text-xs font-semibold text-brand-navy flex justify-between">
+          <span>Ticket: ₹3L - ₹50L</span>
+          <span class="text-brand-green">Instant Lead</span>
+        </div>
+      </div>
+
+      <!-- Item 2 -->
+      <div class="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm hover:shadow-md transition-all group">
+        <div class="w-12 h-12 rounded-xl bg-emerald-50 text-brand-green flex items-center justify-center font-bold text-xl mb-4 group-hover:scale-110 transition-transform">
+          🏢
+        </div>
+        <span class="text-[11px] font-bold uppercase tracking-wider text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded">Property Insurance Trigger</span>
+        <h4 class="font-bold text-slate-800 text-base mt-2 mb-2">Home Loan & LAP</h4>
+        <p class="text-xs text-slate-500 leading-relaxed">
+          Home and shop fire insurance clients possess prime real estate collateral, ideal for Home Loan Balance Transfers, Top-ups, or LAP.
+        </p>
+        <div class="mt-4 pt-3 border-t border-slate-100 text-xs font-semibold text-brand-navy flex justify-between">
+          <span>Ticket: ₹20L - ₹15Cr</span>
+          <span class="text-brand-green">High Conversion</span>
+        </div>
+      </div>
+
+      <!-- Item 3 -->
+      <div class="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm hover:shadow-md transition-all group">
+        <div class="w-12 h-12 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center font-bold text-xl mb-4 group-hover:scale-110 transition-transform">
+          🏭
+        </div>
+        <span class="text-[11px] font-bold uppercase tracking-wider text-purple-600 bg-purple-50 px-2 py-0.5 rounded">Commercial Insurance Trigger</span>
+        <h4 class="font-bold text-slate-800 text-base mt-2 mb-2">MSME & Working Capital</h4>
+        <p class="text-xs text-slate-500 leading-relaxed">
+          Factory, marine, and workmen compensation clients are active business owners constantly requiring unsecured business loans, CC/OD limits, and machinery finance.
+        </p>
+        <div class="mt-4 pt-3 border-t border-slate-100 text-xs font-semibold text-brand-navy flex justify-between">
+          <span>Ticket: ₹10L - ₹25Cr</span>
+          <span class="text-brand-green">Recurring Volume</span>
+        </div>
+      </div>
+
+      <!-- Item 4 -->
+      <div class="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm hover:shadow-md transition-all group">
+        <div class="w-12 h-12 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center font-bold text-xl mb-4 group-hover:scale-110 transition-transform">
+          ❤️
+        </div>
+        <span class="text-[11px] font-bold uppercase tracking-wider text-amber-600 bg-amber-50 px-2 py-0.5 rounded">Health & Life Trigger</span>
+        <h4 class="font-bold text-slate-800 text-base mt-2 mb-2">Personal & Education Loans</h4>
+        <p class="text-xs text-slate-500 leading-relaxed">
+          Family health and term insurance clients regularly fund major life events—weddings, domestic or foreign master’s degrees, and debt consolidation.
+        </p>
+        <div class="mt-4 pt-3 border-t border-slate-100 text-xs font-semibold text-brand-navy flex justify-between">
+          <span>Ticket: ₹1L - ₹40L</span>
+          <span class="text-brand-green">Speed Sanction</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SECTION 4: PRODUCT BASKET -->
+  <section id="products" class="py-16 bg-slate-900 text-white">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="text-center max-w-3xl mx-auto mb-12">
+        <span class="text-xs font-bold uppercase tracking-wider text-brand-green">Full-Spectrum Credit Portfolio</span>
+        <h2 class="text-3xl font-bold text-white mt-1">Comprehensive Loan Products Basket</h2>
+        <p class="text-slate-400 mt-2 text-sm sm:text-base">
+          From micro personal lines to ₹100 Crore corporate debt structuring, Quickfinsure satisfies every retail and commercial financing need.
+        </p>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <!-- Retail Credit -->
+        <div class="bg-slate-800/80 rounded-3xl p-6 border border-slate-700 hover:border-brand-green/60 transition-all flex flex-col justify-between">
+          <div>
+            <div class="flex items-center gap-3 mb-4">
+              <span class="p-3 bg-brand-green/10 text-brand-green rounded-xl text-xl font-bold">🏠</span>
+              <h3 class="text-xl font-bold text-white">Retail Secured & Unsecured</h3>
+            </div>
+            <p class="text-xs text-slate-400 mb-6">Designed for salaried and self-employed individuals with quick turnaround and competitive interest rates.</p>
+
+            <ul class="space-y-3 text-xs text-slate-300">
+              <li class="flex items-start gap-2">
+                <span class="text-brand-green font-bold">✓</span>
+                <div><strong>Home Loans:</strong> Purchase, Construction, Plot + Home, Balance Transfer & Top-up (up to 30 yrs).</div>
+              </li>
+              <li class="flex items-start gap-2">
+                <span class="text-brand-green font-bold">✓</span>
+                <div><strong>Loan Against Property (LAP):</strong> Commercial, Residential & Industrial collateral monetization.</div>
+              </li>
+              <li class="flex items-start gap-2">
+                <span class="text-brand-green font-bold">✓</span>
+                <div><strong>Personal Loans:</strong> Instant approval unsecured cash loans for salaried & self-employed (₹50k - ₹40L).</div>
+              </li>
+              <li class="flex items-start gap-2">
+                <span class="text-brand-green font-bold">✓</span>
+                <div><strong>Auto Loans:</strong> New car, pre-owned car purchase, two-wheeler finance & car refinance.</div>
+              </li>
+              <li class="flex items-start gap-2">
+                <span class="text-brand-green font-bold">✓</span>
+                <div><strong>Education Loans:</strong> Domestic and overseas education with minimal collateral requirements.</div>
+              </li>
+            </ul>
+          </div>
+          <div class="mt-6 pt-4 border-t border-slate-700 text-xs text-brand-green font-bold">
+            Average Disbursal TAT: 24 - 48 Hours
+          </div>
+        </div>
+
+        <!-- MSME & Business Loans -->
+        <div class="bg-slate-800/80 rounded-3xl p-6 border border-slate-700 hover:border-brand-green/60 transition-all flex flex-col justify-between">
+          <div>
+            <div class="flex items-center gap-3 mb-4">
+              <span class="p-3 bg-blue-500/10 text-blue-400 rounded-xl text-xl font-bold">💼</span>
+              <h3 class="text-xl font-bold text-white">SME & Business Credit</h3>
+            </div>
+            <p class="text-xs text-slate-400 mb-6">Empowering Indian MSMEs, retailers, and entrepreneurs with flexible liquidity and growth capital.</p>
+
+            <ul class="space-y-3 text-xs text-slate-300">
+              <li class="flex items-start gap-2">
+                <span class="text-blue-400 font-bold">✓</span>
+                <div><strong>Unsecured Business Loans:</strong> Collateral-free funding based on banking turnover & GST (₹3L - ₹1Cr).</div>
+              </li>
+              <li class="flex items-start gap-2">
+                <span class="text-blue-400 font-bold">✓</span>
+                <div><strong>Working Capital (CC / OD):</strong> Flexible cash credit and overdraft facilities linked to stock/debtors.</div>
+              </li>
+              <li class="flex items-start gap-2">
+                <span class="text-blue-400 font-bold">✓</span>
+                <div><strong>Machinery & Equipment Finance:</strong> Term loans for acquiring industrial, medical, and printing equipment.</div>
+              </li>
+              <li class="flex items-start gap-2">
+                <span class="text-blue-400 font-bold">✓</span>
+                <div><strong>Dropline Overdraft (DOD):</strong> Repayment flexibility that reduces interest costs as limits taper down.</div>
+              </li>
+              <li class="flex items-start gap-2">
+                <span class="text-blue-400 font-bold">✓</span>
+                <div><strong>Commercial Vehicle Loans:</strong> Trucks, buses, transit vehicles, and construction machinery.</div>
+              </li>
+            </ul>
+          </div>
+          <div class="mt-6 pt-4 border-t border-slate-700 text-xs text-blue-400 font-bold">
+            Tailored MSME Scoring Models
+          </div>
+        </div>
+
+        <!-- Corporate & Structured Finance -->
+        <div class="bg-slate-800/80 rounded-3xl p-6 border border-slate-700 hover:border-brand-green/60 transition-all flex flex-col justify-between">
+          <div>
+            <div class="flex items-center gap-3 mb-4">
+              <span class="p-3 bg-purple-500/10 text-purple-400 rounded-xl text-xl font-bold">🏛️</span>
+              <h3 class="text-xl font-bold text-white">Corporate & Structured Debt</h3>
+            </div>
+            <p class="text-xs text-slate-400 mb-6">High-ticket financial engineering for real estate developers, enterprise corporations, and landlords.</p>
+
+            <ul class="space-y-3 text-xs text-slate-300">
+              <li class="flex items-start gap-2">
+                <span class="text-purple-400 font-bold">✓</span>
+                <div><strong>Lease Rental Discounting (LRD):</strong> Term loans against guaranteed long-term corporate leases (₹5Cr - ₹100Cr+).</div>
+              </li>
+              <li class="flex items-start gap-2">
+                <span class="text-purple-400 font-bold">✓</span>
+                <div><strong>Debt Consolidation & Balance Transfer:</strong> Restructuring high-cost loans into prime-rate single facilities.</div>
+              </li>
+              <li class="flex items-start gap-2">
+                <span class="text-purple-400 font-bold">✓</span>
+                <div><strong>Builder & Project Finance:</strong> Construction finance and inventory funding for vetted real estate developers.</div>
+              </li>
+              <li class="flex items-start gap-2">
+                <span class="text-purple-400 font-bold">✓</span>
+                <div><strong>Letter of Credit (LC) & Bank Guarantees (BG):</strong> Non-fund trade finance facilities through partner banks.</div>
+              </li>
+            </ul>
+          </div>
+          <div class="mt-6 pt-4 border-t border-slate-700 text-xs text-purple-400 font-bold">
+            Specialized Corporate Advisory Desk
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SECTION 5: PROPRIETARY PHYGITAL TECHNOLOGY -->
+  <section id="technology" class="py-16 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+    <div class="text-center max-w-3xl mx-auto mb-12">
+      <span class="text-xs font-bold uppercase tracking-wider text-brand-green">Digital Edge</span>
+      <h2 class="text-3xl font-bold text-brand-navy mt-1">Proprietary Phygital Lending Architecture</h2>
+      <p class="text-slate-600 mt-2 text-sm sm:text-base">
+        Eliminating friction with paperless single-use links, automated e-KYC, multi-lender eligibility matrix, and real-time commission disbursements.
+      </p>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-5 gap-8 items-center">
+      <!-- Steps 1 to 5 -->
+      <div class="lg:col-span-3 space-y-4">
+        <!-- Step 1 -->
+        <div class="flex items-start gap-4 p-4 rounded-2xl bg-white border border-slate-200 shadow-sm">
+          <div class="flex-shrink-0 w-10 h-10 rounded-xl bg-brand-navy text-white flex items-center justify-center font-bold text-sm">
+            01
+          </div>
+          <div>
+            <h4 class="font-bold text-brand-navy text-sm">Instant Secure Link Generation</h4>
+            <p class="text-xs text-slate-500 mt-0.5">
+              The branch executive or advisor generates a single-use secure link. Borrower uploads documents from their phone with zero app download or login barriers.
+            </p>
+          </div>
+        </div>
+
+        <!-- Step 2 -->
+        <div class="flex items-start gap-4 p-4 rounded-2xl bg-white border border-slate-200 shadow-sm">
+          <div class="flex-shrink-0 w-10 h-10 rounded-xl bg-brand-navy text-white flex items-center justify-center font-bold text-sm">
+            02
+          </div>
+          <div>
+            <h4 class="font-bold text-brand-navy text-sm">Algorithmic Document OCR & Credit Check</h4>
+            <p class="text-xs text-slate-500 mt-0.5">
+              Instant verification of PAN, Aadhaar, ITRs, and GST returns. Integrated Account Aggregator (AA) parses bank statements and calculates real-time FOIR.
+            </p>
+          </div>
+        </div>
+
+        <!-- Step 3 -->
+        <div class="flex items-start gap-4 p-4 rounded-2xl bg-white border border-slate-200 shadow-sm">
+          <div class="flex-shrink-0 w-10 h-10 rounded-xl bg-brand-navy text-white flex items-center justify-center font-bold text-sm">
+            03
+          </div>
+          <div>
+            <h4 class="font-bold text-brand-navy text-sm">Multi-Lender Policy Matching</h4>
+            <p class="text-xs text-slate-500 mt-0.5">
+              Our rule matrix scans 75+ bank credit policies to route the file directly to the bank with the highest approval probability and lowest rate of interest.
+            </p>
+          </div>
+        </div>
+
+        <!-- Step 4 -->
+        <div class="flex items-start gap-4 p-4 rounded-2xl bg-white border border-slate-200 shadow-sm">
+          <div class="flex-shrink-0 w-10 h-10 rounded-xl bg-brand-navy text-white flex items-center justify-center font-bold text-sm">
+            04
+          </div>
+          <div>
+            <h4 class="font-bold text-brand-navy text-sm">In-Principle Sanction & Dedicated Processing</h4>
+            <p class="text-xs text-slate-500 mt-0.5">
+              Central Processing Unit (CPU) coordinates with bank credit managers for fast-track property valuation, legal search, and final sanction letter issue.
+            </p>
+          </div>
+        </div>
+
+        <!-- Step 5 -->
+        <div class="flex items-start gap-4 p-4 rounded-2xl bg-emerald-50 border border-emerald-200 shadow-sm">
+          <div class="flex-shrink-0 w-10 h-10 rounded-xl bg-brand-green text-white flex items-center justify-center font-bold text-sm">
+            05
+          </div>
+          <div>
+            <h4 class="font-bold text-brand-navy text-sm">Disbursement & Instant Payout Credit</h4>
+            <p class="text-xs text-emerald-800 mt-0.5">
+              Funds disbursed to borrower’s account. Advisor commission ledger is credited transparently in real time with complete invoice generation.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Live Interactive Eligibility Simulator Card -->
+      <div class="lg:col-span-2 bg-gradient-to-br from-brand-navy to-slate-900 text-white rounded-3xl p-6 shadow-xl border border-slate-700">
+        <div class="flex items-center justify-between mb-4 border-b border-slate-700 pb-3">
+          <h4 class="font-bold text-sm text-white flex items-center gap-2">
+            <span>⚡</span> Quickfinsure Calculator
+          </h4>
+          <span class="text-[11px] text-brand-green font-semibold bg-emerald-500/10 px-2 py-0.5 rounded">Live Demo</span>
+        </div>
+
+        <div class="space-y-4 text-xs">
+          <div>
+            <label class="block text-slate-400 font-semibold mb-1">Monthly Income (₹)</label>
+            <input type="number" id="calcIncome" value="75000" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white font-bold focus:border-brand-green outline-none" oninput="calculateEligibility()" />
+          </div>
+
+          <div>
+            <label class="block text-slate-400 font-semibold mb-1">Existing EMIs (₹)</label>
+            <input type="number" id="calcEmi" value="15000" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white font-bold focus:border-brand-green outline-none" oninput="calculateEligibility()" />
+          </div>
+
+          <div>
+            <label class="block text-slate-400 font-semibold mb-1">Select Loan Type</label>
+            <select id="calcType" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white font-bold focus:border-brand-green outline-none" onchange="calculateEligibility()">
+              <option value="home">Home Loan (8.50% / 20 Yrs)</option>
+              <option value="personal">Personal Loan (11.50% / 5 Yrs)</option>
+              <option value="business">Business Loan (14.00% / 3 Yrs)</option>
+              <option value="lap">Loan Against Property (9.75% / 15 Yrs)</option>
+            </select>
+          </div>
+
+          <div class="mt-6 p-4 rounded-2xl bg-slate-800/90 border border-slate-700 text-center">
+            <span class="text-[11px] text-slate-400 font-semibold uppercase tracking-wider">Estimated Loan Eligibility</span>
+            <p id="calcResult" class="text-2xl font-extrabold text-brand-green mt-1">₹42,50,000</p>
+            <span id="calcSub" class="text-[10px] text-slate-400">Approx. EMI Capacity: ₹30,000/mo (50% FOIR)</span>
+          </div>
+
+          <button onclick="alert('Quickfinsure Partner App integrates multi-bank API decisioning in real-time!')" class="w-full py-2.5 rounded-xl bg-brand-green hover:bg-brand-greenDark font-bold text-white text-xs transition-colors">
+            Generate Partner Application Link
+          </button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SECTION 6: LENDING PARTNERS GRID -->
+  <section id="partners" class="py-16 bg-slate-100 border-y border-slate-200">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="text-center max-w-3xl mx-auto mb-12">
+        <span class="text-xs font-bold uppercase tracking-wider text-brand-green">Institutional Network</span>
+        <h2 class="text-3xl font-bold text-brand-navy mt-1">Collaborating with 75+ Leading Financial Institutions</h2>
+        <p class="text-slate-600 mt-2 text-sm sm:text-base">
+          Direct institutional code agreements with top Public Sector Banks, Private Sector Giants, and Premier NBFCs/HFCs across India.
+        </p>
+      </div>
+
+      <!-- Partner Logos / Badges Grid -->
+      <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4 text-center">
+        <!-- Bank 1 -->
+        <div class="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-sm flex flex-col items-center justify-center h-24 hover:border-brand-green transition-all">
+          <span class="font-extrabold text-slate-800 text-sm">HDFC Bank</span>
+          <span class="text-[10px] text-slate-400 mt-1">Private Bank</span>
+        </div>
+        <!-- Bank 2 -->
+        <div class="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-sm flex flex-col items-center justify-center h-24 hover:border-brand-green transition-all">
+          <span class="font-extrabold text-slate-800 text-sm">ICICI Bank</span>
+          <span class="text-[10px] text-slate-400 mt-1">Private Bank</span>
+        </div>
+        <!-- Bank 3 -->
+        <div class="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-sm flex flex-col items-center justify-center h-24 hover:border-brand-green transition-all">
+          <span class="font-extrabold text-slate-800 text-sm">State Bank of India</span>
+          <span class="text-[10px] text-slate-400 mt-1">Public Sector</span>
+        </div>
+        <!-- Bank 4 -->
+        <div class="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-sm flex flex-col items-center justify-center h-24 hover:border-brand-green transition-all">
+          <span class="font-extrabold text-slate-800 text-sm">Axis Bank</span>
+          <span class="text-[10px] text-slate-400 mt-1">Private Bank</span>
+        </div>
+        <!-- Bank 5 -->
+        <div class="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-sm flex flex-col items-center justify-center h-24 hover:border-brand-green transition-all">
+          <span class="font-extrabold text-slate-800 text-sm">Kotak Mahindra</span>
+          <span class="text-[10px] text-slate-400 mt-1">Private Bank</span>
+        </div>
+        <!-- Bank 6 -->
+        <div class="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-sm flex flex-col items-center justify-center h-24 hover:border-brand-green transition-all">
+          <span class="font-extrabold text-slate-800 text-sm">IDFC FIRST Bank</span>
+          <span class="text-[10px] text-slate-400 mt-1">Retail Banking</span>
+        </div>
+        <!-- Bank 7 -->
+        <div class="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-sm flex flex-col items-center justify-center h-24 hover:border-brand-green transition-all">
+          <span class="font-extrabold text-slate-800 text-sm">Bajaj Finserv</span>
+          <span class="text-[10px] text-slate-400 mt-1">Premier NBFC</span>
+        </div>
+        <!-- Bank 8 -->
+        <div class="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-sm flex flex-col items-center justify-center h-24 hover:border-brand-green transition-all">
+          <span class="font-extrabold text-slate-800 text-sm">Tata Capital</span>
+          <span class="text-[10px] text-slate-400 mt-1">Premier NBFC</span>
+        </div>
+        <!-- Bank 9 -->
+        <div class="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-sm flex flex-col items-center justify-center h-24 hover:border-brand-green transition-all">
+          <span class="font-extrabold text-slate-800 text-sm">Bank of Baroda</span>
+          <span class="text-[10px] text-slate-400 mt-1">Public Sector</span>
+        </div>
+        <!-- Bank 10 -->
+        <div class="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-sm flex flex-col items-center justify-center h-24 hover:border-brand-green transition-all">
+          <span class="font-extrabold text-slate-800 text-sm">PNB Housing</span>
+          <span class="text-[10px] text-slate-400 mt-1">Housing Finance</span>
+        </div>
+        <!-- Bank 11 -->
+        <div class="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-sm flex flex-col items-center justify-center h-24 hover:border-brand-green transition-all">
+          <span class="font-extrabold text-slate-800 text-sm">Cholamandalam</span>
+          <span class="text-[10px] text-slate-400 mt-1">Vehicle & LAP</span>
+        </div>
+        <!-- Bank 12 -->
+        <div class="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-sm flex flex-col items-center justify-center h-24 hover:border-brand-green transition-all">
+          <span class="font-extrabold text-slate-800 text-sm">L&T Finance</span>
+          <span class="text-[10px] text-slate-400 mt-1">Diversified NBFC</span>
+        </div>
+      </div>
+
+      <!-- Why Banks Love Quickfinsure -->
+      <div class="mt-12 bg-white rounded-3xl p-8 border border-slate-200 shadow-sm">
+        <h3 class="text-xl font-bold text-brand-navy mb-4 text-center">Value Proposition for Banking & NBFC Partners</h3>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 text-center">
+          <div>
+            <div class="text-brand-green text-3xl font-extrabold mb-1">3x</div>
+            <p class="font-bold text-slate-800 text-xs">Higher Conversion Rates</p>
+            <p class="text-[11px] text-slate-500 mt-1">Dossiers are pre-vetted with CIBIL, FOIR & banking analysis completed before logging.</p>
+          </div>
+          <div>
+            <div class="text-brand-navy text-3xl font-extrabold mb-1">0%</div>
+            <p class="font-bold text-slate-800 text-xs">Fraud Tolerance</p>
+            <p class="text-[11px] text-slate-500 mt-1">Rigorous digital authentication and multi-step verification eliminates falsified records.</p>
+          </div>
+          <div>
+            <div class="text-brand-green text-3xl font-extrabold mb-1">60%</div>
+            <p class="font-bold text-slate-800 text-xs">Lower Customer Acquisition Cost</p>
+            <p class="text-[11px] text-slate-500 mt-1">Banks expand their balance sheet without expanding brick-and-mortar branch overheads.</p>
+          </div>
+          <div>
+            <div class="text-brand-navy text-3xl font-extrabold mb-1">Pan-India</div>
+            <p class="font-bold text-slate-800 text-xs">Deep Tier 2 & Tier 3 Sourcing</p>
+            <p class="text-[11px] text-slate-500 mt-1">50,000+ local advisors generate credit demand across non-metro Indian markets.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SECTION 7: 3-YEAR STRATEGIC ROADMAP -->
+  <section class="py-16 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+    <div class="text-center max-w-3xl mx-auto mb-12">
+      <span class="text-xs font-bold uppercase tracking-wider text-brand-green">Strategic Vision</span>
+      <h2 class="text-3xl font-bold text-brand-navy mt-1">3-Year Growth Roadmap (2026 - 2029)</h2>
+      <p class="text-slate-600 mt-2 text-sm sm:text-base">
+        A structured, milestone-driven expansion plan targeting market leadership in Indian loan distribution.
+      </p>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+      <!-- Year 1 -->
+      <div class="bg-white rounded-3xl p-6 border-2 border-slate-200 relative shadow-sm">
+        <span class="inline-block px-3 py-1 bg-slate-100 text-slate-700 text-xs font-bold rounded-lg mb-3">FY 2026 - 2027</span>
+        <h4 class="text-lg font-bold text-brand-navy mb-2">Activation & Foundation</h4>
+        <div class="text-2xl font-black text-brand-navy mb-4">₹1,000 Cr+ <span class="text-xs font-medium text-slate-500">Disbursals</span></div>
+        <ul class="space-y-2 text-xs text-slate-600">
+          <li class="flex items-center gap-2"><span>●</span> Activate first 20,000 Quickinsure POSP advisors for loans</li>
+          <li class="flex items-center gap-2"><span>●</span> Secure direct national DSA codes with Top 25 Banks</li>
+          <li class="flex items-center gap-2"><span>●</span> Achieve ₹100 Cr monthly loan disbursement run-rate</li>
+          <li class="flex items-center gap-2"><span>●</span> Launch Quickfinsure Mobile Partner App</li>
+        </ul>
+      </div>
+
+      <!-- Year 2 -->
+      <div class="bg-white rounded-3xl p-6 border-2 border-emerald-500/50 relative shadow-md">
+        <div class="absolute -top-3 right-6 bg-brand-green text-white text-[10px] font-extrabold uppercase px-3 py-1 rounded-full shadow">
+          Expansion
+        </div>
+        <span class="inline-block px-3 py-1 bg-emerald-50 text-emerald-700 text-xs font-bold rounded-lg mb-3">FY 2027 - 2028</span>
+        <h4 class="text-lg font-bold text-brand-navy mb-2">Scale & MSME Dominance</h4>
+        <div class="text-2xl font-black text-brand-green mb-4">₹2,800 Cr+ <span class="text-xs font-medium text-slate-500">Disbursals</span></div>
+        <ul class="space-y-2 text-xs text-slate-600">
+          <li class="flex items-center gap-2"><span class="text-brand-green">●</span> Full activation of 50,000+ financial advisors</li>
+          <li class="flex items-center gap-2"><span class="text-brand-green">●</span> Launch specialized MSME Working Capital Desk</li>
+          <li class="flex items-center gap-2"><span class="text-brand-green">●</span> Open regional credit hubs across 10 major metro clusters</li>
+          <li class="flex items-center gap-2"><span class="text-brand-green">●</span> Deep API integration with Account Aggregator network</li>
+        </ul>
+      </div>
+
+      <!-- Year 3 -->
+      <div class="bg-gradient-to-br from-brand-slate to-brand-navy text-white rounded-3xl p-6 border-2 border-slate-700 relative shadow-xl">
+        <span class="inline-block px-3 py-1 bg-white/10 text-brand-green text-xs font-bold rounded-lg mb-3">FY 2028 - 2029</span>
+        <h4 class="text-lg font-bold text-white mb-2">National Market Leadership</h4>
+        <div class="text-2xl font-black text-brand-green mb-4">₹5,000 Cr+ <span class="text-xs font-medium text-slate-400">Annual Run-Rate</span></div>
+        <ul class="space-y-2 text-xs text-slate-300">
+          <li class="flex items-center gap-2"><span class="text-brand-green">●</span> Expand advisor base to 100,000+ certified partners</li>
+          <li class="flex items-center gap-2"><span class="text-brand-green">●</span> Co-lending arrangements with NBFC partners</li>
+          <li class="flex items-center gap-2"><span class="text-brand-green">●</span> Rank among India's Top 3 national loan distribution DSA firms</li>
+          <li class="flex items-center gap-2"><span class="text-brand-green">●</span> End-to-end digital co-sanctioning algorithms</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- SECTION 8: CONTACT & PARTNERSHIP -->
+  <section id="contact" class="py-16 bg-slate-900 text-white">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="bg-gradient-to-r from-brand-slate via-slate-800 to-brand-navy rounded-3xl p-8 sm:p-12 border border-slate-700 shadow-2xl">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+          <div class="lg:col-span-8">
+            <span class="text-xs font-bold uppercase tracking-wider text-brand-green">Get in Touch</span>
+            <h3 class="text-2xl sm:text-4xl font-extrabold text-white mt-1 mb-4">
+              Partner with Quickfinsure Today
+            </h3>
+            <p class="text-slate-300 text-sm sm:text-base leading-relaxed mb-6">
+              Whether you are a <strong>Bank / NBFC Credit Head</strong> looking to expand disbursements or an <strong>Insurance Advisor / DSA Partner</strong> seeking top-tier commission slabs and paperless loan tools, we invite you to join our journey.
+            </p>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+              <div class="bg-slate-800/80 p-4 rounded-xl border border-slate-700">
+                <p class="text-slate-400 font-medium">Headquarters</p>
+                <p class="font-bold text-white mt-1">Pune, Maharashtra, India</p>
+                <p class="text-[11px] text-slate-400 mt-0.5">Corporate & Central Credit Processing Unit</p>
+              </div>
+
+              <div class="bg-slate-800/80 p-4 rounded-xl border border-slate-700">
+                <p class="text-slate-400 font-medium">Banking & Alliances</p>
+                <p class="font-bold text-white mt-1">alliances@quickfinsure.com</p>
+                <p class="text-[11px] text-slate-400 mt-0.5">For Bank / NBFC DSA Code Empanelment</p>
+              </div>
+
+              <div class="bg-slate-800/80 p-4 rounded-xl border border-slate-700">
+                <p class="text-slate-400 font-medium">Partner & Advisor Desk</p>
+                <p class="font-bold text-white mt-1">partners@quickfinsure.com</p>
+                <p class="text-[11px] text-slate-400 mt-0.5">50,000+ POSP Cross-Sell Activation</p>
+              </div>
+
+              <div class="bg-slate-800/80 p-4 rounded-xl border border-slate-700">
+                <p class="text-slate-400 font-medium">Web Portal</p>
+                <p class="font-bold text-brand-green mt-1">www.quickfinsure.com</p>
+                <p class="text-[11px] text-slate-400 mt-0.5">Sister Firm: www.quickinsure.co.in</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="lg:col-span-4 text-center">
+            <div class="bg-white/5 border border-white/10 rounded-2xl p-6 text-center">
+              <img src="quickfinsure_logo.png" alt="Quickfinsure" class="h-12 mx-auto mb-4 object-contain brightness-110" />
+              <p class="text-xs text-slate-300 font-medium mb-4">Ready to experience "Finance Simplified"?</p>
+              <button onclick="window.print()" class="w-full py-3 rounded-xl bg-brand-green hover:bg-brand-greenDark font-bold text-white text-xs shadow-lg shadow-emerald-500/30 transition-all flex items-center justify-center gap-2">
+                🖨️ Download Corporate Profile PDF
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="mt-8 text-center text-xs text-slate-500">
+        © 2026 Quickfinsure Private Limited. All rights reserved. A Sister Company of Quickinsure Insurance Brokers Pvt. Ltd. (Est. 2016).
+      </div>
+    </div>
+  </section>
+
+  <!-- JAVASCRIPT FOR CALCULATOR -->
+  <script>
+    function calculateEligibility() {
+      const income = parseFloat(document.getElementById('calcIncome').value) || 0;
+      const emi = parseFloat(document.getElementById('calcEmi').value) || 0;
+      const type = document.getElementById('calcType').value;
+
+      // Available surplus
+      let foir = 0.50; // default 50%
+      let rate = 8.5;
+      let months = 240;
+
+      if (type === 'home') {
+        foir = 0.55;
+        rate = 8.5;
+        months = 240;
+      } else if (type === 'personal') {
+        foir = 0.45;
+        rate = 11.5;
+        months = 60;
+      } else if (type === 'business') {
+        foir = 0.50;
+        rate = 14.0;
+        months = 36;
+      } else if (type === 'lap') {
+        foir = 0.50;
+        rate = 9.75;
+        months = 180;
+      }
+
+      const maxEmiCapacity = Math.max(0, (income * foir) - emi);
+      const monthlyRate = rate / 12 / 100;
+      
+      // Present Value calculation PV = EMI * [(1 - (1+r)^-n) / r]
+      let loanAmount = 0;
+      if (maxEmiCapacity > 0 && monthlyRate > 0) {
+        loanAmount = maxEmiCapacity * ((1 - Math.pow(1 + monthlyRate, -months)) / monthlyRate);
+      }
+
+      // Round to nearest 50,000
+      loanAmount = Math.round(loanAmount / 50000) * 50000;
+      if (loanAmount < 100000) loanAmount = 100000;
+
+      const formatted = new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(loanAmount);
+      const formattedEmi = new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(maxEmiCapacity);
+
+      document.getElementById('calcResult').innerText = formatted;
+      document.getElementById('calcSub').innerText = `Approx. Monthly EMI Capacity: ${formattedEmi}/mo (${Math.round(foir * 100)}% FOIR)`;
+    }
+  </script>
+</body>
+</html>

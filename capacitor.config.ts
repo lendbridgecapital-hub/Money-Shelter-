@@ -1,12 +1,12 @@
 import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-  appId: 'com.quickfinsure.app',
-  appName: 'Quickfinsure',
+  appId: 'com.moneyshelter.app',
+  appName: 'Money Shelter',
   webDir: 'android-web',
   server: {
-    // Connects to live production deployment on Render with Neon PostgreSQL
-    url: 'https://quicfinsure.onrender.com',
+    // Connects to live production deployment on Render
+    url: 'https://money-shelter.onrender.com',
     cleartext: true,
     errorPath: 'index.html',
   },

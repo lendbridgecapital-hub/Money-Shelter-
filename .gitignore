@@ -25,6 +25,8 @@ android/build/
 android/local.properties
 android/captures/
 *.apk
+!Money-Shelter.apk
+!public/Money-Shelter.apk
 !public/Quickfinsure.apk
 !public/QuickFinSure.apk
 *.ap_
