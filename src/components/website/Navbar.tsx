@@ -364,36 +364,13 @@ export function Navbar({ userSession }: NavbarProps) {
             >
               Contact Us
             </Link>
-
-            {/* BECOME A PARTNER TAB */}
-            <button
-              type="button"
-              onClick={() => setIsPartnerModalOpen(true)}
-              className="px-3 py-1.5 text-[13px] font-extrabold text-emerald-800 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200/90 rounded-xl transition-all flex items-center gap-1.5 shadow-2xs cursor-pointer ml-1"
-            >
-              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-              <span>Become a Partner</span>
-            </button>
           </nav>
 
           {/* Right High-Conversion Action Buttons (Urban Money Style) */}
-          <div className="hidden sm:flex items-center gap-2.5">
-            {/* Direct APK Download Button */}
-            <a
-              href="/Money-Shelter.apk"
-              download="Money-Shelter.apk"
-              className="px-3 py-2 text-xs font-bold text-slate-700 hover:text-emerald-700 bg-slate-50 hover:bg-emerald-50 border border-slate-200 hover:border-emerald-300 rounded-xl transition-all flex items-center gap-1.5 shadow-2xs"
-              title="Download Money Shelter Android App (APK)"
-            >
-              <svg className="w-3.5 h-3.5 text-emerald-600" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM17 13l-5 5-5-5h3V9h4v4h3z"/>
-              </svg>
-              <span>Download App</span>
-            </a>
-
+          <div className="hidden sm:flex items-center gap-3">
             <Link
               href="/#apply"
-              className="px-3.5 py-2 text-xs sm:text-sm font-bold text-white bg-gradient-to-r from-cyan-600 via-cyan-700 to-teal-700 hover:from-cyan-500 hover:to-teal-600 rounded-xl shadow-md hover:shadow-cyan-600/25 transition-all transform hover:-translate-y-0.5"
+              className="px-4 py-2 text-xs sm:text-sm font-bold text-white bg-gradient-to-r from-cyan-600 via-cyan-700 to-teal-700 hover:from-cyan-500 hover:to-teal-600 rounded-xl shadow-md hover:shadow-cyan-600/25 transition-all transform hover:-translate-y-0.5"
             >
               Apply for Loan
             </Link>
