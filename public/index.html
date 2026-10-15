@@ -45,7 +45,7 @@
       </div>
 
       <label class="input-label" for="serverUrlInput">Portal Address:</label>
-      <input type="text" id="serverUrlInput" class="input-field" value="https://money-shelter.onrender.com" />
+      <input type="text" id="serverUrlInput" class="input-field" value="https://money-shelter.onrender.com/login" />
 
       <button class="btn btn-primary" onclick="connectToServer()">
         🔄 Retry Connection
@@ -56,11 +56,11 @@
   <script>
     const CANDIDATES = [
       localStorage.getItem("moneyshelter_server_url"),
-      "https://money-shelter.onrender.com",
-      "https://quicfinsure.onrender.com"
+      "https://money-shelter.onrender.com/login",
+      "https://quicfinsure.onrender.com/login"
     ].filter(Boolean);
 
-    let activeUrl = CANDIDATES[0] || "https://money-shelter.onrender.com";
+    let activeUrl = CANDIDATES[0] || "https://money-shelter.onrender.com/login";
     document.getElementById("serverUrlInput").value = activeUrl;
 
     function setStatus(loading, title, msg, isError = false) {

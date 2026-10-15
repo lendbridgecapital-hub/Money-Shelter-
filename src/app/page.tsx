@@ -12,6 +12,7 @@ import { EmiCalculatorSection } from '@/components/website/EmiCalculatorSection'
 import { LeadInquirySection } from '@/components/website/LeadInquirySection';
 import { PartnerCtaSection } from '@/components/website/PartnerCtaSection';
 import { Footer } from '@/components/website/Footer';
+import AppNativeRedirect from '@/components/AppNativeRedirect';
 
 export const metadata = {
   title: 'Money Shelter Pvt. Ltd. — Where Money Meets Trust',
@@ -24,6 +25,9 @@ export default async function HomePage() {
 
   return (
     <div className="min-h-screen bg-white text-slate-900 selection:bg-cyan-600 selection:text-white flex flex-col font-sans">
+      {/* Auto-redirect inside Capacitor mobile app to /login */}
+      <AppNativeRedirect isLoggedIn={Boolean(session?.user)} />
+
       {/* Sticky Header Navigation */}
       <Navbar userSession={session?.user} />
 

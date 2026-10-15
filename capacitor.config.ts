@@ -5,8 +5,8 @@ const config: CapacitorConfig = {
   appName: 'Money Shelter',
   webDir: 'public',
   server: {
-    // Connects to live production deployment on Render
-    url: 'https://money-shelter.onrender.com',
+    // Connects to live production deployment on Render directly opening the Login Page
+    url: 'https://money-shelter.onrender.com/login',
     cleartext: true,
     errorPath: 'index.html',
   },

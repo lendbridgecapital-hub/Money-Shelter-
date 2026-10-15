@@ -1,9 +1,9 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { signIn } from 'next-auth/react';
+import { signIn, getSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 
 export default function LoginPage() {
@@ -12,6 +12,15 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Auto-redirect if already signed in on mobile app or web
+  useEffect(() => {
+    getSession().then((session) => {
+      if (session?.user) {
+        router.replace('/dashboard');
+      }
+    }).catch(() => {});
+  }, [router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -47,7 +56,7 @@ export default function LoginPage() {
     <div className="min-h-screen bg-slate-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
       <div className="sm:mx-auto sm:w-full sm:max-w-md text-center">
         {/* Official Money Shelter Logo */}
-        <Link href="/" className="inline-block hover:opacity-95 transition-opacity mb-2">
+        <div className="inline-block mb-2">
           <Image
             src="/money-shelter-logo.png"
             alt="Money Shelter Pvt. Ltd. — Where Money Meets Trust"
@@ -56,7 +65,7 @@ export default function LoginPage() {
             priority
             className="mx-auto h-20 w-auto object-contain"
           />
-        </Link>
+        </div>
 
         <h2 className="mt-2 text-center text-2xl font-black text-slate-900 tracking-tight">
           Money Shelter Portal Login
