@@ -1,9 +1,9 @@
 import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-  appId: 'com.moneyshelter.app',
+  appId: 'com.quickfinsure.app',
   appName: 'Money Shelter',
-  webDir: 'android-web',
+  webDir: 'public',
   server: {
     // Connects to live production deployment on Render
     url: 'https://money-shelter.onrender.com',

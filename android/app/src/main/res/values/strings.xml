@@ -2,6 +2,6 @@
 <resources>
     <string name="app_name">Money Shelter</string>
     <string name="title_activity_main">Money Shelter</string>
-    <string name="package_name">com.moneyshelter.app</string>
-    <string name="custom_url_scheme">com.moneyshelter.app</string>
+    <string name="package_name">com.quickfinsure.app</string>
+    <string name="custom_url_scheme">com.quickfinsure.app</string>
 </resources>
