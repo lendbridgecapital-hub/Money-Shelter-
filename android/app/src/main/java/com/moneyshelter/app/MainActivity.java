@@ -1,4 +1,4 @@
-package com.quickfinsure.app;
+package com.moneyshelter.app;
 
 import com.getcapacitor.BridgeActivity;
 
