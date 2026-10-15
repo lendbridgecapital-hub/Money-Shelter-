@@ -80,7 +80,10 @@ export async function getCompanySettings(tenantId = 'default'): Promise<CompanyS
 }
 
 function normalizeBrand(str: string): string {
-  return str.replace(/QuickFinSure/g, 'Quickfinsure');
+  return str.replace(/Quickfinsure\s+Private\s+Limited/gi, 'Money Shelter Pvt. Ltd.')
+    .replace(/Quickfinsure\s+Solutions/gi, 'Money Shelter Pvt. Ltd.')
+    .replace(/Quickfinsure/gi, 'Money Shelter')
+    .replace(/QuickFinSure/gi, 'Money Shelter');
 }
 
 function mapRowToSettings(row: Record<string, unknown>): CompanySettings {

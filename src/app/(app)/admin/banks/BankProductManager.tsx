@@ -1359,7 +1359,7 @@ export default function BankProductManager({
                           {/* Net Margin indicator */}
                           {inlineForm.baseRate !== '' && inlineForm.partnerRate !== '' && (
                             <div className="p-2.5 rounded-lg bg-emerald-50/70 border border-emerald-200 flex items-center justify-between text-xs text-emerald-900">
-                              <span className="font-semibold">Quickfinsure Net Retained Spread:</span>
+                              <span className="font-semibold">Money Shelter Net Retained Spread:</span>
                               <span className="font-mono font-bold">
                                 +{(Number(inlineForm.baseRate) - Number(inlineForm.partnerRate) - Number(inlineForm.subDsaRate || 0)).toFixed(2)}% margin
                               </span>
@@ -1868,7 +1868,7 @@ export default function BankProductManager({
                       : 'bg-rose-50 border-rose-200 text-rose-900'
                   }`}>
                     <div>
-                      <span className="font-bold">Quickfinsure Net Retained Margin:</span>
+                      <span className="font-bold">Money Shelter Net Retained Margin:</span>
                       <p className="text-[11px] opacity-75 mt-0.5">
                         Bank ({Number(baseRate).toFixed(2)}%) − Partner ({Number(partnerRate).toFixed(2)}%) − Sub-DSA ({Number(subDsaRate || 0).toFixed(2)}%)
                       </p>

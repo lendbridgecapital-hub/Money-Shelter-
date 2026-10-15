@@ -129,7 +129,7 @@ export async function GET(req: NextRequest) {
       status: 200,
       headers: {
         'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-        'Content-Disposition': 'attachment; filename="Quickfinsure_Bank_Policy_Cards.xlsx"',
+        'Content-Disposition': 'attachment; filename="Money_Shelter_Bank_Policy_Cards.xlsx"',
       },
     });
   } catch (error: any) {

@@ -46,7 +46,7 @@ export default function CustomerEligibilityOfferModal({
 
   const publicShareUrl = typeof window !== 'undefined'
     ? `${window.location.origin}/offer/eligibility/${applicationToken || initialData.applicationToken || 'sample'}`
-    : `https://quicfinsure.onrender.com/offer/eligibility/${applicationToken || initialData.applicationToken || 'sample'}`;
+    : `https://money-shelter.onrender.com/offer/eligibility/${applicationToken || initialData.applicationToken || 'sample'}`;
 
   const handlePrint = () => {
     if (typeof window !== 'undefined') {
@@ -57,7 +57,7 @@ export default function CustomerEligibilityOfferModal({
   const handleDownloadPdf = async () => {
     setIsGeneratingPdf(true);
     const cleanCustomerName = (data.customerName || 'Applicant').replace(/[^a-zA-Z0-9]/g, '_');
-    const fileName = `Quickfinsure_Eligibility_Offer_${cleanCustomerName}.pdf`;
+    const fileName = `Money_Shelter_Eligibility_Offer_${cleanCustomerName}.pdf`;
     await downloadElementAsPdf('customer-eligibility-pdf', fileName);
     setIsGeneratingPdf(false);
   };

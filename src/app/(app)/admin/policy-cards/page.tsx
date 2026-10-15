@@ -5,7 +5,7 @@ import type { BankPolicyCard, DynamicCriteriaFieldDef } from '@/types/policy';
 import PolicyCardManager from './PolicyCardManager';
 
 export const metadata = {
-  title: 'Bank Policy Engine | Quickfinsure Admin',
+  title: 'Bank Policy Engine | Money Shelter Admin',
   description: 'Manage institutional bank sourcing guidelines, FOIR caps, and CIBIL interest rate matrices.',
 };
 

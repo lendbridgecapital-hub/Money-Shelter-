@@ -13,7 +13,7 @@ interface Props {
 
 export default function PartnerOnboardingStatusGuard({
   partner,
-  companyName = 'Quickfinsure',
+  companyName = 'Money Shelter',
 }: Props) {
   const router = useRouter();
   const [panFile, setPanFile] = useState<File | null>(null);
@@ -193,8 +193,8 @@ export default function PartnerOnboardingStatusGuard({
 
         <p className="text-xs text-slate-500">
           If you believe this is in error, please contact Central Support at{' '}
-          <a href="mailto:support@quickfinsure.com" className="text-emerald-700 underline font-semibold">
-            support@quickfinsure.com
+          <a href="mailto:support@moneyshelter.in" className="text-emerald-700 underline font-semibold">
+            support@moneyshelter.in
           </a>
           .
         </p>

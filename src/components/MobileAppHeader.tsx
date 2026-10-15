@@ -74,16 +74,16 @@ export default function MobileAppHeader({
               // eslint-disable-next-line @next/next/no-img-element
               <img
                 src={logoUrl}
-                alt={companyName || 'Quickfinsure'}
+                alt={companyName || 'Money Shelter'}
                 className="h-7 max-h-7.5 w-auto max-w-[150px] object-contain"
               />
             ) : (
               <div className="flex items-center gap-2">
                 <div className="w-8 h-8 rounded-xl bg-emerald-600 text-white font-black text-xs flex items-center justify-center shadow-xs">
-                  {companyName ? companyName.charAt(0).toUpperCase() : 'Q'}
+                  {companyName ? companyName.charAt(0).toUpperCase() : 'M'}
                 </div>
                 <span className="font-extrabold text-slate-900 text-sm tracking-tight">
-                  {companyName || 'Quickfinsure'}
+                  {companyName || 'Money Shelter'}
                 </span>
               </div>
             )}

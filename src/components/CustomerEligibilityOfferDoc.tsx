@@ -62,13 +62,13 @@ export default function CustomerEligibilityOfferDoc({ data }: CustomerEligibilit
                 </div>
                 <div>
                   <h1 className="text-lg sm:text-xl font-black tracking-tight text-slate-900 uppercase leading-none">
-                    {data.companyName || 'QUICKFINSURE SOLUTIONS'}
+                    {data.companyName || 'MONEY SHELTER PVT. LTD.'}
                   </h1>
                   <p className="text-[10px] font-bold text-emerald-800 tracking-wider uppercase mt-1">
-                    {data.companyTagline || 'LICENSED DSA PARTNER & MULTI-BANK SYNDICATION NETWORK'}
+                    {data.companyTagline || 'WHERE MONEY MEETS TRUST • MULTI-BANK SYNDICATION NETWORK'}
                   </p>
                   <p className="text-[10px] text-slate-500 mt-0.5">
-                    Email: {data.officialEmail || 'support@quickfinsure.com'} • Helpdesk: {data.supportPhone || '+91 98765 43210'}
+                    Email: {data.officialEmail || 'info@moneyshelter.in'} • Helpdesk: {data.supportPhone || '+91 9049002010'}
                   </p>
                 </div>
               </div>
@@ -730,7 +730,7 @@ export default function CustomerEligibilityOfferDoc({ data }: CustomerEligibilit
         {/* ========================================================================= */}
         <div className="border-t-2 border-emerald-600/80 pt-3 mt-4 flex items-center justify-between text-[10px] text-slate-500">
           <div>
-            <strong className="text-slate-800">{data.companyName || 'Quickfinsure Solutions'}</strong> • Multi-Bank Syndication Network
+            <strong className="text-slate-800">{data.companyName || 'Money Shelter Pvt. Ltd.'}</strong> • Multi-Bank Syndication Network
           </div>
           <div className="font-bold text-slate-700 uppercase tracking-wider">
             TENTATIVE OFFER REPORT • Page 1 of 2
@@ -784,7 +784,7 @@ export default function CustomerEligibilityOfferDoc({ data }: CustomerEligibilit
                 </div>
                 <div>
                   <h2 className="text-base font-black tracking-tight text-slate-900 uppercase leading-none">
-                    {data.companyName || 'QUICKFINSURE SOLUTIONS'}
+                    {data.companyName || 'MONEY SHELTER PVT. LTD.'}
                   </h2>
                   <p className="text-[10px] font-bold text-emerald-800 tracking-wider uppercase mt-0.5">
                     INSTITUTIONAL SYNDICATION & SANCTION GUIDELINES
@@ -1053,7 +1053,7 @@ export default function CustomerEligibilityOfferDoc({ data }: CustomerEligibilit
                           marginTop: '1px',
                         }}
                       >
-                        Quickfinsure Sourcing Engine
+                        Money Shelter Sourcing Engine
                       </div>
                     </td>
                   </tr>
@@ -1079,7 +1079,7 @@ export default function CustomerEligibilityOfferDoc({ data }: CustomerEligibilit
         {/* ========================================================================= */}
         <div className="border-t-2 border-emerald-600/80 pt-3 mt-4 flex items-center justify-between text-[10px] text-slate-500">
           <div>
-            <strong className="text-slate-800">{data.companyName || 'Quickfinsure Solutions'}</strong> • Multi-Bank Syndication Network
+            <strong className="text-slate-800">{data.companyName || 'Money Shelter Pvt. Ltd.'}</strong> • Multi-Bank Syndication Network
           </div>
           <div className="font-bold text-slate-700 uppercase tracking-wider">
             TENTATIVE OFFER REPORT • Page 2 of 2

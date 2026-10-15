@@ -16,7 +16,7 @@ export default async function CreateLinkPage() {
     return (
       <PartnerOnboardingStatusGuard
         partner={user}
-        companyName={settings.companyName || 'Quickfinsure'}
+        companyName={settings.companyName || 'Money Shelter'}
       />
     );
   }

@@ -96,7 +96,7 @@ export default function LoanEligibilityMatchModal({
         },
         summary,
         advisor: {
-          name: application.relationshipManagerName || application.channelPartnerName || 'Quickfinsure Senior Credit Advisor',
+          name: application.relationshipManagerName || application.channelPartnerName || 'Money Shelter Senior Credit Advisor',
           role: application.relationshipManagerName ? 'Relationship Manager' : 'Financial Advisor',
           phone: '+91 98765 43210',
           branchName: application.branchName || 'Pune Bavdhan HQ',
@@ -140,7 +140,7 @@ export default function LoanEligibilityMatchModal({
               input,
               summary: res.summary,
               advisor: {
-                name: application.relationshipManagerName || application.channelPartnerName || 'Quickfinsure Senior Credit Advisor',
+                name: application.relationshipManagerName || application.channelPartnerName || 'Money Shelter Senior Credit Advisor',
                 role: application.relationshipManagerName ? 'Relationship Manager' : 'Financial Advisor',
                 phone: '+91 98765 43210',
                 branchName: application.branchName || 'Pune Bavdhan HQ',
@@ -179,7 +179,7 @@ export default function LoanEligibilityMatchModal({
                 input,
                 summary: res.summary,
                 advisor: {
-                  name: application.relationshipManagerName || application.channelPartnerName || 'Quickfinsure Senior Credit Advisor',
+                  name: application.relationshipManagerName || application.channelPartnerName || 'Money Shelter Senior Credit Advisor',
                   role: application.relationshipManagerName ? 'Relationship Manager' : 'Financial Advisor',
                   phone: '+91 98765 43210',
                   branchName: application.branchName || 'Pune Bavdhan HQ',
@@ -744,7 +744,7 @@ export default function LoanEligibilityMatchModal({
         {/* Footer */}
         <div className="bg-slate-50 border-t border-slate-200 p-4 px-6 flex items-center justify-between shrink-0">
           <span className="text-xs text-slate-400">
-            Quickfinsure Sourcing Intelligence & Risk Underwriting
+            Money Shelter Sourcing Intelligence & Risk Underwriting
           </span>
           <button
             type="button"

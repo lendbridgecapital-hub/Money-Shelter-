@@ -86,15 +86,15 @@ export default function BulkCreateRmModal({
   const handleDownloadSampleCsv = () => {
     const csvContent =
       'Full Name,Work Email,Phone,Branch Code,Password\n' +
-      `Ramesh Sharma,ramesh.sharma@quickfinsure.com,9876543210,${branches[0]?.code || 'PUN-01'},RM@QuickFin2026!\n` +
-      `Priya Verma,priya.verma@quickfinsure.com,9811223344,${branches[1]?.code || branches[0]?.code || 'MUM-01'},RM@QuickFin2026!\n` +
-      `Amit Kulkarni,amit.kulkarni@quickfinsure.com,9988776655,${branches[0]?.code || 'PUN-01'},Pass1234!`;
+      `Ramesh Sharma,ramesh.sharma@moneyshelter.in,9876543210,${branches[0]?.code || 'PUN-01'},RM@MoneyShelter2026!\n` +
+      `Priya Verma,priya.verma@moneyshelter.in,9811223344,${branches[1]?.code || branches[0]?.code || 'MUM-01'},RM@MoneyShelter2026!\n` +
+      `Amit Kulkarni,amit.kulkarni@moneyshelter.in,9988776655,${branches[0]?.code || 'PUN-01'},Pass1234!`;
 
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.setAttribute('download', 'quickfinsure_bulk_rms_template.csv');
+    link.setAttribute('download', 'moneyshelter_bulk_rms_template.csv');
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -427,7 +427,7 @@ export default function BulkCreateRmModal({
                                 type="email"
                                 value={row.email}
                                 onChange={(e) => handleUpdateRow(row.id, 'email', e.target.value)}
-                                placeholder="ramesh@quickfinsure.com"
+                                placeholder="ramesh@moneyshelter.in"
                                 className={`w-full px-2.5 py-1.5 border rounded-lg text-xs font-medium focus:ring-2 ${
                                   !isEmailValid
                                     ? 'border-rose-400 bg-rose-50 text-rose-800 focus:ring-rose-500'
@@ -562,9 +562,9 @@ export default function BulkCreateRmModal({
                   onChange={(e) => setRawCsvText(e.target.value)}
                   placeholder={
                     'Full Name, Work Email, Phone, Branch Code / Name, Password\n' +
-                    'Ramesh Sharma, ramesh.sharma@quickfinsure.com, 9876543210, Pune Head Office, Pass123!\n' +
-                    'Priya Verma, priya.verma@quickfinsure.com, 9811223344, Mumbai Branch\n' +
-                    'Amit Kulkarni, amit.kulkarni@quickfinsure.com, 9988776655, PUN-01'
+                    'Ramesh Sharma, ramesh.sharma@moneyshelter.in, 9876543210, Pune Head Office, Pass123!\n' +
+                    'Priya Verma, priya.verma@moneyshelter.in, 9811223344, Mumbai Branch\n' +
+                    'Amit Kulkarni, amit.kulkarni@moneyshelter.in, 9988776655, PUN-01'
                   }
                   className="w-full p-3 font-mono text-xs border border-slate-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:outline-none"
                 />

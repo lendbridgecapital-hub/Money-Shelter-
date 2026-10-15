@@ -146,19 +146,19 @@ XLSX.utils.book_append_sheet(wb, wsMatrix, 'CIBIL Rate Matrix');
 });
 
 // Export destinations
-const rootExportPath = path.join(__dirname, '..', 'Quickfinsure_Bank_Policy_Cards.xlsx');
+const rootExportPath = path.join(__dirname, '..', 'Money_Shelter_Bank_Policy_Cards.xlsx');
 const publicDir = path.join(__dirname, '..', 'public', 'downloads');
 if (!fs.existsSync(publicDir)) {
   fs.mkdirSync(publicDir, { recursive: true });
 }
-const publicExportPath = path.join(publicDir, 'Quickfinsure_Bank_Policy_Cards.xlsx');
+const publicExportPath = path.join(publicDir, 'Money_Shelter_Bank_Policy_Cards.xlsx');
 
 // Write Excel files
 XLSX.writeFile(wb, rootExportPath);
 XLSX.writeFile(wb, publicExportPath);
 
 // Also generate CSV for direct compatibility
-const csvPath = path.join(__dirname, '..', 'Quickfinsure_Bank_Policy_Cards.csv');
+const csvPath = path.join(__dirname, '..', 'Money_Shelter_Bank_Policy_Cards.csv');
 const csvContent = XLSX.utils.sheet_to_csv(wsSummary);
 fs.writeFileSync(csvPath, csvContent, 'utf8');
 

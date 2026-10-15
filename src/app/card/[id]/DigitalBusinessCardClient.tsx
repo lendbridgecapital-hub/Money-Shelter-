@@ -25,7 +25,7 @@ export default function DigitalBusinessCardClient({ advisor, companySettings }: 
   const [city, setCity] = useState(advisor.city || '');
   const [notes, setNotes] = useState('');
 
-  const companyName = companySettings.companyName || 'Quickfinsure';
+  const companyName = companySettings.companyName || 'Money Shelter';
   const advisorPhoto = advisor.photoUrl || advisor.firmLogoUrl;
   const advisorTitle =
     advisor.role === 'CHANNEL_PARTNER'
@@ -46,7 +46,7 @@ export default function DigitalBusinessCardClient({ advisor, companySettings }: 
       advisor.phone ? `TEL;TYPE=CELL,VOICE:${advisor.phone}` : '',
       `EMAIL;TYPE=INTERNET:${advisor.email}`,
       companySettings.websiteUrl ? `URL:${companySettings.websiteUrl}` : '',
-      `NOTE:${advisor.bio ? `${advisor.bio} - ` : ''}Quickfinsure Certified Financial Partner`,
+      `NOTE:${advisor.bio ? `${advisor.bio} - ` : ''}${companyName} Certified Financial Partner`,
       'END:VCARD',
     ]
       .filter(Boolean)
@@ -56,7 +56,7 @@ export default function DigitalBusinessCardClient({ advisor, companySettings }: 
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.setAttribute('download', `${advisor.name.replace(/\s+/g, '_')}_Quickfinsure.vcf`);
+    link.setAttribute('download', `${advisor.name.replace(/\s+/g, '_')}_MoneyShelter.vcf`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -64,10 +64,10 @@ export default function DigitalBusinessCardClient({ advisor, companySettings }: 
   }
 
   function getPublicCardUrl() {
-    if (typeof window === 'undefined') return `https://quicfinsure.onrender.com/card/${advisor.id}`;
+    if (typeof window === 'undefined') return `https://money-shelter.onrender.com/card/${advisor.id}`;
     const origin = window.location.origin;
     if (!origin || origin.includes('localhost') || origin.startsWith('capacitor:')) {
-      return `https://quicfinsure.onrender.com/card/${advisor.id}`;
+      return `https://money-shelter.onrender.com/card/${advisor.id}`;
     }
     return `${origin}/card/${advisor.id}`;
   }
@@ -171,7 +171,7 @@ export default function DigitalBusinessCardClient({ advisor, companySettings }: 
         <div className="bg-gradient-to-br from-slate-900 via-slate-800 to-emerald-950 text-white rounded-3xl shadow-2xl border border-emerald-500/25 overflow-hidden">
           {/* Card Top Banner with Emerald Gradient */}
           <div className="p-6 text-white text-center relative border-b border-white/10">
-            {/* Quickfinsure Brand Watermark */}
+            {/* Money Shelter Brand Watermark */}
             <div className="flex items-center justify-between mb-4">
               <span className="text-[10px] font-mono tracking-widest uppercase px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
                 Verified DSA Partner

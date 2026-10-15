@@ -20,7 +20,7 @@ export default function MobileBottomNav({
   role,
   userId,
   userName = 'Operator',
-  companyName = 'Quickfinsure',
+  companyName = 'Money Shelter',
   logoUrl,
   branchName,
   isDedicatedSiteRm = false,

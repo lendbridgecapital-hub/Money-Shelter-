@@ -7,8 +7,8 @@ import PartnerCertificateView from './PartnerCertificateView';
 import type { User } from '@/types/db';
 
 export const metadata = {
-  title: 'Channel Partner Certificate of Association — Quickfinsure',
-  description: 'Official Certificate of Association for Quickfinsure Channel Partner & Sub-DSA Network.',
+  title: 'Channel Partner Certificate of Association — Money Shelter',
+  description: 'Official Certificate of Association for Money Shelter Channel Partner & Sub-DSA Network.',
 };
 
 interface Props {
@@ -53,7 +53,7 @@ export default async function PartnerCertificatePage({ searchParams }: Props) {
   return (
     <PartnerCertificateView
       partner={targetPartner}
-      companyName={settings.companyName || 'Quickfinsure'}
+      companyName={settings.companyName || 'Money Shelter'}
     />
   );
 }

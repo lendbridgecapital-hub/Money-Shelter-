@@ -216,7 +216,7 @@ export default function LoanCalculator({
   // Share text generator
   const getShareableText = () => {
     const loanName = isHome ? 'Home Loan' : 'Personal Loan';
-    return `*Quickfinsure EMI Estimate Breakdown*
+    return `*Money Shelter EMI Estimate Breakdown*
 ------------------------------------
 🏦 *Loan Type:* ${loanName}
 💰 *Loan Amount:* ${formatCurrencyINR(amount)}
@@ -227,7 +227,7 @@ export default function LoanCalculator({
 📈 *Total Interest Payable:* ${formatCurrencyINR(totalInterest)}
 💳 *Total Amount Payable:* ${formatCurrencyINR(totalPayable)}
 ------------------------------------
-Calculated with Quickfinsure loan advisory tools.`;
+Calculated with Money Shelter loan advisory tools.`;
   };
 
   const handleShareWhatsApp = () => {

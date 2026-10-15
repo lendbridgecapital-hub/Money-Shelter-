@@ -361,7 +361,7 @@ export default function PolicyCardManager({ initialCards, dynamicDefs }: PolicyC
             {/* Export to Excel Button */}
             <a
               href="/api/admin/policy-cards/export"
-              download="Quickfinsure_Bank_Policy_Cards.xlsx"
+              download="Money_Shelter_Bank_Policy_Cards.xlsx"
               className="px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold border border-slate-300 shadow-2xs active:scale-95 transition flex items-center gap-1.5 shrink-0"
               title="Download all Bank Policy Cards in Excel (.xlsx) format"
             >

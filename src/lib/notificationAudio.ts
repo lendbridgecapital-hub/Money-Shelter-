@@ -1,7 +1,7 @@
 'use client';
 
 /**
- * Quickfinsure Real-Time Notification Sound & Voice Alert Engine
+ * Money Shelter Real-Time Notification Sound & Voice Alert Engine
  * 
  * Provides:
  * 1. Crisp Web Audio API Chime (WhatsApp / iOS style marimba ding-dong chime)
@@ -296,7 +296,7 @@ export function testNotificationSound(): void {
   const mode = getNotificationSoundMode();
   if (mode === 'voice') {
     setTimeout(() => {
-      playVoiceAlert('Quickfinsure voice alert is active. New notifications will sound like this.');
+      playVoiceAlert('Money Shelter voice alert is active. New notifications will sound like this.');
     }, 320);
   }
 }

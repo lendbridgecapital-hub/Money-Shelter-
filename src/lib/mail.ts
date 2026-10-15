@@ -27,7 +27,7 @@ export async function sendMail({ to, subject, html, from, tenantId }: SendMailOp
   const smtpSecure = settings.smtpSecure ?? (process.env.SMTP_SECURE === 'true' || smtpPort === 465);
   const smtpUser = settings.smtpUser || process.env.SMTP_USER || process.env.EMAIL_SERVER_USER || '';
   const smtpPassword = settings.smtpPassword || process.env.SMTP_PASSWORD || process.env.SMTP_PASS || process.env.EMAIL_SERVER_PASSWORD || '';
-  const fromName = settings.smtpFromName || process.env.SMTP_FROM_NAME || settings.companyName || 'Quickfinsure';
+  const fromName = settings.smtpFromName || process.env.SMTP_FROM_NAME || settings.companyName || 'Money Shelter';
 
   // Always log the email into the system database first
   const logEntry = logEmail({

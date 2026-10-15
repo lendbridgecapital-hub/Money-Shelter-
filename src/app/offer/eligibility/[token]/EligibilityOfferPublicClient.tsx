@@ -22,7 +22,7 @@ export default function EligibilityOfferPublicClient({ offerData }: Props) {
     setIsGeneratingPdf(true);
     try {
       const cleanCustomerName = (offerData.customerName || 'Applicant').replace(/[^a-zA-Z0-9]/g, '_');
-      const fileName = `Quickfinsure_Eligibility_Offer_${cleanCustomerName}.pdf`;
+      const fileName = `Money_Shelter_Eligibility_Offer_${cleanCustomerName}.pdf`;
       await downloadElementAsPdf('customer-eligibility-pdf', fileName);
     } catch (err) {
       console.error('Error generating PDF:', err);
@@ -38,7 +38,7 @@ export default function EligibilityOfferPublicClient({ offerData }: Props) {
   const advisorPhoneClean = offerData.advisorPhone ? offerData.advisorPhone.replace(/[^0-9+]/g, '') : '';
   const currentUrl = typeof window !== 'undefined' ? window.location.href : '';
   const whatsAppText = encodeURIComponent(
-    `Hello ${offerData.advisorName || 'Quickfinsure Advisor'}, I am reviewing my loan eligibility offer (${offerData.referenceNumber}) for ${offerData.customerName}. Link: ${currentUrl}`
+    `Hello ${offerData.advisorName || 'Money Shelter Advisor'}, I am reviewing my loan eligibility offer (${offerData.referenceNumber}) for ${offerData.customerName}. Link: ${currentUrl}`
   );
   const whatsAppUrl = advisorPhoneClean
     ? `https://wa.me/${advisorPhoneClean.replace('+', '')}?text=${whatsAppText}`

@@ -13,8 +13,8 @@ export async function generateMetadata({ params }: { params: { token: string } }
   const application = getApplicationByToken(params.token);
   return {
     title: application?.fullName
-      ? `Loan Eligibility Offer — ${application.fullName} | Quickfinsure`
-      : 'Loan Eligibility Offer | Quickfinsure',
+      ? `Loan Eligibility Offer — ${application.fullName} | Money Shelter`
+      : 'Loan Eligibility Offer | Money Shelter',
     description: 'Official tentative loan eligibility assessment and multi-bank offer letter.',
   };
 }
@@ -73,7 +73,7 @@ export default async function EligibilityOfferPublicPage({
       summary,
       settings,
       advisor: {
-        name: application.relationshipManagerName || application.channelPartnerName || 'Quickfinsure Senior Credit Advisor',
+        name: application.relationshipManagerName || application.channelPartnerName || `${settings.companyName || 'Money Shelter'} Senior Credit Advisor`,
         role: application.relationshipManagerName ? 'Relationship Manager' : 'Financial Advisor',
         phone: '+91 98765 43210',
         branchName: application.branchName || 'Pune Bavdhan HQ',

@@ -168,8 +168,8 @@ export default function PartnerComplianceManager({
     const link = getOnboardingUrl();
     const text = encodeURIComponent(
       isSubDsa
-        ? `Hi! Join my agency network at Quickfinsure as an authorized Channel Partner (Agent). Submit retail loans digitally, get instant bank approvals, and earn top commission slabs on every disbursement. Register directly using my link: ${link}`
-        : `Hello! Register as an authorized Channel Partner with Quickfinsure using my direct onboarding link: ${link}`
+        ? `Hi! Join my agency network at Money Shelter as an authorized Channel Partner (Agent). Submit retail loans digitally, get instant bank approvals, and earn top commission slabs on every disbursement. Register directly using my link: ${link}`
+        : `Hello! Register as an authorized Channel Partner with Money Shelter using my direct onboarding link: ${link}`
     );
     window.open(`https://api.whatsapp.com/send?text=${text}`, '_blank');
   };
@@ -177,7 +177,7 @@ export default function PartnerComplianceManager({
   const shareSubDsaViaWhatsApp = () => {
     const link = getSubDsaOnboardingUrl();
     const text = encodeURIComponent(
-      `Hello! We invite you to join Quickfinsure as an authorized Sub-DSA. Build your own agent team, earn override commissions on your network's business, and access direct loan disbursements: ${link}`
+      `Hello! We invite you to join Money Shelter as an authorized Sub-DSA. Build your own agent team, earn override commissions on your network's business, and access direct loan disbursements: ${link}`
     );
     window.open(`https://api.whatsapp.com/send?text=${text}`, '_blank');
   };
@@ -1262,7 +1262,7 @@ export default function PartnerComplianceManager({
               <div className="flex items-center gap-2">
                 {selectedPartnerForActivity.phone && (
                   <a
-                    href={`https://wa.me/91${selectedPartnerForActivity.phone.replace(/\D/g, '')}?text=${encodeURIComponent(`Hi ${selectedPartnerForActivity.name}, checking in on your loan applications with Quickfinsure.`)}`}
+                    href={`https://wa.me/91${selectedPartnerForActivity.phone.replace(/\D/g, '')}?text=${encodeURIComponent(`Hi ${selectedPartnerForActivity.name}, checking in on your loan applications with Money Shelter.`)}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 rounded-lg text-xs font-semibold transition"

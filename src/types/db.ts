@@ -61,7 +61,7 @@ export interface BankProduct {
   tenantId?: string;
   productName: string; // 'Home Loan' | 'Personal Loan' | 'Business Loan' | 'Education Loan' | 'Balance Transfer' | 'Property Loan' | custom
   banks: string[]; // List of Indian bank & NBFC names
-  baseRate: number; // Gross commission % receivable by Quickfinsure from the bank (e.g. 2.0%)
+  baseRate: number; // Gross commission % receivable by Money Shelter from the bank (e.g. 2.0%)
   partnerRate: number; // Commission % shared with the Channel Partner (e.g. 1.5%)
   subDsaRate: number; // Override commission % shared with the Sub-DSA (e.g. 0.1%)
   dedicatedPartnerId?: string | null; // null if applicable for all partners

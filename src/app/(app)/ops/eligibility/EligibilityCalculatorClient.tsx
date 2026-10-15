@@ -94,7 +94,7 @@ export default function EligibilityCalculatorClient({
         },
         summary,
         advisor: {
-          name: 'Quickfinsure Senior Credit Advisor',
+          name: 'Money Shelter Senior Credit Advisor',
           role: 'Underwriting Desk',
           phone: '+91 98765 43210',
           branchName: 'Pune Bavdhan HQ',

@@ -69,22 +69,22 @@ export default function CreateLinkPanel({
 
   // WhatsApp message: Advisor name, company name, and link on a separate line for 100% clickability
   const siteTagText = isSite && activeBranch ? ` for ${activeBranch.name}` : '';
-  const whatsappMessage = `Hello! I am your financial advisor ${advisorName}. Please complete your loan application with ${companyName || 'Quickfinsure'}${siteTagText} by uploading your documents here:
+  const whatsappMessage = `Hello! I am your financial advisor ${advisorName}. Please complete your loan application with ${companyName || 'Money Shelter'}${siteTagText} by uploading your documents here:
 
 ${shareUrl}`;
 
   const whatsappHref = `https://api.whatsapp.com/send?text=${encodeURIComponent(whatsappMessage)}`;
 
-  const emailSubject = `Loan Application Link — ${companyName || 'Quickfinsure'}${siteTagText}`;
+  const emailSubject = `Loan Application Link — ${companyName || 'Money Shelter'}${siteTagText}`;
   const emailBody = `Hello! I am your financial advisor ${advisorName}.
 
-Please complete your loan application with ${companyName || 'Quickfinsure'}${siteTagText} by uploading your documents here:
+Please complete your loan application with ${companyName || 'Money Shelter'}${siteTagText} by uploading your documents here:
 
 ${shareUrl}
 
 Warm regards,
 ${advisorName}
-${companyName || 'Quickfinsure'}`;
+${companyName || 'Money Shelter'}`;
   const emailHref = `mailto:?subject=${encodeURIComponent(emailSubject)}&body=${encodeURIComponent(emailBody)}`;
 
   return (

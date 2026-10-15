@@ -11,7 +11,7 @@ if (!process.env.NEXTAUTH_URL) {
   if (process.env.RENDER_EXTERNAL_URL) {
     process.env.NEXTAUTH_URL = process.env.RENDER_EXTERNAL_URL;
   } else if (process.env.NODE_ENV === 'production') {
-    process.env.NEXTAUTH_URL = 'https://quicfinsure.onrender.com';
+    process.env.NEXTAUTH_URL = 'https://money-shelter.onrender.com';
   } else {
     process.env.NEXTAUTH_URL = 'http://localhost:3000';
   }
@@ -41,13 +41,24 @@ export const authOptions: NextAuthOptions = {
         console.log('[auth] Attempting login for:', email);
         let user = getUserByEmail(email);
 
+        if (!user && (email.includes('@moneyshelter.') || email.includes('@moneyshelter.in'))) {
+          const alternateEmail = email.replace(/@moneyshelter\.(in|com)/, '@quickfinsure.com');
+          user = getUserByEmail(alternateEmail);
+        } else if (!user && email.includes('@quickfinsure.')) {
+          const alternateEmail = email.replace(/@quickfinsure\.(in|com)/, '@moneyshelter.in');
+          user = getUserByEmail(alternateEmail);
+        }
+
         // Failsafe: if database is fresh or empty, restore account from initialSeedData
         if (!user) {
           const rawSeed: any = initialSeedData;
           const seed = (rawSeed?.default && (rawSeed.default.users || rawSeed.default.tenants)) ? rawSeed.default : rawSeed;
           const userList = Array.isArray(seed?.users) ? seed.users : [];
           const seedUser = userList.find(
-            (u: any) => String(u.email).toLowerCase() === email
+            (u: any) => {
+              const uEmail = String(u.email).toLowerCase();
+              return uEmail === email || (email.includes('@moneyshelter.') && uEmail === email.replace(/@moneyshelter\.(in|com)/, '@quickfinsure.com'));
+            }
           );
           if (seedUser) {
             try {

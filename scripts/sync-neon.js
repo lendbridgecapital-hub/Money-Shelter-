@@ -88,7 +88,7 @@ async function initSchema(client) {
     `CREATE TABLE IF NOT EXISTS company_settings (
       id TEXT PRIMARY KEY,
       tenant_id TEXT,
-      company_name TEXT NOT NULL DEFAULT 'Quickfinsure',
+      company_name TEXT NOT NULL DEFAULT 'Money Shelter Pvt. Ltd.',
       tagline TEXT,
       logo_url TEXT,
       favicon_url TEXT,

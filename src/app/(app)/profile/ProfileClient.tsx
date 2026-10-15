@@ -61,7 +61,7 @@ export default function ProfileClient({ user, settings }: Props) {
 
   function handleShareWhatsApp() {
     const text = encodeURIComponent(
-      `Hello! Here is my official Digital Business Card from ${settings.companyName || 'Quickfinsure'}. Tap the link to view my financial services, save my contact details to your phone, or apply for a loan:\n\n${cardUrl}`
+      `Hello! Here is my official Digital Business Card from ${settings.companyName || 'Money Shelter'}. Tap the link to view my financial services, save my contact details to your phone, or apply for a loan:\n\n${cardUrl}`
     );
     window.open(`https://api.whatsapp.com/send?text=${text}`, '_blank');
   }

@@ -42,7 +42,7 @@ export async function notifyTouchpoint01_CustomerSubmitted(
 ): Promise<void> {
   const tenantId = options?.tenantId || application.tenantId || 'default';
   const settings = await getCompanySettings(tenantId);
-  const companyName = settings.companyName || 'Quickfinsure';
+  const companyName = settings.companyName || 'Money Shelter';
   const fullName = application.fullName || 'Customer';
   const loanTypeLabel = application.loanType ? LOAN_TYPE_LABELS[application.loanType] || application.loanType : 'Loan';
   const loanAmount = application.loanAmount || 0;
@@ -202,7 +202,7 @@ export async function notifyTouchpoint02_SentToBank(
 ): Promise<void> {
   const tenantId = options?.tenantId || application.tenantId || 'default';
   const settings = await getCompanySettings(tenantId);
-  const companyName = settings.companyName || 'Quickfinsure';
+  const companyName = settings.companyName || 'Money Shelter';
   const fullName = application.fullName || 'Customer';
   const caseIdDisplay = application.id.slice(-6);
 
@@ -281,7 +281,7 @@ export async function notifyTouchpoint03_DocumentsRequired(
 ): Promise<void> {
   const tenantId = options?.tenantId || application.tenantId || 'default';
   const settings = await getCompanySettings(tenantId);
-  const companyName = settings.companyName || 'Quickfinsure';
+  const companyName = settings.companyName || 'Money Shelter';
   const fullName = application.fullName || 'Customer';
   const caseIdDisplay = application.id.slice(-6);
   const baseUrl = getBaseUrl();
@@ -367,7 +367,7 @@ export async function notifyTouchpoint04_DocumentsReUploaded(
 ): Promise<void> {
   const tenantId = options?.tenantId || application.tenantId || 'default';
   const settings = await getCompanySettings(tenantId);
-  const companyName = settings.companyName || 'Quickfinsure';
+  const companyName = settings.companyName || 'Money Shelter';
   const fullName = application.fullName || 'Customer';
   const caseIdDisplay = application.id.slice(-6);
   const baseUrl = getBaseUrl();
@@ -452,7 +452,7 @@ export async function notifyTouchpoint05_LoanSanctioned(
 ): Promise<void> {
   const tenantId = options?.tenantId || application.tenantId || 'default';
   const settings = await getCompanySettings(tenantId);
-  const companyName = settings.companyName || 'Quickfinsure';
+  const companyName = settings.companyName || 'Money Shelter';
   const fullName = application.fullName || 'Customer';
   const caseIdDisplay = application.id.slice(-6);
   const tenureMonths = application.tenureMonths || 60;
@@ -537,7 +537,7 @@ export async function notifyTouchpoint06_OfferAccepted(
 ): Promise<void> {
   const tenantId = options?.tenantId || application.tenantId || 'default';
   const settings = await getCompanySettings(tenantId);
-  const companyName = settings.companyName || 'Quickfinsure';
+  const companyName = settings.companyName || 'Money Shelter';
   const fullName = application.fullName || 'Customer';
   const baseUrl = getBaseUrl();
   const caseUrl = `${baseUrl}/branch/requests/${application.id}`;
@@ -621,7 +621,7 @@ export async function notifyTouchpoint07_LoanDisbursed(
 ): Promise<void> {
   const tenantId = options?.tenantId || application.tenantId || 'default';
   const settings = await getCompanySettings(tenantId);
-  const companyName = settings.companyName || 'Quickfinsure';
+  const companyName = settings.companyName || 'Money Shelter';
   const fullName = application.fullName || 'Customer';
   const bankName = application.bankName || 'Lending Bank';
   const baseUrl = getBaseUrl();
@@ -688,7 +688,7 @@ export async function notifyTouchpoint08_LoanRejected(
 ): Promise<void> {
   const tenantId = options?.tenantId || application.tenantId || 'default';
   const settings = await getCompanySettings(tenantId);
-  const companyName = settings.companyName || 'Quickfinsure';
+  const companyName = settings.companyName || 'Money Shelter';
   const fullName = application.fullName || 'Customer';
   const caseIdDisplay = application.id.slice(-6);
   const partnerId = application.channelPartnerId || application.createdById;
@@ -765,7 +765,7 @@ export async function notifyTouchpoint09_PartnerOnboarded(
 ): Promise<void> {
   const tenantId = options?.tenantId || partner.tenantId || 'default';
   const settings = await getCompanySettings(tenantId);
-  const companyName = settings.companyName || 'Quickfinsure';
+  const companyName = settings.companyName || 'Money Shelter';
   const partnerName = partner.name;
   const rmName = assignedRm?.name || partner.assignedRmName || 'Central Support Desk';
 
@@ -838,7 +838,7 @@ export async function notifyTouchpoint10_PartnerApproved(
 ): Promise<void> {
   const tenantId = options?.tenantId || partner.tenantId || 'default';
   const settings = await getCompanySettings(tenantId);
-  const companyName = settings.companyName || 'Quickfinsure';
+  const companyName = settings.companyName || 'Money Shelter';
   const partnerName = partner.name;
   const baseUrl = getBaseUrl();
   const certUrl = `${baseUrl}/partner/certificate`;
@@ -906,7 +906,7 @@ export async function notifyTouchpoint11_PartnerDocsRequested(
 ): Promise<void> {
   const tenantId = options?.tenantId || partner.tenantId || 'default';
   const settings = await getCompanySettings(tenantId);
-  const companyName = settings.companyName || 'Quickfinsure';
+  const companyName = settings.companyName || 'Money Shelter';
   const baseUrl = getBaseUrl();
   const onboardUrl = `${baseUrl}/partner/onboard`;
 
@@ -966,7 +966,7 @@ export async function notifyTouchpoint12_ClawbackRecorded(
 ): Promise<void> {
   const tenantId = options?.tenantId || partner.tenantId || 'default';
   const settings = await getCompanySettings(tenantId);
-  const companyName = settings.companyName || 'Quickfinsure';
+  const companyName = settings.companyName || 'Money Shelter';
 
   // 1. In-App Notification (To Channel Partner)
   try {

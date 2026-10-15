@@ -459,7 +459,7 @@ export default function CommissionManager({
               </h3>
             </div>
             <p className="text-xs text-slate-600 leading-relaxed">
-              Set the exact product-by-product commercial splits below. When a mapped Agent closes a loan, the Agent receives their configured <strong>Partner Rate</strong>, the supervising <strong>Sub-DSA</strong> automatically earns the <strong>Sub-DSA Override</strong>, and Quickfinsure retains the remaining <strong>Net Retained Margin</strong>.
+              Set the exact product-by-product commercial splits below. When a mapped Agent closes a loan, the Agent receives their configured <strong>Partner Rate</strong>, the supervising <strong>Sub-DSA</strong> automatically earns the <strong>Sub-DSA Override</strong>, and Money Shelter retains the remaining <strong>Net Retained Margin</strong>.
             </p>
             <div className="bg-white/80 p-3 rounded-xl border border-indigo-100 text-[11px] grid sm:grid-cols-4 gap-2 font-medium text-slate-700">
               <div>

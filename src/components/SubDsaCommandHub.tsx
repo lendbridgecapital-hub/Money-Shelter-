@@ -35,7 +35,7 @@ export default function SubDsaCommandHub({ user }: Props) {
 
   const shareAgentLinkWhatsApp = () => {
     const text = encodeURIComponent(
-      `Hi! Join my agency network at Quickfinsure as an authorized Channel Partner (Agent). Submit retail loans digitally, get instant bank approvals, and earn top commission slabs on every disbursement. Register directly using my link: ${agentReferralLink}`
+      `Hi! Join my agency network at Money Shelter as an authorized Channel Partner (Agent). Submit retail loans digitally, get instant bank approvals, and earn top commission slabs on every disbursement. Register directly using my link: ${agentReferralLink}`
     );
     window.open(`https://api.whatsapp.com/send?text=${text}`, '_blank');
   };

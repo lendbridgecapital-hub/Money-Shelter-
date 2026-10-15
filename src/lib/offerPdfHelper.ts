@@ -97,7 +97,7 @@ export function buildCustomerEligibilityOfferData(params: {
   const defaultSpecialRemark =
     'Standard pre-sanction requirements: Latest 3 months salary slips / 2 years ITR, 6 months banking statements from primary operating account, KYC documents (PAN & Aadhaar), and property/business verification documents where applicable.';
 
-  const advisorName = advisor?.name || application?.relationshipManagerName || application?.channelPartnerName || 'Quickfinsure Senior Credit Advisor';
+  const advisorName = advisor?.name || application?.relationshipManagerName || application?.channelPartnerName || 'Money Shelter Senior Credit Advisor';
   const advisorRole = advisor?.role || (application?.relationshipManagerName ? 'Relationship Manager' : 'Financial Advisor');
   const advisorPhone = advisor?.phone || '+91 98765 43210';
   const branchName = advisor?.branchName || application?.branchName || 'Pune Bavdhan HQ';
@@ -108,10 +108,10 @@ export function buildCustomerEligibilityOfferData(params: {
     validUntil: validUntilDate.toISOString(),
     applicationToken: appToken,
     applicationId: application?.id,
-    companyName: settings?.companyName || 'Quickfinsure Solutions',
+    companyName: settings?.companyName || 'Money Shelter Pvt. Ltd.',
     companyTagline: settings?.tagline || 'Licensed DSA Partner & Multi-Bank Syndication Network',
-    supportPhone: settings?.supportPhone || '+91 98765 43210',
-    officialEmail: settings?.officialEmail || 'support@quickfinsure.com',
+    supportPhone: settings?.supportPhone || '+91 9049002010',
+    officialEmail: settings?.officialEmail || 'info@moneyshelter.in',
     advisorName,
     advisorRole,
     advisorPhone,

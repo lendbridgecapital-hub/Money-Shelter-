@@ -54,7 +54,7 @@ export default function ActiveReportsSection({
   const shareRmLinkWhatsApp = (id?: string, rmName?: string) => {
     const link = getRmOnboardUrl(id);
     const text = encodeURIComponent(
-      `Hello! Onboard as an authorized Channel Partner with Quickfinsure via my direct referral link: ${link}. Once registered, you will be auto-assigned to me (${rmName || 'Relationship Manager'}) for fast-track loan processing and dedicated partner support.`
+      `Hello! Onboard as an authorized Channel Partner with Money Shelter via my direct referral link: ${link}. Once registered, you will be auto-assigned to me (${rmName || 'Relationship Manager'}) for fast-track loan processing and dedicated partner support.`
     );
     window.open(`https://api.whatsapp.com/send?text=${text}`, '_blank');
   };

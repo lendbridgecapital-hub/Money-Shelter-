@@ -7,7 +7,7 @@ import type { LoanType } from '@/types/db';
 import EligibilityCalculatorClient from './EligibilityCalculatorClient';
 
 export const metadata = {
-  title: 'Customer Loan Eligibility & Bank Recommendation | Quickfinsure',
+  title: 'Customer Loan Eligibility & Bank Recommendation | Money Shelter',
   description: 'AI-assisted matchmaking engine evaluating customer CIBIL, FOIR, and income against active bank policies.',
 };
 

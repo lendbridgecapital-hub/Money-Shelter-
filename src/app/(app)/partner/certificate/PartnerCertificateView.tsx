@@ -12,10 +12,10 @@ interface Props {
 
 export default function PartnerCertificateView({
   partner,
-  companyName = 'Quickfinsure',
+  companyName = 'Money Shelter',
 }: Props) {
   const issueDateFormatted = formatDate(partner.certificateIssuedAt || partner.approvedAt || partner.createdAt);
-  const certNumber = partner.certificateNumber || `QFS-CERT-2026-${partner.id.slice(-4).toUpperCase()}`;
+  const certNumber = partner.certificateNumber || `MS-CERT-2026-${partner.id.slice(-4).toUpperCase()}`;
 
   const handlePrint = () => {
     if (typeof window !== 'undefined') {
@@ -68,7 +68,7 @@ export default function PartnerCertificateView({
         {/* Subtle Background Watermark */}
         <div className="absolute inset-0 flex items-center justify-center opacity-[0.03] pointer-events-none select-none">
           <span className="text-[140px] font-black tracking-widest text-slate-900 uppercase">
-            QUICKFINSURE
+            MONEY SHELTER
           </span>
         </div>
 
@@ -81,7 +81,7 @@ export default function PartnerCertificateView({
         {/* Certificate Header */}
         <div className="text-center space-y-2 relative z-10">
           <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-gradient-to-tr from-emerald-700 to-emerald-600 text-white font-sans font-black text-xl shadow-md mb-1">
-            Q
+            M
           </div>
           <h2 className="text-base sm:text-lg font-bold font-sans uppercase tracking-[0.25em] text-slate-700">
             {companyName} Solutions Private Limited
@@ -167,7 +167,7 @@ export default function PartnerCertificateView({
           {/* Golden Seal Emblem */}
           <div className="w-20 h-20 rounded-full border-4 border-amber-500/80 bg-gradient-to-tr from-amber-100 to-amber-50 flex flex-col items-center justify-center shadow-inner text-center shrink-0">
             <span className="text-amber-800 text-[8px] font-extrabold uppercase tracking-widest leading-none">
-              QUICKFINSURE
+              MONEY SHELTER
             </span>
             <span className="text-base my-0.5">🎖️</span>
             <span className="text-amber-900 text-[7px] font-bold uppercase tracking-wider leading-none">
@@ -182,7 +182,7 @@ export default function PartnerCertificateView({
             </div>
             <div className="w-36 h-0.5 bg-slate-300 ml-auto mr-auto sm:mr-0" />
             <p className="text-[10px] font-bold text-slate-800 uppercase">Authorized Signatory</p>
-            <p className="text-[9px] text-slate-400">Quickfinsure Solutions Pvt Ltd</p>
+            <p className="text-[9px] text-slate-400">{companyName} Solutions Pvt Ltd</p>
           </div>
         </div>
       </div>

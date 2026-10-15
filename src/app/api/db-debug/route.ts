@@ -92,10 +92,16 @@ export async function GET(req: NextRequest) {
     users = (db.prepare('SELECT id, email, role, active, password_hash FROM users').all() || []) as Record<string, unknown>[];
   }
 
-  const admin = getUserByEmail('admin@quickfinsure.com');
+  const admin = getUserByEmail('admin@moneyshelter.in') || getUserByEmail('admin@quickfinsure.com');
   const passwordCheck = admin ? await bcrypt.compare('Password123!', admin.passwordHash) : false;
 
-  const testAccounts = ['admin@quickfinsure.com', 'ops@quickfinsure.com', 'rm@quickfinsure.com', 'partner@quickfinsure.com'];
+  const testAccounts = [
+    'admin@moneyshelter.in',
+    'ops@moneyshelter.in',
+    'rm@moneyshelter.in',
+    'partner@moneyshelter.in',
+    'admin@quickfinsure.com',
+  ];
   const testResults: Record<string, { exists: boolean; role?: string; passwordMatch: boolean }> = {};
 
   for (const email of testAccounts) {

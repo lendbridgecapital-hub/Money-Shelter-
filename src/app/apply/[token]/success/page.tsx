@@ -93,7 +93,7 @@ export default async function ApplicationSuccessPage({ params }: { params: { tok
                 {advisorName}
               </h3>
               <p className="text-xs text-slate-500 font-medium">
-                {advisor?.firmName || branch?.name || 'Quickfinsure Loan Desk'}
+                {advisor?.firmName || branch?.name || (settings.companyName ? `${settings.companyName} Loan Desk` : 'Money Shelter Loan Desk')}
                 {advisor?.partnerCode ? ` · ID: ${advisor.partnerCode}` : ''}
               </p>
             </div>
@@ -125,7 +125,7 @@ export default async function ApplicationSuccessPage({ params }: { params: { tok
 
                 <a
                   href={`https://wa.me/91${cleanPhone}?text=${encodeURIComponent(
-                    `Hello ${advisorName}, I have just submitted my loan application form on Quickfinsure (Ref: ${application.token}). Please review and guide me on the next steps.`
+                    `Hello ${advisorName}, I have just submitted my loan application form on ${settings.companyName || 'Money Shelter'} (Ref: ${application.token}). Please review and guide me on the next steps.`
                   )}`}
                   target="_blank"
                   rel="noopener noreferrer"
