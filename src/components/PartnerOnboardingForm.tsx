@@ -1245,7 +1245,7 @@ Compliance Undertaking: DPDP Act 2023 compliant, Zero-Cash Collection policy, no
           <a href="mailto:info@moneyshelter.in" className="text-emerald-600 hover:underline">
             info@moneyshelter.in
           </a>{' '}
-          or call <strong>+91 20 4000 1100</strong>.
+          or call <strong>+91 9049002010</strong>.
         </p>
         <p className="text-[11px]">
           Bavdhan &amp; Central Corporate Hub, Pune, Maharashtra 411021.

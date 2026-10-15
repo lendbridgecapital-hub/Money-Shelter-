@@ -34,7 +34,7 @@ export function Footer() {
               <p className="text-slate-400 text-[11px] mt-1">
                 Bavdhan & Central Corporate Hub, Pune, Maharashtra - 411021
               </p>
-              <div className="mt-2 text-cyan-300 font-medium">+91 20 4000 1100</div>
+              <div className="mt-2 text-cyan-300 font-medium">+91 9049002010</div>
             </div>
 
             {/* Nashik Branch */}

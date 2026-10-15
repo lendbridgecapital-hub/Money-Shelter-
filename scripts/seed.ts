@@ -91,7 +91,7 @@ async function main() {
       code: 'PUN01',
       email: 'pune@quickfinsure.com',
       address: '5th Floor, Galore Tech IT Park, Bavdhan, Pune - 411021',
-      phone: '+91 20 4000 1100',
+      phone: '+91 9049002010',
     });
     createBranch({
       name: 'Mumbai - Andheri West',

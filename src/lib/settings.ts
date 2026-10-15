@@ -11,7 +11,7 @@ export const DEFAULT_SETTINGS: CompanySettings = {
   primaryColor: '#0e7490', // Corporate Deep Cyan / Teal
   accentColor: '#d97706',  // Warm Gold Accent
   officialEmail: 'info@moneyshelter.in',
-  supportPhone: '+91 20 4000 1100',
+  supportPhone: '+91 9049002010',
   websiteUrl: 'https://moneyshelter.in',
   footerText: '© 2026 Money Shelter Pvt. Ltd. All rights reserved. Where Money Meets Trust.',
   portalTitle: 'Money Shelter — Where Money Meets Trust',

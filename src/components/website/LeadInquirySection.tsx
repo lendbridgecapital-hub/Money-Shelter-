@@ -73,7 +73,7 @@ export function LeadInquirySection() {
             {/* Quick Contact Box */}
             <div className="mt-8 p-5 rounded-2xl bg-cyan-950 text-white text-xs">
               <div className="font-bold text-amber-300 text-sm">Prefer direct phone contact?</div>
-              <div className="mt-1 text-slate-300">Call our central desk: <strong className="text-white">+91 20 4000 1100</strong></div>
+              <div className="mt-1 text-slate-300">Call our central desk: <strong className="text-white">+91 9049002010</strong></div>
               <div className="mt-0.5 text-slate-300">Or email: <strong className="text-white">info@moneyshelter.in</strong></div>
             </div>
           </div>
