@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { MoneyShelterLogo } from '@/components/MoneyShelterLogo';
+import { BecomePartnerModal } from './BecomePartnerModal';
 
 interface NavbarProps {
   userSession?: {
@@ -18,6 +19,7 @@ export function Navbar({ userSession }: NavbarProps) {
   const [isScrolled, setIsScrolled] = useState(false);
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isPartnerModalOpen, setIsPartnerModalOpen] = useState(false);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
@@ -96,7 +98,7 @@ export function Navbar({ userSession }: NavbarProps) {
             </span>
           </div>
 
-          <div className="flex items-center gap-4 text-slate-600">
+          <div className="flex items-center gap-3 text-slate-600">
             <a
               href="tel:+912040001100"
               className="hover:text-amber-600 transition-colors flex items-center gap-1 font-bold text-slate-800"
@@ -107,12 +109,26 @@ export function Navbar({ userSession }: NavbarProps) {
               <span>+91 20 4000 1100</span>
             </a>
             <span className="text-slate-300 hidden sm:inline">|</span>
-            <Link
-              href="/partner/register"
-              className="hover:text-cyan-700 font-semibold text-slate-600 hidden sm:inline-flex items-center gap-1"
+            <a
+              href="/Money-Shelter.apk"
+              download="Money-Shelter.apk"
+              className="hover:text-emerald-700 transition-colors flex items-center gap-1 font-bold text-slate-700 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200 text-[11px]"
+              title="Download Money Shelter Android App (APK)"
             >
-              <span>DSA / Partner Desk</span>
-            </Link>
+              <svg className="w-3 h-3 text-emerald-600" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM17 13l-5 5-5-5h3V9h4v4h3z"/>
+              </svg>
+              <span>Download App (APK)</span>
+            </a>
+            <span className="text-slate-300 hidden sm:inline">|</span>
+            <button
+              type="button"
+              onClick={() => setIsPartnerModalOpen(true)}
+              className="hover:text-emerald-700 font-bold text-slate-700 hidden sm:inline-flex items-center gap-1 cursor-pointer transition-colors"
+            >
+              <span className="text-emerald-600 font-black">✦</span>
+              <span>Become a Partner</span>
+            </button>
           </div>
         </div>
       </div>
@@ -348,13 +364,36 @@ export function Navbar({ userSession }: NavbarProps) {
             >
               Contact Us
             </Link>
+
+            {/* BECOME A PARTNER TAB */}
+            <button
+              type="button"
+              onClick={() => setIsPartnerModalOpen(true)}
+              className="px-3 py-1.5 text-[13px] font-extrabold text-emerald-800 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200/90 rounded-xl transition-all flex items-center gap-1.5 shadow-2xs cursor-pointer ml-1"
+            >
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+              <span>Become a Partner</span>
+            </button>
           </nav>
 
           {/* Right High-Conversion Action Buttons (Urban Money Style) */}
-          <div className="hidden sm:flex items-center gap-3">
+          <div className="hidden sm:flex items-center gap-2.5">
+            {/* Direct APK Download Button */}
+            <a
+              href="/Money-Shelter.apk"
+              download="Money-Shelter.apk"
+              className="px-3 py-2 text-xs font-bold text-slate-700 hover:text-emerald-700 bg-slate-50 hover:bg-emerald-50 border border-slate-200 hover:border-emerald-300 rounded-xl transition-all flex items-center gap-1.5 shadow-2xs"
+              title="Download Money Shelter Android App (APK)"
+            >
+              <svg className="w-3.5 h-3.5 text-emerald-600" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM17 13l-5 5-5-5h3V9h4v4h3z"/>
+              </svg>
+              <span>Download App</span>
+            </a>
+
             <Link
               href="/#apply"
-              className="px-4 py-2 text-xs sm:text-sm font-bold text-white bg-gradient-to-r from-cyan-600 via-cyan-700 to-teal-700 hover:from-cyan-500 hover:to-teal-600 rounded-xl shadow-md hover:shadow-cyan-600/25 transition-all transform hover:-translate-y-0.5"
+              className="px-3.5 py-2 text-xs sm:text-sm font-bold text-white bg-gradient-to-r from-cyan-600 via-cyan-700 to-teal-700 hover:from-cyan-500 hover:to-teal-600 rounded-xl shadow-md hover:shadow-cyan-600/25 transition-all transform hover:-translate-y-0.5"
             >
               Apply for Loan
             </Link>
@@ -445,6 +484,31 @@ export function Navbar({ userSession }: NavbarProps) {
             </div>
 
             <div className="pt-3 border-t border-slate-100 flex flex-col gap-2.5">
+              {/* Mobile Download APK Button */}
+              <a
+                href="/Money-Shelter.apk"
+                download="Money-Shelter.apk"
+                className="w-full text-center py-2.5 text-sm font-bold text-emerald-800 bg-emerald-50 border border-emerald-200 rounded-xl flex items-center justify-center gap-2"
+              >
+                <svg className="w-4 h-4 text-emerald-600" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM17 13l-5 5-5-5h3V9h4v4h3z"/>
+                </svg>
+                <span>Download App (Android APK)</span>
+              </a>
+
+              {/* Mobile Become a Partner Button */}
+              <button
+                type="button"
+                onClick={() => {
+                  setIsMobileMenuOpen(false);
+                  setIsPartnerModalOpen(true);
+                }}
+                className="w-full text-center py-2.5 text-sm font-bold text-white bg-gradient-to-r from-emerald-600 to-teal-700 rounded-xl shadow-xs flex items-center justify-center gap-1.5 cursor-pointer"
+              >
+                <span className="text-amber-300 font-black">✦</span>
+                <span>Become a Partner (Onboard Form)</span>
+              </button>
+
               <Link
                 href="/#apply"
                 onClick={() => setIsMobileMenuOpen(false)}
@@ -463,6 +527,12 @@ export function Navbar({ userSession }: NavbarProps) {
           </div>
         )}
       </header>
+
+      {/* Interactive Channel Partner Compliance Onboarding Modal */}
+      <BecomePartnerModal
+        isOpen={isPartnerModalOpen}
+        onClose={() => setIsPartnerModalOpen(false)}
+      />
     </>
   );
 }

@@ -7,6 +7,7 @@ import {
   completePartnerOnboardingAction,
 } from '@/actions/partnerOnboardingActions';
 import type { Branch } from '@/types/db';
+import { MoneyShelterLogo } from '@/components/MoneyShelterLogo';
 
 export interface ReferralRm {
   id: string;
@@ -83,7 +84,7 @@ function compressAndReadDoc(file: File): Promise<string> {
 
 export default function PartnerOnboardingForm({
   branches,
-  companyName = 'Quickfinsure',
+  companyName = 'Money Shelter Pvt. Ltd.',
   referralRm,
   referralSubDsa,
   targetRole = 'CHANNEL_PARTNER',
@@ -255,7 +256,7 @@ export default function PartnerOnboardingForm({
     const agreementSubDsaNote = referralSubDsa ? `Operating under Sub-DSA: ${referralSubDsa.name} (${referralSubDsa.partnerCode || 'Mapped'})` : '';
     const agreementAuthorizedText = `SUB-DSA / REFERRAL PARTNER AGREEMENT
 Executed on: ${currentDateFormatted}
-First Party: Quickfinsure Solutions (Galore Tech IT Park, Bavdhan, Pune HQ)
+First Party: Money Shelter Pvt. Ltd. (Bavdhan, Pune HQ, Maharashtra)
 Second Party (${agreementRoleTitle}): ${fullName}
 Father's/Spouse's Name: ${fatherSpouseName}
 Registered Address: ${address}
@@ -340,8 +341,8 @@ Compliance Undertaking: DPDP Act 2023 compliant, Zero-Cash Collection policy, no
 
       {/* Brand Header */}
       <div className="text-center mb-6 sm:mb-8">
-        <div className="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-emerald-600 text-white font-extrabold text-xl shadow-md mb-3">
-          Q
+        <div className="inline-flex items-center justify-center p-2 rounded-2xl bg-white border border-slate-200 shadow-md mb-3">
+          <MoneyShelterLogo variant="dark" size="md" />
         </div>
         <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
           {targetRole === 'SUB_DSA'
@@ -845,7 +846,7 @@ Compliance Undertaking: DPDP Act 2023 compliant, Zero-Cash Collection policy, no
                   First Party (Company):
                 </h4>
                 <p>
-                  <strong>Quickfinsure Private Limited</strong>, an incorporated entity having its office at Galore Tech IT Park, Fifth Floor L M D Square, Lane No. 2, Bavdhan, Pune, Maharashtra 411021 (hereinafter referred to as the &quot;Company&quot;).
+                  <strong>Money Shelter Private Limited</strong>, an incorporated entity having its corporate office at Bavdhan, Pune, Maharashtra 411021 (hereinafter referred to as the &quot;Company&quot;).
                 </p>
               </div>
 
@@ -1240,14 +1241,14 @@ Compliance Undertaking: DPDP Act 2023 compliant, Zero-Cash Collection policy, no
       {/* Support Footer */}
       <div className="mt-8 text-center text-xs text-slate-400 space-y-1">
         <p>
-          Need onboarding assistance? Contact the DSA Desk at{' '}
-          <a href="mailto:contact@quickfinsure.com" className="text-emerald-600 hover:underline">
-            contact@quickfinsure.com
+          Need onboarding assistance? Contact the Money Shelter Partner Desk at{' '}
+          <a href="mailto:info@moneyshelter.in" className="text-emerald-600 hover:underline">
+            info@moneyshelter.in
           </a>{' '}
-          or call <strong>+91 98765 43210</strong>.
+          or call <strong>+91 20 4000 1100</strong>.
         </p>
         <p className="text-[11px]">
-          Galore Tech IT Park, Fifth Floor L M D Square, Lane No. 2, Bavdhan, Pune, Maharashtra 411021.
+          Bavdhan &amp; Central Corporate Hub, Pune, Maharashtra 411021.
         </p>
       </div>
     </div>

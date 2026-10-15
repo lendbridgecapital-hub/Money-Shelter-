@@ -58,14 +58,20 @@
           <strong class="text-slate-900 font-bold">₹2,500+ Cr</strong> Disbursed • <strong class="text-slate-900 font-bold">30,000+</strong> Happy Customers Served Since 2014
         </span>
       </div>
-      <div class="flex items-center gap-4 text-slate-600">
+      <div class="flex items-center gap-3 text-slate-600">
         <a href="tel:+912040001100" class="hover:text-amber-600 transition-colors flex items-center gap-1 font-bold text-slate-800">
           <span>📞 +91 20 4000 1100</span>
         </a>
         <span class="text-slate-300 hidden sm:inline">|</span>
-        <a href="mailto:info@moneyshelter.in" class="hover:text-cyan-700 font-semibold hidden sm:inline-flex items-center gap-1">
-          <span>✉️ info@moneyshelter.in</span>
+        <a href="Money-Shelter.apk" download="Money-Shelter.apk" class="hover:text-emerald-700 transition-colors flex items-center gap-1 font-bold text-slate-700 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200 text-[11px]" title="Download Money Shelter Android APK">
+          <svg class="w-3 h-3 text-emerald-600 fill-current" viewBox="0 0 24 24"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM17 13l-5 5-5-5h3V9h4v4h3z"/></svg>
+          <span>Download App (APK)</span>
         </a>
+        <span class="text-slate-300 hidden sm:inline">|</span>
+        <button type="button" onclick="openPartnerModal()" class="hover:text-emerald-700 font-bold text-slate-700 hidden sm:inline-flex items-center gap-1 cursor-pointer transition-colors">
+          <span class="text-emerald-600 font-black">✦</span>
+          <span>Become a Partner</span>
+        </button>
       </div>
     </div>
   </div>
@@ -176,14 +182,26 @@
         <a href="#branches" class="px-3.5 py-2 text-[14px] font-semibold text-slate-700 hover:text-cyan-700 hover:bg-slate-50 rounded-lg transition-colors">
           Contact Us
         </a>
+
+        <!-- BECOME A PARTNER TAB -->
+        <button type="button" onclick="openPartnerModal()" class="px-3 py-1.5 text-[13px] font-extrabold text-emerald-800 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200/90 rounded-xl transition-all flex items-center gap-1.5 shadow-2xs cursor-pointer ml-1">
+          <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+          <span>Become a Partner</span>
+        </button>
       </nav>
 
       <!-- Action Buttons (Right) -->
-      <div class="hidden sm:flex items-center gap-3">
-        <a href="#apply" class="px-5 py-2.5 text-sm font-bold text-white bg-gradient-to-r from-cyan-600 via-cyan-700 to-teal-700 hover:from-cyan-500 hover:to-teal-600 rounded-xl shadow-md hover:shadow-cyan-600/25 transition-all transform hover:-translate-y-0.5">
+      <div class="hidden sm:flex items-center gap-2.5">
+        <!-- Direct APK Download Button -->
+        <a href="Money-Shelter.apk" download="Money-Shelter.apk" class="px-3 py-2 text-xs font-bold text-slate-700 hover:text-emerald-700 bg-slate-50 hover:bg-emerald-50 border border-slate-200 hover:border-emerald-300 rounded-xl transition-all flex items-center gap-1.5 shadow-2xs" title="Download Money Shelter Android App (APK)">
+          <svg class="w-3.5 h-3.5 text-emerald-600 fill-current" viewBox="0 0 24 24"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM17 13l-5 5-5-5h3V9h4v4h3z"/></svg>
+          <span>Download App</span>
+        </a>
+
+        <a href="#apply" class="px-4 py-2 text-xs sm:text-sm font-bold text-white bg-gradient-to-r from-cyan-600 via-cyan-700 to-teal-700 hover:from-cyan-500 hover:to-teal-600 rounded-xl shadow-md hover:shadow-cyan-600/25 transition-all transform hover:-translate-y-0.5">
           Apply for Loan
         </a>
-        <a href="#apply" class="px-4 py-2.5 text-xs font-bold text-slate-700 hover:text-cyan-700 border border-slate-300 hover:border-cyan-600 rounded-xl transition-colors flex items-center gap-1.5">
+        <a href="/login" class="px-3.5 py-2 text-xs font-bold text-slate-700 hover:text-cyan-700 border border-slate-300 hover:border-cyan-600 rounded-xl transition-colors flex items-center gap-1.5">
           <svg class="w-3.5 h-3.5 text-cyan-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
           <span>Partner Login</span>
         </a>
@@ -1058,8 +1076,122 @@
       document.getElementById('formSuccess').classList.remove('hidden');
     }
 
+    function openPartnerModal() {
+      document.getElementById('partnerModal').classList.remove('hidden');
+    }
+
+    function closePartnerModal() {
+      document.getElementById('partnerModal').classList.add('hidden');
+    }
+
+    function handlePartnerSubmit(e) {
+      e.preventDefault();
+      const name = document.getElementById('pmName').value;
+      const code = 'MS-PRT-' + Math.floor(1000 + Math.random() * 9000);
+      document.getElementById('pmFormCard').classList.add('hidden');
+      document.getElementById('pmSuccessCard').classList.remove('hidden');
+      document.getElementById('pmGeneratedCode').innerText = code;
+    }
+
     updateHeroCalc();
     calcEMI();
   </script>
+
+  <!-- Interactive Onboard Partner Modal (Channel Partner Compliance & Network) -->
+  <div id="partnerModal" class="hidden fixed inset-0 z-[100] bg-slate-950/70 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
+    <div class="bg-white rounded-3xl max-w-lg w-full p-6 sm:p-7 shadow-2xl border border-slate-100 my-8 relative">
+      <button type="button" onclick="closePartnerModal()" class="absolute top-5 right-5 w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 hover:text-slate-800 flex items-center justify-center transition-colors text-sm font-bold">
+        ✕
+      </button>
+
+      <div id="pmFormCard">
+        <div class="border-b border-slate-100 pb-4 mb-4">
+          <div class="flex items-center gap-2 mb-1.5">
+            <span class="text-[11px] font-bold uppercase tracking-wider text-cyan-800 bg-cyan-50 px-2.5 py-0.5 rounded-md border border-cyan-100">
+              Channel Partner Compliance &amp; Network
+            </span>
+          </div>
+          <h3 class="text-xl font-extrabold text-slate-900 tracking-tight">Onboard New Partner</h3>
+          <p class="text-xs text-slate-500 mt-0.5">
+            Direct registration. Partner will be auto-approved and issued an official Money Shelter Partner Code.
+          </p>
+        </div>
+
+        <form onsubmit="handlePartnerSubmit(event)" class="space-y-3.5">
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1">Appointment Role &amp; Network Tier *</label>
+            <select class="w-full px-3 py-2 text-xs border border-slate-200 rounded-xl bg-slate-50 font-bold text-slate-800">
+              <option value="CHANNEL_PARTNER">Channel Partner (Agent) — Direct Origination Tier</option>
+              <option value="SUB_DSA">Sub-DSA (Master Tier) — Team Recruitment &amp; Override Engine</option>
+            </select>
+          </div>
+
+          <div class="grid sm:grid-cols-2 gap-3">
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 mb-1">Partner Full Name *</label>
+              <input id="pmName" type="text" required placeholder="e.g. Ramesh Verma" class="w-full px-3 py-2 text-xs border border-slate-200 rounded-xl font-medium" />
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 mb-1">10-Digit Mobile *</label>
+              <input type="tel" required placeholder="9820011223" maxlength="10" class="w-full px-3 py-2 text-xs border border-slate-200 rounded-xl font-mono" />
+            </div>
+          </div>
+
+          <div class="grid sm:grid-cols-2 gap-3">
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 mb-1">Email Address *</label>
+              <input type="email" required placeholder="ramesh@example.com" class="w-full px-3 py-2 text-xs border border-slate-200 rounded-xl font-medium" />
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 mb-1">Operating Branch *</label>
+              <select class="w-full px-3 py-2 text-xs border border-slate-200 rounded-xl bg-white font-medium">
+                <option>Pune - Bavdhan HQ</option>
+                <option>Mumbai - Andheri West</option>
+                <option>Satara Branch</option>
+                <option>Bengaluru - Indiranagar</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="grid sm:grid-cols-2 gap-3">
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 mb-1">PAN Number</label>
+              <input type="text" maxlength="10" placeholder="ABCDE1234F" class="w-full px-3 py-2 text-xs border border-slate-200 rounded-xl font-mono uppercase" />
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 mb-1">Aadhaar (Optional)</label>
+              <input type="text" maxlength="12" placeholder="12-digit UID" class="w-full px-3 py-2 text-xs border border-slate-200 rounded-xl font-mono" />
+            </div>
+          </div>
+
+          <div class="p-2.5 rounded-xl bg-cyan-50/70 border border-cyan-100 flex items-center justify-between text-[11px] text-cyan-900">
+            <span>Want to upload documents &amp; sign agreement now?</span>
+            <a href="/partner/onboard" class="font-bold underline text-cyan-800 ml-2">Full KYC Form &rarr;</a>
+          </div>
+
+          <div class="pt-2 flex items-center justify-end gap-2.5">
+            <button type="button" onclick="closePartnerModal()" class="px-4 py-2 border border-slate-200 text-slate-600 text-xs font-bold rounded-xl">Cancel</button>
+            <button type="submit" class="px-5 py-2.5 bg-gradient-to-r from-emerald-600 to-teal-700 hover:from-emerald-500 hover:to-teal-600 text-white text-xs font-bold rounded-xl shadow-md">
+              ➕ Onboard Partner &amp; Generate Code
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <div id="pmSuccessCard" class="hidden text-center py-4 space-y-4">
+        <div class="w-16 h-16 mx-auto rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-600 flex items-center justify-center text-3xl font-bold">✓</div>
+        <h3 class="text-2xl font-black text-slate-900">Partner Onboarded Successfully!</h3>
+        <p class="text-xs text-slate-500">Welcome to Money Shelter distribution network.</p>
+        <div class="bg-slate-50 border border-slate-200 rounded-2xl p-4 text-center">
+          <span class="text-xs text-slate-500 block mb-1">Your Official Partner Code:</span>
+          <span id="pmGeneratedCode" class="text-xl font-extrabold text-cyan-800 font-mono bg-cyan-50 px-3 py-1.5 rounded-lg border border-cyan-200 inline-block">MS-PRT-0000</span>
+        </div>
+        <div class="pt-2 flex gap-3">
+          <a href="/login" class="flex-1 py-3 rounded-xl bg-cyan-700 text-white font-bold text-xs text-center shadow-md">Go to Partner Login &rarr;</a>
+          <button type="button" onclick="closePartnerModal()" class="py-3 px-4 rounded-xl border border-slate-200 text-xs font-semibold">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
 </body>
 </html>

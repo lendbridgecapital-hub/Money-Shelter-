@@ -79,9 +79,9 @@ export function createUser(data: {
 
   if (data.role === 'CHANNEL_PARTNER' || data.role === 'SUB_DSA') {
     const randomSuffix = Math.floor(1000 + Math.random() * 9000);
-    const defaultPrefix = data.role === 'SUB_DSA' ? 'QFS-SUB' : 'QFS-PRT';
+    const defaultPrefix = data.role === 'SUB_DSA' ? 'MS-SUB' : 'MS-PRT';
     const partnerCode = data.partnerCode || `${defaultPrefix}-${randomSuffix}`;
-    const certNum = `QFS-CERT-2026-${randomSuffix}`;
+    const certNum = `MS-CERT-2026-${randomSuffix}`;
     const partnerStatus = data.partnerStatus || 'APPROVED';
 
     db.prepare(

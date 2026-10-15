@@ -576,3 +576,88 @@ export async function resubmitPartnerDocsAction(payload: {
     return { ok: false, error: err instanceof Error ? err.message : 'Failed to resubmit documents.' };
   }
 }
+
+/**
+ * Public Website Quick Onboard Partner Action
+ * Allows website visitors clicking "Become a Partner" to register and be issued an official Partner Code instantly.
+ */
+export async function publicWebsiteOnboardPartnerAction(payload: {
+  fullName: string;
+  email: string;
+  mobile: string;
+  branchId?: string;
+  role?: 'CHANNEL_PARTNER' | 'SUB_DSA';
+  panNumber?: string | null;
+  aadhaarNumber?: string | null;
+  password?: string;
+}): Promise<{ ok: boolean; message?: string; error?: string; partnerCode?: string; partnerId?: string }> {
+  try {
+    const fullName = (payload.fullName || '').trim();
+    const email = (payload.email || '').trim().toLowerCase();
+    const mobile = (payload.mobile || '').trim().replace(/[^0-9]/g, '').slice(-10);
+    const password = payload.password?.trim() || 'MoneyShelter@123';
+    const role = payload.role === 'SUB_DSA' ? 'SUB_DSA' : 'CHANNEL_PARTNER';
+
+    if (!fullName) return { ok: false, error: 'Partner full legal name is required.' };
+    if (!email || !/^\S+@\S+\.\S+$/.test(email)) return { ok: false, error: 'A valid email address is required.' };
+    if (mobile.length !== 10) return { ok: false, error: 'A valid 10-digit mobile number is required.' };
+
+    if (emailExists(email)) {
+      return { ok: false, error: `An account with email "${email}" already exists. Please sign in or use another email.` };
+    }
+
+    const branches = listBranches();
+    const branchId = payload.branchId || branches[0]?.id || 'br_c95492722e36abe1';
+
+    const cleanPan = payload.panNumber ? payload.panNumber.trim().toUpperCase() : null;
+    if (cleanPan && !/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/.test(cleanPan)) {
+      return { ok: false, error: 'Please enter a valid 10-digit PAN (e.g. ABCDE1234F).' };
+    }
+
+    const cleanAadhaar = payload.aadhaarNumber ? payload.aadhaarNumber.trim().replace(/[^0-9]/g, '') : null;
+    if (cleanAadhaar && cleanAadhaar.length !== 12) {
+      return { ok: false, error: 'Please enter a valid 12-digit Aadhaar number.' };
+    }
+
+    const passwordHash = await bcrypt.hash(password, 10);
+
+    const partner = createUser({
+      name: fullName,
+      email,
+      passwordHash,
+      role,
+      branchId,
+      phone: mobile,
+      panNumber: cleanPan,
+      aadhaarNumber: cleanAadhaar,
+      partnerStatus: 'APPROVED',
+    });
+
+    // Notify new partner
+    try {
+      createNotification({
+        recipientId: partner.id,
+        recipientRole: role,
+        applicationId: 'partner-onboarding',
+        title: `Welcome to Money Shelter!`,
+        message: `${fullName}, your official partner code is ${partner.partnerCode}. You can now login to track cases and commission payouts.`,
+        tenantId: 'default',
+      });
+    } catch {}
+
+    safeRevalidate('/admin/partners');
+    safeRevalidate('/admin/partner-requests');
+    safeRevalidate('/dashboard');
+
+    await syncDatabase();
+
+    return {
+      ok: true,
+      partnerCode: partner.partnerCode,
+      partnerId: partner.id,
+      message: `Welcome to Money Shelter! You have been onboarded as an authorized ${role === 'SUB_DSA' ? 'Sub-DSA' : 'Channel Partner'}. Your official Partner Code is ${partner.partnerCode}.`,
+    };
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : 'Failed to complete partner onboarding.' };
+  }
+}

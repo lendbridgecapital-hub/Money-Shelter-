@@ -139,7 +139,7 @@ export function Footer() {
           {/* Partner & Portal */}
           <div>
             <h4 className="text-white font-bold text-sm uppercase tracking-wider mb-4">
-              Portal Access
+              Portal & Apps
             </h4>
             <ul className="space-y-2.5">
               <li>
@@ -149,10 +149,23 @@ export function Footer() {
                 </Link>
               </li>
               <li>
-                <Link href="/partner/register" className="hover:text-amber-400 transition-colors flex items-center gap-1.5">
+                <Link href="/partner/onboard" className="hover:text-amber-400 transition-colors flex items-center gap-1.5 font-semibold text-amber-300">
                   <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
                   <span>Become a Channel Partner</span>
                 </Link>
+              </li>
+              <li>
+                <a
+                  href="/Money-Shelter.apk"
+                  download="Money-Shelter.apk"
+                  className="hover:text-emerald-300 transition-colors flex items-center gap-1.5 font-bold text-emerald-400"
+                  title="Download Money Shelter Android APK"
+                >
+                  <svg className="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24">
+                    <path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM17 13l-5 5-5-5h3V9h4v4h3z"/>
+                  </svg>
+                  <span>Download Mobile App (APK)</span>
+                </a>
               </li>
               <li>
                 <a href="#apply" className="hover:text-cyan-400 transition-colors">
