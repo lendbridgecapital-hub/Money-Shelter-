@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { getApplicationByToken } from '@/lib/repos/applicationsRepo';
+import { getApplicationByToken, updateApplicationStatus } from '@/lib/repos/applicationsRepo';
 import { getBranchById } from '@/lib/repos/branchesRepo';
 import { getUserById } from '@/lib/repos/usersRepo';
 import { getCompanySettings } from '@/lib/settings';
@@ -76,6 +76,63 @@ export default async function CustomerApplyPage({
 
   const settings = await getCompanySettings(application.tenantId || 'default');
   const branch = getBranchById(application.branchId);
+
+  // Check 7-Day Auto-Expiry or FAILED bucket status
+  const nowMs = Date.now();
+  const createdMs = application.createdAt ? new Date(application.createdAt).getTime() : nowMs;
+  const isSevenDaysExpired = application.status === 'LINK_SHARED' && (nowMs - createdMs) >= 7 * 24 * 60 * 60 * 1000;
+  const isFailed = application.status === 'FAILED' || isSevenDaysExpired;
+
+  if (isFailed) {
+    if (application.status === 'LINK_SHARED') {
+      try {
+        updateApplicationStatus(application.id, 'FAILED');
+      } catch {}
+    }
+
+    const advisor = application.channelPartnerId
+      ? getUserById(application.channelPartnerId)
+      : application.createdById
+      ? getUserById(application.createdById)
+      : undefined;
+    const advisorName = advisor?.name || application.channelPartnerName || application.createdByName || 'Your Financial Advisor';
+    const advisorPhone = advisor?.phone || branch?.phone || settings.supportPhone;
+    const cleanPhone = advisorPhone ? advisorPhone.replace(/[^0-9]/g, '').slice(-10) : '';
+
+    return (
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center p-6">
+        <div className="max-w-md w-full bg-white border border-rose-200 rounded-3xl p-8 text-center shadow-lg">
+          <div className="w-16 h-16 rounded-2xl mx-auto flex items-center justify-center text-white text-3xl shadow-md mb-5 bg-rose-600">
+            ⏳
+          </div>
+          <h1 className="text-xl font-bold text-slate-900 mb-2">Application Link Expired</h1>
+          <p className="text-xs text-slate-600 leading-relaxed mb-6">
+            This loan application link has expired after 7 days of inactivity. The case has been closed and moved to the Failed bucket.
+          </p>
+
+          <div className="bg-rose-50/70 border border-rose-200 rounded-xl p-4 text-xs text-rose-900 text-left space-y-1.5 mb-6">
+            <p><strong>Bucket:</strong> Failed / Expired</p>
+            <p><strong>Expiry Reason:</strong> 7 days validity window exceeded</p>
+            <p><strong>Assigned Advisor:</strong> {advisorName}</p>
+            {branch?.name && <p><strong>Branch:</strong> {branch.name}</p>}
+          </div>
+
+          <p className="text-xs text-slate-600 font-semibold mb-4">
+            Please ask your advisor to generate a new application link to apply for your loan.
+          </p>
+          {cleanPhone && (
+            <a
+              href={`tel:+91${cleanPhone}`}
+              className="inline-flex items-center justify-center w-full py-3 px-4 rounded-xl text-xs font-bold text-white transition shadow-sm bg-emerald-600 hover:bg-emerald-700 mb-3"
+            >
+              📞 Call Advisor: +91 {cleanPhone}
+            </a>
+          )}
+          <ExitFormButton label="Exit Form / Close Tab ✕" variant="outline" />
+        </div>
+      </div>
+    );
+  }
 
   // If status is DOCUMENTS_REQUIRED: Render the dedicated document upload checklist
   if (application.status === 'DOCUMENTS_REQUIRED') {

@@ -127,6 +127,7 @@ const VALID_STATUSES: ApplicationStatus[] = [
   'CUSTOMER_ACCEPTED',
   'DISBURSED',
   'REJECTED',
+  'FAILED',
 ];
 
 export async function updateApplicationStatusAction(

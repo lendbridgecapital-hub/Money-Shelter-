@@ -50,6 +50,11 @@ export default function StatusBadge({
       text: 'text-rose-800',
       dot: 'bg-rose-500',
     },
+    FAILED: {
+      bg: 'bg-rose-100/80 border-rose-300',
+      text: 'text-rose-900',
+      dot: 'bg-rose-600',
+    },
   };
 
   const style = styles[status] || styles.LINK_SHARED;

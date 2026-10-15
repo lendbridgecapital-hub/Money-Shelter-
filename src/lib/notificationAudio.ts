@@ -163,6 +163,52 @@ export function playChimeSound(): void {
 }
 
 /**
+ * Play High-Priority Emergency / Warning Alarm for SLA breaches (Red alert for Admin)
+ */
+export function playWarningAlarmSound(): void {
+  try {
+    const ctx = getAudioContext();
+    if (!ctx) return;
+
+    const now = ctx.currentTime;
+
+    // Siren alarm: 4 alternating high-low pulses (880Hz / 660Hz)
+    const pulses = [
+      { freq: 880, start: 0.00, duration: 0.18, gain: 0.45 },
+      { freq: 660, start: 0.20, duration: 0.18, gain: 0.40 },
+      { freq: 920, start: 0.42, duration: 0.22, gain: 0.50 },
+      { freq: 700, start: 0.66, duration: 0.22, gain: 0.45 },
+      { freq: 980, start: 0.90, duration: 0.28, gain: 0.55 },
+    ];
+
+    pulses.forEach(({ freq, start, duration, gain: maxGain }) => {
+      const osc = ctx.createOscillator();
+      const gainNode = ctx.createGain();
+
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(freq, now + start);
+
+      gainNode.gain.setValueAtTime(0.001, now + start);
+      gainNode.gain.linearRampToValueAtTime(maxGain, now + start + 0.02);
+      gainNode.gain.exponentialRampToValueAtTime(0.0001, now + start + duration);
+
+      osc.connect(gainNode);
+      gainNode.connect(ctx.destination);
+
+      osc.start(now + start);
+      osc.stop(now + start + duration);
+    });
+
+    // Urgent mobile vibration pattern
+    if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
+      navigator.vibrate([250, 100, 250, 100, 450]);
+    }
+  } catch (err) {
+    console.warn('[notificationAudio] Alarm playback failed:', err);
+  }
+}
+
+/**
  * Format raw notification text into clear, natural spoken words
  */
 function cleanTextForSpeech(text: string): string {
@@ -231,10 +277,19 @@ export function triggerNotificationAlert(notification: {
   message?: string;
 }): void {
   const mode = getNotificationSoundMode();
-  if (mode === 'mute') return;
+  // Check if this is an urgent SLA warning alarm (for Admin / Ops critical TAT breach)
+  const isAlarm =
+    notification.title.includes('Warning Alarm') ||
+    notification.title.includes('Critical TAT') ||
+    notification.title.includes('🚨') ||
+    (notification.message && notification.message.includes('TAT Breach'));
 
-  // 1. Play messaging chime tone immediately
-  playChimeSound();
+  if (isAlarm) {
+    playWarningAlarmSound();
+  } else {
+    // 1. Play messaging chime tone immediately
+    playChimeSound();
+  }
 
   // 2. Play voice alert if enabled
   if (mode === 'voice') {

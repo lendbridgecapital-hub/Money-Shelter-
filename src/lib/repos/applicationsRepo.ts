@@ -3,6 +3,7 @@ import { db } from '@/lib/db';
 import type { LoanApplication, ApplicationStatus, LoanType, PipelineStats, User } from '@/types/db';
 import { listPartnersByRm, listPartnersBySubDsa, getUserById } from '@/lib/repos/usersRepo';
 import { generateApplicationToken } from '@/lib/tokens';
+import { evaluateAndProcessSlaRules } from '@/lib/slaEngine';
 
 export function createApplicationLink(data: {
   token: string;
@@ -36,8 +37,8 @@ export function createApplicationLink(data: {
   db.prepare(
     `INSERT INTO loan_applications (
       id, tenant_id, token, branch_id, created_by_id, channel_partner_id, channel_partner_name,
-      relationship_manager_id, relationship_manager_name, status, created_at, updated_at
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+      relationship_manager_id, relationship_manager_name, status, status_changed_at, created_at, updated_at
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
   ).run(
     id,
     tenantId,
@@ -49,6 +50,7 @@ export function createApplicationLink(data: {
     rmId,
     rmName,
     'LINK_SHARED',
+    now,
     now,
     now
   );
@@ -143,7 +145,7 @@ export function recordCustomerSubmission(
 
   db.prepare(
     `UPDATE loan_applications
-     SET full_name = ?, mobile = ?, email = ?, loan_type = ?, loan_amount = ?, monthly_income = ?, existing_emi = ?, tenure_months = ?, status = ?, submitted_at = ?, updated_at = ?
+     SET full_name = ?, mobile = ?, email = ?, loan_type = ?, loan_amount = ?, monthly_income = ?, existing_emi = ?, tenure_months = ?, status = ?, status_changed_at = ?, tat_alerts_sent = NULL, submitted_at = ?, updated_at = ?
      WHERE id = ?`
   ).run(
     data.fullName.trim(),
@@ -157,20 +159,21 @@ export function recordCustomerSubmission(
     'DOCUMENTS_IN',
     now,
     now,
+    now,
     id
   );
 
   // Guaranteed Verification Guard: ensure status is strictly DOCUMENTS_IN
   const verified = getApplicationById(id);
   if (!verified || verified.status !== 'DOCUMENTS_IN') {
-    db.prepare('UPDATE loan_applications SET status = ?, full_name = ?, mobile = ?, updated_at = ? WHERE id = ?')
-      .run('DOCUMENTS_IN', data.fullName.trim(), data.mobile.trim(), now, id);
+    db.prepare('UPDATE loan_applications SET status = ?, status_changed_at = ?, tat_alerts_sent = NULL, full_name = ?, mobile = ?, updated_at = ? WHERE id = ?')
+      .run('DOCUMENTS_IN', now, data.fullName.trim(), data.mobile.trim(), now, id);
   }
 }
 
 export function updateApplicationStatus(id: string, status: ApplicationStatus): void {
   const now = new Date().toISOString();
-  db.prepare('UPDATE loan_applications SET status = ?, updated_at = ? WHERE id = ?').run(status, now, id);
+  db.prepare('UPDATE loan_applications SET status = ?, status_changed_at = ?, tat_alerts_sent = NULL, updated_at = ? WHERE id = ?').run(status, now, now, id);
 }
 
 export function updateApplicationCustomerInfo(
@@ -222,17 +225,17 @@ export function sendCaseToBank(applicationId: string, bankId: string, bankName: 
   const now = new Date().toISOString();
   db.prepare(
     `UPDATE loan_applications
-     SET status = 'SENT_TO_BANK', bank_id = ?, bank_name = ?, sent_to_bank_at = ?, updated_at = ?
+     SET status = 'SENT_TO_BANK', bank_id = ?, bank_name = ?, sent_to_bank_at = ?, status_changed_at = ?, tat_alerts_sent = NULL, updated_at = ?
      WHERE id = ?`
-  ).run(bankId, bankName, now, now, applicationId);
+  ).run(bankId, bankName, now, now, now, applicationId);
 }
 
 // 2. Mark documents required
 export function setDocumentsRequired(applicationId: string): void {
   const now = new Date().toISOString();
   db.prepare(
-    `UPDATE loan_applications SET status = 'DOCUMENTS_REQUIRED', updated_at = ? WHERE id = ?`
-  ).run(now, applicationId);
+    `UPDATE loan_applications SET status = 'DOCUMENTS_REQUIRED', status_changed_at = ?, tat_alerts_sent = NULL, updated_at = ? WHERE id = ?`
+  ).run(now, now, applicationId);
 }
 
 // 3. Bank approval with loan terms
@@ -245,8 +248,8 @@ export function approveApplication(
   bankName?: string
 ): void {
   const now = new Date().toISOString();
-  const updates: string[] = ['status = ?', 'approved_amount = ?', 'interest_rate = ?', 'tenure_months = ?', 'approved_at = ?', 'updated_at = ?'];
-  const params: unknown[] = ['APPROVED', approvedAmount, interestRate, tenureMonths, now, now];
+  const updates: string[] = ['status = ?', 'approved_amount = ?', 'interest_rate = ?', 'tenure_months = ?', 'approved_at = ?', 'status_changed_at = ?', 'tat_alerts_sent = NULL', 'updated_at = ?'];
+  const params: unknown[] = ['APPROVED', approvedAmount, interestRate, tenureMonths, now, now, now];
 
   if (bankId && bankName) {
     updates.push('bank_id = ?', 'bank_name = ?');
@@ -262,9 +265,9 @@ export function customerAcceptLoanOffer(token: string, acceptanceLetterRef: stri
   const now = new Date().toISOString();
   db.prepare(
     `UPDATE loan_applications
-     SET status = 'CUSTOMER_ACCEPTED', customer_accepted_at = ?, acceptance_letter_ref = ?, updated_at = ?
+     SET status = 'CUSTOMER_ACCEPTED', customer_accepted_at = ?, status_changed_at = ?, tat_alerts_sent = NULL, acceptance_letter_ref = ?, updated_at = ?
      WHERE token = ?`
-  ).run(now, acceptanceLetterRef, now, token);
+  ).run(now, now, acceptanceLetterRef, now, token);
 
   return getApplicationByToken(token);
 }
@@ -278,7 +281,7 @@ export function disburseApplication(
   const now = new Date().toISOString();
   db.prepare(
     `UPDATE loan_applications
-     SET status = 'DISBURSED', disbursed_amount = ?, commission_amount = ?, commission_status = 'PENDING', disbursed_at = ?, updated_at = ?
+     SET status = 'DISBURSED', disbursed_amount = ?, commission_amount = ?, commission_status = 'PENDING', status_changed_at = ?, tat_alerts_sent = NULL, disbursed_at = ?, updated_at = ?
      WHERE id = ?`
   ).run(disbursedAmount, commissionAmount, now, now, applicationId);
 }
@@ -288,7 +291,13 @@ export function listAllApplications(tenantId = 'default'): LoanApplication[] {
     .prepare('SELECT * FROM loan_applications WHERE tenant_id = ? ORDER BY created_at DESC')
     .all(tenantId) as Record<string, unknown>[];
 
-  return rows.map(mapRowToApplication);
+  const apps = rows.map(mapRowToApplication);
+  try {
+    evaluateAndProcessSlaRules(apps).catch((err) => {
+      console.warn('[applicationsRepo] evaluateAndProcessSlaRules error:', err);
+    });
+  } catch {}
+  return apps;
 }
 
 export function listApplicationsByBranch(branchId: string): LoanApplication[] {
@@ -393,6 +402,7 @@ export function getPipelineStats(user?: User, tenantId = 'default'): PipelineSta
     customerAccepted: apps.filter((a) => norm(a.status) === 'CUSTOMER_ACCEPTED').length,
     disbursed: apps.filter((a) => norm(a.status) === 'DISBURSED' || norm(a.status) === 'LOAN_DISBURSED').length,
     rejected: apps.filter((a) => norm(a.status) === 'REJECTED' || norm(a.status) === 'LOAN_REJECTED').length,
+    failed: apps.filter((a) => norm(a.status) === 'FAILED').length,
   };
 }
 
@@ -407,6 +417,7 @@ export function branchStats(branchId?: string, tenantId = 'default') {
     approved: apps.filter((a) => norm(a.status) === 'APPROVED' || norm(a.status) === 'LOAN_APPROVED').length,
     rejected: apps.filter((a) => norm(a.status) === 'REJECTED' || norm(a.status) === 'LOAN_REJECTED').length,
     disbursed: apps.filter((a) => norm(a.status) === 'DISBURSED' || norm(a.status) === 'LOAN_DISBURSED').length,
+    failed: apps.filter((a) => norm(a.status) === 'FAILED').length,
   };
 }
 
@@ -503,6 +514,8 @@ function mapRowToApplication(row: Record<string, unknown>): LoanApplication {
     createdAt: String(row.created_at || row.createdAt || ''),
     submittedAt: row.submitted_at || row.submittedAt ? String(row.submitted_at || row.submittedAt) : null,
     updatedAt: row.updated_at || row.updatedAt ? String(row.updated_at || row.updatedAt) : null,
+    statusChangedAt: row.status_changed_at || row.statusChangedAt ? String(row.status_changed_at || row.statusChangedAt) : null,
+    tatAlertsSent: row.tat_alerts_sent || row.tatAlertsSent ? String(row.tat_alerts_sent || row.tatAlertsSent) : null,
   };
 }
 
@@ -552,8 +565,8 @@ export function createInquiryFromCard(data: {
     `INSERT INTO loan_applications (
       id, tenant_id, token, branch_id, created_by_id, channel_partner_id, channel_partner_name,
       relationship_manager_id, relationship_manager_name, full_name, mobile, email,
-      loan_type, loan_amount, status, created_at, updated_at
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+      loan_type, loan_amount, status, status_changed_at, created_at, updated_at
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
   ).run(
     id,
     tenantId,
@@ -570,6 +583,7 @@ export function createInquiryFromCard(data: {
     data.loanType || 'PERSONAL_LOAN',
     data.loanAmount || 0,
     'LINK_SHARED',
+    now,
     now,
     now
   );
@@ -608,8 +622,8 @@ export function createDirectPartnerApplication(data: {
     `INSERT INTO loan_applications (
       id, tenant_id, token, branch_id, created_by_id, channel_partner_id, channel_partner_name,
       relationship_manager_id, relationship_manager_name, full_name, mobile, email,
-      loan_type, loan_amount, monthly_income, existing_emi, tenure_months, pan_number, aadhaar_number, status, submitted_at, created_at, updated_at
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+      loan_type, loan_amount, monthly_income, existing_emi, tenure_months, pan_number, aadhaar_number, status, status_changed_at, submitted_at, created_at, updated_at
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
   ).run(
     id,
     tenantId,
@@ -631,6 +645,7 @@ export function createDirectPartnerApplication(data: {
     data.panNumber ? data.panNumber.trim().toUpperCase() : null,
     data.aadhaarNumber ? data.aadhaarNumber.trim().replace(/\s+/g, '') : null,
     status,
+    now,
     now,
     now,
     now

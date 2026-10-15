@@ -20,7 +20,8 @@ export type ApplicationStatus =
   | 'APPROVED'
   | 'CUSTOMER_ACCEPTED'
   | 'DISBURSED'
-  | 'REJECTED';
+  | 'REJECTED'
+  | 'FAILED';
 
 export type LoanType =
   | 'HOME_LOAN'
@@ -359,6 +360,10 @@ export interface LoanApplication {
   commissionStatus?: 'PENDING' | 'PAID' | 'CLAWBACK' | null;
   eligibilityOfferJson?: string | null;
 
+  // SLA / TAT Timer Tracking
+  statusChangedAt?: string | null;
+  tatAlertsSent?: string | null;
+
   createdAt: string;
   submittedAt?: string | null;
   updatedAt?: string | null;
@@ -396,6 +401,7 @@ export interface PipelineStats {
   customerAccepted: number;
   disbursed: number;
   rejected: number;
+  failed: number;
 }
 
 export interface EmailLog {

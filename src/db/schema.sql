@@ -145,7 +145,9 @@ CREATE TABLE IF NOT EXISTS loan_applications (
   commission_status TEXT,
   created_at TEXT NOT NULL,
   submitted_at TEXT,
-  updated_at TEXT
+  updated_at TEXT,
+  status_changed_at TEXT,
+  tat_alerts_sent TEXT
 );
 
 CREATE TABLE IF NOT EXISTS application_documents (

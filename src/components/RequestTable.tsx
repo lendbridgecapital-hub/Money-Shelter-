@@ -1,11 +1,12 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import type { LoanApplication, ApplicationStatus } from '@/types/db';
 import { LOAN_TYPE_LABELS, formatCurrencyINR, formatDate, formatDateTime } from '@/lib/format';
 import StatusBadge from '@/components/StatusBadge';
+import { calculateCaseSla } from '@/lib/slaClient';
 
 interface RequestTableProps {
   applications: LoanApplication[];
@@ -21,6 +22,15 @@ export default function RequestTable({
   const router = useRouter();
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('LINK_SHARED');
+  const [now, setNow] = useState<Date>(() => new Date());
+
+  // Real-time ticking every 30 seconds for live bucket timer
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setNow(new Date());
+    }, 30000);
+    return () => clearInterval(timer);
+  }, []);
 
   React.useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -107,6 +117,11 @@ export default function RequestTable({
       label: 'Rejected',
       count: applications.filter((a) => a.status === 'REJECTED').length,
     },
+    {
+      key: 'FAILED',
+      label: 'Failed / Expired',
+      count: applications.filter((a) => a.status === 'FAILED').length,
+    },
   ];
 
   return (
@@ -181,41 +196,64 @@ export default function RequestTable({
             <p className="text-[11px] text-slate-400 mt-0.5">Try selecting another filter or adjusting your search keyword.</p>
           </div>
         ) : (
-          filtered.map((app) => (
-            <Link
-              key={app.id}
-              href={`/branch/requests/${app.id}`}
-              className="block bg-white border border-slate-200/90 rounded-2xl p-4 shadow-2xs active:bg-slate-50 active:scale-[0.99] transition-all"
-            >
-              {/* Header: Avatar, Name & Status */}
-              <div className="flex items-start justify-between gap-2 mb-2.5">
-                <div className="flex items-center gap-2.5 min-w-0">
-                  <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-800 border border-emerald-200/90 font-black flex items-center justify-center text-xs shrink-0 shadow-2xs">
-                    {app.fullName ? app.fullName.charAt(0).toUpperCase() : 'C'}
-                  </div>
-                  <div className="min-w-0">
-                    <p className="font-bold text-slate-900 text-sm truncate leading-tight">
-                      {app.fullName || app.token}
-                    </p>
-                    <div className="flex items-center gap-1 text-[11px] text-slate-500 font-mono mt-0.5">
-                      <svg className="w-3 h-3 text-slate-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-                      </svg>
-                      <span className="truncate">{app.mobile || app.email || 'Awaiting Details'}</span>
+          filtered.map((app) => {
+            const sla = calculateCaseSla(app, now);
+            return (
+              <Link
+                key={app.id}
+                href={`/branch/requests/${app.id}`}
+                className={`block border rounded-2xl p-4 shadow-2xs active:scale-[0.99] transition-all ${sla.cardBorderClass} ${sla.cardBgClass}`}
+              >
+                {/* Header: Avatar, Name & Status */}
+                <div className="flex items-start justify-between gap-2 mb-2">
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-800 border border-emerald-200/90 font-black flex items-center justify-center text-xs shrink-0 shadow-2xs">
+                      {app.fullName ? app.fullName.charAt(0).toUpperCase() : 'C'}
                     </div>
-                    {app.branchType === 'SITE' && (
-                      <div className="flex items-center gap-1 text-[10px] font-bold text-amber-900 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-200/80 mt-1 max-w-fit">
-                        <span>🏗️ {app.branchName}</span>
-                        {app.mappedBranchName && <span className="text-blue-700 font-semibold">· Ops: {app.mappedBranchName}</span>}
+                    <div className="min-w-0">
+                      <p className="font-bold text-slate-900 text-sm truncate leading-tight">
+                        {app.fullName || app.token}
+                      </p>
+                      <div className="flex items-center gap-1 text-[11px] text-slate-500 font-mono mt-0.5">
+                        <svg className="w-3 h-3 text-slate-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                        </svg>
+                        <span className="truncate">{app.mobile || app.email || 'Awaiting Details'}</span>
                       </div>
-                    )}
+                      {app.branchType === 'SITE' && (
+                        <div className="flex items-center gap-1 text-[10px] font-bold text-amber-900 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-200/80 mt-1 max-w-fit">
+                          <span>🏗️ {app.branchName}</span>
+                          {app.mappedBranchName && <span className="text-blue-700 font-semibold">· Ops: {app.mappedBranchName}</span>}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="shrink-0">
+                    <StatusBadge status={app.status as ApplicationStatus} size="sm" />
                   </div>
                 </div>
 
-                <div className="shrink-0">
-                  <StatusBadge status={app.status as ApplicationStatus} size="sm" />
+                {/* Live SLA Bucket Timer & Warning Pill */}
+                <div className="flex flex-wrap items-center gap-1.5 mb-2.5">
+                  <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[10px] font-semibold border ${sla.badgeClass}`}>
+                    <span className={`w-1.5 h-1.5 rounded-full ${sla.badgeDotClass}`} />
+                    <span>⏱️ {sla.elapsedFormatted} in bucket</span>
+                    {sla.standardTatFormatted && (
+                      <span className="opacity-75">/ TAT {sla.standardTatFormatted}</span>
+                    )}
+                  </span>
+                  {sla.severity === 'ORANGE' && (
+                    <span className="text-[10px] font-bold text-amber-900 bg-amber-100 px-1.5 py-0.5 rounded border border-amber-300">
+                      ⚠️ TAT Exceeded
+                    </span>
+                  )}
+                  {sla.severity === 'RED' && (
+                    <span className="text-[10px] font-bold text-white bg-rose-600 px-1.5 py-0.5 rounded shadow-xs animate-pulse">
+                      🚨 Admin Alert
+                    </span>
+                  )}
                 </div>
-              </div>
 
               {/* Amount & Loan Type Tile */}
               <div className="p-3 bg-slate-50/90 rounded-xl border border-slate-100 flex items-center justify-between mb-2.5">
@@ -262,8 +300,9 @@ export default function RequestTable({
                 </div>
               </div>
             </Link>
-          ))
-        )}
+          );
+        })
+      )}
       </div>
 
       {/* Desktop Table View (Hidden on mobile, visible on desktop) */}
@@ -287,103 +326,129 @@ export default function RequestTable({
                 </td>
               </tr>
             ) : (
-              filtered.map((app) => (
-                <tr key={app.id} className="hover:bg-slate-50/70 transition-colors">
-                  {/* 1. Created (Timestamp shifted to first before Applicant) */}
-                  <td className="px-3 lg:px-4 py-2.5 lg:py-3 whitespace-nowrap">
-                    <p className="font-semibold text-slate-800 text-xs">
-                      {formatDate(app.createdAt)}
-                    </p>
-                    <p className="text-[10px] lg:text-[11px] text-slate-400 mt-0.5">
-                      {formatDateTime(app.createdAt).split(',')[1]?.trim() || ''}
-                    </p>
-                  </td>
-
-                  {/* 2. Applicant / Customer */}
-                  <td className="px-3 lg:px-4 py-2.5 lg:py-3">
-                    {app.fullName ? (
-                      <div>
-                        <p className="font-semibold text-slate-900 truncate max-w-[130px] xl:max-w-none">{app.fullName}</p>
-                        <p className="text-[11px] lg:text-xs text-slate-400 truncate max-w-[130px] xl:max-w-none">{app.mobile || app.email}</p>
-                      </div>
-                    ) : (
-                      <div>
-                        <span className="font-mono text-xs text-slate-500 bg-slate-100 px-2 py-0.5 rounded">
-                          {app.token}
-                        </span>
-                        <p className="text-[11px] text-amber-600 mt-0.5">Link Shared · Waiting KYC</p>
-                      </div>
-                    )}
-                  </td>
-
-                  {/* 3. Loan Product & Amount (Merged) */}
-                  <td className="px-2.5 lg:px-4 py-2.5 lg:py-3 text-[11px] lg:text-xs whitespace-nowrap">
-                    <p className="font-semibold text-slate-900">
-                      {app.approvedAmount
-                        ? formatCurrencyINR(app.approvedAmount)
-                        : app.loanAmount
-                        ? formatCurrencyINR(app.loanAmount)
-                        : '—'}
-                    </p>
-                    <p className="text-[10px] lg:text-[11px] text-slate-500 font-medium mt-0.5">
-                      {app.loanType ? LOAN_TYPE_LABELS[app.loanType] : 'General Loan'}
-                    </p>
-                  </td>
-
-                  {/* 4. Partner / Bank (With Partner Mobile Number) */}
-                  <td className="px-2.5 lg:px-4 py-2.5 lg:py-3 text-[11px] lg:text-xs">
-                    <div>
-                      <p className="font-semibold text-slate-800 truncate max-w-[140px] xl:max-w-none">
-                        {app.channelPartnerName || app.createdByName || 'Direct'}
+              filtered.map((app) => {
+                const sla = calculateCaseSla(app, now);
+                return (
+                  <tr
+                    key={app.id}
+                    className={`hover:bg-slate-50/70 transition-colors ${
+                      sla.severity === 'RED'
+                        ? 'bg-rose-50/40'
+                        : sla.severity === 'ORANGE'
+                        ? 'bg-amber-50/30'
+                        : ''
+                    }`}
+                  >
+                    {/* 1. Created (Timestamp shifted to first before Applicant) */}
+                    <td className="px-3 lg:px-4 py-2.5 lg:py-3 whitespace-nowrap">
+                      <p className="font-semibold text-slate-800 text-xs">
+                        {formatDate(app.createdAt)}
                       </p>
-                      {(app.channelPartnerMobile || app.channelPartnerPhone) && (
-                        <p className="text-[11px] text-emerald-700 font-medium font-mono flex items-center gap-1 mt-0.5">
-                          <span>📞</span>
-                          <span>{app.channelPartnerMobile || app.channelPartnerPhone}</span>
-                        </p>
+                      <p className="text-[10px] lg:text-[11px] text-slate-400 mt-0.5">
+                        {formatDateTime(app.createdAt).split(',')[1]?.trim() || ''}
+                      </p>
+                    </td>
+
+                    {/* 2. Applicant / Customer */}
+                    <td className="px-3 lg:px-4 py-2.5 lg:py-3">
+                      {app.fullName ? (
+                        <div>
+                          <p className="font-semibold text-slate-900 truncate max-w-[130px] xl:max-w-none">{app.fullName}</p>
+                          <p className="text-[11px] lg:text-xs text-slate-400 truncate max-w-[130px] xl:max-w-none">{app.mobile || app.email}</p>
+                        </div>
+                      ) : (
+                        <div>
+                          <span className="font-mono text-xs text-slate-500 bg-slate-100 px-2 py-0.5 rounded">
+                            {app.token}
+                          </span>
+                          <p className="text-[11px] text-amber-600 mt-0.5">Link Shared · Waiting KYC</p>
+                        </div>
                       )}
-                      <p className="text-[10px] lg:text-[11px] text-slate-400 truncate max-w-[140px] xl:max-w-none mt-0.5">
-                        Bank: <strong className="text-slate-600">{app.bankName || 'Not assigned'}</strong>
-                      </p>
-                    </div>
-                  </td>
+                    </td>
 
-                  {/* 5. Branch & Status (Merged) */}
-                  <td className="px-2.5 lg:px-4 py-2.5 lg:py-3 text-[11px] lg:text-xs whitespace-nowrap space-y-1.5">
-                    <div>
-                      <StatusBadge status={app.status as ApplicationStatus} size="sm" />
-                    </div>
-                    {app.branchType === 'SITE' ? (
+                    {/* 3. Loan Product & Amount (Merged) */}
+                    <td className="px-2.5 lg:px-4 py-2.5 lg:py-3 text-[11px] lg:text-xs whitespace-nowrap">
+                      <p className="font-semibold text-slate-900">
+                        {app.approvedAmount
+                          ? formatCurrencyINR(app.approvedAmount)
+                          : app.loanAmount
+                          ? formatCurrencyINR(app.loanAmount)
+                          : '—'}
+                      </p>
+                      <p className="text-[10px] lg:text-[11px] text-slate-500 font-medium mt-0.5">
+                        {app.loanType ? LOAN_TYPE_LABELS[app.loanType] : 'General Loan'}
+                      </p>
+                    </td>
+
+                    {/* 4. Partner / Bank (With Partner Mobile Number) */}
+                    <td className="px-2.5 lg:px-4 py-2.5 lg:py-3 text-[11px] lg:text-xs">
                       <div>
-                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full font-bold bg-amber-50 text-amber-900 border border-amber-200 text-[10px]">
-                          <span>🏗️</span>
-                          <span className="truncate max-w-[130px]">{app.branchName || 'Site Project'}</span>
-                        </span>
-                        {app.mappedBranchName && (
-                          <p className="text-[10px] text-blue-700 font-semibold mt-0.5 truncate max-w-[130px]" title={`Handling Ops Branch: ${app.mappedBranchName}`}>
-                            Ops: {app.mappedBranchName}
+                        <p className="font-semibold text-slate-800 truncate max-w-[140px] xl:max-w-none">
+                          {app.channelPartnerName || app.createdByName || 'Direct'}
+                        </p>
+                        {(app.channelPartnerMobile || app.channelPartnerPhone) && (
+                          <p className="text-[11px] text-emerald-700 font-medium font-mono flex items-center gap-1 mt-0.5">
+                            <span>📞</span>
+                            <span>{app.channelPartnerMobile || app.channelPartnerPhone}</span>
                           </p>
                         )}
+                        <p className="text-[10px] lg:text-[11px] text-slate-400 truncate max-w-[140px] xl:max-w-none mt-0.5">
+                          Bank: <strong className="text-slate-600">{app.bankName || 'Not assigned'}</strong>
+                        </p>
                       </div>
-                    ) : (
-                      <span className="inline-flex items-center gap-1 text-slate-600 text-[11px]">
-                        <span>🏢</span>
-                        <span className="truncate max-w-[130px]">{app.branchName || 'Head Office'}</span>
-                      </span>
-                    )}
-                  </td>
+                    </td>
 
-                  {/* 6. Action */}
-                  <td className="px-3 lg:px-4 py-2.5 lg:py-3 text-right whitespace-nowrap">
-                    <Link
-                      href={`/branch/requests/${app.id}`}
-                      className="inline-flex items-center text-[11px] lg:text-xs font-semibold text-emerald-700 hover:text-emerald-800 bg-emerald-50 hover:bg-emerald-100 px-2.5 lg:px-3 py-1 lg:py-1.5 rounded-md transition-colors"
-                    >
-                      Case File →
-                    </Link>
-                  </td>
-                </tr>
-              ))
+                    {/* 5. Branch & Status (Merged with Live Bucket Timer) */}
+                    <td className="px-2.5 lg:px-4 py-2.5 lg:py-3 text-[11px] lg:text-xs whitespace-nowrap space-y-1.5">
+                      <div>
+                        <StatusBadge status={app.status as ApplicationStatus} size="sm" />
+                      </div>
+
+                      {/* Live SLA Bucket Timer Widget */}
+                      <div>
+                        <span
+                          className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[10px] font-semibold border ${sla.badgeClass}`}
+                          title={sla.statusMessage}
+                        >
+                          <span className={`w-1.5 h-1.5 rounded-full ${sla.badgeDotClass}`} />
+                          <span>⏱️ {sla.elapsedFormatted} in bucket</span>
+                          {sla.severity === 'ORANGE' && <span className="font-bold">(TAT Exceeded)</span>}
+                          {sla.severity === 'RED' && <span className="font-bold">🚨 (Alarm)</span>}
+                        </span>
+                      </div>
+
+                      {app.branchType === 'SITE' ? (
+                        <div>
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full font-bold bg-amber-50 text-amber-900 border border-amber-200 text-[10px]">
+                            <span>🏗️</span>
+                            <span className="truncate max-w-[130px]">{app.branchName || 'Site Project'}</span>
+                          </span>
+                          {app.mappedBranchName && (
+                            <p className="text-[10px] text-blue-700 font-semibold mt-0.5 truncate max-w-[130px]" title={`Handling Ops Branch: ${app.mappedBranchName}`}>
+                              Ops: {app.mappedBranchName}
+                            </p>
+                          )}
+                        </div>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 text-slate-600 text-[11px]">
+                          <span>🏢</span>
+                          <span className="truncate max-w-[130px]">{app.branchName || 'Head Office'}</span>
+                        </span>
+                      )}
+                    </td>
+
+                    {/* 6. Action */}
+                    <td className="px-3 lg:px-4 py-2.5 lg:py-3 text-right whitespace-nowrap">
+                      <Link
+                        href={`/branch/requests/${app.id}`}
+                        className="inline-flex items-center text-[11px] lg:text-xs font-semibold text-emerald-700 hover:text-emerald-800 bg-emerald-50 hover:bg-emerald-100 px-2.5 lg:px-3 py-1 lg:py-1.5 rounded-md transition-colors"
+                      >
+                        Case File →
+                      </Link>
+                    </td>
+                  </tr>
+                );
+              })
             )}
           </tbody>
         </table>

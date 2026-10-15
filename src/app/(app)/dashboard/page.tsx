@@ -134,15 +134,8 @@ export default async function DashboardPage() {
         </div>
       )}
 
-      {/* Square Flowchart Pipeline Cards (3 cols on medium/laptop, 6 cols on wide desktop) */}
-      <div className="hidden md:grid grid-cols-3 xl:grid-cols-6 gap-2 sm:gap-2.5 min-w-0">
-        <PipelineCard
-          label="Total Leads"
-          count={stats.total}
-          colorClass="text-slate-900"
-          href="/branch/requests"
-          dotColor="bg-slate-400"
-        />
+      {/* Square Flowchart Pipeline Cards */}
+      <div className="hidden md:grid grid-cols-4 xl:grid-cols-7 gap-2 sm:gap-2.5 min-w-0">
         <PipelineCard
           label="Link Shared"
           count={stats.linkShared}
@@ -177,6 +170,20 @@ export default async function DashboardPage() {
           colorClass="text-emerald-600"
           href="/branch/requests?status=APPROVED"
           dotColor="bg-emerald-500"
+        />
+        <PipelineCard
+          label="Disbursed"
+          count={stats.disbursed}
+          colorClass="text-teal-700"
+          href="/branch/requests?status=DISBURSED"
+          dotColor="bg-teal-500"
+        />
+        <PipelineCard
+          label="Failed / Expired"
+          count={stats.failed}
+          colorClass="text-rose-700"
+          href="/branch/requests?status=FAILED"
+          dotColor="bg-rose-500"
         />
       </div>
 

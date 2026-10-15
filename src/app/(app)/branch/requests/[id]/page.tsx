@@ -14,6 +14,7 @@ import OperationalWorkflowPanel from '@/components/OperationalWorkflowPanel';
 import CaseMatchEligibilityBanner from '@/components/CaseMatchEligibilityBanner';
 import CaseTopActionBanners from '@/components/CaseTopActionBanners';
 import CaseEditCustomerButton from '@/components/CaseEditCustomerButton';
+import { calculateCaseSla } from '@/lib/slaClient';
 
 const CATEGORY_TITLES: Record<string, string> = {
   PAN_CARD: 'PAN Card',
@@ -130,13 +131,58 @@ export default async function RequestDetailPage({ params }: { params: { id: stri
             </>
           )}
         </div>
-        <div className="flex items-center gap-3 flex-wrap">
-          <h1 className="text-xl font-semibold text-slate-900">
-            {application.fullName || 'Awaiting customer submission'}
-          </h1>
-          <StatusBadge status={application.status} />
-        </div>
+        {(() => {
+          const sla = calculateCaseSla(application);
+          return (
+            <div className="flex items-center gap-3 flex-wrap">
+              <h1 className="text-xl font-semibold text-slate-900">
+                {application.fullName || 'Awaiting customer submission'}
+              </h1>
+              <StatusBadge status={application.status} />
+              {/* Live Bucket Timer Badge */}
+              <span
+                className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-bold border shadow-xs ${sla.badgeClass}`}
+                title={sla.statusMessage}
+              >
+                <span className={`w-2 h-2 rounded-full ${sla.badgeDotClass}`} />
+                <span>⏱️ {sla.elapsedFormatted} in current bucket</span>
+                {sla.standardTatFormatted && (
+                  <span className="opacity-80 font-normal">/ TAT: {sla.standardTatFormatted}</span>
+                )}
+                {sla.severity === 'ORANGE' && <span className="ml-1 text-amber-950 font-black">⚠️ TAT Exceeded</span>}
+                {sla.severity === 'RED' && <span className="ml-1 text-white bg-rose-700 px-1.5 py-0.5 rounded font-black animate-pulse">🚨 Admin Warning Alarm</span>}
+              </span>
+            </div>
+          );
+        })()}
       </div>
+
+      {/* SLA Alert Banner for breached cases */}
+      {(() => {
+        const sla = calculateCaseSla(application);
+        if (sla.severity === 'NORMAL') return null;
+        return (
+          <div
+            className={`p-4 rounded-xl border mb-5 flex items-center justify-between gap-3 ${
+              sla.severity === 'RED'
+                ? 'bg-rose-50 border-rose-300 text-rose-950 shadow-xs'
+                : 'bg-amber-50 border-amber-300 text-amber-950 shadow-xs'
+            }`}
+          >
+            <div className="flex items-center gap-3">
+              <span className="text-2xl">{sla.severity === 'RED' ? '🚨' : '⚠️'}</span>
+              <div>
+                <p className="font-bold text-sm">
+                  {sla.severity === 'RED' ? 'Critical SLA Breach (Warning Alarm Triggered)' : 'Standard Turnaround Time (TAT) Exceeded'}
+                </p>
+                <p className="text-xs opacity-90 mt-0.5">
+                  {sla.statusMessage}
+                </p>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
 
       {/* Flowchart Visual Pipeline Tracker */}
       <div className="bg-white border border-slate-200 rounded-xl p-5 mb-6 overflow-x-auto shadow-xs">

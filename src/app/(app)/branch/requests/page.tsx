@@ -41,14 +41,15 @@ export default async function RequestsPage() {
         </Link>
       </div>
 
-      {/* Desktop-only Compact Pipeline Stage Overview (3 cols on medium/laptop, 6 cols on wide desktop) */}
-      <div className="hidden md:grid grid-cols-3 xl:grid-cols-6 gap-2 sm:gap-2.5 min-w-0">
+      {/* Desktop-only Compact Pipeline Stage Overview */}
+      <div className="hidden md:grid grid-cols-4 xl:grid-cols-7 gap-2 sm:gap-2.5 min-w-0">
         <CompactStageCard label="Link Shared" value={stats.linkShared} colorClass="text-emerald-700" href="/branch/requests?status=LINK_SHARED" />
         <CompactStageCard label="Docs In" value={stats.documentsIn} colorClass="text-slate-800" href="/branch/requests?status=DOCUMENTS_IN" />
         <CompactStageCard label="Docs Required" value={stats.documentsRequired} colorClass="text-amber-700" href="/branch/requests?status=DOCUMENTS_REQUIRED" />
         <CompactStageCard label="Sent to Bank" value={stats.sentToBank} colorClass="text-indigo-700" href="/branch/requests?status=SENT_TO_BANK" />
         <CompactStageCard label="Approved" value={stats.approved} colorClass="text-emerald-600" href="/branch/requests?status=APPROVED" />
         <CompactStageCard label="Disbursed" value={stats.disbursed} colorClass="text-teal-700" href="/branch/requests?status=DISBURSED" />
+        <CompactStageCard label="Failed / Expired" value={stats.failed} colorClass="text-rose-700" href="/branch/requests?status=FAILED" />
       </div>
 
       {/* Main Request Cards & Filter Component */}
