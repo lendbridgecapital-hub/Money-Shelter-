@@ -23,9 +23,11 @@ export default async function DashboardPage() {
   const tenantId = user.tenantId || 'default';
   const stats = getPipelineStats(user, tenantId);
   const applications = listApplicationsByRole(user);
-  // Show only "Documents In" and above cases under Recent Applications on main screen.
-  // Link Shared cases remain accessible in the Loan Pipeline under Cases tab.
-  const submittedApplications = applications.filter((a) => a.status !== 'LINK_SHARED');
+  // Show only "Documents In" and above active cases under Recent Applications on main screen.
+  // Link Shared and Failed cases remain accessible in the Loan Pipeline under Cases tab.
+  const submittedApplications = applications.filter(
+    (a) => a.status !== 'LINK_SHARED' && a.status !== 'FAILED'
+  );
   const recentApplications = submittedApplications.slice(0, 4);
 
   const isAdmin = user.role === 'ADMIN';

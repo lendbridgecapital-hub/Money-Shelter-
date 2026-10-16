@@ -94,6 +94,11 @@ export default function LoanOriginationHub({
   const effectiveLoanType: LoanType =
     primaryCategory === 'OTHER' ? selectedSubLoanType : primaryCategory;
 
+  // Filter out LINK_SHARED and FAILED cases from recent applications overview on dashboard
+  const displayApplications = recentApplications.filter(
+    (app) => app.status !== 'LINK_SHARED' && app.status !== 'FAILED'
+  );
+
   return (
     <div className="bg-white border border-slate-200/90 rounded-2xl shadow-xs overflow-hidden space-y-3 p-3 sm:p-3.5">
       {/* 1. Loan Category Tabs Header */}
@@ -261,16 +266,16 @@ export default function LoanOriginationHub({
           </Link>
         </div>
 
-        {recentApplications.length === 0 ? (
+        {displayApplications.length === 0 ? (
           <div className="p-6 text-center text-xs text-slate-400">
-            No document-submitted loan applications recorded yet. Shared links awaiting customer completion can be tracked in the{' '}
-            <Link href="/branch/requests?status=LINK_SHARED" className="text-emerald-700 font-bold hover:underline">
+            No active loan applications recorded yet. All pipeline and link-shared cases can be tracked in the{' '}
+            <Link href="/branch/requests" className="text-emerald-700 font-bold hover:underline">
               Loan Pipeline
             </Link>.
           </div>
         ) : (
           <div className="divide-y divide-slate-100">
-            {recentApplications.map((app) => (
+            {displayApplications.map((app) => (
               <div
                 key={app.id}
                 className="p-2.5 hover:bg-slate-50/80 transition flex items-center justify-between gap-2 text-xs"
