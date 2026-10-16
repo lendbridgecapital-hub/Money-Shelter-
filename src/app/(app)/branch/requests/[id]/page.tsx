@@ -118,6 +118,15 @@ export default async function RequestDetailPage({ params }: { params: { id: stri
               <span>Branch: {application.branchName || 'Head Office'}</span>
             </span>
           )}
+          {application.isCoBranded && application.coBrandName && (
+            <>
+              <span className="text-slate-300">•</span>
+              <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-indigo-50 text-indigo-900 border border-indigo-200">
+                <span>🤝</span>
+                <span>Co-Branded: {application.coBrandName}</span>
+              </span>
+            </>
+          )}
           <span className="text-slate-300">•</span>
           <span className="text-xs text-slate-500">
             Originated by: <strong>{application.channelPartnerName || application.createdByName || 'Channel Partner'}</strong>

@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation';
 import { auth } from '@/lib/auth';
 import { getCompanySettings } from '@/lib/settings';
 import { isUserDedicatedSiteRm } from '@/lib/repos/usersRepo';
+import { getBranchById } from '@/lib/repos/branchesRepo';
 import Sidebar from '@/components/Sidebar';
 import MobileAppHeader from '@/components/MobileAppHeader';
 import MobileBottomNav from '@/components/MobileBottomNav';
@@ -14,6 +15,12 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   const isDedicatedSiteRm =
     session.user.role === 'RELATIONSHIP_MANAGER' ? isUserDedicatedSiteRm(session.user.id) : false;
 
+  const userBranch = session.user.branchId ? getBranchById(session.user.branchId) : undefined;
+  const isCoBranded = Boolean(userBranch?.isCoBranded && userBranch?.coBrandName);
+  const coBrandName = userBranch?.coBrandName || null;
+  const coBrandLogoUrl = userBranch?.coBrandLogoUrl || null;
+  const coBrandTagline = userBranch?.coBrandTagline || null;
+
   return (
     <div className="flex flex-col md:flex-row min-h-screen w-full max-w-full overflow-x-hidden bg-slate-50">
       {/* 1. Desktop Sidebar (hidden on mobile, visible on desktop) */}
@@ -25,6 +32,10 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         userName={session.user.name || 'User'}
         branchName={session.user.branchName}
         isDedicatedSiteRm={isDedicatedSiteRm}
+        isCoBranded={isCoBranded}
+        coBrandName={coBrandName}
+        coBrandLogoUrl={coBrandLogoUrl}
+        coBrandTagline={coBrandTagline}
       />
 
       {/* 2. Mobile App Top Bar (visible on mobile, hidden on desktop) */}
@@ -36,6 +47,10 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         logoUrl={settings.logoUrl}
         branchName={session.user.branchName}
         isDedicatedSiteRm={isDedicatedSiteRm}
+        isCoBranded={isCoBranded}
+        coBrandName={coBrandName}
+        coBrandLogoUrl={coBrandLogoUrl}
+        coBrandTagline={coBrandTagline}
       />
 
       {/* 3. Main Workspace Area */}

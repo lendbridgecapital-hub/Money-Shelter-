@@ -8,6 +8,7 @@ import type { ActionResult } from '@/actions/settingsActions';
 
 import * as usersRepo from '@/lib/repos/usersRepo';
 import type { BranchType } from '@/types/db';
+import { saveUploadedFile } from '@/lib/uploads';
 
 export async function createBranchAction(formData: FormData): Promise<ActionResult> {
   try {
@@ -23,6 +24,24 @@ export async function createBranchAction(formData: FormData): Promise<ActionResu
     const developerName = String(formData.get('developerName') || '').trim();
     const dedicatedRmId = String(formData.get('dedicatedRmId') || '').trim() || null;
     const mappedBranchId = String(formData.get('mappedBranchId') || '').trim() || null;
+
+    const isCoBranded =
+      formData.get('isCoBranded') === 'true' ||
+      formData.get('isCoBranded') === '1' ||
+      formData.get('isCoBranded') === 'on';
+    const coBrandName = String(formData.get('coBrandName') || '').trim() || null;
+    const coBrandTagline = String(formData.get('coBrandTagline') || '').trim() || null;
+    let coBrandLogoUrl = String(formData.get('coBrandLogoUrl') || '').trim() || null;
+
+    const logoFile = formData.get('coBrandLogoFile') as File | null;
+    if (logoFile && logoFile.size > 0 && typeof logoFile.arrayBuffer === 'function') {
+      try {
+        const saved = await saveUploadedFile(logoFile, 'branding');
+        coBrandLogoUrl = saved.fileUrl;
+      } catch (uploadErr) {
+        console.error('Co-brand logo upload failed:', uploadErr);
+      }
+    }
 
     let dedicatedRmName: string | null = null;
     if (dedicatedRmId) {
@@ -56,6 +75,10 @@ export async function createBranchAction(formData: FormData): Promise<ActionResu
       dedicatedRmId,
       dedicatedRmName,
       developerName: developerName || null,
+      isCoBranded,
+      coBrandName,
+      coBrandLogoUrl,
+      coBrandTagline,
     });
 
     await syncDatabase();
@@ -85,6 +108,34 @@ export async function updateBranchAction(id: string, formData: FormData): Promis
     const dedicatedRmId = dedicatedRmIdRaw !== null ? (String(dedicatedRmIdRaw).trim() || null) : undefined;
     const mappedBranchIdRaw = formData.get('mappedBranchId');
     const mappedBranchId = mappedBranchIdRaw !== null ? (String(mappedBranchIdRaw).trim() || null) : undefined;
+
+    const isCoBrandedRaw = formData.get('isCoBranded');
+    const isCoBranded =
+      isCoBrandedRaw !== null
+        ? isCoBrandedRaw === 'true' || isCoBrandedRaw === '1' || isCoBrandedRaw === 'on'
+        : undefined;
+
+    const coBrandNameRaw = formData.get('coBrandName');
+    const coBrandName = coBrandNameRaw !== null ? String(coBrandNameRaw).trim() || null : undefined;
+
+    const coBrandTaglineRaw = formData.get('coBrandTagline');
+    const coBrandTagline = coBrandTaglineRaw !== null ? String(coBrandTaglineRaw).trim() || null : undefined;
+
+    let coBrandLogoUrl: string | null | undefined = undefined;
+    const logoUrlRaw = formData.get('coBrandLogoUrl');
+    if (logoUrlRaw !== null) {
+      coBrandLogoUrl = String(logoUrlRaw).trim() || null;
+    }
+
+    const logoFile = formData.get('coBrandLogoFile') as File | null;
+    if (logoFile && logoFile.size > 0 && typeof logoFile.arrayBuffer === 'function') {
+      try {
+        const saved = await saveUploadedFile(logoFile, 'branding');
+        coBrandLogoUrl = saved.fileUrl;
+      } catch (uploadErr) {
+        console.error('Co-brand logo upload failed:', uploadErr);
+      }
+    }
 
     let dedicatedRmName: string | null | undefined = undefined;
     if (dedicatedRmId !== undefined) {
@@ -122,6 +173,10 @@ export async function updateBranchAction(id: string, formData: FormData): Promis
       dedicatedRmId,
       dedicatedRmName,
       developerName: developerName !== undefined ? developerName : undefined,
+      isCoBranded,
+      coBrandName,
+      coBrandLogoUrl,
+      coBrandTagline,
     });
 
     await syncDatabase();

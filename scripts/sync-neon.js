@@ -453,12 +453,37 @@ async function initSchema(client) {
     'submitted_at TEXT',
     'updated_at TEXT',
     'monthly_income REAL',
-    'existing_emi REAL'
+    'existing_emi REAL',
+    'status_changed_at TEXT',
+    'tat_alerts_sent TEXT',
+    'is_co_branded INTEGER DEFAULT 0',
+    'co_brand_name TEXT',
+    'co_brand_logo_url TEXT',
+    'co_brand_tagline TEXT'
   ];
 
   for (const col of loanApplicationColumns) {
     try {
       await client.query(`ALTER TABLE loan_applications ADD COLUMN IF NOT EXISTS ${col};`);
+    } catch (_) {}
+  }
+
+  // Ensure branch columns exist in PostgreSQL
+  const branchColumns = [
+    "type TEXT DEFAULT 'BRANCH'",
+    'mapped_branch_id TEXT',
+    'mapped_branch_name TEXT',
+    'dedicated_rm_id TEXT',
+    'dedicated_rm_name TEXT',
+    'developer_name TEXT',
+    'is_co_branded INTEGER DEFAULT 0',
+    'co_brand_name TEXT',
+    'co_brand_logo_url TEXT',
+    'co_brand_tagline TEXT'
+  ];
+  for (const col of branchColumns) {
+    try {
+      await client.query(`ALTER TABLE branches ADD COLUMN IF NOT EXISTS ${col};`);
     } catch (_) {}
   }
 

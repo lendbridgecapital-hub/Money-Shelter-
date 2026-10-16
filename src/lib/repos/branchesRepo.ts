@@ -60,6 +60,10 @@ export function createBranch(data: {
   dedicatedRmId?: string | null;
   dedicatedRmName?: string | null;
   developerName?: string | null;
+  isCoBranded?: boolean;
+  coBrandName?: string | null;
+  coBrandLogoUrl?: string | null;
+  coBrandTagline?: string | null;
   tenantId?: string;
 }): Branch {
   const isSite = data.type === 'SITE';
@@ -68,6 +72,10 @@ export function createBranch(data: {
   const tenantId = data.tenantId || 'default';
   const code = data.code.trim().toUpperCase();
   const type = data.type || 'BRANCH';
+  const isCoBranded = Boolean(data.isCoBranded);
+  const coBrandName = data.coBrandName ? data.coBrandName.trim() : null;
+  const coBrandLogoUrl = data.coBrandLogoUrl ? data.coBrandLogoUrl.trim() : null;
+  const coBrandTagline = data.coBrandTagline ? data.coBrandTagline.trim() : null;
 
   let mappedBranchId = data.mappedBranchId || null;
   let mappedBranchName = data.mappedBranchName || null;
@@ -79,8 +87,10 @@ export function createBranch(data: {
   }
 
   db.prepare(
-    `INSERT INTO branches (id, tenant_id, name, code, type, mapped_branch_id, mapped_branch_name, address, phone, email, dedicated_rm_id, dedicated_rm_name, developer_name, created_at, updated_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+    `INSERT INTO branches (
+      id, tenant_id, name, code, type, mapped_branch_id, mapped_branch_name, address, phone, email,
+      dedicated_rm_id, dedicated_rm_name, developer_name, is_co_branded, co_brand_name, co_brand_logo_url, co_brand_tagline, created_at, updated_at
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
   ).run(
     id,
     tenantId,
@@ -95,6 +105,10 @@ export function createBranch(data: {
     data.dedicatedRmId || null,
     data.dedicatedRmName || null,
     data.developerName || null,
+    isCoBranded ? 1 : 0,
+    coBrandName,
+    coBrandLogoUrl,
+    coBrandTagline,
     now,
     now
   );
@@ -174,6 +188,22 @@ export function updateBranch(id: string, data: Partial<Branch>): void {
     updates.push('developer_name = ?');
     params.push(data.developerName || null);
   }
+  if (data.isCoBranded !== undefined) {
+    updates.push('is_co_branded = ?');
+    params.push(data.isCoBranded ? 1 : 0);
+  }
+  if (data.coBrandName !== undefined) {
+    updates.push('co_brand_name = ?');
+    params.push(data.coBrandName ? data.coBrandName.trim() : null);
+  }
+  if (data.coBrandLogoUrl !== undefined) {
+    updates.push('co_brand_logo_url = ?');
+    params.push(data.coBrandLogoUrl ? data.coBrandLogoUrl.trim() : null);
+  }
+  if (data.coBrandTagline !== undefined) {
+    updates.push('co_brand_tagline = ?');
+    params.push(data.coBrandTagline ? data.coBrandTagline.trim() : null);
+  }
 
   updates.push('updated_at = ?');
   params.push(new Date().toISOString());
@@ -213,6 +243,10 @@ function mapRowToBranch(row: Record<string, unknown>): Branch {
     dedicatedRmId: row.dedicated_rm_id || row.dedicatedRmId ? String(row.dedicated_rm_id || row.dedicatedRmId) : null,
     dedicatedRmName: row.dedicated_rm_name || row.dedicatedRmName ? String(row.dedicated_rm_name || row.dedicatedRmName) : null,
     developerName: row.developer_name || row.developerName ? String(row.developer_name || row.developerName) : null,
+    isCoBranded: Boolean(row.is_co_branded || row.isCoBranded),
+    coBrandName: row.co_brand_name || row.coBrandName ? String(row.co_brand_name || row.coBrandName) : null,
+    coBrandLogoUrl: row.co_brand_logo_url || row.coBrandLogoUrl ? String(row.co_brand_logo_url || row.coBrandLogoUrl) : null,
+    coBrandTagline: row.co_brand_tagline || row.coBrandTagline ? String(row.co_brand_tagline || row.coBrandTagline) : null,
     createdAt: String(row.created_at || row.createdAt || ''),
     updatedAt: String(row.updated_at || row.updatedAt || ''),
   };

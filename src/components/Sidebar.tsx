@@ -16,6 +16,10 @@ interface SidebarProps {
   userName: string;
   branchName?: string;
   isDedicatedSiteRm?: boolean;
+  isCoBranded?: boolean;
+  coBrandName?: string | null;
+  coBrandLogoUrl?: string | null;
+  coBrandTagline?: string | null;
 }
 
 export default function Sidebar({
@@ -26,6 +30,10 @@ export default function Sidebar({
   userName,
   branchName,
   isDedicatedSiteRm = false,
+  isCoBranded = false,
+  coBrandName,
+  coBrandLogoUrl,
+  coBrandTagline,
 }: SidebarProps) {
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(false);
@@ -256,7 +264,61 @@ export default function Sidebar({
         }`}
       >
         <div className="flex items-center gap-2 overflow-hidden min-w-0 flex-1">
-          {logoUrl ? (
+          {isCoBranded && coBrandName ? (
+            collapsed ? (
+              coBrandLogoUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={coBrandLogoUrl}
+                  alt={coBrandName}
+                  className="w-6 max-h-7 mx-auto object-contain"
+                  title={`${coBrandName} × ${companyName}`}
+                />
+              ) : (
+                <div
+                  className="w-7 h-7 rounded-lg flex items-center justify-center text-white font-black text-xs shadow-2xs shrink-0 mx-auto"
+                  style={{ backgroundColor: 'var(--color-primary, #16a34a)' }}
+                  title={`${coBrandName} × ${companyName}`}
+                >
+                  {coBrandName.charAt(0).toUpperCase()}
+                </div>
+              )
+            ) : (
+              <div className="flex flex-col min-w-0 flex-1">
+                <div className="flex items-center gap-1.5 min-w-0">
+                  {coBrandLogoUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={coBrandLogoUrl}
+                      alt={coBrandName}
+                      className="h-6 max-h-6 object-contain max-w-[70px] shrink-0"
+                    />
+                  ) : (
+                    <span className="font-bold text-xs text-slate-900 truncate max-w-[80px]">
+                      {coBrandName}
+                    </span>
+                  )}
+                  <span className="text-[10px] text-slate-400 font-bold shrink-0">×</span>
+                  {logoUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={logoUrl}
+                      alt={companyName}
+                      className="h-6 max-h-6 object-contain max-w-[70px] shrink-0"
+                    />
+                  ) : (
+                    <span className="font-semibold text-[11px] text-slate-700 truncate max-w-[70px]">
+                      {companyName}
+                    </span>
+                  )}
+                </div>
+                <div className="flex items-center gap-1 text-[9px] text-indigo-700 font-semibold truncate mt-0.5" title={coBrandTagline || `${coBrandName} in partnership with ${companyName}`}>
+                  <span>🤝</span>
+                  <span className="truncate">{coBrandName} {branchName ? `(${branchName})` : ''}</span>
+                </div>
+              </div>
+            )
+          ) : logoUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
               src={logoUrl}

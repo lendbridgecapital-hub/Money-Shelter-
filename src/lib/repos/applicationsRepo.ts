@@ -21,15 +21,36 @@ export function createApplicationLink(data: {
   const partnerId = data.channelPartnerId || data.createdById;
   const partnerName = data.channelPartnerName || 'Channel Partner';
 
-  // Check branch / site details for auto-tagging
+  // Check branch / site details for auto-tagging and co-branding
   let rmId = data.relationshipManagerId || null;
   let rmName = data.relationshipManagerName || null;
-  if (!rmId && data.branchId) {
+  let isCoBranded = 0;
+  let coBrandName: string | null = null;
+  let coBrandLogoUrl: string | null = null;
+  let coBrandTagline: string | null = null;
+
+  if (data.branchId) {
     try {
-      const bRow = db.prepare('SELECT type, dedicated_rm_id, dedicated_rm_name FROM branches WHERE id = ?').get(data.branchId) as { type?: string; dedicated_rm_id?: string; dedicated_rm_name?: string } | undefined;
-      if (bRow && bRow.dedicated_rm_id) {
-        rmId = bRow.dedicated_rm_id;
-        rmName = bRow.dedicated_rm_name || null;
+      const bRow = db.prepare('SELECT type, dedicated_rm_id, dedicated_rm_name, is_co_branded, co_brand_name, co_brand_logo_url, co_brand_tagline FROM branches WHERE id = ?').get(data.branchId) as {
+        type?: string;
+        dedicated_rm_id?: string;
+        dedicated_rm_name?: string;
+        is_co_branded?: number | boolean;
+        co_brand_name?: string;
+        co_brand_logo_url?: string;
+        co_brand_tagline?: string;
+      } | undefined;
+      if (bRow) {
+        if (!rmId && bRow.dedicated_rm_id) {
+          rmId = bRow.dedicated_rm_id;
+          rmName = bRow.dedicated_rm_name || null;
+        }
+        if (bRow.is_co_branded) {
+          isCoBranded = 1;
+          coBrandName = bRow.co_brand_name || null;
+          coBrandLogoUrl = bRow.co_brand_logo_url || null;
+          coBrandTagline = bRow.co_brand_tagline || null;
+        }
       }
     } catch {}
   }
@@ -37,8 +58,9 @@ export function createApplicationLink(data: {
   db.prepare(
     `INSERT INTO loan_applications (
       id, tenant_id, token, branch_id, created_by_id, channel_partner_id, channel_partner_name,
-      relationship_manager_id, relationship_manager_name, status, status_changed_at, created_at, updated_at
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+      relationship_manager_id, relationship_manager_name, status, status_changed_at,
+      is_co_branded, co_brand_name, co_brand_logo_url, co_brand_tagline, created_at, updated_at
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
   ).run(
     id,
     tenantId,
@@ -51,6 +73,10 @@ export function createApplicationLink(data: {
     rmName,
     'LINK_SHARED',
     now,
+    isCoBranded,
+    coBrandName,
+    coBrandLogoUrl,
+    coBrandTagline,
     now,
     now
   );
@@ -427,16 +453,24 @@ function mapRowToApplication(row: Record<string, unknown>): LoanApplication {
   let branchType: 'BRANCH' | 'SITE' | undefined = (row.branch_type || row.branchType) as 'BRANCH' | 'SITE' | undefined;
   let mappedBranchId: string | null | undefined = undefined;
   let mappedBranchName: string | null | undefined = undefined;
+  let isCoBranded = Boolean(row.is_co_branded || row.isCoBranded);
+  let coBrandName = row.co_brand_name || row.coBrandName ? String(row.co_brand_name || row.coBrandName) : null;
+  let coBrandLogoUrl = row.co_brand_logo_url || row.coBrandLogoUrl ? String(row.co_brand_logo_url || row.coBrandLogoUrl) : null;
+  let coBrandTagline = row.co_brand_tagline || row.coBrandTagline ? String(row.co_brand_tagline || row.coBrandTagline) : null;
 
   if (branchId) {
     try {
       const bRow = db
-        .prepare('SELECT name, type, mapped_branch_id, mapped_branch_name FROM branches WHERE id = ?')
+        .prepare('SELECT name, type, mapped_branch_id, mapped_branch_name, is_co_branded, co_brand_name, co_brand_logo_url, co_brand_tagline FROM branches WHERE id = ?')
         .get(branchId) as {
           name?: string;
           type?: string;
           mapped_branch_id?: string;
           mapped_branch_name?: string;
+          is_co_branded?: number | boolean;
+          co_brand_name?: string;
+          co_brand_logo_url?: string;
+          co_brand_tagline?: string;
         } | undefined;
 
       if (bRow) {
@@ -444,6 +478,12 @@ function mapRowToApplication(row: Record<string, unknown>): LoanApplication {
         if (!branchType && bRow.type) branchType = bRow.type === 'SITE' ? 'SITE' : 'BRANCH';
         mappedBranchId = bRow.mapped_branch_id || null;
         mappedBranchName = bRow.mapped_branch_name || null;
+        if (bRow.is_co_branded) {
+          isCoBranded = true;
+          if (!coBrandName && bRow.co_brand_name) coBrandName = bRow.co_brand_name;
+          if (!coBrandLogoUrl && bRow.co_brand_logo_url) coBrandLogoUrl = bRow.co_brand_logo_url;
+          if (!coBrandTagline && bRow.co_brand_tagline) coBrandTagline = bRow.co_brand_tagline;
+        }
       }
     } catch {}
   }
@@ -516,6 +556,10 @@ function mapRowToApplication(row: Record<string, unknown>): LoanApplication {
     updatedAt: row.updated_at || row.updatedAt ? String(row.updated_at || row.updatedAt) : null,
     statusChangedAt: row.status_changed_at || row.statusChangedAt ? String(row.status_changed_at || row.statusChangedAt) : null,
     tatAlertsSent: row.tat_alerts_sent || row.tatAlertsSent ? String(row.tat_alerts_sent || row.tatAlertsSent) : null,
+    isCoBranded,
+    coBrandName,
+    coBrandLogoUrl,
+    coBrandTagline,
   };
 }
 

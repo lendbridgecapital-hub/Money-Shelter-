@@ -125,6 +125,14 @@ function initDatabase(): DatabaseAdapter {
       'CREATE TABLE IF NOT EXISTS reward_redemptions (id TEXT PRIMARY KEY, tenant_id TEXT DEFAULT "default", partner_id TEXT NOT NULL, partner_name TEXT NOT NULL, partner_email TEXT, partner_phone TEXT, points REAL NOT NULL, inr_amount REAL NOT NULL, payout_method TEXT NOT NULL, payout_details TEXT NOT NULL, status TEXT NOT NULL DEFAULT "PENDING", admin_notes TEXT, transaction_ref TEXT, processed_by_id TEXT, processed_by_name TEXT, processed_at TEXT, created_at TEXT NOT NULL)',
       'ALTER TABLE loan_applications ADD COLUMN status_changed_at TEXT',
       'ALTER TABLE loan_applications ADD COLUMN tat_alerts_sent TEXT',
+      'ALTER TABLE branches ADD COLUMN is_co_branded INTEGER DEFAULT 0',
+      'ALTER TABLE branches ADD COLUMN co_brand_name TEXT',
+      'ALTER TABLE branches ADD COLUMN co_brand_logo_url TEXT',
+      'ALTER TABLE branches ADD COLUMN co_brand_tagline TEXT',
+      'ALTER TABLE loan_applications ADD COLUMN is_co_branded INTEGER DEFAULT 0',
+      'ALTER TABLE loan_applications ADD COLUMN co_brand_name TEXT',
+      'ALTER TABLE loan_applications ADD COLUMN co_brand_logo_url TEXT',
+      'ALTER TABLE loan_applications ADD COLUMN co_brand_tagline TEXT',
     ];
     for (const stmt of alterStatements) {
       try {

@@ -258,6 +258,10 @@ export interface Branch {
   dedicatedRmId?: string | null;
   dedicatedRmName?: string | null;
   developerName?: string | null;
+  isCoBranded?: boolean;
+  coBrandName?: string | null;
+  coBrandLogoUrl?: string | null;
+  coBrandTagline?: string | null;
   createdAt: string;
   updatedAt?: string;
 }
@@ -363,6 +367,12 @@ export interface LoanApplication {
   // SLA / TAT Timer Tracking
   statusChangedAt?: string | null;
   tatAlertsSent?: string | null;
+
+  // Branch Co-Branding details
+  isCoBranded?: boolean;
+  coBrandName?: string | null;
+  coBrandLogoUrl?: string | null;
+  coBrandTagline?: string | null;
 
   createdAt: string;
   submittedAt?: string | null;

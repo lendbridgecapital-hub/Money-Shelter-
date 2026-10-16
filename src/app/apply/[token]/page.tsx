@@ -77,6 +77,11 @@ export default async function CustomerApplyPage({
   const settings = await getCompanySettings(application.tenantId || 'default');
   const branch = getBranchById(application.branchId);
 
+  const isCoBranded = Boolean(application.isCoBranded || branch?.isCoBranded);
+  const coBrandName = application.coBrandName || branch?.coBrandName || null;
+  const coBrandLogoUrl = application.coBrandLogoUrl || branch?.coBrandLogoUrl || null;
+  const coBrandTagline = application.coBrandTagline || branch?.coBrandTagline || null;
+
   // Check 7-Day Auto-Expiry or FAILED bucket status
   const nowMs = Date.now();
   const createdMs = application.createdAt ? new Date(application.createdAt).getTime() : nowMs;
@@ -146,7 +151,25 @@ export default async function CustomerApplyPage({
         >
           <div className="max-w-4xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between">
             <div className="flex items-center gap-3">
-              {settings.logoUrl ? (
+              {isCoBranded && coBrandName ? (
+                <div className="flex items-center gap-2 sm:gap-2.5">
+                  {coBrandLogoUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={coBrandLogoUrl} alt={coBrandName} className="h-7 sm:h-8 max-w-[120px] object-contain" />
+                  ) : (
+                    <div className="px-2 py-1 rounded-lg bg-emerald-900 text-white font-extrabold text-[11px] tracking-wide">
+                      {coBrandName}
+                    </div>
+                  )}
+                  <span className="text-slate-300 font-bold text-sm sm:text-base select-none">×</span>
+                  {settings.logoUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={settings.logoUrl} alt={settings.companyName} className="h-6 sm:h-7 max-w-[110px] object-contain" />
+                  ) : (
+                    <span className="font-bold text-slate-800 text-xs sm:text-sm">{settings.companyName}</span>
+                  )}
+                </div>
+              ) : settings.logoUrl ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={settings.logoUrl} alt={settings.companyName} className="h-8 max-w-[130px] object-contain" />
               ) : (
@@ -157,9 +180,11 @@ export default async function CustomerApplyPage({
                   {settings.companyName.charAt(0)}
                 </div>
               )}
-              <span className="font-bold text-slate-900 text-sm hidden sm:inline">
-                {settings.companyName}
-              </span>
+              {!isCoBranded && (
+                <span className="font-bold text-slate-900 text-sm hidden sm:inline">
+                  {settings.companyName}
+                </span>
+              )}
             </div>
 
             <div className="flex items-center gap-2">
@@ -286,7 +311,25 @@ export default async function CustomerApplyPage({
       >
         <div className="max-w-4xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            {settings.logoUrl ? (
+            {isCoBranded && coBrandName ? (
+              <div className="flex items-center gap-2 sm:gap-2.5">
+                {coBrandLogoUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={coBrandLogoUrl} alt={coBrandName} className="h-7 sm:h-8 max-w-[120px] object-contain" />
+                ) : (
+                  <div className="px-2.5 py-1 rounded-lg bg-emerald-900 text-white font-extrabold text-xs tracking-wide">
+                    {coBrandName}
+                  </div>
+                )}
+                <span className="text-slate-300 font-bold text-sm sm:text-base select-none">×</span>
+                {settings.logoUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={settings.logoUrl} alt={settings.companyName} className="h-6 sm:h-7 max-w-[110px] object-contain" />
+                ) : (
+                  <span className="font-bold text-slate-800 text-xs sm:text-sm">{settings.companyName}</span>
+                )}
+              </div>
+            ) : settings.logoUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img src={settings.logoUrl} alt={settings.companyName} className="h-8 max-w-[130px] object-contain" />
             ) : (
@@ -299,10 +342,19 @@ export default async function CustomerApplyPage({
             )}
             <div>
               <h1 className="font-bold text-slate-900 text-sm sm:text-base leading-tight">
-                {settings.companyName}
+                {isCoBranded && coBrandName ? (
+                  <span>
+                    {coBrandName}{' '}
+                    <span className="text-slate-400 font-normal text-xs">({branch?.name || 'Branch'})</span>
+                  </span>
+                ) : (
+                  settings.companyName
+                )}
               </h1>
               <p className="text-[11px] text-slate-500">
-                {branch
+                {isCoBranded
+                  ? coBrandTagline || `In partnership with ${settings.companyName}`
+                  : branch
                   ? branch.type === 'SITE'
                     ? `🏗️ ${branch.name} — Direct Project Desk`
                     : `${branch.name} Branch`
@@ -331,6 +383,12 @@ export default async function CustomerApplyPage({
             >
               Digital Loan Origination
             </span>
+            {isCoBranded && coBrandName && (
+              <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-purple-100 text-purple-900 border border-purple-200">
+                <span>🤝</span>
+                <span>{coBrandName} Co-Branded Portal</span>
+              </span>
+            )}
             {branch?.type === 'SITE' && (
               <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-900 border border-amber-200">
                 <span>🏗️</span>
@@ -342,10 +400,28 @@ export default async function CustomerApplyPage({
             Apply for Your Loan in Minutes
           </h2>
           <p className="text-xs sm:text-sm text-slate-500 mt-1 max-w-2xl">
-            {branch?.type === 'SITE'
+            {isCoBranded && coBrandName
+              ? `Submit your loan requirements through ${coBrandName} in strategic partnership with ${settings.companyName}. Instant pre-eligibility with 40+ premier lending institutions.`
+              : branch?.type === 'SITE'
               ? `Submit your loan documents directly for ${branch.name}. All information will be securely reviewed by our dedicated project desk.`
               : 'Submit your loan requirements and KYC documents in our encrypted portal. Fast approval with top lending banks.'}
           </p>
+
+          {isCoBranded && coBrandName && (
+            <div className="mt-4 p-3.5 bg-gradient-to-r from-purple-50 via-emerald-50/50 to-slate-50 border border-purple-200/90 rounded-2xl flex items-center gap-3 max-w-2xl shadow-2xs">
+              <div className="w-9 h-9 rounded-xl bg-purple-700 text-white font-bold flex items-center justify-center shrink-0 text-base shadow-2xs">
+                🤝
+              </div>
+              <div>
+                <p className="text-xs font-bold text-slate-900">
+                  {coBrandName} • {branch?.name || 'Branch'}
+                </p>
+                <p className="text-[11px] text-slate-600 mt-0.5">
+                  {coBrandTagline || `Direct loan facility operated in strategic partnership with ${settings.companyName}`}. Backed by 40+ premier banks & NBFCs with end-to-end processing.
+                </p>
+              </div>
+            </div>
+          )}
 
           {branch?.type === 'SITE' && (
             <div className="mt-4 p-3.5 bg-gradient-to-r from-amber-50 to-orange-50/40 border border-amber-200 rounded-2xl flex items-center gap-3 max-w-2xl">

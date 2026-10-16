@@ -40,6 +40,11 @@ export default async function ApplicationSuccessPage({ params }: { params: { tok
   const settings = await getCompanySettings(application.tenantId || 'default');
   const branch = getBranchById(application.branchId);
 
+  const isCoBranded = Boolean(application.isCoBranded || branch?.isCoBranded);
+  const coBrandName = application.coBrandName || branch?.coBrandName || null;
+  const coBrandLogoUrl = application.coBrandLogoUrl || branch?.coBrandLogoUrl || null;
+  const coBrandTagline = application.coBrandTagline || branch?.coBrandTagline || null;
+
   const advisor = application.channelPartnerId
     ? getUserById(application.channelPartnerId)
     : application.createdById
@@ -53,6 +58,25 @@ export default async function ApplicationSuccessPage({ params }: { params: { tok
   return (
     <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4 sm:p-6">
       <div className="max-w-xl w-full bg-white border border-slate-200 rounded-3xl p-6 sm:p-10 text-center shadow-lg">
+        {/* Dual Brand Logos when Co-Branded */}
+        {isCoBranded && coBrandName && (
+          <div className="flex items-center justify-center gap-3 mb-6 pb-4 border-b border-slate-100">
+            {coBrandLogoUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={coBrandLogoUrl} alt={coBrandName} className="h-8 max-w-[130px] object-contain" />
+            ) : (
+              <span className="font-extrabold text-slate-900 text-sm">{coBrandName}</span>
+            )}
+            <span className="text-slate-300 font-bold text-base">×</span>
+            {settings.logoUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={settings.logoUrl} alt={settings.companyName} className="h-7 max-w-[120px] object-contain" />
+            ) : (
+              <span className="font-bold text-slate-700 text-xs">{settings.companyName}</span>
+            )}
+          </div>
+        )}
+
         {/* Success Icon */}
         <div
           className="w-20 h-20 rounded-3xl mx-auto flex items-center justify-center text-white text-4xl shadow-md mb-6"
@@ -73,7 +97,7 @@ export default async function ApplicationSuccessPage({ params }: { params: { tok
         </h1>
         <p className="text-xs sm:text-sm text-slate-500 max-w-md mx-auto mb-6">
           Your loan application and KYC documents have been securely submitted to{' '}
-          <strong>{settings.companyName}</strong>. A confirmation email has been sent to your registered address.
+          <strong>{isCoBranded && coBrandName ? `${coBrandName} in partnership with ${settings.companyName}` : settings.companyName}</strong>. A confirmation email has been sent to your registered address.
         </p>
 
         {/* Prominent Partner Contact & "Please Call Your Financial Advisor" Section */}
@@ -93,7 +117,9 @@ export default async function ApplicationSuccessPage({ params }: { params: { tok
                 {advisorName}
               </h3>
               <p className="text-xs text-slate-500 font-medium">
-                {advisor?.firmName || branch?.name || (settings.companyName ? `${settings.companyName} Loan Desk` : 'Money Shelter Loan Desk')}
+                {isCoBranded && coBrandName
+                  ? `${coBrandName} (${branch?.name || 'Branch'}) · In association with Money Shelter`
+                  : advisor?.firmName || branch?.name || (settings.companyName ? `${settings.companyName} Loan Desk` : 'Money Shelter Loan Desk')}
                 {advisor?.partnerCode ? ` · ID: ${advisor.partnerCode}` : ''}
               </p>
             </div>

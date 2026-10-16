@@ -25,6 +25,12 @@ export default function BranchManager({
   const [typeFilter, setTypeFilter] = useState<'ALL' | 'BRANCH' | 'SITE'>(initialTypeFilter);
   const [searchQuery, setSearchQuery] = useState('');
 
+  const [isCoBranded, setIsCoBranded] = useState(false);
+  const [coBrandName, setCoBrandName] = useState('');
+  const [coBrandLogoUrl, setCoBrandLogoUrl] = useState('');
+  const [coBrandTagline, setCoBrandTagline] = useState('');
+  const [logoPreview, setLogoPreview] = useState<string | null>(null);
+
   const branchCount = useMemo(() => branches.filter((b) => b.type !== 'SITE').length, [branches]);
   const siteCount = useMemo(() => branches.filter((b) => b.type === 'SITE').length, [branches]);
   const totalUsers = useMemo(() => branches.reduce((acc, b) => acc + (b.userCount || 0), 0), [branches]);
@@ -48,7 +54,8 @@ export default function BranchManager({
         const matchDev = (b.developerName || '').toLowerCase().includes(q);
         const matchRm = (b.dedicatedRmName || '').toLowerCase().includes(q);
         const matchMappedBranch = (b.mappedBranchName || '').toLowerCase().includes(q);
-        return matchName || matchCode || matchAddress || matchDev || matchRm || matchMappedBranch;
+        const matchCoBrand = (b.coBrandName || '').toLowerCase().includes(q);
+        return matchName || matchCode || matchAddress || matchDev || matchRm || matchMappedBranch || matchCoBrand;
       }
       return true;
     });
@@ -57,6 +64,11 @@ export default function BranchManager({
   const openCreateBranchModal = () => {
     setEditingBranch(null);
     setFormType('BRANCH');
+    setIsCoBranded(false);
+    setCoBrandName('');
+    setCoBrandLogoUrl('');
+    setCoBrandTagline('');
+    setLogoPreview(null);
     setError(null);
     setMessage(null);
     setModalOpen(true);
@@ -65,6 +77,11 @@ export default function BranchManager({
   const openCreateSiteModal = () => {
     setEditingBranch(null);
     setFormType('SITE');
+    setIsCoBranded(false);
+    setCoBrandName('');
+    setCoBrandLogoUrl('');
+    setCoBrandTagline('');
+    setLogoPreview(null);
     setError(null);
     setMessage(null);
     setModalOpen(true);
@@ -73,6 +90,11 @@ export default function BranchManager({
   const openEditModal = (b: BranchWithCounts) => {
     setEditingBranch(b);
     setFormType(b.type === 'SITE' ? 'SITE' : 'BRANCH');
+    setIsCoBranded(Boolean(b.isCoBranded));
+    setCoBrandName(b.coBrandName || '');
+    setCoBrandLogoUrl(b.coBrandLogoUrl || '');
+    setCoBrandTagline(b.coBrandTagline || '');
+    setLogoPreview(b.coBrandLogoUrl || null);
     setError(null);
     setMessage(null);
     setModalOpen(true);
@@ -329,6 +351,17 @@ export default function BranchManager({
                             }
                             return null;
                           })()}
+                          {b.isCoBranded && (
+                            <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-purple-50 text-purple-900 border border-purple-200 text-[10px] font-bold mt-1 shadow-2xs">
+                              {b.coBrandLogoUrl ? (
+                                // eslint-disable-next-line @next/next/no-img-element
+                                <img src={b.coBrandLogoUrl} alt={b.coBrandName || 'Partner'} className="h-3.5 w-auto object-contain max-w-[45px]" />
+                              ) : (
+                                <span>🤝</span>
+                              )}
+                              <span>Co-Branded: {b.coBrandName || 'Partner Entity'}</span>
+                            </div>
+                          )}
                           {b.address && (
                             <p className="text-[11px] text-slate-400 mt-0.5 max-w-xs truncate" title={b.address}>
                               {b.address}
@@ -646,6 +679,112 @@ export default function BranchManager({
                   placeholder={formType === 'SITE' ? 'Full project construction address & landmark' : 'Full office address'}
                   className="w-full px-3 py-2 text-xs border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500"
                 />
+              </div>
+
+              {/* Partner Co-Branding Section */}
+              <div className="bg-gradient-to-br from-purple-50/70 via-indigo-50/40 to-slate-50 border border-purple-200/90 rounded-2xl p-3.5 space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="text-base">🤝</span>
+                    <div>
+                      <label htmlFor="isCoBrandedCheckbox" className="text-xs font-bold text-slate-900 cursor-pointer flex items-center gap-1.5">
+                        <span>Partner Co-Branding</span>
+                        <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-purple-100 text-purple-800 border border-purple-200">Joint Venture / Franchise</span>
+                      </label>
+                      <p className="text-[10px] text-slate-500 mt-0.5">
+                        Display partner brand alongside Money Shelter on customer loan application links & branch logins
+                      </p>
+                    </div>
+                  </div>
+                  <input
+                    id="isCoBrandedCheckbox"
+                    type="checkbox"
+                    name="isCoBranded"
+                    checked={isCoBranded}
+                    onChange={(e) => setIsCoBranded(e.target.checked)}
+                    value="true"
+                    className="w-4 h-4 rounded text-purple-600 focus:ring-purple-500 cursor-pointer"
+                  />
+                </div>
+
+                {isCoBranded && (
+                  <div className="space-y-2.5 pt-2 border-t border-purple-200/60">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                      <div>
+                        <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                          Partner Entity Name *
+                        </label>
+                        <input
+                          type="text"
+                          name="coBrandName"
+                          value={coBrandName}
+                          onChange={(e) => setCoBrandName(e.target.value)}
+                          placeholder="e.g. Lendbridge Capital"
+                          required={isCoBranded}
+                          className="w-full px-3 py-2 text-xs border border-purple-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 font-bold bg-white"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                          Partnership Tagline / Subtitle
+                        </label>
+                        <input
+                          type="text"
+                          name="coBrandTagline"
+                          value={coBrandTagline}
+                          onChange={(e) => setCoBrandTagline(e.target.value)}
+                          placeholder="e.g. In partnership with Money Shelter"
+                          className="w-full px-3 py-2 text-xs border border-purple-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 bg-white"
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                        Partner Logo (Upload Image or Enter URL)
+                      </label>
+                      <div className="flex items-center gap-3">
+                        {logoPreview ? (
+                          <div className="h-10 w-20 bg-white border border-purple-200 rounded-lg p-1 flex items-center justify-center shrink-0 shadow-2xs">
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img src={logoPreview} alt="Co-Brand Logo" className="max-h-full max-w-full object-contain" />
+                          </div>
+                        ) : (
+                          <div className="h-10 w-20 bg-white border border-dashed border-purple-300 rounded-lg flex items-center justify-center shrink-0 text-purple-400 text-[10px]">
+                            No Logo
+                          </div>
+                        )}
+                        <div className="flex-1 space-y-1">
+                          <input
+                            type="file"
+                            name="coBrandLogoFile"
+                            accept="image/*"
+                            onChange={(e) => {
+                              const file = e.target.files?.[0];
+                              if (file) {
+                                const url = URL.createObjectURL(file);
+                                setLogoPreview(url);
+                              }
+                            }}
+                            className="block w-full text-[10px] text-slate-500 file:mr-2 file:py-1 file:px-2.5 file:rounded-lg file:border-0 file:text-[10px] file:font-bold file:bg-purple-100 file:text-purple-800 hover:file:bg-purple-200 cursor-pointer"
+                          />
+                          <input
+                            type="text"
+                            name="coBrandLogoUrl"
+                            value={coBrandLogoUrl}
+                            onChange={(e) => {
+                              setCoBrandLogoUrl(e.target.value);
+                              if (e.target.value) setLogoPreview(e.target.value);
+                            }}
+                            placeholder="Or paste image URL (e.g. https://...)"
+                            className="w-full px-2.5 py-1 text-[10px] border border-purple-200 rounded-lg bg-white"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
 
               <div className="flex justify-end gap-3 pt-3 border-t border-slate-100">

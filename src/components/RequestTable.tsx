@@ -233,6 +233,12 @@ export default function RequestTable({
                           {app.mappedBranchName && <span className="text-blue-700 font-semibold">· Ops: {app.mappedBranchName}</span>}
                         </div>
                       )}
+                      {app.isCoBranded && app.coBrandName && (
+                        <div className="flex items-center gap-1 text-[10px] font-bold text-indigo-900 bg-indigo-50 px-1.5 py-0.5 rounded border border-indigo-200/80 mt-1 max-w-fit">
+                          <span>🤝 {app.coBrandName}</span>
+                          {app.branchName && <span className="text-slate-500 font-normal">({app.branchName})</span>}
+                        </div>
+                      )}
                     </div>
                   </div>
 
@@ -445,6 +451,18 @@ export default function RequestTable({
                           <span>🏢</span>
                           <span className="truncate max-w-[130px]">{app.branchName || 'Head Office'}</span>
                         </span>
+                      )}
+
+                      {app.isCoBranded && app.coBrandName && (
+                        <div>
+                          <span
+                            className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded font-bold bg-indigo-50 text-indigo-800 border border-indigo-200 text-[10px]"
+                            title={`Co-branded with ${app.coBrandName}`}
+                          >
+                            <span>🤝</span>
+                            <span className="truncate max-w-[130px]">{app.coBrandName}</span>
+                          </span>
+                        </div>
                       )}
                     </td>
 

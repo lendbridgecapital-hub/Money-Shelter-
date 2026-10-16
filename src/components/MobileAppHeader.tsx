@@ -15,6 +15,10 @@ interface MobileAppHeaderProps {
   logoUrl?: string | null;
   branchName?: string;
   isDedicatedSiteRm?: boolean;
+  isCoBranded?: boolean;
+  coBrandName?: string | null;
+  coBrandLogoUrl?: string | null;
+  coBrandTagline?: string | null;
 }
 
 function getPageTitle(pathname: string): string {
@@ -43,6 +47,10 @@ export default function MobileAppHeader({
   logoUrl,
   branchName,
   isDedicatedSiteRm = false,
+  isCoBranded = false,
+  coBrandName,
+  coBrandLogoUrl,
+  coBrandTagline,
 }: MobileAppHeaderProps) {
   const router = useRouter();
   const pathname = usePathname();
@@ -69,8 +77,36 @@ export default function MobileAppHeader({
         {/* Left Side Navigation */}
         {isHome ? (
           /* Home Screen: Show Brand Logo & Name */
-          <div className="flex items-center gap-2">
-            {logoUrl ? (
+          <div className="flex items-center gap-2 min-w-0">
+            {isCoBranded && coBrandName ? (
+              <div className="flex items-center gap-1.5 min-w-0">
+                {coBrandLogoUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={coBrandLogoUrl}
+                    alt={coBrandName}
+                    className="h-7 max-h-7.5 w-auto max-w-[80px] object-contain"
+                  />
+                ) : (
+                  <span className="font-extrabold text-slate-900 text-xs truncate max-w-[80px]">
+                    {coBrandName}
+                  </span>
+                )}
+                <span className="text-[10px] text-slate-400 font-bold shrink-0">×</span>
+                {logoUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={logoUrl}
+                    alt={companyName || 'Money Shelter'}
+                    className="h-6 max-h-6.5 w-auto max-w-[80px] object-contain"
+                  />
+                ) : (
+                  <span className="font-bold text-slate-700 text-xs truncate max-w-[70px]">
+                    {companyName || 'Money Shelter'}
+                  </span>
+                )}
+              </div>
+            ) : logoUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img
                 src={logoUrl}
