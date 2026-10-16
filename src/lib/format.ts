@@ -56,7 +56,7 @@ export const STATUS_LABELS: Record<ApplicationStatus, string> = {
   CUSTOMER_ACCEPTED: 'Customer Accepted',
   DISBURSED: 'Loan Disbursed',
   REJECTED: 'Rejected',
-  FAILED: 'Rejected (Expired)',
+  FAILED: 'Failed',
 };
 
 export function formatCurrencyINR(amount: number | null | undefined): string {

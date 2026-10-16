@@ -68,7 +68,7 @@ export function calculateCaseSla(app: LoanApplication, referenceTime = new Date(
     standardTatFormatted = formatElapsedDuration(standardTatMs);
   }
 
-  // Terminal states: closed, no TAT breach, NO TIMER in Disbursed, Rejected, or Expired bucket
+  // Terminal states: closed, no TAT breach, NO TIMER in Disbursed, Rejected, or Failed bucket
   if (status === 'DISBURSED' || status === 'REJECTED' || status === 'FAILED') {
     return {
       status,
@@ -83,15 +83,19 @@ export function calculateCaseSla(app: LoanApplication, referenceTime = new Date(
         status === 'DISBURSED'
           ? 'Disbursed (Completed)'
           : status === 'FAILED'
-          ? 'Rejected (Expired link)'
+          ? 'Failed (Link Expired)'
           : 'Rejected',
       badgeClass:
         status === 'DISBURSED'
           ? 'bg-purple-50 text-purple-800 border-purple-200'
+          : status === 'FAILED'
+          ? 'bg-red-50 text-red-800 border-red-200'
           : 'bg-rose-50 text-rose-800 border-rose-200',
       badgeDotClass:
         status === 'DISBURSED'
           ? 'bg-purple-500'
+          : status === 'FAILED'
+          ? 'bg-red-500'
           : 'bg-rose-500',
       cardBorderClass: 'border-slate-200/90',
       cardBgClass: 'bg-white',
@@ -113,7 +117,7 @@ export function calculateCaseSla(app: LoanApplication, referenceTime = new Date(
         severity: 'RED',
         isBreached: true,
         showTimer: true,
-        statusMessage: 'Expired (>7d in Link Shared) — Moving to Rejected bucket',
+        statusMessage: 'Expired (>7d in Link Shared) — Moving to Failed / Rejected bucket',
         badgeClass: 'bg-rose-100 text-rose-900 border-rose-300 font-bold',
         badgeDotClass: 'bg-rose-600 animate-pulse',
         cardBorderClass: 'border-rose-400 ring-1 ring-rose-300',

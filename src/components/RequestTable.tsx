@@ -36,7 +36,13 @@ export default function RequestTable({
     if (typeof window !== 'undefined') {
       const params = new URLSearchParams(window.location.search);
       const s = params.get('status');
-      if (s) setStatusFilter(s);
+      if (s) {
+        if (s === 'FAILED') {
+          setStatusFilter('REJECTED');
+        } else {
+          setStatusFilter(s);
+        }
+      }
     }
   }, []);
 
@@ -44,7 +50,7 @@ export default function RequestTable({
     return applications.filter((app) => {
       // Status filter
       if (statusFilter !== 'ALL') {
-        if (statusFilter === 'REJECTED') {
+        if (statusFilter === 'REJECTED' || statusFilter === 'FAILED') {
           if (app.status !== 'REJECTED' && app.status !== 'FAILED') {
             return false;
           }
@@ -120,7 +126,7 @@ export default function RequestTable({
     },
     {
       key: 'REJECTED',
-      label: 'Rejected',
+      label: 'Failed / Rejected',
       count: applications.filter((a) => a.status === 'REJECTED' || a.status === 'FAILED').length,
     },
   ];

@@ -49,7 +49,7 @@ export default async function RequestsPage() {
         <CompactStageCard label="Sent to Bank" value={stats.sentToBank} colorClass="text-indigo-700" href="/branch/requests?status=SENT_TO_BANK" />
         <CompactStageCard label="Approved" value={stats.approved} colorClass="text-emerald-600" href="/branch/requests?status=APPROVED" />
         <CompactStageCard label="Disbursed" value={stats.disbursed} colorClass="text-teal-700" href="/branch/requests?status=DISBURSED" />
-        <CompactStageCard label="Failed / Expired" value={stats.failed} colorClass="text-rose-700" href="/branch/requests?status=FAILED" />
+        <CompactStageCard label="Failed / Rejected" value={stats.rejected} colorClass="text-rose-700" href="/branch/requests?status=REJECTED" />
       </div>
 
       {/* Main Request Cards & Filter Component */}

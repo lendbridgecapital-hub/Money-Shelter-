@@ -39,19 +39,19 @@ export async function evaluateAndProcessSlaRules(apps: LoanApplication[]): Promi
 
     let modified = false;
 
-    // Rule A: 7-Day Auto-Expiry for LINK_SHARED -> REJECTED (Merged with Rejected bucket)
+    // Rule A: 7-Day Auto-Expiry for LINK_SHARED -> FAILED (Placed in Failed / Rejected bucket)
     if (app.status === 'LINK_SHARED' && sla.elapsedMs >= 7 * 24 * 60 * 60 * 1000) {
       try {
         db.prepare(
           `UPDATE loan_applications
-           SET status = 'REJECTED', status_changed_at = ?, updated_at = ?
+           SET status = 'FAILED', status_changed_at = ?, updated_at = ?
            WHERE id = ?`
         ).run(nowIso, nowIso, app.id);
 
         addStatusHistory({
           applicationId: app.id,
-          status: 'REJECTED',
-          note: 'Application link auto-expired after 7 days of customer inactivity. Moved to Rejected bucket.',
+          status: 'FAILED',
+          note: 'Application link auto-expired after 7 days of customer inactivity. Status marked as Failed in Failed / Rejected bucket.',
           changedById: 'SYSTEM_SLA_ENGINE',
         });
 
@@ -64,7 +64,7 @@ export async function evaluateAndProcessSlaRules(apps: LoanApplication[]): Promi
             recipientRole: 'CHANNEL_PARTNER',
             applicationId: app.id,
             title: `❌ Case Link Expired: ${app.fullName || app.token}`,
-            message: `The loan application link for ${app.fullName || app.token} has expired after 7 days without customer submission and has moved to the Rejected bucket.`,
+            message: `The loan application link for ${app.fullName || app.token} has expired after 7 days without customer submission. Case status is marked as Failed.`,
           });
         }
 

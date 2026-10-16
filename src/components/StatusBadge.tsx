@@ -51,9 +51,9 @@ export default function StatusBadge({
       dot: 'bg-rose-500',
     },
     FAILED: {
-      bg: 'bg-rose-100/80 border-rose-300',
-      text: 'text-rose-900',
-      dot: 'bg-rose-600',
+      bg: 'bg-red-50 border-red-200',
+      text: 'text-red-800',
+      dot: 'bg-red-500',
     },
   };
 
