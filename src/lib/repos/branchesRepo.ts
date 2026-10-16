@@ -37,6 +37,20 @@ export function getBranchById(id: string): Branch | undefined {
   return row ? mapRowToBranch(row) : undefined;
 }
 
+export function getBranchByCodeOrSlug(identifier: string, tenantId = 'default'): Branch | undefined {
+  if (!identifier) return undefined;
+  const clean = identifier.trim().toLowerCase();
+  const branches = listBranches(tenantId);
+  return branches.find((b) =>
+    b.code.toLowerCase() === clean ||
+    b.id.toLowerCase() === clean ||
+    b.name.toLowerCase() === clean ||
+    b.name.toLowerCase().replace(/\s+/g, '-') === clean ||
+    (b.coBrandName && b.coBrandName.toLowerCase() === clean) ||
+    (b.coBrandName && b.coBrandName.toLowerCase().replace(/\s+/g, '-') === clean)
+  );
+}
+
 export function branchCodeExists(code: string, excludeId?: string): boolean {
   const upper = code.trim().toUpperCase();
   const rows = db

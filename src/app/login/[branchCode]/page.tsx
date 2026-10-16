@@ -1,0 +1,58 @@
+import React from 'react';
+import type { Metadata } from 'next';
+import Link from 'next/link';
+import { getBranchByCodeOrSlug } from '@/lib/repos/branchesRepo';
+import { getCompanySettings } from '@/lib/settings';
+import CoBrandedLoginForm from '@/components/CoBrandedLoginForm';
+
+interface PageProps {
+  params: {
+    branchCode: string;
+  };
+}
+
+export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+  const branch = getBranchByCodeOrSlug(params.branchCode);
+  const settings = await getCompanySettings();
+  if (!branch) {
+    return {
+      title: `Branch Login | ${settings.companyName}`,
+    };
+  }
+  const name = branch.coBrandName || branch.name;
+  return {
+    title: `${name} — Partner & Employee Login | ${settings.companyName}`,
+    description:
+      branch.coBrandTagline ||
+      `Co-branded loan origination and partner portal for ${name} in partnership with ${settings.companyName}.`,
+  };
+}
+
+export default async function CoBrandedLoginPage({ params }: PageProps) {
+  const branch = getBranchByCodeOrSlug(params.branchCode);
+  const settings = await getCompanySettings();
+
+  if (!branch) {
+    return (
+      <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-6 text-center">
+        <div className="max-w-md w-full bg-white p-8 rounded-2xl border border-slate-200 shadow-sm space-y-4">
+          <div className="text-4xl">🏢</div>
+          <h1 className="text-xl font-bold text-slate-900">Branch Portal Not Found</h1>
+          <p className="text-xs text-slate-500">
+            We could not find an active branch with identifier &ldquo;{params.branchCode}&rdquo;. Please verify the URL or proceed to the main portal login.
+          </p>
+          <div className="pt-2">
+            <Link
+              href="/login"
+              className="inline-block px-5 py-2.5 bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs rounded-xl shadow-xs transition"
+            >
+              Go to Money Shelter Login →
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return <CoBrandedLoginForm branch={branch} companySettings={settings} />;
+}

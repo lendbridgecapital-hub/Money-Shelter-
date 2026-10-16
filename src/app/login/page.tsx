@@ -13,6 +13,22 @@ export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Check for branch query param (e.g., /login?branch=SAT01) and redirect to co-branded route
+  useEffect(() => {
+    try {
+      if (typeof window !== 'undefined') {
+        const params = new URLSearchParams(window.location.search);
+        const branchParam = params.get('branch') || params.get('b');
+        if (branchParam) {
+          router.replace(`/login/${encodeURIComponent(branchParam)}`);
+          return;
+        }
+      }
+    } catch {
+      // ignore
+    }
+  }, [router]);
+
   // Auto-redirect if already signed in on mobile app or web
   useEffect(() => {
     getSession().then((session) => {

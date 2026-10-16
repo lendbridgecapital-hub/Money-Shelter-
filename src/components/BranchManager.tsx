@@ -352,14 +352,39 @@ export default function BranchManager({
                             return null;
                           })()}
                           {b.isCoBranded && (
-                            <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-purple-50 text-purple-900 border border-purple-200 text-[10px] font-bold mt-1 shadow-2xs">
-                              {b.coBrandLogoUrl ? (
-                                // eslint-disable-next-line @next/next/no-img-element
-                                <img src={b.coBrandLogoUrl} alt={b.coBrandName || 'Partner'} className="h-3.5 w-auto object-contain max-w-[45px]" />
-                              ) : (
-                                <span>🤝</span>
-                              )}
-                              <span>Co-Branded: {b.coBrandName || 'Partner Entity'}</span>
+                            <div className="space-y-1 mt-1">
+                              <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-purple-50 text-purple-900 border border-purple-200 text-[10px] font-bold shadow-2xs">
+                                {b.coBrandLogoUrl ? (
+                                  // eslint-disable-next-line @next/next/no-img-element
+                                  <img src={b.coBrandLogoUrl} alt={b.coBrandName || 'Partner'} className="h-3.5 w-auto object-contain max-w-[45px]" />
+                                ) : (
+                                  <span>🤝</span>
+                                )}
+                                <span>Co-Branded: {b.coBrandName || 'Partner Entity'}</span>
+                              </div>
+                              <div className="flex items-center gap-1.5 text-[10px]">
+                                <span className="text-slate-400 font-medium">Login:</span>
+                                <Link
+                                  href={`/login/${b.code.toLowerCase()}`}
+                                  target="_blank"
+                                  className="font-mono text-indigo-700 hover:text-indigo-900 underline font-semibold"
+                                  title="Open dedicated co-branded login page"
+                                >
+                                  /login/{b.code.toLowerCase()} ↗
+                                </Link>
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    const url = `${window.location.origin}/login/${b.code.toLowerCase()}`;
+                                    navigator.clipboard.writeText(url);
+                                    alert(`Copied co-branded login URL:\n${url}`);
+                                  }}
+                                  className="text-[9px] font-bold text-indigo-700 hover:text-indigo-900 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 px-1.5 py-0.5 rounded active:scale-95 transition"
+                                  title="Copy URL"
+                                >
+                                  Copy
+                                </button>
+                              </div>
                             </div>
                           )}
                           {b.address && (
