@@ -263,7 +263,10 @@ export default function LoanOriginationHub({
 
         {recentApplications.length === 0 ? (
           <div className="p-6 text-center text-xs text-slate-400">
-            No active loan applications recorded yet. Click &quot;Create Custom Link&quot; above to begin.
+            No document-submitted loan applications recorded yet. Shared links awaiting customer completion can be tracked in the{' '}
+            <Link href="/branch/requests?status=LINK_SHARED" className="text-emerald-700 font-bold hover:underline">
+              Loan Pipeline
+            </Link>.
           </div>
         ) : (
           <div className="divide-y divide-slate-100">

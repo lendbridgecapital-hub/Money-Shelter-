@@ -23,7 +23,10 @@ export default async function DashboardPage() {
   const tenantId = user.tenantId || 'default';
   const stats = getPipelineStats(user, tenantId);
   const applications = listApplicationsByRole(user);
-  const recentApplications = applications.slice(0, 4);
+  // Show only "Documents In" and above cases under Recent Applications on main screen.
+  // Link Shared cases remain accessible in the Loan Pipeline under Cases tab.
+  const submittedApplications = applications.filter((a) => a.status !== 'LINK_SHARED');
+  const recentApplications = submittedApplications.slice(0, 4);
 
   const isAdmin = user.role === 'ADMIN';
   const isSupport = user.role === 'CENTRAL_SUPPORT';
@@ -214,7 +217,7 @@ export default async function DashboardPage() {
         <div className={`${hasSideColumn ? 'lg:col-span-8' : 'w-full'} min-w-0 max-w-full`}>
           <LoanOriginationHub
             recentApplications={recentApplications}
-            totalApplicationsCount={stats.total}
+            totalApplicationsCount={submittedApplications.length}
             partnerName={user.name}
             partnerRole={user.role}
             userId={user.id}
