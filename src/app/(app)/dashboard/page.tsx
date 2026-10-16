@@ -179,10 +179,10 @@ export default async function DashboardPage() {
           dotColor="bg-teal-500"
         />
         <PipelineCard
-          label="Failed / Expired"
-          count={stats.failed}
+          label="Failed / Rejected"
+          count={stats.rejected}
           colorClass="text-rose-700"
-          href="/branch/requests?status=FAILED"
+          href="/branch/requests?status=REJECTED"
           dotColor="bg-rose-500"
         />
       </div>
