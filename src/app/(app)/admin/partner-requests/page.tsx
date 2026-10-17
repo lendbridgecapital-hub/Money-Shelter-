@@ -11,13 +11,24 @@ export const metadata = {
 
 export default async function PartnerRequestsPage() {
   const user = await requireUser();
-  if (user.role !== 'CENTRAL_SUPPORT' && user.role !== 'ADMIN') {
+  const allowedRoles = ['CENTRAL_SUPPORT', 'ADMIN', 'RELATIONSHIP_MANAGER', 'OPERATIONS'];
+  if (!allowedRoles.includes(user.role)) {
     redirect('/dashboard');
   }
 
-  const partners = listPartnerRequests(undefined, user.tenantId || 'default');
-  const relationshipManagers = listRelationshipManagers(user.tenantId || 'default');
+  let partners = listPartnerRequests(undefined, user.tenantId || 'default');
+  let relationshipManagers = listRelationshipManagers(user.tenantId || 'default');
   const branches = listBranches(user.tenantId || 'default');
+
+  // Branch restriction: If user is not Super Admin or Central Support, restrict strictly to their own branch
+  if (user.role !== 'ADMIN' && user.role !== 'CENTRAL_SUPPORT') {
+    if (user.branchId) {
+      partners = partners.filter((p) => p.branchId === user.branchId);
+      relationshipManagers = relationshipManagers.filter((rm) => rm.branchId === user.branchId);
+    } else {
+      partners = [];
+    }
+  }
 
   return (
     <PartnerRequestsClient

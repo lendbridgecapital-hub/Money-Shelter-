@@ -373,8 +373,24 @@ export async function approvePartnerAction(payload: {
 }): Promise<{ ok: boolean; message?: string; error?: string }> {
   try {
     const sessionUser = await requireUser();
-    if (sessionUser.role !== 'CENTRAL_SUPPORT' && sessionUser.role !== 'ADMIN') {
-      return { ok: false, error: 'Only Central Support and Administrators can approve partner applications.' };
+    const allowedRoles = ['CENTRAL_SUPPORT', 'ADMIN', 'RELATIONSHIP_MANAGER', 'OPERATIONS'];
+    if (!allowedRoles.includes(sessionUser.role)) {
+      return { ok: false, error: 'Unauthorized: You do not have permission to approve partner applications.' };
+    }
+
+    const partner = getUserById(payload.partnerId);
+    if (!partner) {
+      return { ok: false, error: 'Partner application not found.' };
+    }
+
+    // Branch Security Check: If not Admin or Central Support, restrict approval exclusively to the partner's assigned branch
+    if (sessionUser.role !== 'ADMIN' && sessionUser.role !== 'CENTRAL_SUPPORT') {
+      if (!sessionUser.branchId || sessionUser.branchId !== partner.branchId) {
+        return {
+          ok: false,
+          error: 'Access Denied: You are only authorized to review and approve partners registered under your specific branch.',
+        };
+      }
     }
 
     if (!payload.assignedRmId) {
@@ -384,6 +400,16 @@ export async function approvePartnerAction(payload: {
     const rms = listRelationshipManagers();
     const assignedRm = rms.find((r) => r.id === payload.assignedRmId);
     const assignedRmName = assignedRm ? assignedRm.name : 'Branch Relationship Manager';
+
+    // Verify assigned RM belongs to the same branch if branch-restricted
+    if (sessionUser.role !== 'ADMIN' && sessionUser.role !== 'CENTRAL_SUPPORT') {
+      if (assignedRm && assignedRm.branchId && assignedRm.branchId !== sessionUser.branchId) {
+        return {
+          ok: false,
+          error: 'Assigned Relationship Manager must belong to your branch.',
+        };
+      }
+    }
 
     const updated = approvePartnerOnboarding(
       payload.partnerId,
@@ -465,8 +491,24 @@ export async function requestPartnerDocsAction(payload: {
 }): Promise<{ ok: boolean; message?: string; error?: string }> {
   try {
     const sessionUser = await requireUser();
-    if (sessionUser.role !== 'CENTRAL_SUPPORT' && sessionUser.role !== 'ADMIN') {
-      return { ok: false, error: 'Only Central Support and Administrators can request document updates.' };
+    const allowedRoles = ['CENTRAL_SUPPORT', 'ADMIN', 'RELATIONSHIP_MANAGER', 'OPERATIONS'];
+    if (!allowedRoles.includes(sessionUser.role)) {
+      return { ok: false, error: 'Unauthorized: You do not have permission to request document updates.' };
+    }
+
+    const partner = getUserById(payload.partnerId);
+    if (!partner) {
+      return { ok: false, error: 'Partner not found.' };
+    }
+
+    // Branch Security Check
+    if (sessionUser.role !== 'ADMIN' && sessionUser.role !== 'CENTRAL_SUPPORT') {
+      if (!sessionUser.branchId || sessionUser.branchId !== partner.branchId) {
+        return {
+          ok: false,
+          error: 'Access Denied: You can only request document updates for partners in your branch.',
+        };
+      }
     }
 
     if (!payload.remark || !payload.remark.trim()) {
@@ -506,8 +548,24 @@ export async function rejectPartnerAction(payload: {
 }): Promise<{ ok: boolean; message?: string; error?: string }> {
   try {
     const sessionUser = await requireUser();
-    if (sessionUser.role !== 'CENTRAL_SUPPORT' && sessionUser.role !== 'ADMIN') {
-      return { ok: false, error: 'Only Central Support and Administrators can reject partner applications.' };
+    const allowedRoles = ['CENTRAL_SUPPORT', 'ADMIN', 'RELATIONSHIP_MANAGER', 'OPERATIONS'];
+    if (!allowedRoles.includes(sessionUser.role)) {
+      return { ok: false, error: 'Unauthorized: You do not have permission to reject partner applications.' };
+    }
+
+    const partner = getUserById(payload.partnerId);
+    if (!partner) {
+      return { ok: false, error: 'Partner not found.' };
+    }
+
+    // Branch Security Check
+    if (sessionUser.role !== 'ADMIN' && sessionUser.role !== 'CENTRAL_SUPPORT') {
+      if (!sessionUser.branchId || sessionUser.branchId !== partner.branchId) {
+        return {
+          ok: false,
+          error: 'Access Denied: You can only reject partner applications in your branch.',
+        };
+      }
     }
 
     if (!payload.reason || !payload.reason.trim()) {
