@@ -128,6 +128,9 @@ export async function GET(req: NextRequest) {
   let neonStoreRows: Record<string, unknown>[] = [];
   let neonRelationalApps: Record<string, unknown>[] = [];
   let neonRelationalUsers: Record<string, unknown>[] = [];
+  let inspectedKeyValue: any = null;
+  let backupCounts: Record<string, number> = {};
+  let restoredCount = 0;
 
   const dbUrl = process.env.DATABASE_URL || process.env.POSTGRES_URL;
   if (dbUrl) {
@@ -159,6 +162,66 @@ export async function GET(req: NextRequest) {
           neonRelationalUsers = uRows || [];
         } catch {}
       }
+
+      // Check for backup query or restore
+      const inspectKey = url.searchParams.get('key');
+      if (inspectKey) {
+        try {
+          const kRows = await queryFn(`SELECT value FROM quickfinsure_store WHERE key = $1 LIMIT 1;`, [inspectKey]);
+          if (kRows && kRows[0] && kRows[0].value) {
+            let v = kRows[0].value;
+            if (typeof v === 'string') v = JSON.parse(v);
+            if (v && v.default) v = v.default;
+            inspectedKeyValue = {
+              loan_applications: v.loan_applications || [],
+              applications_count: Array.isArray(v.loan_applications) ? v.loan_applications.length : 0,
+            };
+          }
+        } catch (e: any) {
+          neonError = `Key inspect error: ${e.message}`;
+        }
+      }
+
+      try {
+        const bRows = await queryFn(`SELECT key, value FROM quickfinsure_store;`);
+        for (const row of bRows || []) {
+          let v = row.value;
+          if (typeof v === 'string') {
+            try { v = JSON.parse(v); } catch {}
+          }
+          if (v && v.default) v = v.default;
+          backupCounts[row.key] = Array.isArray(v?.loan_applications) ? v.loan_applications.length : 0;
+        }
+      } catch {}
+
+      const restoreKey = url.searchParams.get('restore_key');
+      if (restoreKey) {
+        try {
+          const rRows = await queryFn(`SELECT value FROM quickfinsure_store WHERE key = $1 LIMIT 1;`, [restoreKey]);
+          if (rRows && rRows[0] && rRows[0].value) {
+            let src = rRows[0].value;
+            if (typeof src === 'string') src = JSON.parse(src);
+            if (src && src.default) src = src.default;
+            if (src && Array.isArray(src.loan_applications) && src.loan_applications.length > 0) {
+              const mRows = await queryFn(`SELECT value FROM quickfinsure_store WHERE key = 'main_store' LIMIT 1;`);
+              let main = mRows && mRows[0] ? mRows[0].value : {};
+              if (typeof main === 'string') main = JSON.parse(main);
+              if (main && main.default) main = main.default;
+              main.loan_applications = src.loan_applications;
+              if (src.application_documents) main.application_documents = src.application_documents;
+              if (src.required_documents) main.required_documents = src.required_documents;
+              if (src.status_history) main.status_history = src.status_history;
+              await queryFn(
+                `INSERT INTO quickfinsure_store (key, value, updated_at) VALUES ('main_store', $1::jsonb, NOW()) ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, updated_at = NOW();`,
+                [JSON.stringify(main)]
+              );
+              restoredCount = src.loan_applications.length;
+            }
+          }
+        } catch (e: any) {
+          neonError = `Restore error: ${e.message}`;
+        }
+      }
     } catch (nErr) {
       neonError = (nErr as Error).message;
     }
@@ -175,6 +238,9 @@ export async function GET(req: NextRequest) {
     neonInspection: {
       tables: neonTables,
       storeRows: neonStoreRows,
+      backupCounts,
+      inspectedKeyValue,
+      restoredCount,
       relationalAppsCount: neonRelationalApps.length,
       relationalApps: neonRelationalApps.slice(0, 15),
       relationalUsersCount: neonRelationalUsers.length,
