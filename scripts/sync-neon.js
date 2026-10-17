@@ -749,11 +749,14 @@ function safeDeepUnionMerge(primary, secondary) {
       let existing = (id && userMap.get(id)) || (email && emailMap.get(email));
       if (existing) {
         const merged = isPrimary ? { ...existing, ...u } : { ...u, ...existing };
+        if (!merged.id && existing.id) merged.id = existing.id;
         if (id) userMap.set(id, merged);
+        if (merged.id && merged.id !== id) userMap.set(merged.id, merged);
         if (email) emailMap.set(email, merged);
       } else {
-        if (id) userMap.set(id, { ...u });
-        if (email) emailMap.set(email, { ...u });
+        const userObj = { ...u };
+        if (id) userMap.set(id, userObj);
+        if (email) emailMap.set(email, userObj);
       }
     };
 
@@ -761,7 +764,25 @@ function safeDeepUnionMerge(primary, secondary) {
     for (const u of (secondary.users || [])) addU(u, false);
     for (const u of (primary.users || [])) addU(u, true);
 
-    result.users = Array.from(new Set([...userMap.values(), ...emailMap.values()]));
+    // Deduplicate by unique ID and unique Email
+    const seenIds = new Set();
+    const seenEmails = new Set();
+    const deduplicatedUsers = [];
+
+    for (const u of [...userMap.values(), ...emailMap.values()]) {
+      if (!u) continue;
+      const uId = u.id ? String(u.id).toLowerCase() : null;
+      const uEmail = u.email ? String(u.email).toLowerCase().trim() : null;
+
+      if (uId && seenIds.has(uId)) continue;
+      if (uEmail && seenEmails.has(uEmail)) continue;
+
+      if (uId) seenIds.add(uId);
+      if (uEmail) seenEmails.add(uEmail);
+      deduplicatedUsers.push(u);
+    }
+
+    result.users = deduplicatedUsers;
   }
 
   // All entity collections identified by 'id'

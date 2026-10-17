@@ -6,6 +6,9 @@ import { requireUser, requireRole } from '@/lib/auth';
 import {
   emailExists,
   getUserById,
+  getUserByEmail,
+  getPartnerByCode,
+  listAllNetworkPartners,
   createUser,
   createPartnerOnboarding,
   listRelationshipManagers,
@@ -439,8 +442,37 @@ function checkPartnerBranchAccess(
   return { allowed: true, userBranch, allowedBranchIds };
 }
 
+function resolvePartnerCandidate(
+  partnerId: string,
+  partnerEmail?: string,
+  partnerCode?: string,
+  tenantId = 'default'
+): User | undefined {
+  if (partnerId) {
+    const direct = getUserById(partnerId);
+    if (direct) return direct;
+  }
+  if (partnerEmail) {
+    const byEmail = getUserByEmail(partnerEmail);
+    if (byEmail) return byEmail;
+  }
+  if (partnerCode) {
+    const byCode = getPartnerByCode(partnerCode);
+    if (byCode) return byCode;
+  }
+  const all = listAllNetworkPartners(tenantId);
+  return all.find(
+    (p) =>
+      (partnerId && p.id.toLowerCase() === partnerId.toLowerCase()) ||
+      (partnerEmail && p.email.toLowerCase() === partnerEmail.toLowerCase()) ||
+      (partnerCode && (p.partnerCode || '').toUpperCase() === partnerCode.toUpperCase())
+  );
+}
+
 export async function approvePartnerAction(payload: {
   partnerId: string;
+  partnerEmail?: string;
+  partnerCode?: string;
   assignedRmId?: string;
   remark?: string;
   commissionRate?: number | null;
@@ -452,7 +484,12 @@ export async function approvePartnerAction(payload: {
       return { ok: false, error: 'Unauthorized: You do not have permission to approve partner applications.' };
     }
 
-    const partner = getUserById(payload.partnerId);
+    const partner = resolvePartnerCandidate(
+      payload.partnerId,
+      payload.partnerEmail,
+      payload.partnerCode,
+      sessionUser.tenantId || 'default'
+    );
     if (!partner) {
       return { ok: false, error: 'Partner application not found.' };
     }
@@ -524,6 +561,8 @@ export async function approvePartnerAction(payload: {
 
 export async function updatePartnerCommissionRateAction(payload: {
   partnerId: string;
+  partnerEmail?: string;
+  partnerCode?: string;
   commissionRate: number | null;
 }): Promise<{ ok: boolean; message?: string; error?: string }> {
   try {
@@ -533,7 +572,12 @@ export async function updatePartnerCommissionRateAction(payload: {
       return { ok: false, error: 'Unauthorized: Only Administrators and Operations can configure partner commission rates.' };
     }
 
-    const partner = getUserById(payload.partnerId);
+    const partner = resolvePartnerCandidate(
+      payload.partnerId,
+      payload.partnerEmail,
+      payload.partnerCode,
+      sessionUser.tenantId || 'default'
+    );
     if (!partner) {
       return { ok: false, error: 'Partner not found.' };
     }
@@ -548,7 +592,7 @@ export async function updatePartnerCommissionRateAction(payload: {
         ? Number(Number(payload.commissionRate).toFixed(2))
         : null;
 
-    updatePartnerCommissionRate(payload.partnerId, rate);
+    updatePartnerCommissionRate(partner.id, rate);
 
     safeRevalidate('/admin/partners');
     safeRevalidate('/admin/partner-requests');
@@ -570,6 +614,8 @@ export async function updatePartnerCommissionRateAction(payload: {
 
 export async function requestPartnerDocsAction(payload: {
   partnerId: string;
+  partnerEmail?: string;
+  partnerCode?: string;
   remark: string;
 }): Promise<{ ok: boolean; message?: string; error?: string }> {
   try {
@@ -579,7 +625,12 @@ export async function requestPartnerDocsAction(payload: {
       return { ok: false, error: 'Unauthorized: You do not have permission to request document updates.' };
     }
 
-    const partner = getUserById(payload.partnerId);
+    const partner = resolvePartnerCandidate(
+      payload.partnerId,
+      payload.partnerEmail,
+      payload.partnerCode,
+      sessionUser.tenantId || 'default'
+    );
     if (!partner) {
       return { ok: false, error: 'Partner not found.' };
     }
@@ -594,7 +645,7 @@ export async function requestPartnerDocsAction(payload: {
     }
 
     const updated = requestPartnerDocUpdate(
-      payload.partnerId,
+      partner.id,
       payload.remark.trim(),
       { id: sessionUser.id, name: sessionUser.name }
     );
@@ -622,6 +673,8 @@ export async function requestPartnerDocsAction(payload: {
 
 export async function rejectPartnerAction(payload: {
   partnerId: string;
+  partnerEmail?: string;
+  partnerCode?: string;
   reason: string;
 }): Promise<{ ok: boolean; message?: string; error?: string }> {
   try {
@@ -631,7 +684,12 @@ export async function rejectPartnerAction(payload: {
       return { ok: false, error: 'Unauthorized: You do not have permission to reject partner applications.' };
     }
 
-    const partner = getUserById(payload.partnerId);
+    const partner = resolvePartnerCandidate(
+      payload.partnerId,
+      payload.partnerEmail,
+      payload.partnerCode,
+      sessionUser.tenantId || 'default'
+    );
     if (!partner) {
       return { ok: false, error: 'Partner not found.' };
     }

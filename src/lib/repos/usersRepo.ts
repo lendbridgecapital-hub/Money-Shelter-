@@ -237,7 +237,17 @@ export function approvePartnerOnboarding(
   commissionRate?: number | null
 ): User {
   const now = new Date().toISOString();
-  const existing = getUserById(partnerId);
+  let existing = getUserById(partnerId);
+  if (!existing) {
+    const all = listAllNetworkPartners();
+    existing = all.find(
+      (p) =>
+        p.id.toLowerCase() === partnerId.toLowerCase() ||
+        (p.email && p.email.toLowerCase() === partnerId.toLowerCase()) ||
+        (p.partnerCode && p.partnerCode.toUpperCase() === partnerId.toUpperCase())
+    );
+  }
+  const effectiveId = existing ? existing.id : partnerId;
   const isSubDsa = existing?.role === 'SUB_DSA';
   const certSuffix = Math.floor(1000 + Math.random() * 9000);
   const certNum = isSubDsa ? `QFS-SUB-CERT-2026-${certSuffix}` : `QFS-CERT-2026-${certSuffix}`;
@@ -261,7 +271,7 @@ export function approvePartnerOnboarding(
          certificate_issued_at = ?,
          approval_remark = ?,
          commission_rate = ?
-     WHERE id = ?`
+     WHERE id = ? OR LOWER(email) = ?`
   ).run(
     assignedRmId,
     assignedRmName,
@@ -272,10 +282,11 @@ export function approvePartnerOnboarding(
     now,
     remark || 'Application approved by Central Support.',
     commRate,
-    partnerId
+    effectiveId,
+    (existing?.email || '').toLowerCase()
   );
 
-  const updated = getUserById(partnerId);
+  const updated = getUserById(effectiveId) || (existing?.email ? getUserByEmail(existing.email) : undefined);
   if (!updated) throw new Error('Partner not found');
   return updated;
 }
@@ -285,14 +296,26 @@ export function requestPartnerDocUpdate(
   remark: string,
   _author: { id: string; name: string }
 ): User {
+  let existing = getUserById(partnerId);
+  if (!existing) {
+    const all = listAllNetworkPartners();
+    existing = all.find(
+      (p) =>
+        p.id.toLowerCase() === partnerId.toLowerCase() ||
+        (p.email && p.email.toLowerCase() === partnerId.toLowerCase()) ||
+        (p.partnerCode && p.partnerCode.toUpperCase() === partnerId.toUpperCase())
+    );
+  }
+  const effectiveId = existing ? existing.id : partnerId;
+
   db.prepare(
     `UPDATE users 
      SET partner_status = 'DOCUMENTS_REQUIRED',
          approval_remark = ?
-     WHERE id = ?`
-  ).run(remark, partnerId);
+     WHERE id = ? OR LOWER(email) = ?`
+  ).run(remark, effectiveId, (existing?.email || '').toLowerCase());
 
-  const updated = getUserById(partnerId);
+  const updated = getUserById(effectiveId) || (existing?.email ? getUserByEmail(existing.email) : undefined);
   if (!updated) throw new Error('Partner not found');
   return updated;
 }
@@ -302,14 +325,26 @@ export function rejectPartnerOnboarding(
   reason: string,
   _author: { id: string; name: string }
 ): User {
+  let existing = getUserById(partnerId);
+  if (!existing) {
+    const all = listAllNetworkPartners();
+    existing = all.find(
+      (p) =>
+        p.id.toLowerCase() === partnerId.toLowerCase() ||
+        (p.email && p.email.toLowerCase() === partnerId.toLowerCase()) ||
+        (p.partnerCode && p.partnerCode.toUpperCase() === partnerId.toUpperCase())
+    );
+  }
+  const effectiveId = existing ? existing.id : partnerId;
+
   db.prepare(
     `UPDATE users 
      SET partner_status = 'REJECTED',
          approval_remark = ?
-     WHERE id = ?`
-  ).run(reason, partnerId);
+     WHERE id = ? OR LOWER(email) = ?`
+  ).run(reason, effectiveId, (existing?.email || '').toLowerCase());
 
-  const updated = getUserById(partnerId);
+  const updated = getUserById(effectiveId) || (existing?.email ? getUserByEmail(existing.email) : undefined);
   if (!updated) throw new Error('Partner not found');
   return updated;
 }

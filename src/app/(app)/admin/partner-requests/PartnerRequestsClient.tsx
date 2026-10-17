@@ -183,6 +183,8 @@ export default function PartnerRequestsClient({
 
     const res = await approvePartnerAction({
       partnerId: selectedPartner.id,
+      partnerEmail: selectedPartner.email,
+      partnerCode: selectedPartner.partnerCode,
       assignedRmId: effectiveRmId,
       remark: reviewRemark.trim() || `Verified and approved by ${currentUserName || 'Operations'}.`,
       commissionRate: commissionRateInput.trim() ? Number(commissionRateInput) : null,
@@ -309,6 +311,8 @@ export default function PartnerRequestsClient({
 
     const res = await requestPartnerDocsAction({
       partnerId: selectedPartner.id,
+      partnerEmail: selectedPartner.email,
+      partnerCode: selectedPartner.partnerCode,
       remark: reviewRemark.trim(),
     });
 
@@ -336,6 +340,8 @@ export default function PartnerRequestsClient({
 
     const res = await rejectPartnerAction({
       partnerId: selectedPartner.id,
+      partnerEmail: selectedPartner.email,
+      partnerCode: selectedPartner.partnerCode,
       reason: reviewRemark.trim(),
     });
 
