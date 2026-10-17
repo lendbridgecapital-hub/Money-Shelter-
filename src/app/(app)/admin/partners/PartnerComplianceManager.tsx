@@ -9,6 +9,7 @@ import {
   approvePartnerAction,
   updatePartnerCommissionRateAction,
 } from '@/actions/partnerOnboardingActions';
+import { createSiteForBranchAction } from '@/actions/branchActions';
 import { formatDate, LOAN_TYPE_LABELS, STATUS_LABELS, formatCurrencyINR } from '@/lib/format';
 
 interface Props {
@@ -17,7 +18,11 @@ interface Props {
   relationshipManagers?: User[];
   currentUserRole: Role;
   currentUserId?: string;
+  userBranchId?: string;
+  userBranchName?: string;
   isDedicatedSiteRm?: boolean;
+  isBranchOps?: boolean;
+  branchSites?: Branch[];
   applications?: LoanApplication[];
   rewardLedger?: RewardLedgerEntry[];
 }
@@ -28,7 +33,11 @@ export default function PartnerComplianceManager({
   relationshipManagers = [],
   currentUserRole,
   currentUserId,
+  userBranchId,
+  userBranchName,
   isDedicatedSiteRm = false,
+  isBranchOps = false,
+  branchSites = [],
   applications = [],
   rewardLedger = [],
 }: Props) {
@@ -37,6 +46,7 @@ export default function PartnerComplianceManager({
   const isRM = currentUserRole === 'RELATIONSHIP_MANAGER';
   const isSupport = currentUserRole === 'CENTRAL_SUPPORT';
   const isSubDsa = currentUserRole === 'SUB_DSA';
+  const isOps = currentUserRole === 'OPERATIONS';
 
   // Selection & Modals
   const [selectedPartner, setSelectedPartner] = useState<User | null>(null);
@@ -88,6 +98,20 @@ export default function PartnerComplianceManager({
   const [commissionModalLoading, setCommissionModalLoading] = useState(false);
   const [commissionModalError, setCommissionModalError] = useState<string | null>(null);
   const [commissionModalSuccess, setCommissionModalSuccess] = useState<string | null>(null);
+
+  // Add Project / Construction Site Modal State
+  const [showAddSiteModal, setShowAddSiteModal] = useState(false);
+  const [siteName, setSiteName] = useState('');
+  const [siteCode, setSiteCode] = useState('');
+  const [siteDeveloper, setSiteDeveloper] = useState('');
+  const [siteAddress, setSiteAddress] = useState('');
+  const [sitePhone, setSitePhone] = useState('');
+  const [siteEmail, setSiteEmail] = useState('');
+  const [siteDedicatedRmId, setSiteDedicatedRmId] = useState('');
+  const [siteLoading, setSiteLoading] = useState(false);
+  const [siteError, setSiteError] = useState<string | null>(null);
+  const [siteSuccess, setSiteSuccess] = useState<string | null>(null);
+  const [copiedSiteLink, setCopiedSiteLink] = useState<string | null>(null);
 
   // Agent Activity Inspection Modal State
   const [selectedPartnerForActivity, setSelectedPartnerForActivity] = useState<User | null>(null);
@@ -141,6 +165,9 @@ export default function PartnerComplianceManager({
     if (isRM && currentUserId) {
       return `${origin}/partner/onboard?rmId=${currentUserId}`;
     }
+    if (isBranchOps && userBranchId) {
+      return `${origin}/partner/onboard?branchId=${encodeURIComponent(userBranchId)}`;
+    }
     return `${origin}/partner/onboard`;
   };
 
@@ -164,11 +191,30 @@ export default function PartnerComplianceManager({
     setTimeout(() => setCopiedSubDsaLink(false), 2500);
   };
 
+  const copySiteLoanLink = (siteId: string) => {
+    const origin = typeof window !== 'undefined' ? window.location.origin : '';
+    const link = `${origin}/branch/create-link?siteId=${encodeURIComponent(siteId)}`;
+    navigator.clipboard.writeText(link);
+    setCopiedSiteLink(`loan_${siteId}`);
+    setTimeout(() => setCopiedSiteLink(null), 2500);
+  };
+
+  const copySitePartnerLink = (siteId: string) => {
+    const origin = typeof window !== 'undefined' ? window.location.origin : '';
+    const link = `${origin}/partner/onboard?branchId=${encodeURIComponent(siteId)}`;
+    navigator.clipboard.writeText(link);
+    setCopiedSiteLink(`partner_${siteId}`);
+    setTimeout(() => setCopiedSiteLink(null), 2500);
+  };
+
   const shareViaWhatsApp = () => {
     const link = getOnboardingUrl();
+    const branchTitle = userBranchName || 'our branch';
     const text = encodeURIComponent(
       isSubDsa
         ? `Hi! Join my agency network at Money Shelter as an authorized Channel Partner (Agent). Submit retail loans digitally, get instant bank approvals, and earn top commission slabs on every disbursement. Register directly using my link: ${link}`
+        : isBranchOps
+        ? `Hello! Join ${branchTitle} loan distribution network as an authorized Channel Partner. Sourced digital leads, real-time file tracking, and direct bank payouts. Register directly using our branch onboarding link: ${link}`
         : `Hello! Register as an authorized Channel Partner with Money Shelter using my direct onboarding link: ${link}`
     );
     window.open(`https://api.whatsapp.com/send?text=${text}`, '_blank');
@@ -181,6 +227,48 @@ export default function PartnerComplianceManager({
     );
     window.open(`https://api.whatsapp.com/send?text=${text}`, '_blank');
   };
+
+  async function handleCreateSite(e: React.FormEvent) {
+    e.preventDefault();
+    setSiteError(null);
+    setSiteSuccess(null);
+
+    if (!siteName.trim()) {
+      return setSiteError('Project / Construction site name is required.');
+    }
+
+    setSiteLoading(true);
+    const fd = new FormData();
+    fd.append('name', siteName.trim());
+    if (siteCode.trim()) fd.append('code', siteCode.trim());
+    if (siteDeveloper.trim()) fd.append('developerName', siteDeveloper.trim());
+    if (siteAddress.trim()) fd.append('address', siteAddress.trim());
+    if (sitePhone.trim()) fd.append('phone', sitePhone.trim());
+    if (siteEmail.trim()) fd.append('email', siteEmail.trim());
+    if (siteDedicatedRmId) fd.append('dedicatedRmId', siteDedicatedRmId);
+    if (userBranchId) fd.append('mappedBranchId', userBranchId);
+
+    const res = await createSiteForBranchAction(fd);
+    setSiteLoading(false);
+
+    if (res.ok) {
+      setSiteSuccess(res.message || 'Project site created successfully!');
+      setTimeout(() => {
+        setShowAddSiteModal(false);
+        setSiteName('');
+        setSiteCode('');
+        setSiteDeveloper('');
+        setSiteAddress('');
+        setSitePhone('');
+        setSiteEmail('');
+        setSiteDedicatedRmId('');
+        setSiteSuccess(null);
+        router.refresh();
+      }, 1200);
+    } else {
+      setSiteError(res.error || 'Failed to create project site.');
+    }
+  }
 
   function openBlockModal(partner: User) {
     setSelectedPartner(partner);
@@ -322,6 +410,8 @@ export default function PartnerComplianceManager({
               ? `My Team (${partners.length})`
               : isRM
               ? `My Assigned Channel Partners (${partners.length})`
+              : isBranchOps
+              ? `${userBranchName || 'Branch'} Channel Partner Compliance & Network (${partners.length})`
               : 'Channel Partner Compliance & Network'}
           </h1>
           <p className="text-xs text-slate-500 mt-0.5">
@@ -329,33 +419,53 @@ export default function PartnerComplianceManager({
               ? 'Directory of channel partner agents in your network. Click any agent name or Activity button to inspect their live loan applications, volume, and override payouts.'
               : isRM
               ? 'Directory of Channel Partners mapped to your RM portfolio. Monitor their performance, codes, and activities.'
+              : isBranchOps
+              ? `Monitor channel partner originations for ${userBranchName || 'your branch'} and mapped project sites, onboard new partners with instant approval, and manage network compliance.`
               : 'Monitor Channel Partner originations, onboard new partners with instant approval, and manage network compliance.'}
           </p>
         </div>
 
         <div className="flex items-center gap-2 self-start sm:self-auto flex-wrap">
-          {(isAdmin || (isRM && !isDedicatedSiteRm)) && (
+          {/* Add Project Site Option for Branch Operations, Admin, and Central Support */}
+          {(isBranchOps || isAdmin || isSupport) && (
             <button
               type="button"
-              onClick={() => setShowSubDsaModal(true)}
-              className="px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-xl shadow-xs transition inline-flex items-center gap-1.5 active:scale-95"
+              onClick={() => {
+                setSiteError(null);
+                setSiteSuccess(null);
+                setShowAddSiteModal(true);
+              }}
+              className="px-4 py-2.5 bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold rounded-xl shadow-xs transition inline-flex items-center gap-1.5 active:scale-95 cursor-pointer"
             >
-              <span>🏢 Appoint Sub-DSA</span>
+              <span>🏗️ Add Project Site</span>
             </button>
           )}
 
           {(isAdmin || (isRM && !isDedicatedSiteRm)) && (
             <button
               type="button"
+              onClick={() => setShowSubDsaModal(true)}
+              className="px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-xl shadow-xs transition inline-flex items-center gap-1.5 active:scale-95 cursor-pointer"
+            >
+              <span>🏢 Appoint Sub-DSA</span>
+            </button>
+          )}
+
+          {(isAdmin || isBranchOps || (isRM && !isDedicatedSiteRm)) && (
+            <button
+              type="button"
               onClick={() => {
                 setSelectedOnboardRole('CHANNEL_PARTNER');
                 setOnboardError(null);
                 setOnboardSuccess(null);
+                if (isBranchOps && userBranchId) {
+                  setSelectedBranchId(userBranchId);
+                }
                 setShowOnboardModal(true);
               }}
-              className="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl shadow-xs transition inline-flex items-center gap-1.5 active:scale-95"
+              className="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl shadow-xs transition inline-flex items-center gap-1.5 active:scale-95 cursor-pointer"
             >
-              <span>➕ Onboard New Partner</span>
+              <span>➕ {isBranchOps ? 'Onboard Branch Partner' : 'Onboard New Partner'}</span>
             </button>
           )}
         </div>
@@ -364,66 +474,166 @@ export default function PartnerComplianceManager({
       {/* Partner Onboarding Link Banner */}
       {!isDedicatedSiteRm && (
         <div className="bg-gradient-to-r from-emerald-50/70 via-white to-slate-50/50 border border-emerald-200 rounded-xl p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 shadow-2xs">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-emerald-600 text-white flex items-center justify-center text-lg shrink-0 shadow-xs">
-            🤝
-          </div>
-          <div>
-            <div className="flex items-center gap-2 flex-wrap">
-              <h2 className="text-xs font-bold text-slate-900 uppercase tracking-wide">
-                {isSubDsa
-                  ? 'My Agent Referral & Onboarding Link'
-                  : isRM
-                  ? 'My Partner Onboarding Link (Auto-Assign)'
-                  : 'Public Partner Self-Registration Link'}
-              </h2>
-              <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-100 text-emerald-800">
-                {isSubDsa
-                  ? '⚡ 0.1% Team Override Engine'
-                  : isRM
-                  ? '⚡ Auto-Assigns To You'
-                  : 'Self-Registration & Sub-DSA'}
-              </span>
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-emerald-600 text-white flex items-center justify-center text-lg shrink-0 shadow-xs">
+              🤝
             </div>
-            <p className="text-[11px] text-slate-500 mt-0.5">
-              {isSubDsa
-                ? 'Share this link with prospective agents. Any partner who registers through this link will be automatically mapped under your Sub-DSA network.'
-                : isRM
-                ? 'Share this link with prospective partners. Any partner who registers through this link will be automatically assigned to you.'
-                : 'Share this link with prospective partners to submit PAN & Aadhaar KYC, review the Sub-DSA agreement, and complete mobile OTP verification.'}
-            </p>
+            <div>
+              <div className="flex items-center gap-2 flex-wrap">
+                <h2 className="text-xs font-bold text-slate-900 uppercase tracking-wide">
+                  {isSubDsa
+                    ? 'My Agent Referral & Onboarding Link'
+                    : isRM
+                    ? 'My Partner Onboarding Link (Auto-Assign)'
+                    : isBranchOps
+                    ? `${userBranchName || 'Branch'} Partner Referral & Onboarding Link`
+                    : 'Public Partner Self-Registration Link'}
+                </h2>
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-100 text-emerald-800">
+                  {isSubDsa
+                    ? '⚡ 0.1% Team Override Engine'
+                    : isRM
+                    ? '⚡ Auto-Assigns To You'
+                    : isBranchOps
+                    ? `⚡ Locked to ${userBranchName || 'Branch'}`
+                    : 'Self-Registration & Sub-DSA'}
+                </span>
+              </div>
+              <p className="text-[11px] text-slate-500 mt-0.5">
+                {isSubDsa
+                  ? 'Share this link with prospective agents. Any partner who registers through this link will be automatically mapped under your Sub-DSA network.'
+                  : isRM
+                  ? 'Share this link with prospective partners. Any partner who registers through this link will be automatically assigned to you.'
+                  : isBranchOps
+                  ? `Share this link with prospective channel partners. Any partner registering through this link will be mapped strictly under ${userBranchName || 'your branch'}.`
+                  : 'Share this link with prospective partners to submit PAN & Aadhaar KYC, review the Sub-DSA agreement, and complete mobile OTP verification.'}
+              </p>
+            </div>
           </div>
-        </div>
 
-        <div className="flex items-center gap-2 shrink-0 flex-wrap">
-          <button
-            type="button"
-            onClick={copyOnboardingLink}
-            className="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-lg shadow-2xs transition inline-flex items-center gap-1.5"
-          >
-            <span>{copiedLink ? '✓ Copied Link' : (isRM || isSubDsa) ? '📋 Copy My Link' : '📋 Copy Link'}</span>
-          </button>
-          <a
-            href={isSubDsa && currentUserId ? `/partner/onboard?subDsaId=${currentUserId}` : isRM && currentUserId ? `/partner/onboard?rmId=${currentUserId}` : '/partner/onboard'}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="px-3 py-2 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-semibold rounded-lg transition inline-flex items-center gap-1"
-          >
-            <span>Preview Form</span>
-            <span>↗</span>
-          </a>
-          {(isRM || isSubDsa) && (
+          <div className="flex items-center gap-2 shrink-0 flex-wrap">
             <button
               type="button"
-              onClick={shareViaWhatsApp}
-              className="px-3 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-lg shadow-2xs transition inline-flex items-center gap-1"
+              onClick={copyOnboardingLink}
+              className="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-lg shadow-2xs transition inline-flex items-center gap-1.5 cursor-pointer"
             >
-              <span>WhatsApp</span>
+              <span>{copiedLink ? '✓ Copied Link' : isBranchOps ? '📋 Copy Branch Link' : (isRM || isSubDsa) ? '📋 Copy My Link' : '📋 Copy Link'}</span>
             </button>
+            <a
+              href={getOnboardingUrl()}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="px-3 py-2 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-semibold rounded-lg transition inline-flex items-center gap-1 cursor-pointer"
+            >
+              <span>Preview Form</span>
+              <span>↗</span>
+            </a>
+            {(isRM || isSubDsa || isBranchOps) && (
+              <button
+                type="button"
+                onClick={shareViaWhatsApp}
+                className="px-3 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-lg shadow-2xs transition inline-flex items-center gap-1 cursor-pointer"
+              >
+                <span>WhatsApp</span>
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Branch Mapped Project & Construction Sites Section */}
+      {(isBranchOps || (branchSites && branchSites.length > 0)) && (
+        <div className="bg-white border border-amber-200/90 rounded-xl p-4 shadow-2xs space-y-3">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 border-b border-slate-100 pb-3">
+            <div className="flex items-center gap-2.5">
+              <span className="text-xl">🏗️</span>
+              <div>
+                <div className="flex items-center gap-2">
+                  <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wide">
+                    {userBranchName || 'Branch'} Mapped Project & Construction Sites ({branchSites.length})
+                  </h3>
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-amber-100 text-amber-900">
+                    Direct Site Tracking
+                  </span>
+                </div>
+                <p className="text-[11px] text-slate-500 mt-0.5">
+                  Direct company construction sites mapped under this branch. Share dedicated site links for customer loan applications and partner onboarding.
+                </p>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                setSiteError(null);
+                setSiteSuccess(null);
+                setShowAddSiteModal(true);
+              }}
+              className="px-3 py-1.5 bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold rounded-lg transition inline-flex items-center gap-1 cursor-pointer self-start sm:self-auto"
+            >
+              <span>+ Add Project Site</span>
+            </button>
+          </div>
+
+          {branchSites.length === 0 ? (
+            <div className="py-6 text-center text-xs text-slate-400 bg-slate-50/50 rounded-lg border border-dashed border-slate-200">
+              <p className="font-semibold text-slate-600">No construction project sites added yet.</p>
+              <p className="text-[11px] text-slate-400 mt-0.5">
+                Click &quot;+ Add Project Site&quot; to register a builder project site under {userBranchName || 'your branch'}.
+              </p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              {branchSites.map((site) => (
+                <div
+                  key={site.id}
+                  className="p-3 bg-gradient-to-br from-amber-50/30 to-white border border-slate-200 rounded-xl flex flex-col justify-between gap-2 hover:border-amber-300 transition"
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <div>
+                      <div className="flex items-center gap-1.5">
+                        <span className="font-bold text-xs text-slate-900">{site.name}</span>
+                        <span className="font-mono text-[10px] px-1.5 py-0.2 rounded bg-slate-100 text-slate-600 font-bold">
+                          {site.code}
+                        </span>
+                      </div>
+                      {site.developerName && (
+                        <p className="text-[11px] text-slate-500 mt-0.5 font-medium">
+                          Developer: <span className="text-slate-700">{site.developerName}</span>
+                        </p>
+                      )}
+                      {site.dedicatedRmName && (
+                        <p className="text-[11px] text-slate-500">
+                          Dedicated RM: <span className="text-slate-700">{site.dedicatedRmName}</span>
+                        </p>
+                      )}
+                    </div>
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200 shrink-0">
+                      Active Site
+                    </span>
+                  </div>
+
+                  <div className="flex items-center gap-2 pt-2 border-t border-slate-100 flex-wrap">
+                    <button
+                      type="button"
+                      onClick={() => copySiteLoanLink(site.id)}
+                      className="px-2.5 py-1 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 rounded-lg text-[11px] font-semibold transition inline-flex items-center gap-1 cursor-pointer"
+                    >
+                      <span>{copiedSiteLink === `loan_${site.id}` ? '✓ Copied Loan Link' : '📋 Loan Link'}</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => copySitePartnerLink(site.id)}
+                      className="px-2.5 py-1 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 rounded-lg text-[11px] font-semibold transition inline-flex items-center gap-1 cursor-pointer"
+                    >
+                      <span>{copiedSiteLink === `partner_${site.id}` ? '✓ Copied Partner Link' : '📋 Partner Onboard Link'}</span>
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
           )}
         </div>
-      </div>
-    )}
+      )}
 
       {/* Filter Tabs */}
       <div className="flex flex-wrap items-center gap-2 border-b border-slate-200 pb-2">
@@ -807,9 +1017,10 @@ export default function PartnerComplianceManager({
                   </label>
                   <select
                     value={selectedBranchId}
+                    disabled={isBranchOps}
                     onChange={(e) => setSelectedBranchId(e.target.value)}
                     required
-                    className="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500 font-medium"
+                    className="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500 font-medium disabled:bg-slate-100"
                   >
                     {branches.map((b) => (
                       <option key={b.id} value={b.id}>
@@ -1514,11 +1725,174 @@ export default function PartnerComplianceManager({
               <button
                 type="button"
                 onClick={() => setSelectedPartnerForActivity(null)}
-                className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-lg transition"
+                className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-lg transition cursor-pointer"
               >
                 Close Activity Window
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* ================= MODAL: ADD PROJECT / CONSTRUCTION SITE ================= */}
+      {showAddSiteModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in">
+          <div className="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-slate-100 relative space-y-4 max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <div className="flex items-center gap-2">
+                <span className="text-xl">🏗️</span>
+                <div>
+                  <h3 className="font-bold text-slate-900 text-sm">Add Direct Project / Construction Site</h3>
+                  <p className="text-[11px] text-slate-500">
+                    Mapped under {userBranchName || 'operating branch'}
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowAddSiteModal(false)}
+                className="text-slate-400 hover:text-slate-600 text-lg font-bold p-1 cursor-pointer"
+              >
+                ✕
+              </button>
+            </div>
+
+            {siteError && (
+              <div className="p-3 bg-rose-50 border border-rose-200 text-rose-700 text-xs rounded-xl font-medium">
+                ⚠️ {siteError}
+              </div>
+            )}
+
+            {siteSuccess && (
+              <div className="p-3 bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs rounded-xl font-medium">
+                ✓ {siteSuccess}
+              </div>
+            )}
+
+            <form onSubmit={handleCreateSite} className="space-y-3.5">
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  Project / Construction Site Name <span className="text-rose-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. Godrej Rivergreens Phase 2 / Satara Heights Tower A"
+                  value={siteName}
+                  onChange={(e) => setSiteName(e.target.value)}
+                  className="w-full px-3 py-2 border border-slate-200 rounded-lg text-xs focus:ring-2 focus:ring-amber-500 focus:outline-none"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">
+                    Site Code (Optional)
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="e.g. SAT-SITE-01"
+                    value={siteCode}
+                    onChange={(e) => setSiteCode(e.target.value.toUpperCase())}
+                    className="w-full px-3 py-2 border border-slate-200 rounded-lg text-xs focus:ring-2 focus:ring-amber-500 focus:outline-none uppercase font-mono"
+                  />
+                  <span className="text-[10px] text-slate-400">Leave blank to auto-generate</span>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">
+                    Developer / Builder Name
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="e.g. Godrej Properties"
+                    value={siteDeveloper}
+                    onChange={(e) => setSiteDeveloper(e.target.value)}
+                    className="w-full px-3 py-2 border border-slate-200 rounded-lg text-xs focus:ring-2 focus:ring-amber-500 focus:outline-none"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  Site Location / Physical Address
+                </label>
+                <textarea
+                  rows={2}
+                  placeholder="Survey No, Near Landmark, Sector / Taluka, City"
+                  value={siteAddress}
+                  onChange={(e) => setSiteAddress(e.target.value)}
+                  className="w-full px-3 py-2 border border-slate-200 rounded-lg text-xs focus:ring-2 focus:ring-amber-500 focus:outline-none resize-none"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">
+                    Site Contact Phone
+                  </label>
+                  <input
+                    type="tel"
+                    placeholder="+91 98765 43210"
+                    value={sitePhone}
+                    onChange={(e) => setSitePhone(e.target.value)}
+                    className="w-full px-3 py-2 border border-slate-200 rounded-lg text-xs focus:ring-2 focus:ring-amber-500 focus:outline-none"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">
+                    Dedicated Site RM (Optional)
+                  </label>
+                  <select
+                    value={siteDedicatedRmId}
+                    onChange={(e) => setSiteDedicatedRmId(e.target.value)}
+                    className="w-full px-3 py-2 border border-slate-200 rounded-lg text-xs bg-white focus:ring-2 focus:ring-amber-500 focus:outline-none"
+                  >
+                    <option value="">No dedicated RM (Branch Pool)</option>
+                    {relationshipManagers.map((rm) => (
+                      <option key={rm.id} value={rm.id}>
+                        {rm.name} ({rm.email})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl text-[11px] text-slate-600 space-y-1">
+                <div className="flex items-center gap-1 font-semibold text-slate-700">
+                  <span>🏢 Parent Operating Branch:</span>
+                  <span className="text-amber-800 font-bold">{userBranchName || 'Branch'}</span>
+                </div>
+                <p className="text-[10px] text-slate-500">
+                  This site will automatically inherit branch co-branding and will be strictly manageable by {userBranchName || 'your branch'} and Pune HQ.
+                </p>
+              </div>
+
+              <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={() => setShowAddSiteModal(false)}
+                  className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-lg transition cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={siteLoading}
+                  className="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold rounded-lg shadow-xs transition inline-flex items-center gap-1.5 disabled:opacity-50 cursor-pointer"
+                >
+                  {siteLoading ? (
+                    <>
+                      <span className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                      <span>Creating Site...</span>
+                    </>
+                  ) : (
+                    <span>Create Construction Site</span>
+                  )}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

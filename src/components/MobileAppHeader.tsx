@@ -14,6 +14,7 @@ interface MobileAppHeaderProps {
   companyName: string;
   logoUrl?: string | null;
   branchName?: string;
+  branchId?: string;
   isDedicatedSiteRm?: boolean;
   isCoBranded?: boolean;
   coBrandName?: string | null;
@@ -46,6 +47,7 @@ export default function MobileAppHeader({
   companyName,
   logoUrl,
   branchName,
+  branchId,
   isDedicatedSiteRm = false,
   isCoBranded = false,
   coBrandName,
@@ -207,6 +209,7 @@ export default function MobileAppHeader({
         companyName={companyName}
         logoUrl={logoUrl}
         branchName={branchName}
+        branchId={branchId}
         isDedicatedSiteRm={isDedicatedSiteRm}
       />
     </>

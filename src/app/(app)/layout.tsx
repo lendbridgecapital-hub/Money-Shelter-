@@ -39,6 +39,8 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   }
   const coBrandTagline = userBranch?.coBrandTagline || null;
 
+  const effectiveBranchId = userBranch?.id || session.user.branchId;
+
   return (
     <div className="flex flex-col md:flex-row min-h-screen w-full max-w-full overflow-x-hidden bg-slate-50">
       {/* 1. Desktop Sidebar (hidden on mobile, visible on desktop) */}
@@ -49,6 +51,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         logoUrl={settings.logoUrl}
         userName={session.user.name || 'User'}
         branchName={session.user.branchName}
+        branchId={effectiveBranchId}
         isDedicatedSiteRm={isDedicatedSiteRm}
         isCoBranded={isCoBranded}
         coBrandName={coBrandName}
@@ -64,6 +67,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         companyName={settings.companyName}
         logoUrl={settings.logoUrl}
         branchName={session.user.branchName}
+        branchId={effectiveBranchId}
         isDedicatedSiteRm={isDedicatedSiteRm}
         isCoBranded={isCoBranded}
         coBrandName={coBrandName}

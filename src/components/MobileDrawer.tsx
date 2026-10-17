@@ -16,6 +16,7 @@ interface MobileDrawerProps {
   companyName: string;
   logoUrl?: string | null;
   branchName?: string;
+  branchId?: string;
   isDedicatedSiteRm?: boolean;
 }
 
@@ -28,6 +29,7 @@ export default function MobileDrawer({
   companyName,
   logoUrl,
   branchName,
+  branchId,
   isDedicatedSiteRm = false,
 }: MobileDrawerProps) {
   const pathname = usePathname();
@@ -85,10 +87,36 @@ export default function MobileDrawer({
       show: isAdmin || isSupport,
     },
     {
-      label: isSubDsa ? 'My Team' : isRM ? 'My Channel Partners' : isSupport ? 'Partner Directory' : 'Partner Compliance',
+      label: isOps
+        ? 'Branch Partners & Network'
+        : isSubDsa
+        ? 'My Team'
+        : isRM
+        ? 'My Channel Partners'
+        : isSupport
+        ? 'Partner Directory'
+        : 'Partner Compliance',
       href: '/admin/partners',
       icon: '👥',
-      show: isAdmin || isSupport || (isRM && !isDedicatedSiteRm) || isSubDsa,
+      show: isAdmin || isSupport || (isRM && !isDedicatedSiteRm) || isSubDsa || isOps,
+    },
+    {
+      label: isOps
+        ? 'Share Branch Onboard Link'
+        : isSubDsa
+        ? 'Recruit Agents Link'
+        : isRM
+        ? 'Share Onboarding Link'
+        : 'Partner Onboard Form',
+      href: isOps && branchId
+        ? `/partner/onboard?branchId=${encodeURIComponent(branchId)}`
+        : isSubDsa && userId
+        ? `/partner/onboard?subDsaId=${userId}`
+        : isRM && userId
+        ? `/partner/onboard?rmId=${userId}`
+        : '/partner/onboard',
+      icon: '🔗',
+      show: isAdmin || isSupport || (isRM && !isDedicatedSiteRm) || isSubDsa || isOps,
     },
     {
       label: isPartner ? 'My Approved Certificate' : 'Partner Certificate',

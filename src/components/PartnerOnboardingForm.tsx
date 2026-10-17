@@ -34,6 +34,7 @@ interface Props {
   companyName?: string;
   referralRm?: ReferralRm | null;
   referralSubDsa?: ReferralSubDsa | null;
+  referralBranch?: Branch | null;
   targetRole?: 'SUB_DSA' | 'CHANNEL_PARTNER';
 }
 
@@ -87,6 +88,7 @@ export default function PartnerOnboardingForm({
   companyName = 'Money Shelter Pvt. Ltd.',
   referralRm,
   referralSubDsa,
+  referralBranch,
   targetRole = 'CHANNEL_PARTNER',
 }: Props) {
   // Stepper state: 1 = Profile, 2 = KYC & Docs, 3 = Agreement, 4 = OTP Confirmation, 5 = Success
@@ -101,8 +103,19 @@ export default function PartnerOnboardingForm({
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [selectedBranchId, setSelectedBranchId] = useState(
-    referralRm?.branchId || referralSubDsa?.branchId || branches[0]?.id || ''
+    referralBranch?.id || referralRm?.branchId || referralSubDsa?.branchId || branches[0]?.id || ''
   );
+
+  const isBranchCoBranded = Boolean(referralBranch?.isCoBranded && referralBranch?.coBrandName);
+  const coBrandName = referralBranch?.coBrandName || null;
+  let coBrandLogoUrl = referralBranch?.coBrandLogoUrl || null;
+  if (
+    coBrandName &&
+    coBrandName.toLowerCase().includes('lendbridge') &&
+    (!coBrandLogoUrl || coBrandLogoUrl.includes('.svg'))
+  ) {
+    coBrandLogoUrl = '/lendbridge-logo.png';
+  }
 
   // KYC Fields
   const [panNumber, setPanNumber] = useState('');
@@ -319,10 +332,15 @@ Compliance Undertaking: DPDP Act 2023 compliant, Zero-Cash Collection policy, no
     <div className="max-w-3xl mx-auto px-4 py-8 sm:py-12">
       {/* Top Exit Navigation Bar */}
       <div className="flex items-center justify-between pb-3 mb-6 border-b border-slate-200/80">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">
-            {companyName} Partner Desk
+            {isBranchCoBranded ? `${coBrandName} Partner Desk` : `${companyName} Partner Desk`}
           </span>
+          {referralBranch && (
+            <span className="text-[11px] font-semibold text-amber-800 bg-amber-50 px-2 py-0.5 rounded-md border border-amber-200">
+              Branch: {referralBranch.name} ({referralBranch.code})
+            </span>
+          )}
           {referralSubDsa && (
             <span className="text-[11px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200">
               Agency: {referralSubDsa.name}
@@ -341,12 +359,31 @@ Compliance Undertaking: DPDP Act 2023 compliant, Zero-Cash Collection policy, no
 
       {/* Brand Header */}
       <div className="text-center mb-6 sm:mb-8">
-        <div className="inline-flex items-center justify-center p-2 rounded-2xl bg-white border border-slate-200 shadow-md mb-3">
-          <MoneyShelterLogo variant="dark" size="md" />
-        </div>
+        {isBranchCoBranded && coBrandLogoUrl ? (
+          <div className="flex items-center justify-center gap-3 mb-3">
+            <div className="p-2 rounded-2xl bg-white border border-slate-200 shadow-md">
+              <img
+                src={coBrandLogoUrl}
+                alt={coBrandName || 'Partner'}
+                className="h-10 object-contain"
+              />
+            </div>
+            <span className="text-slate-400 font-bold text-sm">×</span>
+            <div className="p-2 rounded-2xl bg-white border border-slate-200 shadow-md">
+              <MoneyShelterLogo variant="dark" size="md" />
+            </div>
+          </div>
+        ) : (
+          <div className="inline-flex items-center justify-center p-2 rounded-2xl bg-white border border-slate-200 shadow-md mb-3">
+            <MoneyShelterLogo variant="dark" size="md" />
+          </div>
+        )}
+
         <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
           {targetRole === 'SUB_DSA'
             ? 'Sub-DSA Partner & Network Onboarding'
+            : referralBranch
+            ? `${referralBranch.name} Channel Partner Onboarding`
             : referralSubDsa
             ? 'Channel Partner (Agent) Onboarding'
             : 'Channel Partner & Sub-DSA Onboarding'}
@@ -354,6 +391,8 @@ Compliance Undertaking: DPDP Act 2023 compliant, Zero-Cash Collection policy, no
         <p className="text-xs sm:text-sm text-slate-500 max-w-md mx-auto mt-1">
           {targetRole === 'SUB_DSA'
             ? `Join ${companyName} as an authorized Sub-DSA. Build and manage your agent network, earn override commissions on team business, and originate direct customer loans.`
+            : referralBranch
+            ? `Register directly with ${isBranchCoBranded ? `${coBrandName} (${referralBranch.name})` : referralBranch.name} as an authorized loan referral associate. Direct digital files, high commissions, and real-time bank payouts.`
             : referralSubDsa
             ? `Join ${companyName} under ${referralSubDsa.name}'s agency network. Earn guaranteed bank payouts on every disbursed loan.`
             : `Join ${companyName} as an authorized loan referral associate. Sourced digital leads, transparent slabs, and real-time bank payouts.`}
@@ -622,13 +661,21 @@ Compliance Undertaking: DPDP Act 2023 compliant, Zero-Cash Collection policy, no
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">
-                  Nearest Operating Branch
-                </label>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="block text-xs font-semibold text-slate-700">
+                    Operating Branch
+                  </label>
+                  {referralBranch && (
+                    <span className="text-[10px] font-bold px-1.5 py-0.2 rounded bg-amber-100 text-amber-900">
+                      🔒 Locked to {referralBranch.name}
+                    </span>
+                  )}
+                </div>
                 <select
                   value={selectedBranchId}
+                  disabled={Boolean(referralBranch)}
                   onChange={(e) => setSelectedBranchId(e.target.value)}
-                  className="w-full px-3 py-2 border border-slate-200 rounded-lg text-xs bg-white focus:ring-2 focus:ring-emerald-500 focus:outline-none"
+                  className="w-full px-3 py-2 border border-slate-200 rounded-lg text-xs bg-white focus:ring-2 focus:ring-emerald-500 focus:outline-none disabled:bg-slate-100 disabled:text-slate-600 font-medium"
                 >
                   {branches.map((b) => (
                     <option key={b.id} value={b.id}>
@@ -636,7 +683,11 @@ Compliance Undertaking: DPDP Act 2023 compliant, Zero-Cash Collection policy, no
                     </option>
                   ))}
                 </select>
-                <span className="text-[10px] text-slate-400">Your relationship manager desk</span>
+                <span className="text-[10px] text-slate-400">
+                  {referralBranch
+                    ? `Registered directly under ${referralBranch.name} portfolio desk`
+                    : 'Your relationship manager desk'}
+                </span>
               </div>
             </div>
 

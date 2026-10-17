@@ -190,6 +190,113 @@ export async function updateBranchAction(id: string, formData: FormData): Promis
   }
 }
 
+export async function createSiteForBranchAction(formData: FormData): Promise<ActionResult> {
+  try {
+    const user = await requireRole('ADMIN', 'CENTRAL_SUPPORT', 'OPERATIONS');
+
+    const name = String(formData.get('name') || '').trim();
+    let code = String(formData.get('code') || '').trim();
+    const address = String(formData.get('address') || '').trim();
+    const phone = String(formData.get('phone') || '').trim();
+    const email = String(formData.get('email') || '').trim();
+    const developerName = String(formData.get('developerName') || '').trim();
+    const dedicatedRmId = String(formData.get('dedicatedRmId') || '').trim() || null;
+
+    if (!name) return { ok: false, error: 'Project / Construction site name is required.' };
+
+    // Resolve parent branch
+    let mappedBranchId = String(formData.get('mappedBranchId') || '').trim();
+    if (user.role === 'OPERATIONS') {
+      // Branch operations can only create sites mapped to their own branch
+      let effectiveBranchId = user.branchId;
+      if (
+        !effectiveBranchId &&
+        (user.email?.toLowerCase().includes('lendbridge') ||
+          user.email?.toLowerCase().includes('satara') ||
+          user.name?.toLowerCase().includes('lendbridge') ||
+          user.name?.toLowerCase().includes('satara'))
+      ) {
+        effectiveBranchId = 'br_satara_01';
+      }
+      if (!effectiveBranchId) {
+        return { ok: false, error: 'Your operations user is not assigned to a branch.' };
+      }
+      mappedBranchId = effectiveBranchId;
+    }
+
+    if (!mappedBranchId) {
+      return { ok: false, error: 'Parent branch is required for a project site.' };
+    }
+
+    const parentB = branchesRepo.getBranchById(mappedBranchId);
+    if (!parentB) {
+      return { ok: false, error: 'Parent branch does not exist.' };
+    }
+
+    // Auto-generate site code if not provided
+    if (!code) {
+      const prefix = (parentB.code || 'SITE').slice(0, 3).toUpperCase();
+      const randomSuffix = Math.floor(100 + Math.random() * 900);
+      code = `${prefix}-ST-${randomSuffix}`;
+    }
+
+    if (branchesRepo.branchCodeExists(code)) {
+      return { ok: false, error: `Site code "${code.toUpperCase()}" is already in use. Please enter a unique code.` };
+    }
+
+    let dedicatedRmName: string | null = null;
+    if (dedicatedRmId) {
+      const rm = usersRepo.getUserById(dedicatedRmId);
+      if (rm) {
+        dedicatedRmName = rm.name;
+      }
+    }
+
+    // Inherit co-branding from parent branch if parent is co-branded
+    const isCoBranded = parentB.isCoBranded || false;
+    const coBrandName = parentB.coBrandName || null;
+    const coBrandLogoUrl = parentB.coBrandLogoUrl || null;
+    const coBrandTagline = parentB.coBrandTagline || null;
+
+    branchesRepo.createBranch({
+      name,
+      code,
+      type: 'SITE',
+      mappedBranchId: parentB.id,
+      mappedBranchName: parentB.name,
+      address: address || null,
+      phone: phone || null,
+      email: email || null,
+      dedicatedRmId,
+      dedicatedRmName,
+      developerName: developerName || null,
+      isCoBranded,
+      coBrandName,
+      coBrandLogoUrl,
+      coBrandTagline,
+    });
+
+    await syncDatabase();
+    revalidatePath('/admin/partners');
+    revalidatePath('/admin/branches');
+    revalidatePath('/admin/sites');
+    revalidatePath('/branch/create-link');
+
+    return {
+      ok: true,
+      message: `Direct Construction Site "${name}" (${code}) created successfully under ${parentB.name}.`,
+    };
+  } catch (err) {
+    return {
+      ok: false,
+      error:
+        err instanceof Error && err.message === 'FORBIDDEN'
+          ? 'You do not have permission to create project sites.'
+          : 'Failed to create project site. Please check the inputs and try again.',
+    };
+  }
+}
+
 export async function deleteBranchAction(id: string): Promise<ActionResult> {
   try {
     await requireRole('ADMIN');

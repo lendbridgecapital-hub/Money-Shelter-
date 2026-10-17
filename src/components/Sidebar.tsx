@@ -15,6 +15,7 @@ interface SidebarProps {
   logoUrl?: string | null;
   userName: string;
   branchName?: string;
+  branchId?: string;
   isDedicatedSiteRm?: boolean;
   isCoBranded?: boolean;
   coBrandName?: string | null;
@@ -29,6 +30,7 @@ export default function Sidebar({
   logoUrl,
   userName,
   branchName,
+  branchId,
   isDedicatedSiteRm = false,
   isCoBranded = false,
   coBrandName,
@@ -82,11 +84,23 @@ export default function Sidebar({
       external: false,
     },
     {
-      label: isSubDsa ? 'My Team' : isRM ? 'My Channel Partners' : isSupport ? 'Partner Directory' : 'Partner Compliance',
+      label: isOps
+        ? 'Branch Partners & Network'
+        : isSubDsa
+        ? 'My Team'
+        : isRM
+        ? 'My Channel Partners'
+        : isSupport
+        ? 'Partner Directory'
+        : 'Partner Compliance',
       href: '/admin/partners',
       icon: '🛡️',
-      description: isSubDsa ? 'Mapped agents in your franchise' : 'Active partners & records',
-      show: isAdmin || isSupport || (isRM && !isDedicatedSiteRm) || isSubDsa,
+      description: isOps
+        ? 'Branch partners, sites & originations'
+        : isSubDsa
+        ? 'Mapped agents in your franchise'
+        : 'Active partners & records',
+      show: isAdmin || isSupport || (isRM && !isDedicatedSiteRm) || isSubDsa || isOps,
       external: false,
     },
     {
@@ -118,19 +132,29 @@ export default function Sidebar({
       external: false,
     },
     {
-      label: isSubDsa ? 'Recruit Agents Link' : isRM ? 'Share Onboarding Link' : 'Public Onboard Link',
-      href: isSubDsa && userId
+      label: isOps
+        ? 'Share Branch Onboard Link'
+        : isSubDsa
+        ? 'Recruit Agents Link'
+        : isRM
+        ? 'Share Onboarding Link'
+        : 'Public Onboard Link',
+      href: isOps && branchId
+        ? `/partner/onboard?branchId=${encodeURIComponent(branchId)}`
+        : isSubDsa && userId
         ? `/partner/onboard?subDsaId=${userId}`
         : isRM && userId
         ? `/partner/onboard?rmId=${userId}`
         : '/partner/onboard',
       icon: '🔗',
-      description: isSubDsa
+      description: isOps
+        ? 'Branch-scoped partner onboarding link'
+        : isSubDsa
         ? 'Invite agents under your Sub-DSA network'
         : isRM
         ? 'Auto-assigns partners to your RM portfolio'
         : 'External partner onboard form',
-      show: isAdmin || isSupport || (isRM && !isDedicatedSiteRm) || isSubDsa,
+      show: isAdmin || isSupport || (isRM && !isDedicatedSiteRm) || isSubDsa || isOps,
       external: true,
     },
   ].filter((item) => item.show);

@@ -107,6 +107,21 @@ export default async function PartnerOnboardPage({
 
   const targetRole = isExplicitSubDsa ? 'SUB_DSA' : 'CHANNEL_PARTNER';
 
+  // 3. Check if referred via direct Branch link (e.g. Satara Branch / Lendbridge Capital)
+  const targetBranchId = searchParams?.branchId;
+  let referralBranch: (typeof branches)[number] | null = null;
+  if (targetBranchId) {
+    const cleanId = targetBranchId.trim().toLowerCase();
+    referralBranch =
+      branches.find(
+        (b) =>
+          b.id.toLowerCase() === cleanId ||
+          b.code.toLowerCase() === cleanId ||
+          b.name.toLowerCase() === cleanId ||
+          (b.coBrandName && b.coBrandName.toLowerCase() === cleanId)
+      ) || null;
+  }
+
   return (
     <div className="min-h-screen bg-slate-50">
       <PartnerOnboardingForm
@@ -114,6 +129,7 @@ export default async function PartnerOnboardPage({
         companyName={settings.companyName || 'Money Shelter Pvt. Ltd.'}
         referralRm={referralRm}
         referralSubDsa={referralSubDsa}
+        referralBranch={referralBranch}
         targetRole={targetRole}
       />
     </div>
