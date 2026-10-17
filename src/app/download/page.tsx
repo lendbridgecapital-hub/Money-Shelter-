@@ -55,6 +55,31 @@ export default function DownloadPage() {
           </div>
         </div>
 
+        {/* Satara Branch / Lendbridge Capital App Banner */}
+        <div className="mt-5 p-3.5 bg-gradient-to-r from-blue-50/90 via-indigo-50/80 to-slate-50 border border-blue-200/90 rounded-2xl flex items-center justify-between gap-3 text-left">
+          <div className="flex items-center gap-2.5">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/lendbridge-emblem.png"
+              alt="Lendbridge Capital"
+              className="w-10 h-10 object-contain bg-white rounded-xl p-1 border border-blue-200 shrink-0"
+              onError={(e) => {
+                (e.currentTarget as HTMLImageElement).src = '/lendbridge-logo.png';
+              }}
+            />
+            <div>
+              <p className="text-xs font-bold text-slate-900">Looking for Satara Branch App?</p>
+              <p className="text-[11px] text-slate-500">Download Lendbridge Capital dedicated edition</p>
+            </div>
+          </div>
+          <Link
+            href="/lendbridge/download"
+            className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl shadow-2xs transition whitespace-nowrap shrink-0"
+          >
+            Lendbridge App →
+          </Link>
+        </div>
+
         <div className="mt-6 pt-5 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
           <Link href="/" className="hover:text-cyan-700 font-semibold">
             &larr; Back to Website

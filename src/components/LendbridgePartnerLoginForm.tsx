@@ -274,6 +274,17 @@ export default function LendbridgePartnerLoginForm({ companySettings }: Lendbrid
                 </Link>
               </div>
 
+              {/* Dedicated App Download Link */}
+              <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-center gap-1.5 text-center">
+                <span className="text-xs">📱</span>
+                <Link
+                  href="/lendbridge/download"
+                  className="text-xs font-bold text-slate-700 hover:text-blue-700 underline underline-offset-2 transition"
+                >
+                  Download Lendbridge Capital Mobile App →
+                </Link>
+              </div>
+
               {/* HQ Operations Login Switch */}
               <div className="mt-4 text-center">
                 <Link

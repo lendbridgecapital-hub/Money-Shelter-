@@ -1,0 +1,24 @@
+{
+  "name": "Lendbridge Capital — Satara Partner Portal",
+  "short_name": "Lendbridge",
+  "description": "Lendbridge Capital Satara Branch Loan Origination, Pipeline & Partner Network App",
+  "start_url": "/lendbridge/login",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#ffffff",
+  "theme_color": "#0f172a",
+  "icons": [
+    {
+      "src": "/lendbridge-emblem.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/lendbridge-logo.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
