@@ -63,11 +63,6 @@ export default function LoginPage() {
     }
   };
 
-  const handleQuickFill = (demoEmail: string) => {
-    setEmail(demoEmail);
-    setPassword('Password123!');
-  };
-
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
       <div className="sm:mx-auto sm:w-full sm:max-w-md text-center">
@@ -135,58 +130,6 @@ export default function LoginPage() {
               </button>
             </div>
           </form>
-
-          {/* Quick Demo Logins for All Roles */}
-          <div className="mt-8 pt-6 border-t border-slate-100">
-            <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2.5 text-center">
-              Quick Role-Based Sign-Ins
-            </p>
-            <div className="grid grid-cols-2 gap-2">
-              <button
-                type="button"
-                onClick={() => handleQuickFill('admin@moneyshelter.in')}
-                className="py-2 px-2.5 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-lg text-xs font-bold text-slate-800 transition-colors text-left flex flex-col"
-              >
-                <span>👑 Admin</span>
-                <span className="text-[10px] font-normal text-slate-400">admin@moneyshelter.in</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => handleQuickFill('support@moneyshelter.in')}
-                className="py-2 px-2.5 bg-amber-50/60 hover:bg-amber-100/70 border border-amber-300 rounded-lg text-xs font-bold text-amber-900 transition-colors text-left flex flex-col"
-              >
-                <span>🛡️ Support Desk</span>
-                <span className="text-[10px] font-normal text-amber-700">support@moneyshelter.in</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => handleQuickFill('ops@moneyshelter.in')}
-                className="py-2 px-2.5 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-lg text-xs font-bold text-slate-800 transition-colors text-left flex flex-col"
-              >
-                <span>⚙️ Operations</span>
-                <span className="text-[10px] font-normal text-slate-500">ops@moneyshelter.in</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => handleQuickFill('rm@moneyshelter.in')}
-                className="py-2 px-2.5 bg-indigo-50/50 hover:bg-indigo-50 border border-indigo-200 rounded-lg text-xs font-bold text-indigo-900 transition-colors text-left flex flex-col"
-              >
-                <span>👔 Relationship Mgr</span>
-                <span className="text-[10px] font-normal text-indigo-600">rm@moneyshelter.in</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => handleQuickFill('partner@moneyshelter.in')}
-                className="col-span-2 py-2 px-2.5 bg-emerald-50/50 hover:bg-emerald-50 border border-emerald-200 rounded-lg text-xs font-bold text-emerald-900 transition-colors text-left flex flex-col"
-              >
-                <span>🤝 Channel Partner</span>
-                <span className="text-[10px] font-normal text-emerald-600">partner@moneyshelter.in</span>
-              </button>
-            </div>
-            <p className="text-[10px] text-slate-400 mt-2.5 text-center">
-              Universal default password: <code className="font-mono font-semibold text-slate-600">Password123!</code>
-            </p>
-          </div>
         </div>
 
         {/* Partner Onboarding Link */}

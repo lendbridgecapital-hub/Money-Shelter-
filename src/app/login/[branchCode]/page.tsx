@@ -16,8 +16,8 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const cleanCode = params.branchCode.toLowerCase();
   if (cleanCode === 'lendbridge' || cleanCode === 'lendbridge-capital' || cleanCode === 'lendbridgecapital') {
     return {
-      title: 'Lendbridge Capital — Channel Partner Login | Money Shelter',
-      description: 'Official Channel Partner & DSA Login Portal for Lendbridge Capital in strategic partnership with Money Shelter.',
+      title: 'Lendbridge Capital — Channel Partner Login',
+      description: 'Official Channel Partner & DSA Login Portal for Lendbridge Capital (Satara Branch).',
     };
   }
 

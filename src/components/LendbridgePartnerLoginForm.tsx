@@ -2,7 +2,6 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
 import { signIn, getSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import type { CompanySettings } from '@/types/db';
@@ -11,16 +10,12 @@ interface LendbridgePartnerLoginFormProps {
   companySettings?: CompanySettings;
 }
 
-export default function LendbridgePartnerLoginForm({ companySettings }: LendbridgePartnerLoginFormProps) {
+export default function LendbridgePartnerLoginForm({}: LendbridgePartnerLoginFormProps) {
   const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  const companyLogo = companySettings?.logoUrl || '/money-shelter-logo.png';
-  const companyName = companySettings?.companyName || 'Money Shelter Pvt. Ltd.';
 
   // Auto-redirect if already signed in
   useEffect(() => {
@@ -44,7 +39,7 @@ export default function LendbridgePartnerLoginForm({ companySettings }: Lendbrid
       });
 
       if (res?.error) {
-        setError('Invalid partner email or password. Please verify your credentials or contact Lendbridge partner desk.');
+        setError('Invalid email address or password. Please verify your credentials or contact Lendbridge partner desk.');
         setIsLoading(false);
       } else {
         router.push('/dashboard');
@@ -56,246 +51,117 @@ export default function LendbridgePartnerLoginForm({ companySettings }: Lendbrid
     }
   };
 
-  const handleQuickFillPartner = () => {
-    setEmail('lendbridgecapital@gmail.com');
-    setPassword('Password123!');
-  };
-
   return (
-    <div className="min-h-screen bg-white text-slate-900 flex flex-col justify-center py-8 sm:py-12 px-4 sm:px-6 lg:px-8 selection:bg-blue-600 selection:text-white">
-      {/* Background Subtle Gradient Overlay */}
-      <div className="fixed inset-0 pointer-events-none bg-gradient-to-b from-slate-50 via-white to-slate-50/60 -z-10" />
-
-      <div className="max-w-6xl w-full mx-auto">
-        {/* Top Header Bar */}
-        <div className="bg-white border border-slate-200/90 rounded-2xl p-4 sm:p-5 shadow-xs mb-8 flex flex-col sm:flex-row items-center justify-between gap-4">
-          {/* Left: Lendbridge Capital Logo */}
-          <div className="flex items-center gap-3.5">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src="/lendbridge-logo.png"
-              alt="Lendbridge Capital"
-              className="h-12 sm:h-14 w-auto object-contain max-w-[240px]"
-              onError={(e) => {
-                // Graceful fallback to emblem + wordmark if full logo path changes
-                (e.currentTarget as HTMLImageElement).src = '/lendbridge-emblem.png';
-              }}
-            />
-            <div className="hidden md:block pl-3 border-l border-slate-200">
-              <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase bg-blue-50 text-blue-700 border border-blue-200 inline-block">
-                Channel Partner Portal
-              </span>
-              <p className="text-[11px] text-slate-500 font-medium mt-0.5">
-                Official Lending &amp; Channel Partner Platform
-              </p>
-            </div>
-          </div>
-
-          {/* Right: Direct Lendbridge Contact */}
-          <div className="flex flex-wrap items-center gap-3 text-xs font-semibold text-slate-600">
-            <a
-              href="mailto:lendbridgecapital@gmail.com"
-              className="flex items-center gap-1.5 hover:text-blue-600 transition bg-slate-50 border border-slate-200/80 px-3 py-1.5 rounded-xl shadow-2xs"
-            >
-              <span>✉️</span>
-              <span className="text-slate-700">lendbridgecapital@gmail.com</span>
-            </a>
-            <a
-              href="tel:9049301089"
-              className="flex items-center gap-1.5 hover:text-blue-600 transition font-bold text-slate-900 bg-slate-50 border border-slate-200/80 px-3 py-1.5 rounded-xl shadow-2xs"
-            >
-              <span>📞</span>
-              <span>+91 9049301089</span>
-            </a>
-          </div>
+    <div className="min-h-screen bg-slate-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8 selection:bg-blue-600 selection:text-white">
+      <div className="sm:mx-auto sm:w-full sm:max-w-md text-center">
+        {/* Official Lendbridge Capital Logo */}
+        <div className="inline-block mb-3">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/lendbridge-logo.png"
+            alt="Lendbridge Capital — Satara Branch"
+            className="mx-auto h-20 sm:h-24 w-auto object-contain max-w-[280px]"
+            onError={(e) => {
+              (e.currentTarget as HTMLImageElement).src = '/lendbridge-emblem.png';
+            }}
+          />
         </div>
 
-        {/* Main Grid: Left Features + Right Login Card */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 items-center">
-          {/* Left: Value Proposition for Channel Partners */}
-          <div className="lg:col-span-7 space-y-6">
-            <div className="space-y-3">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-50 border border-blue-200 text-blue-700 text-xs font-bold">
-                <span>⚡</span>
-                <span>Dedicated Channel Partner & DSA Login</span>
-              </div>
-              <h1 className="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight leading-tight">
-                Supercharge Your Loan Business with Lendbridge Capital
-              </h1>
-              <p className="text-sm sm:text-base text-slate-600 leading-relaxed">
-                Seamless multi-bank loan sourcing, live 30-minute TAT file tracking, and highest market commission slabs — all on a single unified partner dashboard.
-              </p>
+        <h2 className="mt-2 text-center text-2xl font-black text-slate-900 tracking-tight">
+          Lendbridge Capital Portal Login
+        </h2>
+        <p className="mt-1 text-center text-xs font-semibold text-slate-500 uppercase tracking-wider">
+          Satara Branch Loan Origination &amp; Partner Platform
+        </p>
+      </div>
+
+      <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
+        <div className="bg-white py-8 px-6 shadow-xl shadow-slate-100 sm:rounded-2xl border border-slate-200/80 sm:px-10">
+          {error && (
+            <div className="mb-6 p-4 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs font-semibold flex items-center gap-2">
+              <span className="shrink-0 font-bold">✕</span>
+              <span>{error}</span>
+            </div>
+          )}
+
+          <form onSubmit={handleSubmit} className="space-y-5">
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 mb-1">
+                Email Address
+              </label>
+              <input
+                type="email"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="partner@lendbridgecapital.com"
+                className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600 transition"
+              />
             </div>
 
-            {/* 4 Feature Pillars */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 pt-1">
-              <div className="p-4 rounded-2xl bg-white border border-slate-200/90 hover:border-blue-400 hover:shadow-xs transition">
-                <div className="text-2xl mb-1.5">🏛️</div>
-                <h3 className="font-bold text-slate-900 text-sm">50+ Banks & NBFCs</h3>
-                <p className="text-xs text-slate-500 mt-1 leading-relaxed">
-                  Direct login access across HDFC, ICICI, SBI, Axis, Kotak, Tata Capital, and Bajaj.
-                </p>
-              </div>
-
-              <div className="p-4 rounded-2xl bg-white border border-slate-200/90 hover:border-blue-400 hover:shadow-xs transition">
-                <div className="text-2xl mb-1.5">⏱️</div>
-                <h3 className="font-bold text-slate-900 text-sm">Real-Time SLA Timers</h3>
-                <p className="text-xs text-slate-500 mt-1 leading-relaxed">
-                  30-min TAT monitor in document buckets with automated SMS & WhatsApp client follow-ups.
-                </p>
-              </div>
-
-              <div className="p-4 rounded-2xl bg-white border border-slate-200/90 hover:border-blue-400 hover:shadow-xs transition">
-                <div className="text-2xl mb-1.5">💰</div>
-                <h3 className="font-bold text-slate-900 text-sm">Highest Commission Slabs</h3>
-                <p className="text-xs text-slate-500 mt-1 leading-relaxed">
-                  Transparent commission ledgers and prompt payouts on every disbursed file.
-                </p>
-              </div>
-
-              <div className="p-4 rounded-2xl bg-white border border-slate-200/90 hover:border-blue-400 hover:shadow-xs transition">
-                <div className="text-2xl mb-1.5">📲</div>
-                <h3 className="font-bold text-slate-900 text-sm">Instant Digital Links</h3>
-                <p className="text-xs text-slate-500 mt-1 leading-relaxed">
-                  Share co-branded loan application links with borrowers and collect documents instantly.
-                </p>
-              </div>
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 mb-1">
+                Password
+              </label>
+              <input
+                type="password"
+                required
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="••••••••••••"
+                className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600 transition"
+              />
             </div>
-          </div>
 
-          {/* Right: Partner Login Box */}
-          <div className="lg:col-span-5">
-            <div className="bg-white border border-slate-200 rounded-3xl p-6 sm:p-8 shadow-xl shadow-slate-200/60">
-              {/* Card Header with Lendbridge Logo */}
-              <div className="mb-6 flex items-center justify-between pb-4 border-b border-slate-100">
-                <div>
-                  <h2 className="text-xl font-black text-slate-900 tracking-tight">Partner Sign In</h2>
-                  <p className="text-xs text-slate-500 mt-1">
-                    Access your live loan pipeline, sanctions, and commissions.
-                  </p>
-                </div>
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src="/lendbridge-emblem.png"
-                  alt="LB"
-                  className="h-10 w-auto object-contain shrink-0"
-                />
-              </div>
-
-              {error && (
-                <div className="mb-5 p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs font-semibold flex items-start gap-2.5">
-                  <span className="font-bold text-rose-600 text-sm">✕</span>
-                  <span className="leading-snug">{error}</span>
-                </div>
-              )}
-
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
-                    Registered Email Address
-                  </label>
-                  <input
-                    type="email"
-                    required
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="partner@lendbridgecapital.com"
-                    className="w-full px-4 py-3 bg-slate-50/70 border border-slate-200 rounded-xl text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:bg-white focus:ring-2 focus:ring-blue-600 focus:border-blue-600 transition"
-                  />
-                </div>
-
-                <div>
-                  <div className="flex items-center justify-between mb-1.5">
-                    <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
-                      Password
-                    </label>
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                      className="text-xs font-semibold text-blue-600 hover:text-blue-700 transition"
-                    >
-                      {showPassword ? 'Hide' : 'Show'}
-                    </button>
-                  </div>
-                  <input
-                    type={showPassword ? 'text' : 'password'}
-                    required
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder="••••••••••••"
-                    className="w-full px-4 py-3 bg-slate-50/70 border border-slate-200 rounded-xl text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:bg-white focus:ring-2 focus:ring-blue-600 focus:border-blue-600 transition"
-                  />
-                </div>
-
-                <div className="pt-2">
-                  <button
-                    type="submit"
-                    disabled={isLoading}
-                    className="w-full py-3.5 px-4 rounded-xl text-sm font-bold text-white bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-700 hover:from-blue-500 hover:to-indigo-500 shadow-md hover:shadow-blue-500/20 active:scale-[0.99] disabled:opacity-50 transition-all flex items-center justify-center gap-2"
-                  >
-                    {isLoading ? (
-                      <>
-                        <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                        <span>Signing In…</span>
-                      </>
-                    ) : (
-                      <span>Sign In to Partner Dashboard →</span>
-                    )}
-                  </button>
-                </div>
-              </form>
-
-              {/* Quick Fill Button for Testing */}
-              <div className="mt-4 pt-4 border-t border-slate-100 flex items-center justify-between">
-                <span className="text-[11px] text-slate-400 font-medium">Testing credentials:</span>
-                <button
-                  type="button"
-                  onClick={handleQuickFillPartner}
-                  className="text-[11px] font-bold text-amber-900 hover:text-amber-950 bg-amber-50 hover:bg-amber-100 border border-amber-300 px-2.5 py-1 rounded-lg transition"
-                >
-                  Fill Demo Partner Login
-                </button>
-              </div>
-
-              {/* Partner Onboarding Link */}
-              <div className="mt-6 pt-5 border-t border-slate-100 text-center">
-                <p className="text-xs text-slate-500">
-                  Not an authorized Lendbridge partner yet?
-                </p>
-                <Link
-                  href="/partner/onboard?branchId=br_satara_01"
-                  className="mt-1.5 inline-block text-xs font-bold text-blue-600 hover:text-blue-800 underline underline-offset-4 transition"
-                >
-                  Register as a Lendbridge Capital Partner →
-                </Link>
-              </div>
-
-              {/* Dedicated App Download Link */}
-              <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-center gap-1.5 text-center">
-                <span className="text-xs">📱</span>
-                <Link
-                  href="/lendbridge/download"
-                  className="text-xs font-bold text-slate-700 hover:text-blue-700 underline underline-offset-2 transition"
-                >
-                  Download Lendbridge Capital Mobile App →
-                </Link>
-              </div>
-
-              {/* Satara Support Footer */}
-              <div className="mt-4 pt-3 border-t border-slate-100 text-center">
-                <p className="text-[11px] text-slate-500">
-                  Lendbridge Capital Desk:{' '}
-                  <a href="tel:9049301089" className="font-bold text-slate-700 hover:text-blue-600">
-                    +91 9049301089
-                  </a>{' '}
-                  •{' '}
-                  <a href="mailto:lendbridgecapital@gmail.com" className="text-blue-600 font-semibold hover:underline">
-                    lendbridgecapital@gmail.com
-                  </a>
-                </p>
-              </div>
+            <div>
+              <button
+                type="submit"
+                disabled={isLoading}
+                className="w-full py-3 px-4 rounded-xl text-sm font-bold text-white bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-700 hover:from-blue-500 hover:to-indigo-500 shadow-md hover:shadow-blue-500/20 active:scale-[0.99] disabled:opacity-50 transition-all flex items-center justify-center gap-2"
+              >
+                {isLoading ? (
+                  <>
+                    <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    <span>Signing In…</span>
+                  </>
+                ) : (
+                  <span>Sign In to Portal</span>
+                )}
+              </button>
             </div>
-          </div>
+          </form>
+        </div>
+
+        {/* Partner Onboarding Link */}
+        <div className="mt-5 text-center">
+          <p className="text-xs text-slate-500">
+            Want to become a Lendbridge Capital partner?{' '}
+            <Link
+              href="/partner/onboard?branchId=br_satara_01"
+              className="font-bold text-blue-700 hover:text-blue-900 transition-colors"
+            >
+              Onboard &amp; Sign Partner Agreement →
+            </Link>
+          </p>
+        </div>
+
+        {/* Contact Info Footer for Satara Branch */}
+        <div className="mt-4 pt-3 border-t border-slate-200/70 max-w-sm mx-auto text-center flex items-center justify-center gap-4 text-xs font-medium text-slate-500">
+          <a
+            href="tel:9049301089"
+            className="hover:text-blue-600 transition flex items-center gap-1 font-semibold text-slate-700"
+          >
+            <span>📞</span>
+            <span>+91 9049301089</span>
+          </a>
+          <span className="text-slate-300">•</span>
+          <a
+            href="mailto:lendbridgecapital@gmail.com"
+            className="hover:text-blue-600 transition flex items-center gap-1 font-semibold text-slate-700"
+          >
+            <span>✉️</span>
+            <span>lendbridgecapital@gmail.com</span>
+          </a>
         </div>
       </div>
     </div>

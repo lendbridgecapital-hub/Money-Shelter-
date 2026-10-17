@@ -4,9 +4,19 @@ import { getCompanySettings } from '@/lib/settings';
 import LendbridgePartnerLoginForm from '@/components/LendbridgePartnerLoginForm';
 
 export const metadata: Metadata = {
-  title: 'Lendbridge Capital — Channel Partner Login | Money Shelter',
+  title: 'Lendbridge Capital — Portal Login',
   description:
-    'Dedicated Channel Partner and Sub-DSA login portal for Lendbridge Capital in partnership with Money Shelter Pvt. Ltd. Access multi-bank sourcing, live SLA timers, and commission reports.',
+    'Official Channel Partner, Sub-DSA and Branch Employee login portal for Lendbridge Capital (Satara Branch). Access multi-bank loan sourcing, live SLA timers, and commission reports.',
+  openGraph: {
+    title: 'Lendbridge Capital — Portal Login',
+    description:
+      'Official Channel Partner, Sub-DSA and Branch Employee login portal for Lendbridge Capital (Satara Branch).',
+    siteName: 'Lendbridge Capital',
+    images: [{ url: 'https://money-shelter.onrender.com/lendbridge-logo.png' }],
+  },
+  icons: {
+    icon: '/lendbridge-logo.png',
+  },
 };
 
 export default async function LendbridgeLoginPage() {
