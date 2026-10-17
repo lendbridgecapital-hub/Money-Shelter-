@@ -57,6 +57,8 @@ export async function submitCustomerApplication(token: string, formData: FormDat
   const propertyPaperType = rawPropertyPaperType ? String(rawPropertyPaperType).trim() : undefined;
 
   const loanAmount = Number(formData.get('loanAmount') || 0);
+  const rawOngoingLoan = formData.get('ongoingLoanAmount');
+  const ongoingLoanAmount = rawOngoingLoan !== null && rawOngoingLoan !== '' ? Number(rawOngoingLoan) : undefined;
   const rawMonthlyIncome = formData.get('monthlyIncome');
   const monthlyIncome = rawMonthlyIncome !== null && rawMonthlyIncome !== '' ? Number(rawMonthlyIncome) : undefined;
   const rawExistingEmi = formData.get('existingEmi');
@@ -75,6 +77,9 @@ export async function submitCustomerApplication(token: string, formData: FormDat
   if (!/^\S+@\S+\.\S+$/.test(email)) return { ok: false, error: 'Please enter a valid email address.' };
   if (!VALID_LOAN_TYPES.includes(loanType)) return { ok: false, error: 'Please select a loan type.' };
   if (!loanAmount || loanAmount <= 0) return { ok: false, error: 'Please enter the loan amount required.' };
+  if (loanType === 'BALANCE_TRANSFER' && (!ongoingLoanAmount || ongoingLoanAmount <= 0)) {
+    return { ok: false, error: 'Please enter your current ongoing loan outstanding amount to transfer.' };
+  }
   if (!attested) return { ok: false, error: 'Please confirm the self-attestation declaration before submitting.' };
 
   const documentGroups = getDocumentGroupsForApplication(loanType, incomeType);
@@ -108,6 +113,7 @@ export async function submitCustomerApplication(token: string, formData: FormDat
     incomeType,
     propertyPaperType,
     loanAmount,
+    ongoingLoanAmount,
     monthlyIncome,
     existingEmi,
     tenureMonths,

@@ -994,6 +994,7 @@ export async function editCustomerInformationAction(
     email?: string | null;
     loanType: LoanType;
     loanAmount: number;
+    ongoingLoanAmount?: number | null;
     monthlyIncome?: number | null;
     existingEmi?: number | null;
     tenureMonths?: number | null;
@@ -1042,6 +1043,9 @@ export async function editCustomerInformationAction(
     if (Number(data.loanAmount) !== Number(application.loanAmount)) {
       changes.push(`Loan Amount: ₹${Number(application.loanAmount || 0).toLocaleString('en-IN')} → ₹${Number(data.loanAmount).toLocaleString('en-IN')}`);
     }
+    if (data.ongoingLoanAmount !== undefined && Number(data.ongoingLoanAmount || 0) !== Number(application.ongoingLoanAmount || 0)) {
+      changes.push(`Ongoing Loan Amount: ₹${Number(application.ongoingLoanAmount || 0).toLocaleString('en-IN')} → ₹${Number(data.ongoingLoanAmount || 0).toLocaleString('en-IN')}`);
+    }
     if (Number(data.monthlyIncome || 0) !== Number(application.monthlyIncome || 0)) {
       changes.push(`Monthly Income: ₹${Number(application.monthlyIncome || 0).toLocaleString('en-IN')} → ₹${Number(data.monthlyIncome || 0).toLocaleString('en-IN')}`);
     }
@@ -1069,6 +1073,7 @@ export async function editCustomerInformationAction(
       email: data.email,
       loanType: data.loanType,
       loanAmount: Number(data.loanAmount) || 0,
+      ongoingLoanAmount: data.ongoingLoanAmount !== undefined ? Number(data.ongoingLoanAmount) : null,
       monthlyIncome: data.monthlyIncome !== undefined ? Number(data.monthlyIncome) : null,
       existingEmi: data.existingEmi !== undefined ? Number(data.existingEmi) : null,
       tenureMonths: data.tenureMonths !== undefined ? Number(data.tenureMonths) : null,

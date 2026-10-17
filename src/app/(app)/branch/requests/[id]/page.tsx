@@ -33,6 +33,7 @@ const CATEGORY_TITLES: Record<string, string> = {
   BANK_STATEMENT: 'Bank Statements & Financials',
   LOAN_TRACK_RECORD: 'Track Record of Loans (Running Loans / RTR)',
   PROPERTY_PAPERS: 'Property Documents',
+  FORECLOSURE_LETTER: 'Foreclosure Letter / Loan Repayment Statement (SOA)',
   ADDITIONAL_REQUIRED: 'Operational Additional Documents',
   ACCEPTANCE_LETTER: 'Sanction Acceptance Letter',
   OTHER: 'Other',
@@ -284,6 +285,9 @@ export default async function RequestDetailPage({ params }: { params: { id: stri
                 <Field label="Property Paper Type" value={application.propertyPaperType} />
               )}
               <Field label="Requested Loan Amount" value={application.loanAmount ? formatCurrencyINR(application.loanAmount) : null} />
+              {application.ongoingLoanAmount && (
+                <Field label="Ongoing Loan Amount (Balance Transfer)" value={formatCurrencyINR(application.ongoingLoanAmount)} />
+              )}
               {application.monthlyIncome && (
                 <Field label="Monthly Net Income" value={formatCurrencyINR(application.monthlyIncome)} />
               )}

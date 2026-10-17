@@ -258,6 +258,8 @@ ${displayBrandName}`;
               ? 'ℹ️ Business Loan selected: Customer will be asked for Photo, Shop Act Licence (both sides), Udyam Certificate, GST Certificate, and 3 Years ITR.'
               : selectedLoanType === 'LOAN_AGAINST_PROPERTY'
               ? `ℹ️ Loan Against Property (LAP) selected: Customer will be asked for ${selectedIncomeType === 'SALARIED' ? '3 Months Salary Slip' : '3 Years ITR'}, Loan Track Record (Running Loans), and Property Papers.`
+              : selectedLoanType === 'BALANCE_TRANSFER'
+              ? 'ℹ️ Balance Transfer selected: Customer will be asked for Ongoing Loan Amount, Foreclosure Letter or Loan Repayment Statement (SOA), Income Proof, and Bank Statements.'
               : 'ℹ️ Selected loan type and income profile will configure the customer document checklist automatically.'}
           </p>
         </div>

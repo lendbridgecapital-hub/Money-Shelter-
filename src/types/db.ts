@@ -50,6 +50,7 @@ export type DocumentCategory =
   | 'GST_CERTIFICATE'
   | 'LOAN_TRACK_RECORD'
   | 'PROPERTY_PAPERS'
+  | 'FORECLOSURE_LETTER'
   | 'ADDITIONAL_REQUIRED'
   | 'ACCEPTANCE_LETTER'
   | 'OTHER';
@@ -352,6 +353,7 @@ export interface LoanApplication {
   incomeType?: IncomeType | null;
   propertyPaperType?: string | null;
   loanAmount?: number | null;
+  ongoingLoanAmount?: number | null;
   monthlyIncome?: number | null;
   existingEmi?: number | null;
   panNumber?: string | null;

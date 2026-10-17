@@ -208,9 +208,30 @@ export default function CustomerApplicationForm({
             )}
           </div>
 
+          {selectedLoanType === 'BALANCE_TRANSFER' && (
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+                Ongoing Loan Amount (Current Outstanding in ₹) <span className="text-rose-500">*</span>
+              </label>
+              <div className="relative">
+                <span className="absolute left-3.5 top-2.5 text-xs font-bold text-slate-400">₹</span>
+                <input
+                  type="number"
+                  name="ongoingLoanAmount"
+                  required
+                  min={10000}
+                  step={5000}
+                  placeholder="e.g. 1850000"
+                  className="w-full pl-8 pr-4 py-2.5 text-sm border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+              <p className="text-[11px] text-slate-400 mt-1">Existing principal outstanding to be transferred</p>
+            </div>
+          )}
+
           <div>
             <label className="block text-xs font-semibold text-slate-700 mb-1.5">
-              Loan Amount Desired (in INR ₹) <span className="text-rose-500">*</span>
+              {selectedLoanType === 'BALANCE_TRANSFER' ? 'Target Transfer / Top-Up Loan Amount (in INR ₹)' : 'Loan Amount Desired (in INR ₹)'} <span className="text-rose-500">*</span>
             </label>
             <input
               type="number"

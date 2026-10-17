@@ -136,6 +136,7 @@ function initDatabase(): DatabaseAdapter {
       'ALTER TABLE branches ADD COLUMN status TEXT DEFAULT "APPROVED"',
       'ALTER TABLE loan_applications ADD COLUMN income_type TEXT',
       'ALTER TABLE loan_applications ADD COLUMN property_paper_type TEXT',
+      'ALTER TABLE loan_applications ADD COLUMN ongoing_loan_amount REAL',
     ];
     for (const stmt of alterStatements) {
       try {

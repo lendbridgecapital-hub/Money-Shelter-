@@ -351,6 +351,130 @@ export function getDocumentGroupsForApplication(
         },
       ],
     });
+  } else if (loanType === 'BALANCE_TRANSFER') {
+    // Balance Transfer Requirements
+    // 1. Foreclosure Letter or Loan Repayment Statement (SOA)
+    groups.push({
+      category: 'FORECLOSURE_LETTER',
+      title: 'Foreclosure Letter / Loan Repayment Statement',
+      description: 'Latest Foreclosure Letter showing outstanding principal or complete 12-month Statement of Account (SOA) / Repayment Track from existing lender.',
+      required: true,
+      fields: [
+        {
+          name: 'foreclosure_letter',
+          label: 'Foreclosure Letter / SOA Repayment Statement',
+          helperText: 'Official bank foreclosure letter or 12-month loan repayment statement (PDF or image)',
+          accept: '.pdf,image/*',
+        },
+        {
+          name: 'existing_sanction_letter',
+          label: 'Existing Loan Sanction Letter / Amortization Schedule',
+          helperText: 'Optional copy of original sanction letter or repayment schedule',
+          accept: '.pdf,image/*',
+        },
+      ],
+    });
+
+    // 2. Income Proof
+    if (incomeType === 'SALARIED') {
+      groups.push({
+        category: 'INCOME_PROOF',
+        title: '3 Months Salary Slips (Income Proof)',
+        description: 'Last 3 months salary slips and Form 16 / appointment letter.',
+        required: true,
+        fields: [
+          {
+            name: 'salary_slip_1',
+            label: 'Latest Month Salary Slip (Month 1)',
+            helperText: 'PDF or image',
+            accept: '.pdf,image/*',
+          },
+          {
+            name: 'salary_slip_2',
+            label: 'Second Month Salary Slip (Month 2)',
+            helperText: 'PDF or image',
+            accept: '.pdf,image/*',
+          },
+          {
+            name: 'salary_slip_3',
+            label: 'Third Month Salary Slip (Month 3)',
+            helperText: 'PDF or image',
+            accept: '.pdf,image/*',
+          },
+          {
+            name: 'form_16',
+            label: 'Form 16 (Latest 1-2 Years) / Appointment Letter',
+            helperText: 'Optional but speeds up sanction',
+            accept: '.pdf,image/*',
+          },
+        ],
+      });
+    } else {
+      groups.push({
+        category: 'INCOME_PROOF',
+        title: 'Latest 2-3 Years Income Tax Returns (ITR)',
+        description: 'ITR-V with Computation of Income and Financials for the last 2-3 assessment years.',
+        required: true,
+        fields: [
+          {
+            name: 'itr_year_1',
+            label: 'Latest Year ITR (Year 1) + Computation & Financials',
+            helperText: 'PDF or image',
+            accept: '.pdf,image/*',
+          },
+          {
+            name: 'itr_year_2',
+            label: 'Previous Year ITR (Year 2) + Computation & Financials',
+            helperText: 'PDF or image',
+            accept: '.pdf,image/*',
+          },
+          {
+            name: 'itr_year_3',
+            label: '3rd Year ITR (Year 3) + Computation & Financials',
+            helperText: 'Optional supplementary year',
+            accept: '.pdf,image/*',
+          },
+        ],
+      });
+    }
+
+    // 3. Bank Statement
+    groups.push({
+      category: 'BANK_STATEMENT',
+      title: 'Bank Account Statements',
+      description: incomeType === 'SALARIED' ? 'Last 6 to 12 months salary credit bank statement.' : 'Last 12 months primary operative bank account statement.',
+      required: true,
+      fields: [
+        {
+          name: 'bank_statement',
+          label: 'Primary Bank Statement (Last 6–12 Months)',
+          helperText: 'Official net banking PDF format',
+          accept: '.pdf',
+        },
+        {
+          name: 'bank_statement_extra',
+          label: 'Additional Bank Statement (Savings / Other Accounts)',
+          helperText: 'Optional',
+          accept: '.pdf',
+        },
+      ],
+    });
+
+    // 4. Property Papers (if transferring Home Loan or LAP)
+    groups.push({
+      category: 'PROPERTY_PAPERS',
+      title: 'Property Papers / LOD from Existing Bank',
+      description: 'List of Documents (LOD) held by existing bank or copy of Sale Deed / Agreement (if property backed).',
+      required: false,
+      fields: [
+        {
+          name: 'property_paper_file',
+          label: 'List of Documents (LOD) / Property Paper Copy',
+          helperText: 'Optional LOD certificate or property title document copy',
+          accept: '.pdf,image/*',
+        },
+      ],
+    });
   } else {
     // Other loans (Home Loan, Personal Loan, etc.)
     if (incomeType === 'SALARIED') {

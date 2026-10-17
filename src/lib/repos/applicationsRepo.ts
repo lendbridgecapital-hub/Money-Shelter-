@@ -188,6 +188,7 @@ export function recordCustomerSubmission(
     incomeType?: IncomeType;
     propertyPaperType?: string;
     loanAmount: number;
+    ongoingLoanAmount?: number;
     monthlyIncome?: number;
     existingEmi?: number;
     tenureMonths?: number;
@@ -201,7 +202,7 @@ export function recordCustomerSubmission(
 
   db.prepare(
     `UPDATE loan_applications
-     SET full_name = ?, mobile = ?, email = ?, loan_type = ?, income_type = ?, property_paper_type = ?, loan_amount = ?, monthly_income = ?, existing_emi = ?, tenure_months = ?, status = ?, status_changed_at = ?, tat_alerts_sent = NULL, submitted_at = ?, updated_at = ?
+     SET full_name = ?, mobile = ?, email = ?, loan_type = ?, income_type = ?, property_paper_type = ?, loan_amount = ?, ongoing_loan_amount = ?, monthly_income = ?, existing_emi = ?, tenure_months = ?, status = ?, status_changed_at = ?, tat_alerts_sent = NULL, submitted_at = ?, updated_at = ?
      WHERE id = ?`
   ).run(
     data.fullName.trim(),
@@ -211,6 +212,7 @@ export function recordCustomerSubmission(
     data.incomeType || existing?.incomeType || null,
     data.propertyPaperType || existing?.propertyPaperType || null,
     data.loanAmount,
+    data.ongoingLoanAmount !== undefined && data.ongoingLoanAmount !== null ? data.ongoingLoanAmount : (existing?.ongoingLoanAmount || null),
     data.monthlyIncome || null,
     data.existingEmi !== undefined && data.existingEmi !== null ? data.existingEmi : null,
     tenure,
@@ -244,6 +246,7 @@ export function updateApplicationCustomerInfo(
     incomeType?: IncomeType | null;
     propertyPaperType?: string | null;
     loanAmount: number;
+    ongoingLoanAmount?: number | null;
     monthlyIncome?: number | null;
     existingEmi?: number | null;
     tenureMonths?: number | null;
@@ -254,7 +257,7 @@ export function updateApplicationCustomerInfo(
   const now = new Date().toISOString();
   db.prepare(
     `UPDATE loan_applications
-     SET full_name = ?, mobile = ?, email = ?, loan_type = ?, income_type = COALESCE(?, income_type), property_paper_type = COALESCE(?, property_paper_type), loan_amount = ?,
+     SET full_name = ?, mobile = ?, email = ?, loan_type = ?, income_type = COALESCE(?, income_type), property_paper_type = COALESCE(?, property_paper_type), loan_amount = ?, ongoing_loan_amount = COALESCE(?, ongoing_loan_amount),
          monthly_income = ?, existing_emi = ?, tenure_months = ?, pan_number = ?, aadhaar_number = ?,
          updated_at = ?
      WHERE id = ?`
@@ -266,6 +269,7 @@ export function updateApplicationCustomerInfo(
     data.incomeType || null,
     data.propertyPaperType || null,
     Number(data.loanAmount) || 0,
+    data.ongoingLoanAmount !== undefined && data.ongoingLoanAmount !== null ? Number(data.ongoingLoanAmount) : null,
     data.monthlyIncome !== undefined && data.monthlyIncome !== null ? Number(data.monthlyIncome) : null,
     data.existingEmi !== undefined && data.existingEmi !== null ? Number(data.existingEmi) : null,
     data.tenureMonths !== undefined && data.tenureMonths !== null ? Number(data.tenureMonths) : null,
@@ -748,6 +752,7 @@ function mapRowToApplication(row: Record<string, unknown>): LoanApplication {
     incomeType: (row.income_type || row.incomeType) as IncomeType | null,
     propertyPaperType: row.property_paper_type || row.propertyPaperType ? String(row.property_paper_type || row.propertyPaperType) : null,
     loanAmount: row.loan_amount || row.loanAmount ? Number(row.loan_amount || row.loanAmount) : null,
+    ongoingLoanAmount: row.ongoing_loan_amount !== undefined && row.ongoing_loan_amount !== null ? Number(row.ongoing_loan_amount) : (row.ongoingLoanAmount !== undefined && row.ongoingLoanAmount !== null ? Number(row.ongoingLoanAmount) : null),
     monthlyIncome: row.monthly_income || row.monthlyIncome ? Number(row.monthly_income || row.monthlyIncome) : null,
     existingEmi: row.existing_emi !== undefined && row.existing_emi !== null ? Number(row.existing_emi) : (row.existingEmi !== undefined && row.existingEmi !== null ? Number(row.existingEmi) : null),
     panNumber: row.pan_number || row.panNumber ? String(row.pan_number || row.panNumber) : null,
