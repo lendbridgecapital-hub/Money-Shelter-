@@ -161,13 +161,6 @@ export default function LendbridgePartnerLoginForm({ companySettings }: Lendbrid
                 </p>
               </div>
             </div>
-
-            {/* Support / Contact Info */}
-            <div className="flex items-center gap-4 text-xs text-slate-500 pt-1 flex-wrap">
-              <span>Partner Desk: <strong className="text-slate-800 font-bold">+91 9049002010</strong></span>
-              <span>•</span>
-              <span>Email: <strong className="text-slate-800 font-bold">partners@lendbridgecapital.com</strong></span>
-            </div>
           </div>
 
           {/* Right: Partner Login Box */}
