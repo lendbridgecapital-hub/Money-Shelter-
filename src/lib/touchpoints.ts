@@ -29,6 +29,25 @@ function getOpsAndSupportUsers(tenantId = 'default'): User[] {
   }
 }
 
+function getTouchpointBrandName(
+  context?: { branchId?: string | null; branchName?: string | null; isCoBranded?: boolean | null; coBrandName?: string | null } | null,
+  fallback = 'Money Shelter'
+): string {
+  if (!context) return fallback;
+  if (context.coBrandName) return context.coBrandName;
+  if (context.branchId) {
+    const branch = getBranchById(context.branchId);
+    if (branch?.isCoBranded && branch?.coBrandName) return branch.coBrandName;
+    if (branch?.id === 'br_satara_01' || branch?.code === 'STR01' || branch?.name?.toLowerCase().includes('satara')) {
+      return 'Lendbridge Capital';
+    }
+  }
+  if (context.branchName?.toLowerCase().includes('satara') || context.branchName?.toLowerCase().includes('lendbridge')) {
+    return 'Lendbridge Capital';
+  }
+  return fallback;
+}
+
 /**
  * TOUCHPOINT 01: Customer Application Submitted
  * Trigger: Customer submits online loan form and uploads KYC documents via /apply/[token]
@@ -42,7 +61,7 @@ export async function notifyTouchpoint01_CustomerSubmitted(
 ): Promise<void> {
   const tenantId = options?.tenantId || application.tenantId || 'default';
   const settings = await getCompanySettings(tenantId);
-  const companyName = settings.companyName || 'Money Shelter';
+  const companyName = getTouchpointBrandName(application, settings.companyName || 'Money Shelter');
   const fullName = application.fullName || 'Customer';
   const loanTypeLabel = application.loanType ? LOAN_TYPE_LABELS[application.loanType] || application.loanType : 'Loan';
   const loanAmount = application.loanAmount || 0;
@@ -202,7 +221,7 @@ export async function notifyTouchpoint02_SentToBank(
 ): Promise<void> {
   const tenantId = options?.tenantId || application.tenantId || 'default';
   const settings = await getCompanySettings(tenantId);
-  const companyName = settings.companyName || 'Money Shelter';
+  const companyName = getTouchpointBrandName(application, settings.companyName || 'Money Shelter');
   const fullName = application.fullName || 'Customer';
   const caseIdDisplay = application.id.slice(-6);
 
@@ -281,7 +300,7 @@ export async function notifyTouchpoint03_DocumentsRequired(
 ): Promise<void> {
   const tenantId = options?.tenantId || application.tenantId || 'default';
   const settings = await getCompanySettings(tenantId);
-  const companyName = settings.companyName || 'Money Shelter';
+  const companyName = getTouchpointBrandName(application, settings.companyName || 'Money Shelter');
   const fullName = application.fullName || 'Customer';
   const caseIdDisplay = application.id.slice(-6);
   const baseUrl = getBaseUrl();
@@ -367,7 +386,7 @@ export async function notifyTouchpoint04_DocumentsReUploaded(
 ): Promise<void> {
   const tenantId = options?.tenantId || application.tenantId || 'default';
   const settings = await getCompanySettings(tenantId);
-  const companyName = settings.companyName || 'Money Shelter';
+  const companyName = getTouchpointBrandName(application, settings.companyName || 'Money Shelter');
   const fullName = application.fullName || 'Customer';
   const caseIdDisplay = application.id.slice(-6);
   const baseUrl = getBaseUrl();
@@ -452,7 +471,7 @@ export async function notifyTouchpoint05_LoanSanctioned(
 ): Promise<void> {
   const tenantId = options?.tenantId || application.tenantId || 'default';
   const settings = await getCompanySettings(tenantId);
-  const companyName = settings.companyName || 'Money Shelter';
+  const companyName = getTouchpointBrandName(application, settings.companyName || 'Money Shelter');
   const fullName = application.fullName || 'Customer';
   const caseIdDisplay = application.id.slice(-6);
   const tenureMonths = application.tenureMonths || 60;
@@ -537,7 +556,7 @@ export async function notifyTouchpoint06_OfferAccepted(
 ): Promise<void> {
   const tenantId = options?.tenantId || application.tenantId || 'default';
   const settings = await getCompanySettings(tenantId);
-  const companyName = settings.companyName || 'Money Shelter';
+  const companyName = getTouchpointBrandName(application, settings.companyName || 'Money Shelter');
   const fullName = application.fullName || 'Customer';
   const baseUrl = getBaseUrl();
   const caseUrl = `${baseUrl}/branch/requests/${application.id}`;
@@ -621,7 +640,7 @@ export async function notifyTouchpoint07_LoanDisbursed(
 ): Promise<void> {
   const tenantId = options?.tenantId || application.tenantId || 'default';
   const settings = await getCompanySettings(tenantId);
-  const companyName = settings.companyName || 'Money Shelter';
+  const companyName = getTouchpointBrandName(application, settings.companyName || 'Money Shelter');
   const fullName = application.fullName || 'Customer';
   const bankName = application.bankName || 'Lending Bank';
   const baseUrl = getBaseUrl();
@@ -688,7 +707,7 @@ export async function notifyTouchpoint08_LoanRejected(
 ): Promise<void> {
   const tenantId = options?.tenantId || application.tenantId || 'default';
   const settings = await getCompanySettings(tenantId);
-  const companyName = settings.companyName || 'Money Shelter';
+  const companyName = getTouchpointBrandName(application, settings.companyName || 'Money Shelter');
   const fullName = application.fullName || 'Customer';
   const caseIdDisplay = application.id.slice(-6);
   const partnerId = application.channelPartnerId || application.createdById;
@@ -765,7 +784,7 @@ export async function notifyTouchpoint09_PartnerOnboarded(
 ): Promise<void> {
   const tenantId = options?.tenantId || partner.tenantId || 'default';
   const settings = await getCompanySettings(tenantId);
-  const companyName = settings.companyName || 'Money Shelter';
+  const companyName = getTouchpointBrandName(partner, settings.companyName || 'Money Shelter');
   const partnerName = partner.name;
   const rmName = assignedRm?.name || partner.assignedRmName || 'Central Support Desk';
 
@@ -838,7 +857,7 @@ export async function notifyTouchpoint10_PartnerApproved(
 ): Promise<void> {
   const tenantId = options?.tenantId || partner.tenantId || 'default';
   const settings = await getCompanySettings(tenantId);
-  const companyName = settings.companyName || 'Money Shelter';
+  const companyName = getTouchpointBrandName(partner, settings.companyName || 'Money Shelter');
   const partnerName = partner.name;
   const baseUrl = getBaseUrl();
   const certUrl = `${baseUrl}/partner/certificate`;
@@ -906,7 +925,7 @@ export async function notifyTouchpoint11_PartnerDocsRequested(
 ): Promise<void> {
   const tenantId = options?.tenantId || partner.tenantId || 'default';
   const settings = await getCompanySettings(tenantId);
-  const companyName = settings.companyName || 'Money Shelter';
+  const companyName = getTouchpointBrandName(partner, settings.companyName || 'Money Shelter');
   const baseUrl = getBaseUrl();
   const onboardUrl = `${baseUrl}/partner/onboard`;
 
@@ -966,7 +985,7 @@ export async function notifyTouchpoint12_ClawbackRecorded(
 ): Promise<void> {
   const tenantId = options?.tenantId || partner.tenantId || 'default';
   const settings = await getCompanySettings(tenantId);
-  const companyName = settings.companyName || 'Money Shelter';
+  const companyName = getTouchpointBrandName(partner, settings.companyName || 'Money Shelter');
 
   // 1. In-App Notification (To Channel Partner)
   try {

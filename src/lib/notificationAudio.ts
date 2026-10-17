@@ -351,7 +351,7 @@ export function testNotificationSound(): void {
   const mode = getNotificationSoundMode();
   if (mode === 'voice') {
     setTimeout(() => {
-      playVoiceAlert('Money Shelter voice alert is active. New notifications will sound like this.');
+      playVoiceAlert('Portal voice alert is active. New notifications will sound like this.');
     }, 320);
   }
 }
