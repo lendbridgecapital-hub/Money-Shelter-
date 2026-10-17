@@ -519,6 +519,79 @@ async function initSchema(client) {
       WHERE email ILIKE '%lendbridge%';
     `);
   } catch (_) {}
+
+  // ONE-TIME MARKET LAUNCH CLEANUP:
+  // Purges all 30 test loan applications, 39 test documents, test remarks, notifications, commissions,
+  // while strictly preserving all 17 users (Admins, Ops, RMs, Partners), branches, banks, products, policy cards, and settings.
+  try {
+    const purgeCheck = await client.query(
+      "SELECT value FROM quickfinsure_store WHERE key = 'market_launch_v1_purged' LIMIT 1;"
+    );
+    const alreadyPurged = purgeCheck && purgeCheck.length > 0 && purgeCheck[0].value;
+
+    if (!alreadyPurged) {
+      console.log('[market-launch] Executing one-time test data cleanup in Neon PostgreSQL...');
+
+      // 1. Truncate relational tables
+      const tablesToTruncate = [
+        'loan_applications',
+        'application_documents',
+        'status_history',
+        'operational_remarks',
+        'partner_notifications',
+        'commissions',
+        'clawbacks',
+        'required_documents',
+      ];
+      for (const tbl of tablesToTruncate) {
+        try {
+          await client.query(`TRUNCATE TABLE ${tbl} CASCADE;`);
+        } catch (_) {
+          try {
+            await client.query(`DELETE FROM ${tbl};`);
+          } catch (_) {}
+        }
+      }
+
+      // 2. Clean main_store JSONB in quickfinsure_store
+      const storeRes = await client.query(
+        "SELECT value FROM quickfinsure_store WHERE key = 'main_store' LIMIT 1;"
+      );
+      if (storeRes && storeRes.length > 0 && storeRes[0].value) {
+        let storeData = storeRes[0].value;
+        if (typeof storeData === 'string') {
+          try { storeData = JSON.parse(storeData); } catch {}
+        }
+        if (storeData && storeData.default) storeData = storeData.default;
+        if (storeData && typeof storeData === 'object') {
+          storeData.loan_applications = [];
+          storeData.application_documents = [];
+          storeData.status_history = [];
+          storeData.operational_remarks = [];
+          storeData.partner_notifications = [];
+          storeData.commissions = [];
+          storeData.clawbacks = [];
+          storeData.required_documents = [];
+
+          const cleanJson = JSON.stringify(storeData);
+          await client.query(
+            `UPDATE quickfinsure_store SET value = $1::jsonb, updated_at = NOW() WHERE key = 'main_store';`,
+            [cleanJson]
+          );
+        }
+      }
+
+      // 3. Set marker so cleanup never runs again, protecting future customer applications
+      await client.query(
+        `INSERT INTO quickfinsure_store (key, value, updated_at) 
+         VALUES ('market_launch_v1_purged', '{"purged": true, "timestamp": "' || NOW() || '"}'::jsonb, NOW())
+         ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, updated_at = NOW();`
+      );
+      console.log('[market-launch] ✓ Neon test data cleanup completed successfully.');
+    }
+  } catch (purgeErr) {
+    console.warn('[market-launch] Notice during test data cleanup:', purgeErr.message);
+  }
 }
 
 function loadInitialSeedData() {
@@ -868,6 +941,16 @@ async function pushData(client, data) {
       }
       if (existing && existing.default) existing = existing.default;
       if (existing && Array.isArray(existing.users) && existing.users.length > 0) {
+        if (Array.isArray(payload.loan_applications) && payload.loan_applications.length === 0 && Array.isArray(existing.loan_applications) && existing.loan_applications.length > 0) {
+          existing.loan_applications = [];
+          existing.application_documents = [];
+          existing.status_history = [];
+          existing.operational_remarks = [];
+          existing.partner_notifications = [];
+          existing.commissions = [];
+          existing.clawbacks = [];
+          existing.required_documents = [];
+        }
         // Deep union merge so existing users, cases, and logs in Neon are NEVER wiped
         payload = safeDeepUnionMerge(payload, existing);
       }

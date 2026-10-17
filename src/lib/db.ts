@@ -529,6 +529,16 @@ function createPortableStorage(storageFilePath: string): DatabaseAdapter {
               }
               if (existing && existing.default) existing = existing.default;
               if (existing && Array.isArray(existing.users) && existing.users.length > 0) {
+                if (Array.isArray(payload.loan_applications) && payload.loan_applications.length === 0 && Array.isArray(existing.loan_applications) && existing.loan_applications.length > 0) {
+                  existing.loan_applications = [];
+                  existing.application_documents = [];
+                  existing.status_history = [];
+                  existing.operational_remarks = [];
+                  existing.partner_notifications = [];
+                  existing.commissions = [];
+                  existing.clawbacks = [];
+                  existing.required_documents = [];
+                }
                 payload = safeDeepUnionMerge(payload, existing);
                 cachedData = { ...cachedData, ...payload };
               }
@@ -589,6 +599,16 @@ function createPortableStorage(storageFilePath: string): DatabaseAdapter {
                 }
                 if (existing && existing.default) existing = existing.default;
                 if (existing && Array.isArray(existing.users) && existing.users.length > 0) {
+                  if (Array.isArray(payload.loan_applications) && payload.loan_applications.length === 0 && Array.isArray(existing.loan_applications) && existing.loan_applications.length > 0) {
+                    existing.loan_applications = [];
+                    existing.application_documents = [];
+                    existing.status_history = [];
+                    existing.operational_remarks = [];
+                    existing.partner_notifications = [];
+                    existing.commissions = [];
+                    existing.clawbacks = [];
+                    existing.required_documents = [];
+                  }
                   payload = safeDeepUnionMerge(payload, existing);
                   cachedData = { ...cachedData, ...payload };
                 }
