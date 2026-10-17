@@ -86,6 +86,12 @@ export default function MobileAppHeader({
                     src={coBrandLogoUrl}
                     alt={coBrandName}
                     className="h-7 max-h-7.5 w-auto max-w-[80px] object-contain"
+                    onError={(e) => {
+                      const target = e.currentTarget;
+                      if (!target.src.includes('lendbridge-logo.png')) {
+                        target.src = '/lendbridge-logo.png';
+                      }
+                    }}
                   />
                 ) : (
                   <span className="font-extrabold text-slate-900 text-xs truncate max-w-[80px]">

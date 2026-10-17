@@ -273,6 +273,12 @@ export default function Sidebar({
                   alt={coBrandName}
                   className="w-6 max-h-7 mx-auto object-contain"
                   title={`${coBrandName} × ${companyName}`}
+                  onError={(e) => {
+                    const target = e.currentTarget;
+                    if (!target.src.includes('lendbridge-logo.png')) {
+                      target.src = '/lendbridge-logo.png';
+                    }
+                  }}
                 />
               ) : (
                 <div
@@ -292,6 +298,12 @@ export default function Sidebar({
                       src={coBrandLogoUrl}
                       alt={coBrandName}
                       className="h-6 max-h-6 object-contain max-w-[70px] shrink-0"
+                      onError={(e) => {
+                        const target = e.currentTarget;
+                        if (!target.src.includes('lendbridge-logo.png')) {
+                          target.src = '/lendbridge-logo.png';
+                        }
+                      }}
                     />
                   ) : (
                     <span className="font-bold text-xs text-slate-900 truncate max-w-[80px]">

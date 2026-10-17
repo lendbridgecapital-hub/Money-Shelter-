@@ -506,9 +506,13 @@ async function initSchema(client) {
       UPDATE branches 
       SET is_co_branded = 1, 
           co_brand_name = 'Lendbridge Capital', 
-          co_brand_logo_url = '/lendbridge-logo.svg', 
+          co_brand_logo_url = '/lendbridge-logo.png', 
           co_brand_tagline = 'Co-Branded Regional Partner of Money Shelter' 
       WHERE id = 'br_satara_01' OR code = 'STR01' OR name ILIKE '%satara%';
+
+      UPDATE loan_applications
+      SET co_brand_logo_url = '/lendbridge-logo.png'
+      WHERE branch_id = 'br_satara_01' OR co_brand_name ILIKE '%lendbridge%';
 
       UPDATE users 
       SET branch_id = 'br_satara_01', role = 'OPERATIONS' 
@@ -607,7 +611,7 @@ function ensureLendbridgeAndBranchIntegrity(data) {
         email: 'satara@quickfinsure.com',
         is_co_branded: 1,
         co_brand_name: 'Lendbridge Capital',
-        co_brand_logo_url: '/lendbridge-logo.svg',
+        co_brand_logo_url: '/lendbridge-logo.png',
         co_brand_tagline: 'Co-Branded Regional Partner of Money Shelter',
         created_at: '2026-10-05T18:00:00.000Z',
         updated_at: '2026-10-05T18:00:00.000Z',
@@ -616,7 +620,7 @@ function ensureLendbridgeAndBranchIntegrity(data) {
     } else {
       satara.is_co_branded = 1;
       satara.co_brand_name = satara.co_brand_name || 'Lendbridge Capital';
-      satara.co_brand_logo_url = satara.co_brand_logo_url || '/lendbridge-logo.svg';
+      satara.co_brand_logo_url = '/lendbridge-logo.png';
       satara.co_brand_tagline = satara.co_brand_tagline || 'Co-Branded Regional Partner of Money Shelter';
     }
   }
@@ -687,7 +691,7 @@ function ensureLendbridgeAndBranchIntegrity(data) {
         aadhaar_number: '765432109876',
         is_co_branded: 1,
         co_brand_name: 'Lendbridge Capital',
-        co_brand_logo_url: '/lendbridge-logo.svg',
+        co_brand_logo_url: '/lendbridge-logo.png',
         co_brand_tagline: 'Co-Branded Regional Partner of Money Shelter',
       };
       const sataraApp2 = {
@@ -718,7 +722,7 @@ function ensureLendbridgeAndBranchIntegrity(data) {
         aadhaar_number: '654321098765',
         is_co_branded: 1,
         co_brand_name: 'Lendbridge Capital',
-        co_brand_logo_url: '/lendbridge-logo.svg',
+        co_brand_logo_url: '/lendbridge-logo.png',
         co_brand_tagline: 'Co-Branded Regional Partner of Money Shelter',
       };
       data.loan_applications.unshift(sataraApp1, sataraApp2);

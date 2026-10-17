@@ -15,10 +15,28 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   const isDedicatedSiteRm =
     session.user.role === 'RELATIONSHIP_MANAGER' ? isUserDedicatedSiteRm(session.user.id) : false;
 
-  const userBranch = session.user.branchId ? getBranchById(session.user.branchId) : undefined;
+  let userBranch = session.user.branchId ? getBranchById(session.user.branchId) : undefined;
+  if (
+    !userBranch &&
+    (session.user.email?.toLowerCase().includes('lendbridge') ||
+      session.user.email?.toLowerCase().includes('satara') ||
+      session.user.name?.toLowerCase().includes('lendbridge') ||
+      session.user.name?.toLowerCase().includes('satara'))
+  ) {
+    userBranch = getBranchById('br_satara_01');
+  }
+
   const isCoBranded = Boolean(userBranch?.isCoBranded && userBranch?.coBrandName);
   const coBrandName = userBranch?.coBrandName || null;
-  const coBrandLogoUrl = userBranch?.coBrandLogoUrl || null;
+  let coBrandLogoUrl = userBranch?.coBrandLogoUrl || null;
+
+  if (
+    coBrandName &&
+    coBrandName.toLowerCase().includes('lendbridge') &&
+    (!coBrandLogoUrl || coBrandLogoUrl.includes('.svg'))
+  ) {
+    coBrandLogoUrl = '/lendbridge-logo.png';
+  }
   const coBrandTagline = userBranch?.coBrandTagline || null;
 
   return (

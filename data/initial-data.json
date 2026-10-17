@@ -109,7 +109,7 @@
       "updated_at": "2026-10-05T18:00:00.000Z",
       "is_co_branded": 1,
       "co_brand_name": "Lendbridge Capital",
-      "co_brand_logo_url": "/lendbridge-logo.svg",
+      "co_brand_logo_url": "/lendbridge-logo.png",
       "co_brand_tagline": "Co-Branded Regional Partner of Money Shelter"
     }
   ],
@@ -520,7 +520,7 @@
       "aadhaar_number": "765432109876",
       "is_co_branded": 1,
       "co_brand_name": "Lendbridge Capital",
-      "co_brand_logo_url": "/lendbridge-logo.svg",
+      "co_brand_logo_url": "/lendbridge-logo.png",
       "co_brand_tagline": "Co-Branded Regional Partner of Money Shelter",
       "tat_alerts_sent": "{\"DOCUMENTS_IN_RED\":\"2026-10-17T02:45:17.587Z\"}"
     },
@@ -552,7 +552,7 @@
       "aadhaar_number": "654321098765",
       "is_co_branded": 1,
       "co_brand_name": "Lendbridge Capital",
-      "co_brand_logo_url": "/lendbridge-logo.svg",
+      "co_brand_logo_url": "/lendbridge-logo.png",
       "co_brand_tagline": "Co-Branded Regional Partner of Money Shelter"
     },
     {

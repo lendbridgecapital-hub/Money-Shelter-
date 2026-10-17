@@ -277,7 +277,7 @@ function createPortableStorage(storageFilePath: string): DatabaseAdapter {
           email: 'satara@quickfinsure.com',
           is_co_branded: 1,
           co_brand_name: 'Lendbridge Capital',
-          co_brand_logo_url: '/lendbridge-logo.svg',
+          co_brand_logo_url: '/lendbridge-logo.png',
           co_brand_tagline: 'Co-Branded Regional Partner of Money Shelter',
           created_at: '2026-10-05T18:00:00.000Z',
           updated_at: '2026-10-05T18:00:00.000Z',
@@ -286,7 +286,7 @@ function createPortableStorage(storageFilePath: string): DatabaseAdapter {
       } else {
         satara.is_co_branded = 1;
         satara.co_brand_name = satara.co_brand_name || 'Lendbridge Capital';
-        satara.co_brand_logo_url = satara.co_brand_logo_url || '/lendbridge-logo.svg';
+        satara.co_brand_logo_url = '/lendbridge-logo.png';
         satara.co_brand_tagline = satara.co_brand_tagline || 'Co-Branded Regional Partner of Money Shelter';
       }
     }
@@ -357,7 +357,7 @@ function createPortableStorage(storageFilePath: string): DatabaseAdapter {
           aadhaar_number: '765432109876',
           is_co_branded: 1,
           co_brand_name: 'Lendbridge Capital',
-          co_brand_logo_url: '/lendbridge-logo.svg',
+          co_brand_logo_url: '/lendbridge-logo.png',
           co_brand_tagline: 'Co-Branded Regional Partner of Money Shelter',
         };
         const sataraApp2 = {
@@ -388,7 +388,7 @@ function createPortableStorage(storageFilePath: string): DatabaseAdapter {
           aadhaar_number: '654321098765',
           is_co_branded: 1,
           co_brand_name: 'Lendbridge Capital',
-          co_brand_logo_url: '/lendbridge-logo.svg',
+          co_brand_logo_url: '/lendbridge-logo.png',
           co_brand_tagline: 'Co-Branded Regional Partner of Money Shelter',
         };
         data.loan_applications.unshift(sataraApp1, sataraApp2);
