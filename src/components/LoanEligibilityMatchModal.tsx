@@ -59,26 +59,71 @@ export default function LoanEligibilityMatchModal({
   const [showAllDetails, setShowAllDetails] = useState<boolean>(false);
   const [isOfferPdfModalOpen, setIsOfferPdfModalOpen] = useState<boolean>(false);
 
-  // Initialize or update fields whenever a new application is passed
+  // Initialize and auto-evaluate fields whenever modal opens with an application
   useEffect(() => {
-    if (application) {
+    if (application && isOpen) {
       const initialType = application.loanType || 'HOME_LOAN';
       setLoanType(initialType);
-      setRequestedAmount(Number(application.loanAmount || 1000000));
-      setMonthlyIncome(Number(application.monthlyIncome || 50000));
-      setExistingEmi(Number(application.existingEmi || 0));
+      const reqAmt = Number(application.loanAmount || 1000000);
+      setRequestedAmount(reqAmt);
+      const mIncome = Number(application.monthlyIncome || 50000);
+      setMonthlyIncome(mIncome);
+      const exEmi = Number(application.existingEmi || 0);
+      setExistingEmi(exEmi);
       const maxYears = getMaxTenureYearsForLoanType(initialType);
       const defaultYears = getDefaultTenureYearsForLoanType(initialType);
       const years = application.tenureMonths ? Math.round(application.tenureMonths / 12) : defaultYears;
-      setRequestedTenureYears(Math.min(maxYears, Math.max(1, years)));
-      setCibilScore(750); // Default prime score, ready for quick evaluation or adjustment
-      setSummary(null);
+      const tenureY = Math.min(maxYears, Math.max(1, years));
+      setRequestedTenureYears(tenureY);
+
+      let initialCibil = 750;
+      if (application.eligibilityOfferJson) {
+        try {
+          const parsed = JSON.parse(application.eligibilityOfferJson);
+          if (parsed.cibilScore) initialCibil = parsed.cibilScore;
+        } catch {}
+      }
+      setCibilScore(initialCibil);
       setErrorMessage(null);
       setSuccessMessage(null);
       setAssigningCardId(null);
       setIsOfferPdfModalOpen(false);
+
+      // Auto-evaluate immediately so report is visible without requiring an extra click
+      const input: CustomerEvaluationInput = {
+        loanType: initialType,
+        cibilScore: initialCibil,
+        monthlyIncome: mIncome,
+        existingEmi: exEmi,
+        requestedAmount: reqAmt,
+        requestedTenureMonths: tenureY * 12,
+        employmentType: 'SALARIED',
+      };
+
+      startTransition(async () => {
+        const res = await evaluateCustomerEligibilityAction(input, rankBy);
+        if (res.ok && res.summary) {
+          setSummary(res.summary);
+          if (application?.id) {
+            try {
+              const autoOffer = buildCustomerEligibilityOfferData({
+                application,
+                input,
+                summary: res.summary,
+                advisor: {
+                  name: application.relationshipManagerName || application.channelPartnerName || 'Money Shelter Senior Credit Advisor',
+                  role: application.relationshipManagerName ? 'Relationship Manager' : 'Financial Advisor',
+                  phone: '+91 98765 43210',
+                  branchName: application.branchName || 'Pune Bavdhan HQ',
+                },
+              });
+              saveApplicationEligibilityOfferAction(application.id, autoOffer).catch(() => {});
+            } catch {}
+          }
+        }
+      });
     }
-  }, [application]);
+  }, [application, isOpen, rankBy]);
 
   // Build the rich shareable customer offer report
   const offerData = summary && application

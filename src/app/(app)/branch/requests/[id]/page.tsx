@@ -233,7 +233,12 @@ export default async function RequestDetailPage({ params }: { params: { id: stri
       {/* Match Loan Eligibility Option on Top */}
       <CaseMatchEligibilityBanner
         application={application}
-        isOpsOrAdmin={user.role === 'OPERATIONS' || user.role === 'ADMIN' || user.role === 'CENTRAL_SUPPORT'}
+        isOpsOrAdmin={
+          user.role === 'OPERATIONS' ||
+          user.role === 'ADMIN' ||
+          user.role === 'CENTRAL_SUPPORT' ||
+          user.role === 'RELATIONSHIP_MANAGER'
+        }
       />
 
       {/* Stage Action Information on Top (e.g. Documents Required checklist & upload, Sanction Acceptance, Customer Offer Link, Disbursed Summary) */}

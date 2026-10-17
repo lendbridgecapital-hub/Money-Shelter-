@@ -56,7 +56,7 @@ export default async function RequestsPage() {
       <RequestTable
         applications={applications}
         showBranchColumn={isAdminOrOps}
-        canMatchEligibility={isAdminOrOps}
+        canMatchEligibility={isAdminOrOps || user.role === 'RELATIONSHIP_MANAGER' || user.role === 'CENTRAL_SUPPORT'}
       />
     </div>
   );

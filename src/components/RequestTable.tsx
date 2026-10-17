@@ -4,9 +4,21 @@ import React, { useState, useMemo, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import type { LoanApplication, ApplicationStatus } from '@/types/db';
+import type { CustomerEligibilityOfferData } from '@/types/policy';
 import { LOAN_TYPE_LABELS, formatCurrencyINR, formatDate, formatDateTime } from '@/lib/format';
 import StatusBadge from '@/components/StatusBadge';
 import { calculateCaseSla } from '@/lib/slaClient';
+import LoanEligibilityMatchModal from '@/components/LoanEligibilityMatchModal';
+import CustomerEligibilityOfferModal from '@/components/CustomerEligibilityOfferModal';
+
+function parseOfferJson(raw: any): CustomerEligibilityOfferData | null {
+  if (!raw) return null;
+  try {
+    return typeof raw === 'string' ? JSON.parse(raw) : raw;
+  } catch {
+    return null;
+  }
+}
 
 interface RequestTableProps {
   applications: LoanApplication[];
@@ -23,6 +35,11 @@ export default function RequestTable({
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('LINK_SHARED');
   const [now, setNow] = useState<Date>(() => new Date());
+  const [matchingApp, setMatchingApp] = useState<LoanApplication | null>(null);
+  const [viewingOfferData, setViewingOfferData] = useState<{
+    offer: CustomerEligibilityOfferData;
+    app: LoanApplication;
+  } | null>(null);
 
   // Real-time ticking every 30 seconds for live bucket timer
   useEffect(() => {
@@ -205,6 +222,7 @@ export default function RequestTable({
         ) : (
           filtered.map((app) => {
             const sla = calculateCaseSla(app, now);
+            const offerData = parseOfferJson(app.eligibilityOfferJson);
             return (
               <Link
                 key={app.id}
@@ -314,6 +332,36 @@ export default function RequestTable({
                   </span>
                 </div>
               </div>
+
+              {/* In DOCUMENTS_IN stage, offer Report and Match Rates actions */}
+              {app.status === 'DOCUMENTS_IN' && canMatchEligibility && (
+                <div
+                  className="mt-2.5 pt-2 border-t border-slate-100 flex items-center gap-1.5"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                  }}
+                >
+                  {offerData && (
+                    <button
+                      type="button"
+                      onClick={() => setViewingOfferData({ offer: offerData, app })}
+                      className="flex-1 py-1.5 px-2 text-[11px] font-bold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 rounded-lg text-center transition-colors flex items-center justify-center gap-1"
+                    >
+                      <span>📄</span>
+                      <span>Offer Report</span>
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => setMatchingApp(app)}
+                    className="flex-1 py-1.5 px-2 text-[11px] font-bold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 rounded-lg text-center transition-colors flex items-center justify-center gap-1"
+                  >
+                    <span>⚡</span>
+                    <span>Match Rates</span>
+                  </button>
+                </div>
+              )}
             </Link>
           );
         })
@@ -343,6 +391,7 @@ export default function RequestTable({
             ) : (
               filtered.map((app) => {
                 const sla = calculateCaseSla(app, now);
+                const offerData = parseOfferJson(app.eligibilityOfferJson);
                 return (
                   <tr
                     key={app.id}
@@ -468,12 +517,38 @@ export default function RequestTable({
 
                     {/* 6. Action */}
                     <td className="px-3 lg:px-4 py-2.5 lg:py-3 text-right whitespace-nowrap">
-                      <Link
-                        href={`/branch/requests/${app.id}`}
-                        className="inline-flex items-center text-[11px] lg:text-xs font-semibold text-emerald-700 hover:text-emerald-800 bg-emerald-50 hover:bg-emerald-100 px-2.5 lg:px-3 py-1 lg:py-1.5 rounded-md transition-colors"
-                      >
-                        Case File →
-                      </Link>
+                      <div className="flex items-center justify-end gap-1.5">
+                        {app.status === 'DOCUMENTS_IN' && canMatchEligibility && (
+                          <>
+                            {offerData && (
+                              <button
+                                type="button"
+                                onClick={() => setViewingOfferData({ offer: offerData, app })}
+                                className="inline-flex items-center gap-1 text-[11px] lg:text-xs font-bold text-indigo-700 hover:text-indigo-800 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 px-2 lg:px-2.5 py-1 lg:py-1.5 rounded-md transition-colors shadow-2xs"
+                                title="View & Download Official Eligibility Offer Report"
+                              >
+                                <span>📄</span>
+                                <span className="hidden xl:inline">Offer Report</span>
+                              </button>
+                            )}
+                            <button
+                              type="button"
+                              onClick={() => setMatchingApp(app)}
+                              className="inline-flex items-center gap-1 text-[11px] lg:text-xs font-bold text-emerald-700 hover:text-emerald-800 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 px-2 lg:px-2.5 py-1 lg:py-1.5 rounded-md transition-colors shadow-2xs"
+                              title="Evaluate FOIR, Bank Policy & Match Best Rates"
+                            >
+                              <span>⚡</span>
+                              <span className="hidden xl:inline">Match Rates</span>
+                            </button>
+                          </>
+                        )}
+                        <Link
+                          href={`/branch/requests/${app.id}`}
+                          className="inline-flex items-center text-[11px] lg:text-xs font-semibold text-slate-700 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 px-2.5 lg:px-3 py-1 lg:py-1.5 rounded-md transition-colors"
+                        >
+                          Case File →
+                        </Link>
+                      </div>
                     </td>
                   </tr>
                 );
@@ -482,6 +557,33 @@ export default function RequestTable({
           </tbody>
         </table>
       </div>
+
+      {/* Loan Eligibility Matchmaking Modal */}
+      {matchingApp && (
+        <LoanEligibilityMatchModal
+          isOpen={!!matchingApp}
+          onClose={() => {
+            setMatchingApp(null);
+            router.refresh();
+          }}
+          application={matchingApp}
+          onAssigned={() => {
+            setMatchingApp(null);
+            router.refresh();
+          }}
+        />
+      )}
+
+      {/* Customer Eligibility Offer PDF View & Download Modal */}
+      {viewingOfferData && (
+        <CustomerEligibilityOfferModal
+          isOpen={!!viewingOfferData}
+          onClose={() => setViewingOfferData(null)}
+          initialData={viewingOfferData.offer}
+          applicationId={viewingOfferData.app.id}
+          applicationToken={viewingOfferData.app.token}
+        />
+      )}
     </div>
   );
 }
