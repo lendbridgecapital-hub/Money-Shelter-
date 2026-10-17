@@ -60,6 +60,7 @@ export function getBranchByCodeOrSlug(identifier: string, tenantId = 'default'):
         ...satara,
         isCoBranded: true,
         coBrandName: satara.coBrandName || 'Lendbridge Capital',
+        coBrandLogoUrl: satara.coBrandLogoUrl || '/lendbridge-logo.png',
         coBrandTagline: satara.coBrandTagline || 'In strategic loan distribution partnership with Money Shelter Pvt. Ltd.',
       };
     }
@@ -75,7 +76,7 @@ export function getBranchByCodeOrSlug(identifier: string, tenantId = 'default'):
       isCoBranded: true,
       coBrandName: 'Lendbridge Capital',
       coBrandTagline: 'In strategic loan distribution partnership with Money Shelter Pvt. Ltd.',
-      coBrandLogoUrl: null,
+      coBrandLogoUrl: '/lendbridge-logo.png',
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };

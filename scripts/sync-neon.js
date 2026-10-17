@@ -659,76 +659,7 @@ function ensureLendbridgeAndBranchIntegrity(data) {
     }
   }
 
-  // 3. Ensure Satara branch has loan applications
-  if (Array.isArray(data.loan_applications)) {
-    const hasSataraApps = data.loan_applications.some(
-      (a) =>
-        a.branch_id === 'br_satara_01' ||
-        (a.co_brand_name && a.co_brand_name.toLowerCase().includes('lendbridge'))
-    );
-    if (!hasSataraApps) {
-      const sataraApp1 = {
-        id: 'app_satara_rohan_patil',
-        tenant_id: 'default',
-        token: 'token_satara_rohan_patil',
-        branch_id: 'br_satara_01',
-        created_by_id: 'usr_tejas_subdsa_01',
-        channel_partner_id: 'usr_tejas_subdsa_01',
-        channel_partner_name: 'Tejas (Sub-DSA Partner)',
-        relationship_manager_id: 'usr_300b47def112f815',
-        relationship_manager_name: 'Relationship Manager (Pune)',
-        status: 'DOCUMENTS_IN',
-        created_at: '2026-10-14T09:00:00.000Z',
-        updated_at: '2026-10-14T09:00:00.000Z',
-        submitted_at: '2026-10-14T09:00:00.000Z',
-        full_name: 'Rohan Dattatray Patil',
-        mobile: '9822011223',
-        email: 'rohan.patil@gmail.com',
-        loan_type: 'HOME_LOAN',
-        loan_amount: 3500000,
-        monthly_income: 85000,
-        existing_emi: 15000,
-        pan_number: 'BKPPA8765Q',
-        aadhaar_number: '765432109876',
-        is_co_branded: 1,
-        co_brand_name: 'Lendbridge Capital',
-        co_brand_logo_url: '/lendbridge-logo.png',
-        co_brand_tagline: 'Co-Branded Regional Partner of Money Shelter',
-      };
-      const sataraApp2 = {
-        id: 'app_satara_aniket_deshmukh',
-        tenant_id: 'default',
-        token: 'token_satara_aniket_deshmukh',
-        branch_id: 'br_satara_01',
-        created_by_id: 'usr_prafulla_cp_01',
-        channel_partner_id: 'usr_prafulla_cp_01',
-        channel_partner_name: 'Prafulla',
-        relationship_manager_id: 'usr_300b47def112f815',
-        relationship_manager_name: 'Relationship Manager (Pune)',
-        status: 'SENT_TO_BANK',
-        bank_id: 'bnk_hdfc_01',
-        bank_name: 'HDFC Bank',
-        sent_to_bank_at: '2026-10-15T11:00:00.000Z',
-        created_at: '2026-10-15T10:00:00.000Z',
-        updated_at: '2026-10-15T11:00:00.000Z',
-        submitted_at: '2026-10-15T10:30:00.000Z',
-        full_name: 'Aniket Shivaji Deshmukh',
-        mobile: '9423556789',
-        email: 'aniket.deshmukh@gmail.com',
-        loan_type: 'BUSINESS_LOAN',
-        loan_amount: 1800000,
-        monthly_income: 120000,
-        existing_emi: 22000,
-        pan_number: 'ADSPA4321K',
-        aadhaar_number: '654321098765',
-        is_co_branded: 1,
-        co_brand_name: 'Lendbridge Capital',
-        co_brand_logo_url: '/lendbridge-logo.png',
-        co_brand_tagline: 'Co-Branded Regional Partner of Money Shelter',
-      };
-      data.loan_applications.unshift(sataraApp1, sataraApp2);
-    }
-  }
+
 
   // 4. Purge tejas duplicate alias and any duplicate users from users array
   if (Array.isArray(data.users)) {

@@ -69,5 +69,13 @@ export default async function CoBrandedLoginPage({ params }: PageProps) {
     );
   }
 
+  // Ensure Satara branch has Lendbridge Capital co-branding and official logo
+  if (branch.id === 'br_satara_01' || branch.code === 'STR01' || branch.name.toLowerCase().includes('satara')) {
+    branch.isCoBranded = true;
+    branch.coBrandName = branch.coBrandName || 'Lendbridge Capital';
+    branch.coBrandLogoUrl = branch.coBrandLogoUrl || '/lendbridge-logo.png';
+    branch.coBrandTagline = branch.coBrandTagline || 'Co-Branded Regional Partner of Money Shelter';
+  }
+
   return <CoBrandedLoginForm branch={branch} companySettings={settings} />;
 }
