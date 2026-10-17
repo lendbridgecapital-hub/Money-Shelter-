@@ -300,7 +300,7 @@ function createPortableStorage(storageFilePath: string): DatabaseAdapter {
         lbUser = {
           id: 'usr_lendbridge_ops_01',
           tenant_id: 'default',
-          name: 'Lendbridge Capital Ops (Satara)',
+          name: 'Rutuja (Lendbridge Capital - Satara Ops)',
           email: 'lendbridgecapital@gmail.com',
           password_hash: '$2a$10$PZCb.z/.Vf6D8Y4V0k/zaOOfMEdQZ8sGDtMYQrvrQFGaFcROwoD9i',
           role: 'OPERATIONS',
@@ -310,6 +310,7 @@ function createPortableStorage(storageFilePath: string): DatabaseAdapter {
         };
         data.users.push(lbUser);
       } else {
+        lbUser.name = 'Rutuja (Lendbridge Capital - Satara Ops)';
         lbUser.role = 'OPERATIONS';
         lbUser.branch_id = 'br_satara_01';
       }

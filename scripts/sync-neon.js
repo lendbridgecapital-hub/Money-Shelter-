@@ -515,7 +515,7 @@ async function initSchema(client) {
       WHERE branch_id = 'br_satara_01' OR co_brand_name ILIKE '%lendbridge%';
 
       UPDATE users 
-      SET branch_id = 'br_satara_01', role = 'OPERATIONS' 
+      SET branch_id = 'br_satara_01', role = 'OPERATIONS', name = 'Rutuja (Lendbridge Capital - Satara Ops)' 
       WHERE email ILIKE '%lendbridge%';
     `);
   } catch (_) {}
@@ -634,7 +634,7 @@ function ensureLendbridgeAndBranchIntegrity(data) {
       lbUser = {
         id: 'usr_lendbridge_ops_01',
         tenant_id: 'default',
-        name: 'Lendbridge Capital Ops (Satara)',
+        name: 'Rutuja (Lendbridge Capital - Satara Ops)',
         email: 'lendbridgecapital@gmail.com',
         password_hash: '$2a$10$PZCb.z/.Vf6D8Y4V0k/zaOOfMEdQZ8sGDtMYQrvrQFGaFcROwoD9i',
         role: 'OPERATIONS',
@@ -644,6 +644,7 @@ function ensureLendbridgeAndBranchIntegrity(data) {
       };
       data.users.push(lbUser);
     } else {
+      lbUser.name = 'Rutuja (Lendbridge Capital - Satara Ops)';
       lbUser.role = 'OPERATIONS';
       lbUser.branch_id = 'br_satara_01';
     }
