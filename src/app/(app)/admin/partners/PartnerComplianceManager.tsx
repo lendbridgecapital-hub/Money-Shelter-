@@ -204,7 +204,7 @@ export default function PartnerComplianceManager({
     };
   }, [activeAgentApps, activeAgentCrpEntries, isSubDsa]);
 
-  const isSatara = Boolean(
+  const isSataraUser = Boolean(
     userBranchId === 'br_satara_01' ||
     userBranchName?.toLowerCase().includes('satara') ||
     userBranchName?.toLowerCase().includes('lendbridge') ||
@@ -215,35 +215,62 @@ export default function PartnerComplianceManager({
     )
   );
 
+  // Active target branch for generating onboarding & Sub-DSA share links
+  // Defaults strictly to Satara branch (Lendbridge Capital) for Admin, RMs, and Satara users
+  const [selectedShareBranchId, setSelectedShareBranchId] = useState<string>(
+    isBranchOps && userBranchId ? userBranchId : 'br_satara_01'
+  );
+
+  const activeShareBranch =
+    branches.find((b) => b.id === selectedShareBranchId) ||
+    (isSataraUser ? branches.find((b) => b.id === 'br_satara_01') : null);
+
+  const isSatara = Boolean(
+    isSataraUser ||
+    selectedShareBranchId === 'br_satara_01' ||
+    selectedShareBranchId === 'STR01' ||
+    activeShareBranch?.name?.toLowerCase().includes('satara') ||
+    activeShareBranch?.coBrandName?.toLowerCase().includes('lendbridge')
+  );
+
   const getOnboardingUrl = () => {
     const origin = typeof window !== 'undefined' ? window.location.origin : '';
-    const sataraParam = isSatara ? '&branchId=br_satara_01' : '';
+    const branchParam = isSatara
+      ? '&branchId=br_satara_01'
+      : (selectedShareBranchId && selectedShareBranchId !== 'all' ? `&branchId=${encodeURIComponent(selectedShareBranchId)}` : '');
+
     if (isSubDsa && currentUserId) {
-      return `${origin}/partner/onboard?subDsaId=${currentUserId}${sataraParam}`;
+      return `${origin}/partner/onboard?subDsaId=${currentUserId}${branchParam}`;
     }
     if (isRM && currentUserId) {
-      return `${origin}/partner/onboard?rmId=${currentUserId}${sataraParam}`;
-    }
-    if (isBranchOps && userBranchId) {
-      return `${origin}/partner/onboard?branchId=${encodeURIComponent(userBranchId)}`;
+      return `${origin}/partner/onboard?rmId=${currentUserId}${branchParam}`;
     }
     if (isSatara) {
       return `${origin}/partner/onboard?branchId=br_satara_01`;
+    }
+    if (selectedShareBranchId && selectedShareBranchId !== 'all') {
+      return `${origin}/partner/onboard?branchId=${encodeURIComponent(selectedShareBranchId)}`;
     }
     return `${origin}/partner/onboard`;
   };
 
   const getSubDsaOnboardingUrl = () => {
     const origin = typeof window !== 'undefined' ? window.location.origin : '';
-    const sataraParam = isSatara ? '&branchId=br_satara_01' : '';
-    if (isBranchOps && userBranchId) {
-      return `${origin}/partner/onboard?role=SUB_DSA&branchId=${encodeURIComponent(userBranchId)}`;
-    }
+    const branchParam = isSatara
+      ? '&branchId=br_satara_01'
+      : (selectedShareBranchId && selectedShareBranchId !== 'all' ? `&branchId=${encodeURIComponent(selectedShareBranchId)}` : '');
+
     if (isRM && currentUserId) {
-      return `${origin}/partner/onboard?role=SUB_DSA&rmId=${currentUserId}${sataraParam}`;
+      return `${origin}/partner/onboard?role=SUB_DSA&rmId=${currentUserId}${branchParam}`;
     }
     const refParam = currentUserId ? `&ref=${currentUserId}` : '';
-    return `${origin}/partner/onboard?role=SUB_DSA${refParam}${sataraParam}`;
+    if (isSatara) {
+      return `${origin}/partner/onboard?role=SUB_DSA&branchId=br_satara_01${refParam}`;
+    }
+    if (selectedShareBranchId && selectedShareBranchId !== 'all') {
+      return `${origin}/partner/onboard?role=SUB_DSA&branchId=${encodeURIComponent(selectedShareBranchId)}${refParam}`;
+    }
+    return `${origin}/partner/onboard?role=SUB_DSA${refParam}`;
   };
 
   const openDirectOnboard = (role: 'CHANNEL_PARTNER' | 'SUB_DSA') => {
@@ -598,28 +625,88 @@ export default function PartnerComplianceManager({
 
       </div>
 
+      {/* Active Branch Selector Bar for Partner Links (For Admin, Ops, and RMs) */}
+      {!isDedicatedSiteRm && !isSubDsa && !isBranchOps && (
+        <div className="bg-white border border-slate-200/90 rounded-2xl p-3.5 shadow-2xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-lg bg-amber-500/10 text-amber-700 flex items-center justify-center text-sm font-bold">
+              🏛️
+            </div>
+            <div>
+              <div className="text-xs font-bold text-slate-800">
+                Partner Link Brand & Branch Selection:
+              </div>
+              <div className="text-[11px] text-slate-500">
+                Generate and share official partner onboarding links with branch-specific branding.
+              </div>
+            </div>
+          </div>
+          <div className="flex items-center gap-2 flex-wrap">
+            <button
+              type="button"
+              onClick={() => setSelectedShareBranchId('br_satara_01')}
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer border ${
+                isSatara
+                  ? 'bg-amber-600 border-amber-600 text-white shadow-xs ring-2 ring-amber-400/30'
+                  : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50'
+              }`}
+            >
+              <span>🏛️ Lendbridge Capital (Satara Branch)</span>
+              {isSatara && (
+                <span className="bg-amber-700/80 text-white text-[9px] px-1.5 py-0.5 rounded-full uppercase tracking-wider font-extrabold">
+                  ACTIVE
+                </span>
+              )}
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                const hqBranch = branches.find((b) => b.id !== 'br_satara_01') || branches[0];
+                setSelectedShareBranchId(hqBranch?.id || 'all');
+              }}
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer border ${
+                !isSatara
+                  ? 'bg-blue-600 border-blue-600 text-white shadow-xs ring-2 ring-blue-400/30'
+                  : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50'
+              }`}
+            >
+              <span>🏢 Money Shelter (HQ)</span>
+              {!isSatara && (
+                <span className="bg-blue-700/80 text-white text-[9px] px-1.5 py-0.5 rounded-full uppercase tracking-wider font-extrabold">
+                  ACTIVE
+                </span>
+              )}
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Partner & Sub-DSA Onboarding Cards (Unified self-contained cards with zero repeated buttons) */}
       {!isDedicatedSiteRm && (
         <div className={`grid grid-cols-1 ${!isSubDsa ? 'lg:grid-cols-2' : ''} gap-3.5`}>
-          {/* 1. Channel Partner Link Card (Emerald) */}
-          <div className="bg-gradient-to-br from-emerald-50/70 via-white to-slate-50/50 border border-emerald-200/90 rounded-2xl p-4 flex flex-col justify-between gap-3 shadow-2xs hover:border-emerald-300 transition">
+          {/* 1. Channel Partner Link Card (Emerald / Amber for Satara) */}
+          <div className={`bg-gradient-to-br ${isSatara ? 'from-amber-50/70 via-white to-slate-50/50 border-amber-200/90 hover:border-amber-300' : 'from-emerald-50/70 via-white to-slate-50/50 border-emerald-200/90 hover:border-emerald-300'} border rounded-2xl p-4 flex flex-col justify-between gap-3 shadow-2xs transition`}>
             <div className="flex items-start gap-3">
-              <div className="w-10 h-10 rounded-xl bg-emerald-600 text-white flex items-center justify-center text-lg shrink-0 shadow-xs">
-                🤝
+              <div className={`w-10 h-10 rounded-xl ${isSatara ? 'bg-amber-600' : 'bg-emerald-600'} text-white flex items-center justify-center text-lg shrink-0 shadow-xs`}>
+                {isSatara ? '🏛️' : '🤝'}
               </div>
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-1.5 flex-wrap">
                   <h2 className="text-xs font-bold text-slate-900 uppercase tracking-wide">
                     {isSubDsa
                       ? 'My Agent Referral & Onboarding Link'
+                      : isSatara
+                      ? 'Lendbridge Capital (Satara) Channel Partner Link'
                       : isRM
                       ? 'Channel Partner Onboarding Link'
                       : isBranchOps
                       ? `${userBranchName || 'Branch'} Channel Partner Link`
                       : 'Public Partner Registration Link'}
                   </h2>
-                  <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-100 text-emerald-800">
-                    {isSubDsa
+                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded ${isSatara ? 'bg-amber-100 text-amber-900 border border-amber-300' : 'bg-emerald-100 text-emerald-800'}`}>
+                    {isSatara
+                      ? '🏛️ Lendbridge Capital (Satara)'
+                      : isSubDsa
                       ? 'Agent Network'
                       : isBranchOps
                       ? `Locked to ${userBranchName || 'Branch'}`
@@ -629,6 +716,8 @@ export default function PartnerComplianceManager({
                 <p className="text-[11px] text-slate-500 mt-0.5 leading-snug">
                   {isSubDsa
                     ? 'Share with prospective agents. Any partner registering through this link will map automatically under your Sub-DSA network.'
+                    : isSatara
+                    ? 'Share with prospective partners in Satara. Onboarded agents register with Lendbridge Capital co-branding and auto-map to Satara branch.'
                     : isRM
                     ? 'Share with prospective partners to auto-assign directly to your RM portfolio.'
                     : isBranchOps
@@ -638,18 +727,18 @@ export default function PartnerComplianceManager({
               </div>
             </div>
 
-            <div className="flex items-center gap-1.5 pt-2 border-t border-emerald-100/80 flex-wrap">
+            <div className="flex items-center gap-1.5 pt-2 border-t border-slate-100 flex-wrap">
               <button
                 type="button"
                 onClick={copyOnboardingLink}
-                className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-lg shadow-2xs transition inline-flex items-center gap-1 cursor-pointer"
+                className={`px-3 py-1.5 ${isSatara ? 'bg-amber-600 hover:bg-amber-700' : 'bg-emerald-600 hover:bg-emerald-700'} text-white text-xs font-bold rounded-lg shadow-2xs transition inline-flex items-center gap-1 cursor-pointer`}
               >
-                <span>{copiedLink ? '✓ Copied' : isBranchOps ? '📋 Copy Partner Link' : (isRM || isSubDsa) ? '📋 Copy My Link' : '📋 Copy Link'}</span>
+                <span>{copiedLink ? '✓ Copied' : isSatara ? '📋 Copy Lendbridge Link' : isBranchOps ? '📋 Copy Partner Link' : (isRM || isSubDsa) ? '📋 Copy My Link' : '📋 Copy Link'}</span>
               </button>
               <button
                 type="button"
                 onClick={() => openShareModal('CHANNEL_PARTNER')}
-                className="px-2.5 py-1.5 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-emerald-800 text-xs font-bold rounded-lg transition inline-flex items-center gap-1 cursor-pointer"
+                className={`px-2.5 py-1.5 ${isSatara ? 'bg-amber-50 hover:bg-amber-100 border-amber-200 text-amber-900' : 'bg-emerald-50 hover:bg-emerald-100 border-emerald-200 text-emerald-800'} border text-xs font-bold rounded-lg transition inline-flex items-center gap-1 cursor-pointer`}
                 title="Share link via WhatsApp, Email, SMS, Telegram, Apps or QR Code"
               >
                 <span>📤 Share Link</span>
@@ -663,7 +752,7 @@ export default function PartnerComplianceManager({
                 <span>Preview</span>
                 <span>↗</span>
               </a>
-              {(isRM || isSubDsa || isBranchOps) && (
+              {(isRM || isSubDsa || isBranchOps || isSatara) && (
                 <button
                   type="button"
                   onClick={shareViaWhatsApp}
@@ -684,28 +773,32 @@ export default function PartnerComplianceManager({
             </div>
           </div>
 
-          {/* 2. Sub-DSA Onboarding Link Card (Indigo) - For Branch Ops, Admin, and RM */}
+          {/* 2. Sub-DSA Onboarding Link Card (Indigo / Amber for Satara) - For Branch Ops, Admin, and RM */}
           {!isSubDsa && (
-            <div className="bg-gradient-to-br from-indigo-50/70 via-white to-slate-50/50 border border-indigo-200/90 rounded-2xl p-4 flex flex-col justify-between gap-3 shadow-2xs hover:border-indigo-300 transition">
+            <div className={`bg-gradient-to-br ${isSatara ? 'from-amber-50/70 via-white to-indigo-50/30 border-indigo-200/90 hover:border-indigo-300' : 'from-indigo-50/70 via-white to-slate-50/50 border-indigo-200/90 hover:border-indigo-300'} border rounded-2xl p-4 flex flex-col justify-between gap-3 shadow-2xs transition`}>
               <div className="flex items-start gap-3">
-                <div className="w-10 h-10 rounded-xl bg-indigo-600 text-white flex items-center justify-center text-lg shrink-0 shadow-xs">
+                <div className={`w-10 h-10 rounded-xl ${isSatara ? 'bg-gradient-to-br from-amber-600 to-indigo-700' : 'bg-indigo-600'} text-white flex items-center justify-center text-lg shrink-0 shadow-xs`}>
                   🏢
                 </div>
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-1.5 flex-wrap">
                     <h2 className="text-xs font-bold text-slate-900 uppercase tracking-wide">
-                      {isBranchOps
+                      {isSatara
+                        ? 'Lendbridge Capital (Satara) Sub-DSA Master Partner Link'
+                        : isBranchOps
                         ? `${userBranchName || 'Branch'} Sub-DSA Onboarding Link`
                         : isRM
                         ? 'Sub-DSA Master Onboarding Link'
                         : 'Sub-DSA Master Partner Link'}
                     </h2>
-                    <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-indigo-100 text-indigo-800">
-                      ⚡ 0.1% Team Override Engine
+                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded ${isSatara ? 'bg-amber-100 text-amber-900 border border-amber-300' : 'bg-indigo-100 text-indigo-800'}`}>
+                      {isSatara ? '🏛️ Lendbridge Capital Sub-DSA' : '⚡ 0.1% Team Override Engine'}
                     </span>
                   </div>
                   <p className="text-[11px] text-slate-500 mt-0.5 leading-snug">
-                    {isBranchOps
+                    {isSatara
+                      ? 'Share with agency leaders & master brokers in Satara to recruit their own agent networks with Lendbridge Capital branding and override payouts.'
+                      : isBranchOps
                       ? `Share with Master DSAs & agencies to recruit their own agent networks mapped under ${userBranchName || 'your branch'} with override payouts.`
                       : 'Share with agency leaders to recruit and build their own sub-agent network with override commissions.'}
                   </p>
@@ -1548,9 +1641,38 @@ export default function PartnerComplianceManager({
             </div>
 
             <div className="space-y-2">
-              <label className="block text-xs font-semibold text-slate-700">
-                Sub-DSA Unique Registration Link
-              </label>
+              <div className="flex items-center justify-between">
+                <label className="block text-xs font-semibold text-slate-700">
+                  Sub-DSA Registration Link
+                </label>
+                <div className="flex items-center gap-1.5">
+                  <button
+                    type="button"
+                    onClick={() => setSelectedShareBranchId('br_satara_01')}
+                    className={`px-2.5 py-1 text-[11px] font-bold rounded-lg border transition cursor-pointer ${
+                      isSatara
+                        ? 'bg-amber-600 border-amber-600 text-white shadow-2xs'
+                        : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
+                    }`}
+                  >
+                    🏛️ Lendbridge (Satara)
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const hqBranch = branches.find((b) => b.id !== 'br_satara_01') || branches[0];
+                      setSelectedShareBranchId(hqBranch?.id || 'all');
+                    }}
+                    className={`px-2.5 py-1 text-[11px] font-bold rounded-lg border transition cursor-pointer ${
+                      !isSatara
+                        ? 'bg-indigo-600 border-indigo-600 text-white shadow-2xs'
+                        : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
+                    }`}
+                  >
+                    🏢 Money Shelter
+                  </button>
+                </div>
+              </div>
               <div className="flex gap-2">
                 <input
                   type="text"
@@ -1561,7 +1683,7 @@ export default function PartnerComplianceManager({
                 <button
                   type="button"
                   onClick={copySubDsaLink}
-                  className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-lg shadow-2xs transition whitespace-nowrap"
+                  className={`px-4 py-2 ${isSatara ? 'bg-amber-600 hover:bg-amber-700' : 'bg-indigo-600 hover:bg-indigo-700'} text-white text-xs font-bold rounded-lg shadow-2xs transition whitespace-nowrap cursor-pointer`}
                 >
                   {copiedSubDsaLink ? '✓ Copied' : '📋 Copy Link'}
                 </button>
