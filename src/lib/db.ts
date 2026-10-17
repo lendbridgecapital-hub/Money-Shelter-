@@ -134,6 +134,8 @@ function initDatabase(): DatabaseAdapter {
       'ALTER TABLE loan_applications ADD COLUMN co_brand_logo_url TEXT',
       'ALTER TABLE loan_applications ADD COLUMN co_brand_tagline TEXT',
       'ALTER TABLE branches ADD COLUMN status TEXT DEFAULT "APPROVED"',
+      'ALTER TABLE loan_applications ADD COLUMN income_type TEXT',
+      'ALTER TABLE loan_applications ADD COLUMN property_paper_type TEXT',
     ];
     for (const stmt of alterStatements) {
       try {

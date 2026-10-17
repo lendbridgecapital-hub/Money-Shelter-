@@ -13,10 +13,10 @@ import { generateApplicationToken } from '@/lib/tokens';
 import * as usersRepo from '@/lib/repos/usersRepo';
 import * as workflowRepo from '@/lib/repos/workflowRepo';
 import { syncDatabase } from '@/lib/db';
-import { DOCUMENT_GROUPS } from '@/lib/documentChecklist';
+import { getDocumentGroupsForApplication } from '@/lib/documentChecklist';
 import { LOAN_TYPE_LABELS } from '@/lib/format';
 import { notifyTouchpoint01_CustomerSubmitted } from '@/lib/touchpoints';
-import type { LoanType } from '@/types/db';
+import type { LoanType, IncomeType } from '@/types/db';
 
 export type SubmitResult = { ok: false; error: string } | { ok: true };
 
@@ -48,6 +48,14 @@ export async function submitCustomerApplication(token: string, formData: FormDat
   const mobile = String(formData.get('mobile') || '').trim();
   const email = String(formData.get('email') || '').trim().toLowerCase();
   const loanType = String(formData.get('loanType') || '') as LoanType;
+  const rawIncomeType = formData.get('incomeType');
+  const rawPropertyPaperType = formData.get('property_paper_type');
+  let incomeType = (rawIncomeType ? String(rawIncomeType) : undefined) as IncomeType | undefined;
+  if (loanType === 'BUSINESS_LOAN' && (!incomeType || incomeType === 'SALARIED')) {
+    incomeType = 'SELF_EMPLOYED_BUSINESS';
+  }
+  const propertyPaperType = rawPropertyPaperType ? String(rawPropertyPaperType).trim() : undefined;
+
   const loanAmount = Number(formData.get('loanAmount') || 0);
   const rawMonthlyIncome = formData.get('monthlyIncome');
   const monthlyIncome = rawMonthlyIncome !== null && rawMonthlyIncome !== '' ? Number(rawMonthlyIncome) : undefined;
@@ -69,15 +77,20 @@ export async function submitCustomerApplication(token: string, formData: FormDat
   if (!loanAmount || loanAmount <= 0) return { ok: false, error: 'Please enter the loan amount required.' };
   if (!attested) return { ok: false, error: 'Please confirm the self-attestation declaration before submitting.' };
 
+  const documentGroups = getDocumentGroupsForApplication(loanType, incomeType);
+
   // Validate required document groups and file sizes up front, before writing anything.
   const residenceProofType = String(formData.get('residence_proof_type') || '').trim();
-  for (const group of DOCUMENT_GROUPS) {
+  for (const group of documentGroups) {
     const groupFiles = group.fields.flatMap((f) => collectFiles(formData, f.name));
     if (group.required && groupFiles.length === 0) {
       return { ok: false, error: `Please upload at least one document for "${group.title}".` };
     }
     if (group.category === 'RESIDENCE_PROOF' && groupFiles.length > 0 && !residenceProofType) {
       return { ok: false, error: 'Please select which type of residence proof you are uploading.' };
+    }
+    if (group.category === 'PROPERTY_PAPERS' && groupFiles.length > 0 && !propertyPaperType) {
+      return { ok: false, error: 'Please select which type of property paper you are uploading.' };
     }
     for (const file of groupFiles) {
       if (file.size > MAX_FILE_SIZE) {
@@ -92,6 +105,8 @@ export async function submitCustomerApplication(token: string, formData: FormDat
     mobile,
     email,
     loanType,
+    incomeType,
+    propertyPaperType,
     loanAmount,
     monthlyIncome,
     existingEmi,
@@ -99,12 +114,17 @@ export async function submitCustomerApplication(token: string, formData: FormDat
   });
 
   // Save every uploaded document.
-  for (const group of DOCUMENT_GROUPS) {
+  for (const group of documentGroups) {
     for (const field of group.fields) {
       const files = collectFiles(formData, field.name);
       for (const file of files) {
         const saved = await saveUploadedFile(file, application.id);
-        const label = group.category === 'RESIDENCE_PROOF' && residenceProofType ? `Residence Proof — ${residenceProofType}` : field.label;
+        let label = field.label;
+        if (group.category === 'RESIDENCE_PROOF' && residenceProofType) {
+          label = `Residence Proof — ${residenceProofType}`;
+        } else if (group.category === 'PROPERTY_PAPERS' && propertyPaperType) {
+          label = `Property Paper — ${propertyPaperType}`;
+        }
         documentsRepo.addDocument({
           applicationId: application.id,
           category: group.category,

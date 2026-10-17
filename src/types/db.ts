@@ -33,12 +33,23 @@ export type LoanType =
   | 'BALANCE_TRANSFER'
   | 'OTHERS';
 
+export type IncomeType =
+  | 'SALARIED'
+  | 'SELF_EMPLOYED_BUSINESS'
+  | 'SELF_EMPLOYED_PROFESSIONAL';
+
 export type DocumentCategory =
   | 'PAN_CARD'
   | 'AADHAAR_CARD'
   | 'RESIDENCE_PROOF'
   | 'INCOME_PROOF'
   | 'BANK_STATEMENT'
+  | 'PHOTO'
+  | 'SHOP_ACT'
+  | 'UDYAM_CERTIFICATE'
+  | 'GST_CERTIFICATE'
+  | 'LOAN_TRACK_RECORD'
+  | 'PROPERTY_PAPERS'
   | 'ADDITIONAL_REQUIRED'
   | 'ACCEPTANCE_LETTER'
   | 'OTHER';
@@ -338,6 +349,8 @@ export interface LoanApplication {
   mobile?: string | null;
   email?: string | null;
   loanType?: LoanType | null;
+  incomeType?: IncomeType | null;
+  propertyPaperType?: string | null;
   loanAmount?: number | null;
   monthlyIncome?: number | null;
   existingEmi?: number | null;

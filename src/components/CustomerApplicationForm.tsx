@@ -1,27 +1,43 @@
 'use client';
 
-import React, { useState, useTransition } from 'react';
+import React, { useState, useTransition, useMemo } from 'react';
 import { submitCustomerApplication } from '@/actions/publicActions';
-import { DOCUMENT_GROUPS, RESIDENCE_PROOF_OPTIONS } from '@/lib/documentChecklist';
+import { getDocumentGroupsForApplication, RESIDENCE_PROOF_OPTIONS, PROPERTY_PAPER_OPTIONS } from '@/lib/documentChecklist';
 import { getMaxTenureYearsForLoanType } from '@/lib/policyEngine';
-import type { CompanySettings, Branch, LoanType } from '@/types/db';
+import type { CompanySettings, Branch, LoanType, IncomeType } from '@/types/db';
 
 interface CustomerApplicationFormProps {
   token: string;
   settings: CompanySettings;
   branch?: Branch | null;
   initialLoanType?: LoanType;
+  initialIncomeType?: IncomeType;
 }
 
-export default function CustomerApplicationForm({ token, settings, branch, initialLoanType }: CustomerApplicationFormProps) {
+export default function CustomerApplicationForm({
+  token,
+  settings,
+  branch,
+  initialLoanType,
+  initialIncomeType,
+}: CustomerApplicationFormProps) {
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [residenceProofType, setResidenceProofType] = useState('');
+  const [propertyPaperType, setPropertyPaperType] = useState('');
   const [selectedLoanType, setSelectedLoanType] = useState<string>(initialLoanType || 'HOME_LOAN');
+  const [selectedIncomeType, setSelectedIncomeType] = useState<IncomeType>(
+    initialIncomeType || (initialLoanType === 'BUSINESS_LOAN' ? 'SELF_EMPLOYED_BUSINESS' : 'SALARIED')
+  );
   const [tenureYears, setTenureYears] = useState<number | ''>(
     initialLoanType === 'PERSONAL_LOAN' ? 5 : 20
   );
   const maxAllowedTenureYears = getMaxTenureYearsForLoanType(selectedLoanType);
+
+  const documentGroups = useMemo(
+    () => getDocumentGroupsForApplication(selectedLoanType, selectedIncomeType),
+    [selectedLoanType, selectedIncomeType]
+  );
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -147,6 +163,9 @@ export default function CustomerApplicationForm({ token, settings, branch, initi
               onChange={(e) => {
                 const newType = e.target.value;
                 setSelectedLoanType(newType);
+                if (newType === 'BUSINESS_LOAN' && selectedIncomeType === 'SALARIED') {
+                  setSelectedIncomeType('SELF_EMPLOYED_BUSINESS');
+                }
                 const maxAllowed = getMaxTenureYearsForLoanType(newType);
                 if (tenureYears !== '' && Number(tenureYears) > maxAllowed) {
                   setTenureYears(maxAllowed);
@@ -163,6 +182,30 @@ export default function CustomerApplicationForm({ token, settings, branch, initi
               <option value="GOLD_LOAN">Gold Loan</option>
               <option value="OTHERS">Other / Custom Requirement</option>
             </select>
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+              Customer Income Type <span className="text-rose-500">*</span>
+            </label>
+            <select
+              name="incomeType"
+              required
+              value={selectedIncomeType}
+              onChange={(e) => setSelectedIncomeType(e.target.value as IncomeType)}
+              className="w-full px-4 py-2.5 text-sm border border-slate-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              {selectedLoanType !== 'BUSINESS_LOAN' && (
+                <option value="SALARIED">Salaried</option>
+              )}
+              <option value="SELF_EMPLOYED_BUSINESS">Self Employed (Business)</option>
+              <option value="SELF_EMPLOYED_PROFESSIONAL">Self Employed (Professional)</option>
+            </select>
+            {selectedLoanType === 'BUSINESS_LOAN' && (
+              <p className="text-[11px] text-amber-700 mt-1">
+                * Note: Business loans are exclusively for business entities / self-employed applicants.
+              </p>
+            )}
           </div>
 
           <div>
@@ -269,7 +312,7 @@ export default function CustomerApplicationForm({ token, settings, branch, initi
         </div>
 
         <div className="space-y-6">
-          {DOCUMENT_GROUPS.map((group) => (
+          {documentGroups.map((group) => (
             <div key={group.category} className="border border-slate-100 bg-slate-50/60 rounded-xl p-5">
               <div className="flex items-baseline justify-between mb-1">
                 <h3 className="text-sm font-bold text-slate-900">
@@ -300,6 +343,32 @@ export default function CustomerApplicationForm({ token, settings, branch, initi
                       </option>
                     ))}
                   </select>
+                </div>
+              )}
+
+              {/* Special Property Paper dropdown for LAP */}
+              {group.category === 'PROPERTY_PAPERS' && (
+                <div className="mb-4">
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">
+                    Select Property Document Type <span className="text-rose-500">*</span>
+                  </label>
+                  <select
+                    name="property_paper_type"
+                    required
+                    value={propertyPaperType}
+                    onChange={(e) => setPropertyPaperType(e.target.value)}
+                    className="w-full sm:max-w-md px-3.5 py-2 text-xs border border-slate-200 rounded-lg bg-white"
+                  >
+                    <option value="">-- Choose property document type --</option>
+                    {PROPERTY_PAPER_OPTIONS.map((opt) => (
+                      <option key={opt} value={opt}>
+                        {opt}
+                      </option>
+                    ))}
+                  </select>
+                  <p className="text-[11px] text-slate-400 mt-1">
+                    Choose Agreement / Sale deed, Builder Project File, Completion Certificate, Society Registration, Share Certificate, or Conveyance deed
+                  </p>
                 </div>
               )}
 

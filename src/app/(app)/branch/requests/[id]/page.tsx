@@ -12,7 +12,7 @@ import { listDocumentsForApplication } from '@/lib/repos/documentsRepo';
 import { listStatusHistory } from '@/lib/repos/statusHistoryRepo';
 import { listBanks } from '@/lib/repos/banksRepo';
 import { listRemarksForApplication, listRequiredDocuments } from '@/lib/repos/workflowRepo';
-import { LOAN_TYPE_LABELS, formatCurrencyINR, formatDateTime } from '@/lib/format';
+import { LOAN_TYPE_LABELS, INCOME_TYPE_LABELS, formatCurrencyINR, formatDateTime } from '@/lib/format';
 import StatusTracker from '@/components/StatusTracker';
 import StatusBadge from '@/components/StatusBadge';
 import OperationalWorkflowPanel from '@/components/OperationalWorkflowPanel';
@@ -25,8 +25,14 @@ const CATEGORY_TITLES: Record<string, string> = {
   PAN_CARD: 'PAN Card',
   AADHAAR_CARD: 'Aadhaar Card',
   RESIDENCE_PROOF: 'Residence Proof',
-  INCOME_PROOF: 'Income Proof',
+  PHOTO: 'Applicant Photograph',
+  SHOP_ACT: 'Shop Act Licence (Both Sides)',
+  UDYAM_CERTIFICATE: 'Udyam Registration Certificate',
+  GST_CERTIFICATE: 'GST Certificate & Returns',
+  INCOME_PROOF: 'Income Proof / ITR',
   BANK_STATEMENT: 'Bank Statements & Financials',
+  LOAN_TRACK_RECORD: 'Track Record of Loans (Running Loans / RTR)',
+  PROPERTY_PAPERS: 'Property Documents',
   ADDITIONAL_REQUIRED: 'Operational Additional Documents',
   ACCEPTANCE_LETTER: 'Sanction Acceptance Letter',
   OTHER: 'Other',
@@ -268,6 +274,15 @@ export default async function RequestDetailPage({ params }: { params: { id: stri
               {application.panNumber && <Field label="PAN Card Number" value={application.panNumber} />}
               {application.aadhaarNumber && <Field label="Aadhaar Number" value={application.aadhaarNumber} />}
               <Field label="Loan Type" value={application.loanType ? LOAN_TYPE_LABELS[application.loanType] : null} />
+              {application.incomeType && (
+                <Field
+                  label="Customer Income Type"
+                  value={INCOME_TYPE_LABELS[application.incomeType] || application.incomeType}
+                />
+              )}
+              {application.propertyPaperType && (
+                <Field label="Property Paper Type" value={application.propertyPaperType} />
+              )}
               <Field label="Requested Loan Amount" value={application.loanAmount ? formatCurrencyINR(application.loanAmount) : null} />
               {application.monthlyIncome && (
                 <Field label="Monthly Net Income" value={formatCurrencyINR(application.monthlyIncome)} />

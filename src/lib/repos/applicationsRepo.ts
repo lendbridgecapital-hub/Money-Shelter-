@@ -1,6 +1,6 @@
 import crypto from 'crypto';
 import { db } from '@/lib/db';
-import type { LoanApplication, ApplicationStatus, LoanType, PipelineStats, User } from '@/types/db';
+import type { LoanApplication, ApplicationStatus, LoanType, IncomeType, PipelineStats, User } from '@/types/db';
 import { listPartnersByRm, listPartnersBySubDsa, getUserById, listUsers } from '@/lib/repos/usersRepo';
 import { listBranches, getBranchById } from '@/lib/repos/branchesRepo';
 import { generateApplicationToken } from '@/lib/tokens';
@@ -10,6 +10,8 @@ export function createApplicationLink(data: {
   token: string;
   branchId: string;
   createdById: string;
+  loanType?: LoanType;
+  incomeType?: IncomeType;
   channelPartnerId?: string;
   channelPartnerName?: string;
   relationshipManagerId?: string | null;
@@ -82,9 +84,9 @@ export function createApplicationLink(data: {
   db.prepare(
     `INSERT INTO loan_applications (
       id, tenant_id, token, branch_id, created_by_id, channel_partner_id, channel_partner_name,
-      relationship_manager_id, relationship_manager_name, status, status_changed_at,
+      relationship_manager_id, relationship_manager_name, loan_type, income_type, status, status_changed_at,
       is_co_branded, co_brand_name, co_brand_logo_url, co_brand_tagline, created_at, updated_at
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
   ).run(
     id,
     tenantId,
@@ -95,6 +97,8 @@ export function createApplicationLink(data: {
     partnerName,
     rmId,
     rmName,
+    data.loanType || null,
+    data.incomeType || null,
     'LINK_SHARED',
     now,
     isCoBranded,
@@ -181,6 +185,8 @@ export function recordCustomerSubmission(
     mobile: string;
     email: string;
     loanType: LoanType;
+    incomeType?: IncomeType;
+    propertyPaperType?: string;
     loanAmount: number;
     monthlyIncome?: number;
     existingEmi?: number;
@@ -195,13 +201,15 @@ export function recordCustomerSubmission(
 
   db.prepare(
     `UPDATE loan_applications
-     SET full_name = ?, mobile = ?, email = ?, loan_type = ?, loan_amount = ?, monthly_income = ?, existing_emi = ?, tenure_months = ?, status = ?, status_changed_at = ?, tat_alerts_sent = NULL, submitted_at = ?, updated_at = ?
+     SET full_name = ?, mobile = ?, email = ?, loan_type = ?, income_type = ?, property_paper_type = ?, loan_amount = ?, monthly_income = ?, existing_emi = ?, tenure_months = ?, status = ?, status_changed_at = ?, tat_alerts_sent = NULL, submitted_at = ?, updated_at = ?
      WHERE id = ?`
   ).run(
     data.fullName.trim(),
     data.mobile.trim(),
     data.email.trim().toLowerCase(),
     data.loanType,
+    data.incomeType || existing?.incomeType || null,
+    data.propertyPaperType || existing?.propertyPaperType || null,
     data.loanAmount,
     data.monthlyIncome || null,
     data.existingEmi !== undefined && data.existingEmi !== null ? data.existingEmi : null,
@@ -233,6 +241,8 @@ export function updateApplicationCustomerInfo(
     mobile: string;
     email?: string | null;
     loanType: LoanType;
+    incomeType?: IncomeType | null;
+    propertyPaperType?: string | null;
     loanAmount: number;
     monthlyIncome?: number | null;
     existingEmi?: number | null;
@@ -244,7 +254,7 @@ export function updateApplicationCustomerInfo(
   const now = new Date().toISOString();
   db.prepare(
     `UPDATE loan_applications
-     SET full_name = ?, mobile = ?, email = ?, loan_type = ?, loan_amount = ?,
+     SET full_name = ?, mobile = ?, email = ?, loan_type = ?, income_type = COALESCE(?, income_type), property_paper_type = COALESCE(?, property_paper_type), loan_amount = ?,
          monthly_income = ?, existing_emi = ?, tenure_months = ?, pan_number = ?, aadhaar_number = ?,
          updated_at = ?
      WHERE id = ?`
@@ -253,6 +263,8 @@ export function updateApplicationCustomerInfo(
     data.mobile.trim(),
     data.email ? data.email.trim().toLowerCase() : null,
     data.loanType,
+    data.incomeType || null,
+    data.propertyPaperType || null,
     Number(data.loanAmount) || 0,
     data.monthlyIncome !== undefined && data.monthlyIncome !== null ? Number(data.monthlyIncome) : null,
     data.existingEmi !== undefined && data.existingEmi !== null ? Number(data.existingEmi) : null,
@@ -733,6 +745,8 @@ function mapRowToApplication(row: Record<string, unknown>): LoanApplication {
     mobile: row.mobile ? String(row.mobile) : null,
     email: row.email ? String(row.email) : null,
     loanType: (row.loan_type || row.loanType) as LoanType | null,
+    incomeType: (row.income_type || row.incomeType) as IncomeType | null,
+    propertyPaperType: row.property_paper_type || row.propertyPaperType ? String(row.property_paper_type || row.propertyPaperType) : null,
     loanAmount: row.loan_amount || row.loanAmount ? Number(row.loan_amount || row.loanAmount) : null,
     monthlyIncome: row.monthly_income || row.monthlyIncome ? Number(row.monthly_income || row.monthlyIncome) : null,
     existingEmi: row.existing_emi !== undefined && row.existing_emi !== null ? Number(row.existing_emi) : (row.existingEmi !== undefined && row.existingEmi !== null ? Number(row.existingEmi) : null),

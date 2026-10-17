@@ -47,6 +47,21 @@ export const LOAN_TYPE_LABELS: Record<LoanType, string> = {
   OTHERS: 'Other / Custom Loan',
 };
 
+export const INCOME_TYPE_LABELS: Record<string, string> = {
+  SALARIED: 'Salaried',
+  SELF_EMPLOYED_BUSINESS: 'Self Employed (Business)',
+  SELF_EMPLOYED_PROFESSIONAL: 'Self Employed (Professional)',
+};
+
+export const PROPERTY_PAPER_OPTIONS = [
+  'Agreement / Sale Deed',
+  'Builder Project File',
+  'Completion Certificate',
+  'Society Registration Certificate',
+  'Share Certificate',
+  'Conveyance Deed',
+] as const;
+
 export const STATUS_LABELS: Record<ApplicationStatus, string> = {
   LINK_SHARED: 'Link Shared',
   DOCUMENTS_IN: 'Documents In',

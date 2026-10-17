@@ -8,7 +8,7 @@ import { listRequiredDocuments } from '@/lib/repos/workflowRepo';
 import CustomerApplicationForm from '@/components/CustomerApplicationForm';
 import CustomerRequiredDocsUploader from '@/components/CustomerRequiredDocsUploader';
 import ExitFormButton from '@/components/ExitFormButton';
-import type { LoanType } from '@/types/db';
+import type { LoanType, IncomeType } from '@/types/db';
 
 export async function generateMetadata({
   params,
@@ -87,7 +87,7 @@ export default async function CustomerApplyPage({
   searchParams,
 }: {
   params: { token: string };
-  searchParams?: { loanType?: string };
+  searchParams?: { loanType?: string; incomeType?: string };
 }) {
   const application = getApplicationByToken(params.token);
   if (!application) {
@@ -596,7 +596,8 @@ export default async function CustomerApplyPage({
           token={params.token}
           settings={settings}
           branch={branch}
-          initialLoanType={searchParams?.loanType as LoanType | undefined}
+          initialLoanType={(searchParams?.loanType || application.loanType) as LoanType | undefined}
+          initialIncomeType={(searchParams?.incomeType || application.incomeType) as IncomeType | undefined}
         />
       </main>
 
