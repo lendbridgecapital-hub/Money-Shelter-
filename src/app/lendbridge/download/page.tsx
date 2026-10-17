@@ -66,7 +66,7 @@ export default function LendbridgeDownloadPage() {
           Lendbridge Capital
         </h1>
         <p className="text-xs text-slate-400 mb-6 leading-relaxed">
-          Dedicated loan origination, pipeline tracking, and partner network application for <strong>Satara Branch</strong> in partnership with Money Shelter.
+          Dedicated loan origination, pipeline tracking, and partner network application for <strong>Lendbridge Capital (Satara Branch)</strong>.
         </p>
 
         {/* Primary Download: Android APK */}
@@ -126,10 +126,22 @@ export default function LendbridgeDownloadPage() {
           </div>
         </div>
 
+        {/* Desk Contact info */}
+        <div className="mt-5 p-3 rounded-xl bg-slate-900/50 border border-slate-700/50 text-[11px] text-slate-400 text-center">
+          <span>Lendbridge Capital Desk: </span>
+          <a href="tel:9049301089" className="text-white font-bold hover:underline">
+            +91 9049301089
+          </a>
+          <span> • </span>
+          <a href="mailto:lendbridgecapital@gmail.com" className="text-blue-400 font-semibold hover:underline">
+            lendbridgecapital@gmail.com
+          </a>
+        </div>
+
         {/* Bottom Nav Links */}
-        <div className="mt-6 pt-5 border-t border-slate-700/60 flex items-center justify-between text-xs text-slate-400">
+        <div className="mt-4 pt-4 border-t border-slate-700/60 flex items-center justify-between text-xs text-slate-400">
           <Link href="/download" className="hover:text-blue-400 transition">
-            &larr; Money Shelter App
+            &larr; Central App
           </Link>
           <Link href="/lendbridge/login" className="hover:text-blue-300 font-bold text-blue-400">
             Satara Partner Login &rarr;

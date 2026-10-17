@@ -1,12 +1,12 @@
 import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-  appId: 'com.quickfinsure.app',
-  appName: 'Money Shelter',
+  appId: 'com.lendbridgecapital.app',
+  appName: 'Lendbridge Capital',
   webDir: 'public',
   server: {
-    // Connects to live production deployment on Render directly opening the Login Page
-    url: 'https://money-shelter.onrender.com/login',
+    // Dedicated Lendbridge Capital partner login portal
+    url: 'https://money-shelter.onrender.com/lendbridge/login',
     cleartext: true,
     errorPath: 'index.html',
   },

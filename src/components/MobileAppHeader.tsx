@@ -81,13 +81,13 @@ export default function MobileAppHeader({
           /* Home Screen: Show Brand Logo & Name */
           <div className="flex items-center gap-2 min-w-0">
             {isCoBranded && coBrandName ? (
-              <div className="flex items-center gap-1.5 min-w-0">
+              <div className="flex items-center gap-2 min-w-0">
                 {coBrandLogoUrl ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img
                     src={coBrandLogoUrl}
                     alt={coBrandName}
-                    className="h-7 max-h-7.5 w-auto max-w-[80px] object-contain"
+                    className="h-8 max-h-8.5 w-auto max-w-[140px] object-contain"
                     onError={(e) => {
                       const target = e.currentTarget;
                       if (!target.src.includes('lendbridge-logo.png')) {
@@ -96,21 +96,8 @@ export default function MobileAppHeader({
                     }}
                   />
                 ) : (
-                  <span className="font-extrabold text-slate-900 text-xs truncate max-w-[80px]">
+                  <span className="font-extrabold text-slate-900 text-sm truncate">
                     {coBrandName}
-                  </span>
-                )}
-                <span className="text-[10px] text-slate-400 font-bold shrink-0">×</span>
-                {logoUrl ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={logoUrl}
-                    alt={companyName || 'Money Shelter'}
-                    className="h-6 max-h-6.5 w-auto max-w-[80px] object-contain"
-                  />
-                ) : (
-                  <span className="font-bold text-slate-700 text-xs truncate max-w-[70px]">
-                    {companyName || 'Money Shelter'}
                   </span>
                 )}
               </div>
@@ -211,6 +198,10 @@ export default function MobileAppHeader({
         branchName={branchName}
         branchId={branchId}
         isDedicatedSiteRm={isDedicatedSiteRm}
+        isCoBranded={isCoBranded}
+        coBrandName={coBrandName}
+        coBrandLogoUrl={coBrandLogoUrl}
+        coBrandTagline={coBrandTagline}
       />
     </>
   );

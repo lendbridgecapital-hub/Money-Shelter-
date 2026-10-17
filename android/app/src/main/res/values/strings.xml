@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='utf-8'?>
 <resources>
-    <string name="app_name">Money Shelter</string>
-    <string name="title_activity_main">Money Shelter</string>
-    <string name="package_name">com.quickfinsure.app</string>
-    <string name="custom_url_scheme">com.quickfinsure.app</string>
+    <string name="app_name">Lendbridge Capital</string>
+    <string name="title_activity_main">Lendbridge Capital</string>
+    <string name="package_name">com.lendbridgecapital.app</string>
+    <string name="custom_url_scheme">com.lendbridgecapital.app</string>
 </resources>

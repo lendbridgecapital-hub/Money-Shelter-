@@ -321,7 +321,7 @@ export default function Sidebar({
                     <img
                       src={coBrandLogoUrl}
                       alt={coBrandName}
-                      className="h-6 max-h-6 object-contain max-w-[70px] shrink-0"
+                      className="h-8 max-h-8.5 object-contain max-w-[150px] shrink-0"
                       onError={(e) => {
                         const target = e.currentTarget;
                         if (!target.src.includes('lendbridge-logo.png')) {
@@ -330,27 +330,14 @@ export default function Sidebar({
                       }}
                     />
                   ) : (
-                    <span className="font-bold text-xs text-slate-900 truncate max-w-[80px]">
+                    <span className="font-extrabold text-sm text-slate-900 truncate">
                       {coBrandName}
                     </span>
                   )}
-                  <span className="text-[10px] text-slate-400 font-bold shrink-0">×</span>
-                  {logoUrl ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                      src={logoUrl}
-                      alt={companyName}
-                      className="h-6 max-h-6 object-contain max-w-[70px] shrink-0"
-                    />
-                  ) : (
-                    <span className="font-semibold text-[11px] text-slate-700 truncate max-w-[70px]">
-                      {companyName}
-                    </span>
-                  )}
                 </div>
-                <div className="flex items-center gap-1 text-[9px] text-indigo-700 font-semibold truncate mt-0.5" title={coBrandTagline || `${coBrandName} in partnership with ${companyName}`}>
-                  <span>🤝</span>
-                  <span className="truncate">{coBrandName} {branchName ? `(${branchName})` : ''}</span>
+                <div className="flex items-center gap-1 text-[10px] text-blue-700 font-semibold truncate mt-0.5" title={coBrandTagline || coBrandName}>
+                  <span>🏛️</span>
+                  <span className="truncate">{coBrandTagline || `${coBrandName} Partner Hub`}</span>
                 </div>
               </div>
             )

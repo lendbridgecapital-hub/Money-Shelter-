@@ -18,6 +18,10 @@ interface MobileDrawerProps {
   branchName?: string;
   branchId?: string;
   isDedicatedSiteRm?: boolean;
+  isCoBranded?: boolean;
+  coBrandName?: string | null;
+  coBrandLogoUrl?: string | null;
+  coBrandTagline?: string | null;
 }
 
 export default function MobileDrawer({
@@ -31,6 +35,10 @@ export default function MobileDrawer({
   branchName,
   branchId,
   isDedicatedSiteRm = false,
+  isCoBranded = false,
+  coBrandName = null,
+  coBrandLogoUrl = null,
+  coBrandTagline = null,
 }: MobileDrawerProps) {
   const pathname = usePathname();
 
@@ -179,8 +187,21 @@ export default function MobileDrawer({
         {/* Drawer Header */}
         <div className="p-4 bg-gradient-to-br from-slate-900 via-slate-800 to-emerald-950 text-white">
           <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center gap-2">
-              {logoUrl ? (
+            <div className="flex items-center gap-2 min-w-0">
+              {isCoBranded && coBrandName ? (
+                coBrandLogoUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={coBrandLogoUrl}
+                    alt={coBrandName}
+                    className="h-7 w-auto object-contain bg-white rounded-lg px-1.5 py-0.5"
+                  />
+                ) : (
+                  <div className="w-7 h-7 rounded-lg bg-blue-600 text-white font-bold flex items-center justify-center text-xs shadow-sm">
+                    {coBrandName.charAt(0).toUpperCase()}
+                  </div>
+                )
+              ) : logoUrl ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={logoUrl} alt={companyName} className="h-6 w-auto object-contain brightness-0 invert" />
               ) : (
@@ -188,7 +209,9 @@ export default function MobileDrawer({
                   {companyName.charAt(0).toUpperCase()}
                 </div>
               )}
-              <span className="font-bold text-xs tracking-tight">{companyName}</span>
+              <span className="font-bold text-xs tracking-tight truncate">
+                {isCoBranded && coBrandName ? coBrandName : companyName}
+              </span>
             </div>
             <button
               type="button"
@@ -267,18 +290,40 @@ export default function MobileDrawer({
           )}
         </div>
 
+        {/* Support Help Center */}
+        <div className="px-4 py-2.5 border-t border-slate-100 bg-slate-50/80 text-[11px] text-slate-500">
+          <p className="font-bold text-slate-700 mb-1">
+            {isCoBranded ? `${coBrandName || 'Lendbridge Capital'} Desk` : 'Need Help & Support?'}
+          </p>
+          <div className="flex items-center justify-between text-xs">
+            <a
+              href={isCoBranded ? 'tel:9049301089' : 'tel:9049002010'}
+              className="font-bold text-slate-800 hover:text-blue-600 flex items-center gap-1"
+            >
+              <span>📞</span>
+              <span>{isCoBranded ? '+91 9049301089' : '+91 9049002010'}</span>
+            </a>
+            <a
+              href={isCoBranded ? 'mailto:lendbridgecapital@gmail.com' : 'mailto:info@moneyshelter.in'}
+              className="text-blue-600 font-semibold hover:underline truncate max-w-[140px]"
+            >
+              {isCoBranded ? 'lendbridgecapital@gmail.com' : 'info@moneyshelter.in'}
+            </a>
+          </div>
+        </div>
+
         {/* Footer: Sign Out */}
         <div className="p-4 border-t border-slate-200 bg-slate-50">
           <button
             type="button"
-            onClick={() => signOut({ callbackUrl: '/login' })}
+            onClick={() => signOut({ callbackUrl: isCoBranded ? '/lendbridge/login' : '/login' })}
             className="w-full py-2.5 px-4 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 text-xs font-bold transition flex items-center justify-center gap-2"
           >
             <span>🚪</span>
-            <span>Sign Out Operator</span>
+            <span>Sign Out</span>
           </button>
           <p className="text-[10px] text-center text-slate-400 mt-2">
-            Money Shelter Mobile Platform v1.0
+            {isCoBranded ? `${coBrandName || 'Lendbridge Capital'} Partner App v1.0` : `${companyName} Mobile Platform v1.0`}
           </p>
         </div>
       </div>

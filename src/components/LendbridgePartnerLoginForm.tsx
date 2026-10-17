@@ -57,7 +57,7 @@ export default function LendbridgePartnerLoginForm({ companySettings }: Lendbrid
   };
 
   const handleQuickFillPartner = () => {
-    setEmail('partner@moneyshelter.in');
+    setEmail('lendbridgecapital@gmail.com');
     setPassword('Password123!');
   };
 
@@ -75,7 +75,7 @@ export default function LendbridgePartnerLoginForm({ companySettings }: Lendbrid
             <img
               src="/lendbridge-logo.png"
               alt="Lendbridge Capital"
-              className="h-10 sm:h-12 w-auto object-contain max-w-[220px]"
+              className="h-12 sm:h-14 w-auto object-contain max-w-[240px]"
               onError={(e) => {
                 // Graceful fallback to emblem + wordmark if full logo path changes
                 (e.currentTarget as HTMLImageElement).src = '/lendbridge-emblem.png';
@@ -86,24 +86,27 @@ export default function LendbridgePartnerLoginForm({ companySettings }: Lendbrid
                 Channel Partner Portal
               </span>
               <p className="text-[11px] text-slate-500 font-medium mt-0.5">
-                In Strategic Lending Partnership with <strong className="text-slate-800">{companyName}</strong>
+                Official Lending &amp; Channel Partner Platform
               </p>
             </div>
           </div>
 
-          {/* Right: Money Shelter Co-Branded Badge */}
-          <div className="flex items-center gap-2.5 shrink-0">
-            <span className="text-xs text-slate-400 font-semibold hidden sm:inline">Powered by</span>
-            <div className="bg-slate-50 px-3 py-1.5 rounded-xl border border-slate-200/80 shadow-2xs">
-              <Image
-                src={companyLogo}
-                alt={companyName}
-                width={130}
-                height={40}
-                priority
-                className="h-7 w-auto object-contain"
-              />
-            </div>
+          {/* Right: Direct Lendbridge Contact */}
+          <div className="flex flex-wrap items-center gap-3 text-xs font-semibold text-slate-600">
+            <a
+              href="mailto:lendbridgecapital@gmail.com"
+              className="flex items-center gap-1.5 hover:text-blue-600 transition bg-slate-50 border border-slate-200/80 px-3 py-1.5 rounded-xl shadow-2xs"
+            >
+              <span>✉️</span>
+              <span className="text-slate-700">lendbridgecapital@gmail.com</span>
+            </a>
+            <a
+              href="tel:9049301089"
+              className="flex items-center gap-1.5 hover:text-blue-600 transition font-bold text-slate-900 bg-slate-50 border border-slate-200/80 px-3 py-1.5 rounded-xl shadow-2xs"
+            >
+              <span>📞</span>
+              <span>+91 9049301089</span>
+            </a>
           </div>
         </div>
 
@@ -267,7 +270,7 @@ export default function LendbridgePartnerLoginForm({ companySettings }: Lendbrid
                   Not an authorized Lendbridge partner yet?
                 </p>
                 <Link
-                  href="/partner/onboard?partner=lendbridge"
+                  href="/partner/onboard?branchId=br_satara_01"
                   className="mt-1.5 inline-block text-xs font-bold text-blue-600 hover:text-blue-800 underline underline-offset-4 transition"
                 >
                   Register as a Lendbridge Capital Partner →
@@ -285,14 +288,18 @@ export default function LendbridgePartnerLoginForm({ companySettings }: Lendbrid
                 </Link>
               </div>
 
-              {/* HQ Operations Login Switch */}
-              <div className="mt-4 text-center">
-                <Link
-                  href="/login"
-                  className="text-[11px] font-medium text-slate-400 hover:text-slate-600 transition"
-                >
-                  Are you Central Ops or HQ Admin? Go to Money Shelter Login →
-                </Link>
+              {/* Satara Support Footer */}
+              <div className="mt-4 pt-3 border-t border-slate-100 text-center">
+                <p className="text-[11px] text-slate-500">
+                  Lendbridge Capital Desk:{' '}
+                  <a href="tel:9049301089" className="font-bold text-slate-700 hover:text-blue-600">
+                    +91 9049301089
+                  </a>{' '}
+                  •{' '}
+                  <a href="mailto:lendbridgecapital@gmail.com" className="text-blue-600 font-semibold hover:underline">
+                    lendbridgecapital@gmail.com
+                  </a>
+                </p>
               </div>
             </div>
           </div>
