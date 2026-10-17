@@ -144,17 +144,6 @@ export default function LoginPage() {
             </Link>
           </p>
         </div>
-
-        {/* Dedicated Lendbridge Capital Partner Portal Link */}
-        <div className="mt-3.5 text-center">
-          <Link
-            href="/lendbridge/login"
-            className="inline-flex items-center gap-2 text-xs font-bold text-indigo-700 hover:text-indigo-900 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200/80 px-3.5 py-1.5 rounded-xl shadow-2xs transition"
-          >
-            <span>🤝</span>
-            <span>Lendbridge Capital Partner Portal Login →</span>
-          </Link>
-        </div>
       </div>
     </div>
   );
