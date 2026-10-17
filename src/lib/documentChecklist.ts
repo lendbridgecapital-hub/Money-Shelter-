@@ -453,22 +453,6 @@ export function getDocumentGroupsForApplication(
         },
       ],
     });
-
-    // 4. Property Papers (if transferring Home Loan or LAP)
-    groups.push({
-      category: 'PROPERTY_PAPERS',
-      title: 'Property Papers / LOD from Existing Bank',
-      description: 'List of Documents (LOD) held by existing bank or copy of Sale Deed / Agreement (if property backed).',
-      required: false,
-      fields: [
-        {
-          name: 'property_paper_file',
-          label: 'List of Documents (LOD) / Property Paper Copy',
-          helperText: 'Optional LOD certificate or property title document copy',
-          accept: '.pdf,image/*',
-        },
-      ],
-    });
   } else {
     // Other loans (Home Loan, Personal Loan, etc.)
     if (incomeType === 'SALARIED') {
