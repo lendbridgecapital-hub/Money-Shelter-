@@ -282,9 +282,12 @@ export default function PartnerOnboardingForm({
     setIsVerifying(true);
     const agreementRoleTitle = targetRole === 'SUB_DSA' ? 'Sub-DSA Master Partner' : 'Referral Partner / Agent';
     const agreementSubDsaNote = referralSubDsa ? `Operating under Sub-DSA: ${referralSubDsa.name} (${referralSubDsa.partnerCode || 'Mapped'})` : '';
+    const firstPartyText = isBranchCoBranded
+      ? 'First Party: Lendbridge Capital (Satara Branch, Powai Naka, Satara, Maharashtra - 415001)'
+      : 'First Party: Money Shelter Pvt. Ltd. (Bavdhan, Pune HQ, Maharashtra)';
     const agreementAuthorizedText = `SUB-DSA / REFERRAL PARTNER AGREEMENT
 Executed on: ${currentDateFormatted}
-First Party: Money Shelter Pvt. Ltd. (Bavdhan, Pune HQ, Maharashtra)
+${firstPartyText}
 Second Party (${agreementRoleTitle}): ${fullName}
 Father's/Spouse's Name: ${fatherSpouseName}
 Registered Address: ${address}
@@ -353,7 +356,7 @@ Compliance Undertaking: DPDP Act 2023 compliant, Zero-Cash Collection policy, no
           </span>
           {referralBranch && (
             <span className="text-[11px] font-semibold text-amber-800 bg-amber-50 px-2 py-0.5 rounded-md border border-amber-200">
-              Branch: {referralBranch.name} ({referralBranch.code})
+              {isBranchCoBranded ? 'Branch: Lendbridge Capital (Satara)' : `Branch: ${referralBranch.name} (${referralBranch.code})`}
             </span>
           )}
           {referralSubDsa && (
@@ -374,23 +377,17 @@ Compliance Undertaking: DPDP Act 2023 compliant, Zero-Cash Collection policy, no
 
       {/* Brand Header */}
       <div className="text-center mb-6 sm:mb-8">
-        {isBranchCoBranded && coBrandLogoUrl ? (
-          <div className="flex items-center justify-center gap-3 sm:gap-4 mb-4">
-            <div className="h-20 sm:h-24 w-36 sm:w-44 px-3 sm:px-4 py-2 sm:py-2.5 rounded-2xl bg-white border border-slate-200/90 shadow-md flex items-center justify-center shrink-0 transition-shadow hover:shadow-lg">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={coBrandLogoUrl}
-                alt={coBrandName || 'Partner'}
-                className="h-14 sm:h-16 w-auto max-w-[130px] sm:max-w-[155px] max-h-full object-contain transition-transform hover:scale-105 duration-200"
-                onError={(e) => {
-                  (e.currentTarget as HTMLImageElement).src = '/lendbridge-logo.png';
-                }}
-              />
-            </div>
-            <span className="text-slate-400 font-extrabold text-lg sm:text-xl select-none">×</span>
-            <div className="h-20 sm:h-24 w-36 sm:w-44 px-3 sm:px-4 py-2 sm:py-2.5 rounded-2xl bg-white border border-slate-200/90 shadow-md flex items-center justify-center shrink-0 transition-shadow hover:shadow-lg">
-              <MoneyShelterLogo variant="dark" size="md" />
-            </div>
+        {isBranchCoBranded ? (
+          <div className="inline-flex items-center justify-center h-20 sm:h-24 px-5 py-2.5 rounded-2xl bg-white border border-slate-200/90 shadow-md mb-4 transition-shadow hover:shadow-lg">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={coBrandLogoUrl || '/lendbridge-logo.png'}
+              alt={coBrandName || 'Lendbridge Capital'}
+              className="h-14 sm:h-16 w-auto max-w-[190px] sm:max-w-[220px] max-h-full object-contain"
+              onError={(e) => {
+                (e.currentTarget as HTMLImageElement).src = '/lendbridge-logo.png';
+              }}
+            />
           </div>
         ) : (
           <div className="inline-flex items-center justify-center p-2 rounded-2xl bg-white border border-slate-200 shadow-md mb-3">
@@ -399,7 +396,11 @@ Compliance Undertaking: DPDP Act 2023 compliant, Zero-Cash Collection policy, no
         )}
 
         <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
-          {targetRole === 'SUB_DSA'
+          {isBranchCoBranded
+            ? targetRole === 'SUB_DSA'
+              ? 'Lendbridge Capital — Sub-DSA Master Partner Onboarding'
+              : 'Lendbridge Capital — Channel Partner Onboarding'
+            : targetRole === 'SUB_DSA'
             ? 'Sub-DSA Partner & Network Onboarding'
             : referralBranch
             ? `${referralBranch.name} Channel Partner Onboarding`
@@ -408,10 +409,14 @@ Compliance Undertaking: DPDP Act 2023 compliant, Zero-Cash Collection policy, no
             : 'Channel Partner & Sub-DSA Onboarding'}
         </h1>
         <p className="text-xs sm:text-sm text-slate-500 max-w-md mx-auto mt-1">
-          {targetRole === 'SUB_DSA'
+          {isBranchCoBranded
+            ? targetRole === 'SUB_DSA'
+              ? 'Join Lendbridge Capital (Satara Branch) as an authorized Sub-DSA Master Partner. Build and manage your agent network, earn override commissions on team business, and originate direct customer loans.'
+              : 'Register directly with Lendbridge Capital (Satara Branch) as an authorized loan referral associate. Direct digital files, high commissions, and real-time bank payouts.'
+            : targetRole === 'SUB_DSA'
             ? `Join ${companyName} as an authorized Sub-DSA. Build and manage your agent network, earn override commissions on team business, and originate direct customer loans.`
             : referralBranch
-            ? `Register directly with ${isBranchCoBranded ? `${coBrandName} (${referralBranch.name})` : referralBranch.name} as an authorized loan referral associate. Direct digital files, high commissions, and real-time bank payouts.`
+            ? `Register directly with ${referralBranch.name} as an authorized loan referral associate. Direct digital files, high commissions, and real-time bank payouts.`
             : referralSubDsa
             ? `Join ${companyName} under ${referralSubDsa.name}'s agency network. Earn guaranteed bank payouts on every disbursed loan.`
             : `Join ${companyName} as an authorized loan referral associate. Sourced digital leads, transparent slabs, and real-time bank payouts.`}
@@ -533,7 +538,7 @@ Compliance Undertaking: DPDP Act 2023 compliant, Zero-Cash Collection policy, no
                     </span>
                   </div>
                   <p className="text-[11px] text-slate-600 mt-1 leading-snug">
-                    You are joining as an authorized <strong>Channel Partner (Agent)</strong> mapped under Sub-DSA <strong>{referralSubDsa.name}</strong>. You will receive dedicated support from their team and full access to {companyName}&apos;s digital loan origination platform.
+                    You are joining as an authorized <strong>Channel Partner (Agent)</strong> mapped under Sub-DSA <strong>{referralSubDsa.name}</strong>. You will receive dedicated support from their team and full access to {isBranchCoBranded ? 'Lendbridge Capital' : companyName}&apos;s digital loan origination platform.
                   </p>
                 </div>
               </div>
@@ -686,7 +691,7 @@ Compliance Undertaking: DPDP Act 2023 compliant, Zero-Cash Collection policy, no
                   </label>
                   {referralBranch && (
                     <span className="text-[10px] font-bold px-1.5 py-0.2 rounded bg-amber-100 text-amber-900">
-                      🔒 Locked to {referralBranch.name}
+                      🔒 Locked to {isBranchCoBranded ? 'Lendbridge Capital (Satara)' : referralBranch.name}
                     </span>
                   )}
                 </div>
@@ -698,13 +703,15 @@ Compliance Undertaking: DPDP Act 2023 compliant, Zero-Cash Collection policy, no
                 >
                   {branches.map((b) => (
                     <option key={b.id} value={b.id}>
-                      {b.name} ({b.code})
+                      {b.id === 'br_satara_01' || b.name.toLowerCase().includes('satara') || b.code === 'STR01'
+                        ? 'Lendbridge Capital (Satara Branch)'
+                        : `${b.name} (${b.code})`}
                     </option>
                   ))}
                 </select>
                 <span className="text-[10px] text-slate-400">
                   {referralBranch
-                    ? `Registered directly under ${referralBranch.name} portfolio desk`
+                    ? `Registered directly under ${isBranchCoBranded ? 'Lendbridge Capital (Satara)' : referralBranch.name} portfolio desk`
                     : 'Your relationship manager desk'}
                 </span>
               </div>
@@ -913,10 +920,18 @@ Compliance Undertaking: DPDP Act 2023 compliant, Zero-Cash Collection policy, no
               {/* First Party */}
               <div className="bg-white p-3.5 rounded-lg border border-slate-200/80 shadow-2xs">
                 <h4 className="font-bold text-slate-900 uppercase text-[11px] text-emerald-800 mb-1">
-                  First Party (Company):
+                  First Party ({isBranchCoBranded ? 'Branch Desk' : 'Company'}):
                 </h4>
                 <p>
-                  <strong>Money Shelter Private Limited</strong>, an incorporated entity having its corporate office at Bavdhan, Pune, Maharashtra 411021 (hereinafter referred to as the &quot;Company&quot;).
+                  {isBranchCoBranded ? (
+                    <>
+                      <strong>Lendbridge Capital (Satara Branch)</strong>, operating from Powai Naka, Satara, Maharashtra - 415001 (hereinafter referred to as the &quot;Company&quot; / &quot;Branch Desk&quot;).
+                    </>
+                  ) : (
+                    <>
+                      <strong>Money Shelter Private Limited</strong>, an incorporated entity having its corporate office at Bavdhan, Pune, Maharashtra 411021 (hereinafter referred to as the &quot;Company&quot;).
+                    </>
+                  )}
                 </p>
               </div>
 
@@ -1138,13 +1153,17 @@ Compliance Undertaking: DPDP Act 2023 compliant, Zero-Cash Collection policy, no
 
             <div>
               <span className="text-[11px] font-bold uppercase tracking-wider text-amber-800 bg-amber-50 px-2.5 py-0.5 rounded-full border border-amber-200">
-                ⏳ Submitted • Pending Central Support Approval
+                ⏳ Submitted • {isBranchCoBranded ? 'Pending Lendbridge Capital Approval' : 'Pending Central Support Approval'}
               </span>
               <h2 className="text-2xl font-extrabold text-slate-900 tracking-tight mt-2">
                 Onboarding Submitted, {successData.partnerName}!
               </h2>
               <p className="text-xs text-slate-500 mt-1 max-w-md mx-auto">
-                {targetRole === 'SUB_DSA'
+                {isBranchCoBranded
+                  ? targetRole === 'SUB_DSA'
+                    ? 'Your Sub-DSA application and executed Master Partner Agreement have been submitted to Lendbridge Capital (Satara Branch) for verification.'
+                    : 'Your KYC documents and authorized Referral Partner Agreement have been submitted to Lendbridge Capital (Satara Branch) for verification.'
+                  : targetRole === 'SUB_DSA'
                   ? 'Your Sub-DSA application and executed Master Partner Agreement have been submitted for verification.'
                   : 'Your KYC documents and authorized Referral Partner Agreement have been submitted to Central Support for verification.'}
               </p>
@@ -1184,7 +1203,12 @@ Compliance Undertaking: DPDP Act 2023 compliant, Zero-Cash Collection policy, no
               <ul className="space-y-1.5 text-slate-600 text-[11px]">
                 <li className="flex items-start gap-2">
                   <span className="text-emerald-600 font-bold shrink-0">1.</span>
-                  <span><strong>Central Support Review:</strong> The Central Support manager is reviewing your submitted PAN & Aadhaar documents and executed agreement.</span>
+                  <span>
+                    <strong>{isBranchCoBranded ? 'Branch Desk Review:' : 'Central Support Review:'}</strong>{' '}
+                    {isBranchCoBranded
+                      ? 'The Lendbridge Capital Satara Branch team is reviewing your submitted PAN & Aadhaar documents and executed agreement.'
+                      : 'The Central Support manager is reviewing your submitted PAN & Aadhaar documents and executed agreement.'}
+                  </span>
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="text-emerald-600 font-bold shrink-0">2.</span>

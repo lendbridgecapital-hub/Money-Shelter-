@@ -24,8 +24,16 @@ export default function SubDsaCommandHub({ user }: Props) {
   const [activeTab, setActiveTab] = useState<'BUILD_TEAM' | null>(null);
   const [copiedAgentLink, setCopiedAgentLink] = useState(false);
 
+  const isSatara = Boolean(
+    user.branchId === 'br_satara_01' ||
+    user.branchName?.toLowerCase().includes('satara') ||
+    user.branchName?.toLowerCase().includes('lendbridge') ||
+    user.email?.toLowerCase().includes('lendbridge')
+  );
+
   const origin = typeof window !== 'undefined' ? window.location.origin : '';
-  const agentReferralLink = `${origin}/partner/onboard?subDsaId=${user.id}&code=${user.partnerCode || ''}`;
+  const sataraParam = isSatara ? '&branchId=br_satara_01' : '';
+  const agentReferralLink = `${origin}/partner/onboard?subDsaId=${user.id}&code=${user.partnerCode || ''}${sataraParam}`;
 
   const copyAgentLink = () => {
     navigator.clipboard.writeText(agentReferralLink);
@@ -35,7 +43,9 @@ export default function SubDsaCommandHub({ user }: Props) {
 
   const shareAgentLinkWhatsApp = () => {
     const text = encodeURIComponent(
-      `Hi! Join my agency network at Money Shelter as an authorized Channel Partner (Agent). Submit retail loans digitally, get instant bank approvals, and earn top commission slabs on every disbursement. Register directly using my link: ${agentReferralLink}`
+      isSatara
+        ? `Hi! Join my agency network at Lendbridge Capital (Satara Branch) as an authorized Channel Partner (Agent). Submit retail and commercial loans digitally, get rapid bank approvals, and earn top commission slabs on every disbursement. Register directly using my link: ${agentReferralLink}`
+        : `Hi! Join my agency network at Money Shelter as an authorized Channel Partner (Agent). Submit retail loans digitally, get instant bank approvals, and earn top commission slabs on every disbursement. Register directly using my link: ${agentReferralLink}`
     );
     window.open(`https://api.whatsapp.com/send?text=${text}`, '_blank');
   };

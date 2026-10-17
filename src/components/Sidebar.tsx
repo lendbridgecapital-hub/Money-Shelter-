@@ -73,6 +73,13 @@ export default function Sidebar({
   const isPartner = role === 'CHANNEL_PARTNER';
   const isSubDsa = role === 'SUB_DSA';
 
+  const isSatara = Boolean(
+    isCoBranded ||
+    branchId === 'br_satara_01' ||
+    branchName?.toLowerCase().includes('satara') ||
+    coBrandName?.toLowerCase().includes('lendbridge')
+  );
+
   // Partner-related sub-items grouped into the collapsible "Partners" drawer
   const partnerSubItems = [
     {
@@ -142,9 +149,11 @@ export default function Sidebar({
       href: isOps && branchId
         ? `/partner/onboard?branchId=${encodeURIComponent(branchId)}`
         : isSubDsa && userId
-        ? `/partner/onboard?subDsaId=${userId}`
+        ? `/partner/onboard?subDsaId=${userId}${isSatara ? '&branchId=br_satara_01' : ''}`
         : isRM && userId
-        ? `/partner/onboard?rmId=${userId}`
+        ? `/partner/onboard?rmId=${userId}${isSatara ? '&branchId=br_satara_01' : ''}`
+        : isSatara
+        ? '/partner/onboard?branchId=br_satara_01'
         : '/partner/onboard',
       icon: '🔗',
       description: isOps

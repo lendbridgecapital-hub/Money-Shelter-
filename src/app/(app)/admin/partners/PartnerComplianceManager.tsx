@@ -204,30 +204,46 @@ export default function PartnerComplianceManager({
     };
   }, [activeAgentApps, activeAgentCrpEntries, isSubDsa]);
 
+  const isSatara = Boolean(
+    userBranchId === 'br_satara_01' ||
+    userBranchName?.toLowerCase().includes('satara') ||
+    userBranchName?.toLowerCase().includes('lendbridge') ||
+    branches.some(
+      (b) =>
+        (b.id === userBranchId || b.name === userBranchName) &&
+        (b.id === 'br_satara_01' || b.name.toLowerCase().includes('satara') || b.coBrandName?.toLowerCase().includes('lendbridge'))
+    )
+  );
+
   const getOnboardingUrl = () => {
     const origin = typeof window !== 'undefined' ? window.location.origin : '';
+    const sataraParam = isSatara ? '&branchId=br_satara_01' : '';
     if (isSubDsa && currentUserId) {
-      return `${origin}/partner/onboard?subDsaId=${currentUserId}`;
+      return `${origin}/partner/onboard?subDsaId=${currentUserId}${sataraParam}`;
     }
     if (isRM && currentUserId) {
-      return `${origin}/partner/onboard?rmId=${currentUserId}`;
+      return `${origin}/partner/onboard?rmId=${currentUserId}${sataraParam}`;
     }
     if (isBranchOps && userBranchId) {
       return `${origin}/partner/onboard?branchId=${encodeURIComponent(userBranchId)}`;
+    }
+    if (isSatara) {
+      return `${origin}/partner/onboard?branchId=br_satara_01`;
     }
     return `${origin}/partner/onboard`;
   };
 
   const getSubDsaOnboardingUrl = () => {
     const origin = typeof window !== 'undefined' ? window.location.origin : '';
+    const sataraParam = isSatara ? '&branchId=br_satara_01' : '';
     if (isBranchOps && userBranchId) {
       return `${origin}/partner/onboard?role=SUB_DSA&branchId=${encodeURIComponent(userBranchId)}`;
     }
     if (isRM && currentUserId) {
-      return `${origin}/partner/onboard?role=SUB_DSA&rmId=${currentUserId}`;
+      return `${origin}/partner/onboard?role=SUB_DSA&rmId=${currentUserId}${sataraParam}`;
     }
     const refParam = currentUserId ? `&ref=${currentUserId}` : '';
-    return `${origin}/partner/onboard?role=SUB_DSA${refParam}`;
+    return `${origin}/partner/onboard?role=SUB_DSA${refParam}${sataraParam}`;
   };
 
   const openDirectOnboard = (role: 'CHANNEL_PARTNER' | 'SUB_DSA') => {
@@ -272,9 +288,11 @@ export default function PartnerComplianceManager({
 
   const shareViaWhatsApp = () => {
     const link = getOnboardingUrl();
-    const branchTitle = userBranchName || 'our branch';
+    const branchTitle = isSatara ? 'Lendbridge Capital (Satara Branch)' : (userBranchName || 'our branch');
     const text = encodeURIComponent(
-      isSubDsa
+      isSatara
+        ? `Hello! Join Lendbridge Capital (Satara Branch) as an authorized Channel Partner (Agent). Submit retail and commercial loan files digitally, get rapid bank approvals, and earn top commission slabs on every disbursement. Register directly using our official link: ${link}`
+        : isSubDsa
         ? `Hi! Join my agency network at Money Shelter as an authorized Channel Partner (Agent). Submit retail loans digitally, get instant bank approvals, and earn top commission slabs on every disbursement. Register directly using my link: ${link}`
         : isBranchOps
         ? `Hello! Join ${branchTitle} loan distribution network as an authorized Channel Partner. Sourced digital leads, real-time file tracking, and direct bank payouts. Register directly using our branch onboarding link: ${link}`
@@ -285,9 +303,11 @@ export default function PartnerComplianceManager({
 
   const shareSubDsaViaWhatsApp = () => {
     const link = getSubDsaOnboardingUrl();
-    const branchTitle = userBranchName || 'our branch';
+    const branchTitle = isSatara ? 'Lendbridge Capital (Satara Branch)' : (userBranchName || 'our branch');
     const text = encodeURIComponent(
-      isBranchOps
+      isSatara
+        ? `Hello! Partner with Lendbridge Capital (Satara Branch) as an authorized Sub-DSA (Master Partner). Recruit channel partners, manage retail loan originations, and earn direct overrides on every disbursement. Register directly using our official branch Sub-DSA link: ${link}`
+        : isBranchOps
         ? `Hello! Join ${branchTitle} distribution network as an authorized Sub-DSA (Master Partner) with Money Shelter. Recruit channel partners, manage retail loan originations, and earn direct overrides on every disbursement. Register directly using our branch Sub-DSA link: ${link}`
         : `Hello! We invite you to join Money Shelter as an authorized Sub-DSA. Build your own agent team, earn override commissions on your network's business, and access direct loan disbursements: ${link}`
     );
@@ -295,40 +315,60 @@ export default function PartnerComplianceManager({
   };
 
   const openShareModal = (type: 'CHANNEL_PARTNER' | 'SUB_DSA') => {
-    const branchTitle = userBranchName || 'our branch';
+    const branchTitle = isSatara ? 'Lendbridge Capital (Satara Branch)' : (userBranchName || 'our branch');
     if (type === 'CHANNEL_PARTNER') {
       const url = getOnboardingUrl();
-      const shareText = isSubDsa
+      const shareText = isSatara
+        ? `Hello! Join Lendbridge Capital (Satara Branch) as an authorized Channel Partner (Agent). Submit retail and commercial loan files digitally, get rapid bank approvals, and earn top commission slabs on every disbursement. Register directly using our official link: ${url}`
+        : isSubDsa
         ? `Hi! Join my agency network at Money Shelter as an authorized Channel Partner (Agent). Submit retail loans digitally, get instant bank approvals, and earn top commission slabs on every disbursement. Register directly using my link: ${url}`
         : isBranchOps
         ? `Hello! Join ${branchTitle} loan distribution network as an authorized Channel Partner with Money Shelter. Digital lead sourcing, real-time file tracking, and direct bank payouts. Register directly using our branch onboarding link: ${url}`
         : `Hello! Register as an authorized Channel Partner with Money Shelter using my direct onboarding link: ${url}`;
 
       setShareConfig({
-        title: isBranchOps ? `${branchTitle} Channel Partner Onboarding` : 'Channel Partner Registration',
-        subtitle: `Official onboarding link for prospective channel partners and agents under ${branchTitle}.`,
+        title: isSatara
+          ? 'Lendbridge Capital — Channel Partner Onboarding'
+          : isBranchOps
+          ? `${branchTitle} Channel Partner Onboarding`
+          : 'Channel Partner Registration',
+        subtitle: isSatara
+          ? 'Official onboarding link for prospective channel partners and agents under Lendbridge Capital (Satara Branch).'
+          : `Official onboarding link for prospective channel partners and agents under ${branchTitle}.`,
         roleName: 'Channel Partner (Agent)',
         url,
         shareText,
-        emailSubject: `Invitation: Join ${branchTitle} as an Authorized Channel Partner (Money Shelter)`,
-        badge: isBranchOps ? `Locked to ${branchTitle}` : 'Direct Origination',
+        emailSubject: isSatara
+          ? 'Invitation: Join Lendbridge Capital (Satara Branch) as an Authorized Channel Partner'
+          : `Invitation: Join ${branchTitle} as an Authorized Channel Partner (Money Shelter)`,
+        badge: isSatara ? 'Lendbridge Capital • Satara' : isBranchOps ? `Locked to ${branchTitle}` : 'Direct Origination',
         icon: '🤝',
         colorTheme: 'emerald',
       });
     } else {
       const url = getSubDsaOnboardingUrl();
-      const shareText = isBranchOps
+      const shareText = isSatara
+        ? `Hello! Partner with Lendbridge Capital (Satara Branch) as an authorized Sub-DSA (Master Partner). Recruit channel partners, manage retail loan originations, and earn direct overrides on every disbursement. Register directly using our official branch Sub-DSA link: ${url}`
+        : isBranchOps
         ? `Hello! Join ${branchTitle} distribution network as an authorized Sub-DSA (Master Partner) with Money Shelter. Recruit channel partners, manage retail loan originations, and earn direct overrides on every disbursement. Register directly using our branch Sub-DSA link: ${url}`
         : `Hello! We invite you to join Money Shelter as an authorized Sub-DSA. Build your own agent team, earn override commissions on your network's business, and access direct loan disbursements: ${url}`;
 
       setShareConfig({
-        title: isBranchOps ? `${branchTitle} Sub-DSA Master Partner Onboarding` : 'Sub-DSA Master Partner Registration',
-        subtitle: `Share with Master DSAs and agency leaders to build and manage their own partner team under ${branchTitle}.`,
+        title: isSatara
+          ? 'Lendbridge Capital — Sub-DSA Master Partner Onboarding'
+          : isBranchOps
+          ? `${branchTitle} Sub-DSA Master Partner Onboarding`
+          : 'Sub-DSA Master Partner Registration',
+        subtitle: isSatara
+          ? 'Share with Master DSAs and agency leaders to build and manage their own partner team under Lendbridge Capital (Satara Branch).'
+          : `Share with Master DSAs and agency leaders to build and manage their own partner team under ${branchTitle}.`,
         roleName: 'Sub-DSA (Master Tier Partner)',
         url,
         shareText,
-        emailSubject: `Invitation: Appoint as Authorized Sub-DSA Master Partner (${branchTitle})`,
-        badge: '⚡ 0.1% Team Override Engine',
+        emailSubject: isSatara
+          ? 'Invitation: Appoint as Authorized Sub-DSA Master Partner (Lendbridge Capital - Satara)'
+          : `Invitation: Appoint as Authorized Sub-DSA Master Partner (${branchTitle})`,
+        badge: isSatara ? 'Lendbridge Capital • Sub-DSA Hub' : '⚡ 0.1% Team Override Engine',
         icon: '🏢',
         colorTheme: 'indigo',
       });
