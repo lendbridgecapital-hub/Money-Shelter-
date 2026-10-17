@@ -640,6 +640,69 @@ function createPortableStorage(storageFilePath: string): DatabaseAdapter {
     return activeSyncPromise;
   }
 
+  let initialHydrationStarted = false;
+  async function hydrateFromNeon(): Promise<void> {
+    const dbUrl = getDbUrl();
+    if (!dbUrl) return;
+
+    try {
+      let liveStore: any = null;
+      try {
+        const { neon } = require('@neondatabase/serverless');
+        const sql = neon(dbUrl);
+        const queryFn = sql.query ? sql.query.bind(sql) : sql;
+        const rows = await queryFn("SELECT value FROM quickfinsure_store WHERE key = 'main_store' LIMIT 1;");
+        if (rows && rows.length > 0 && rows[0].value) {
+          liveStore = rows[0].value;
+        }
+      } catch (neonErr) {
+        // Fallback to pg pool
+        try {
+          const { Pool } = require('pg');
+          const pool = new Pool({
+            connectionString: dbUrl,
+            ssl: { rejectUnauthorized: false },
+          });
+          try {
+            const res = await pool.query("SELECT value FROM quickfinsure_store WHERE key = 'main_store' LIMIT 1;");
+            if (res.rows && res.rows.length > 0 && res.rows[0].value) {
+              liveStore = res.rows[0].value;
+            }
+          } finally {
+            await pool.end().catch(() => {});
+          }
+        } catch (_) {}
+      }
+
+      if (liveStore) {
+        if (typeof liveStore === 'string') {
+          try { liveStore = JSON.parse(liveStore); } catch {}
+        }
+        if (liveStore && liveStore.default) liveStore = liveStore.default;
+        if (liveStore && Array.isArray(liveStore.users) && liveStore.users.length > 0) {
+          sanitizeBlobs(liveStore);
+          ensureLendbridgeAndBranchIntegrity(liveStore);
+          cachedData = safeDeepUnionMerge(cachedData, liveStore);
+          memoryData = cachedData;
+          hasHydratedFromNeon = true;
+          try {
+            fs.writeFileSync(storageFilePath, JSON.stringify(cachedData, null, 2), 'utf8');
+            lastDiskMtime = fs.statSync(storageFilePath).mtimeMs;
+          } catch {}
+          console.log(`[db] ✓ Proactively hydrated from Neon PostgreSQL: ${cachedData.loan_applications?.length || 0} applications, ${cachedData.users?.length || 0} users`);
+        }
+      }
+    } catch (err) {
+      console.warn('[db] Neon auto-hydration error:', (err as Error).message);
+    }
+  }
+
+  // Trigger immediate background hydration if Neon URL exists
+  if (getDbUrl()) {
+    initialHydrationStarted = true;
+    hydrateFromNeon();
+  }
+
   function syncWithNeon(): Promise<void> {
     const dbUrl = getDbUrl();
     if (!dbUrl) return Promise.resolve();
@@ -656,6 +719,10 @@ function createPortableStorage(storageFilePath: string): DatabaseAdapter {
   }
 
   function loadData(): StorageData {
+    if (!hasHydratedFromNeon && getDbUrl() && !initialHydrationStarted) {
+      initialHydrationStarted = true;
+      hydrateFromNeon();
+    }
     // 1. If storage file on disk exists (written by sync-neon.js init or previous mutation), load it!
     if (fs.existsSync(storageFilePath)) {
       try {

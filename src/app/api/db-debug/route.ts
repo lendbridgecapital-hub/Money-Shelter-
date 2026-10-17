@@ -228,7 +228,7 @@ export async function GET(req: NextRequest) {
   }
 
   return NextResponse.json({
-    version: 'v9-neon-sync-priority',
+    version: 'v10-neon-proactive-hydration',
     neonDirectWrite,
     neonError,
     databaseUrlSet: !!dbUrl,
