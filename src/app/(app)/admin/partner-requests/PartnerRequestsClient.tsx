@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import type { User, Role, PartnerStatus, Branch } from '@/types/db';
@@ -95,8 +95,41 @@ export default function PartnerRequestsClient({
     setTimeout(() => setCopiedLink(null), 2000);
   };
 
+  // Deduplicate initial partners list (guaranteeing uniqueness across ID, email, PAN, and partnerCode)
+  const cleanPartners = useMemo(() => {
+    const seenIds = new Set<string>();
+    const seenEmails = new Set<string>();
+    const seenPans = new Set<string>();
+    const seenCodes = new Set<string>();
+    const seenPhones = new Set<string>();
+    return initialPartners.filter((p) => {
+      if (p.id === 'usr_tejas_subdsa_alias' || p.email === 'tejas.subdsa@quickfinsure.com') {
+        return false;
+      }
+      const id = (p.id || '').toLowerCase().trim();
+      const email = (p.email || '').toLowerCase().trim();
+      const pan = (p.panNumber || '').toUpperCase().trim();
+      const code = (p.partnerCode || '').toUpperCase().trim();
+      const phone = (p.phone || '').replace(/\D/g, '').slice(-10);
+
+      if (id && seenIds.has(id)) return false;
+      if (email && seenEmails.has(email)) return false;
+      if (pan && pan.length === 10 && seenPans.has(pan)) return false;
+      if (code && seenCodes.has(code)) return false;
+      if (phone && phone.length === 10 && seenPhones.has(phone)) return false;
+
+      if (id) seenIds.add(id);
+      if (email) seenEmails.add(email);
+      if (pan && pan.length === 10) seenPans.add(pan);
+      if (code) seenCodes.add(code);
+      if (phone && phone.length === 10) seenPhones.add(phone);
+
+      return true;
+    });
+  }, [initialPartners]);
+
   // Filter partners
-  const filteredPartners = initialPartners.filter((p) => {
+  const filteredPartners = cleanPartners.filter((p) => {
     const status = p.partnerStatus || 'APPROVED';
     if (selectedStatus !== 'ALL' && status !== selectedStatus) return false;
     if (selectedRoleFilter === 'SUB_DSA' && p.role !== 'SUB_DSA') return false;
@@ -129,17 +162,17 @@ export default function PartnerRequestsClient({
 
   // Status counts for badge tabs
   const countPending =
-    initialPartners.filter((p) => (p.partnerStatus || 'APPROVED') === 'PENDING_APPROVAL').length +
+    cleanPartners.filter((p) => (p.partnerStatus || 'APPROVED') === 'PENDING_APPROVAL').length +
     branchSites.filter((s) => s.status === 'PENDING_APPROVAL').length;
-  const countDocsReq = initialPartners.filter((p) => p.partnerStatus === 'DOCUMENTS_REQUIRED').length;
+  const countDocsReq = cleanPartners.filter((p) => p.partnerStatus === 'DOCUMENTS_REQUIRED').length;
   const countApproved =
-    initialPartners.filter((p) => (p.partnerStatus || 'APPROVED') === 'APPROVED').length +
+    cleanPartners.filter((p) => (p.partnerStatus || 'APPROVED') === 'APPROVED').length +
     branchSites.filter((s) => (s.status || 'APPROVED') === 'APPROVED').length;
   const countRejected =
-    initialPartners.filter((p) => p.partnerStatus === 'REJECTED').length +
+    cleanPartners.filter((p) => p.partnerStatus === 'REJECTED').length +
     branchSites.filter((s) => s.status === 'REJECTED').length;
-  const countSubDsas = initialPartners.filter((p) => p.role === 'SUB_DSA').length;
-  const countAgents = initialPartners.filter((p) => p.role === 'CHANNEL_PARTNER').length;
+  const countSubDsas = cleanPartners.filter((p) => p.role === 'SUB_DSA').length;
+  const countAgents = cleanPartners.filter((p) => p.role === 'CHANNEL_PARTNER').length;
   const countSites = branchSites.length;
 
   const openReviewModal = (partner: User) => {

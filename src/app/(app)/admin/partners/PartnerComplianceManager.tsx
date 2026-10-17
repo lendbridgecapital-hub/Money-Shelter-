@@ -69,16 +69,49 @@ export default function PartnerComplianceManager({
   const [onboardSuccess, setOnboardSuccess] = useState<string | null>(null);
   const [approvingId, setApprovingId] = useState<string | null>(null);
 
+  // Deduplicated partners list (guarantees zero duplicate partners, sub-dsas, or aliases)
+  const cleanPartners = React.useMemo(() => {
+    const seenIds = new Set<string>();
+    const seenEmails = new Set<string>();
+    const seenPans = new Set<string>();
+    const seenCodes = new Set<string>();
+    const seenPhones = new Set<string>();
+    return partners.filter((p) => {
+      if (p.id === 'usr_tejas_subdsa_alias' || p.email === 'tejas.subdsa@quickfinsure.com') {
+        return false;
+      }
+      const id = (p.id || '').toLowerCase().trim();
+      const email = (p.email || '').toLowerCase().trim();
+      const pan = (p.panNumber || '').toUpperCase().trim();
+      const code = (p.partnerCode || '').toUpperCase().trim();
+      const phone = (p.phone || '').replace(/\D/g, '').slice(-10);
+
+      if (id && seenIds.has(id)) return false;
+      if (email && seenEmails.has(email)) return false;
+      if (pan && pan.length === 10 && seenPans.has(pan)) return false;
+      if (code && seenCodes.has(code)) return false;
+      if (phone && phone.length === 10 && seenPhones.has(phone)) return false;
+
+      if (id) seenIds.add(id);
+      if (email) seenEmails.add(email);
+      if (pan && pan.length === 10) seenPans.add(pan);
+      if (code) seenCodes.add(code);
+      if (phone && phone.length === 10) seenPhones.add(phone);
+
+      return true;
+    });
+  }, [partners]);
+
   // Sub-DSA Team Size Map
   const teamSizeMap = React.useMemo(() => {
     const map = new Map<string, number>();
-    for (const p of partners) {
+    for (const p of cleanPartners) {
       if (p.parentSubDsaId) {
         map.set(p.parentSubDsaId, (map.get(p.parentSubDsaId) || 0) + 1);
       }
     }
     return map;
-  }, [partners]);
+  }, [cleanPartners]);
 
   // Onboarding Form Fields
   const [fullName, setFullName] = useState('');
@@ -407,11 +440,11 @@ export default function PartnerComplianceManager({
         <div>
           <h1 className="text-xl font-bold text-slate-900">
             {isSubDsa
-              ? `My Team (${partners.length})`
+              ? `My Team (${cleanPartners.length})`
               : isRM
-              ? `My Assigned Channel Partners (${partners.length})`
+              ? `My Assigned Channel Partners (${cleanPartners.length})`
               : isBranchOps
-              ? `${userBranchName || 'Branch'} Channel Partner Compliance & Network (${partners.length})`
+              ? `${userBranchName || 'Branch'} Channel Partner Compliance & Network (${cleanPartners.length})`
               : 'Channel Partner Compliance & Network'}
           </h1>
           <p className="text-xs text-slate-500 mt-0.5">
@@ -638,10 +671,10 @@ export default function PartnerComplianceManager({
       {/* Filter Tabs */}
       <div className="flex flex-wrap items-center gap-2 border-b border-slate-200 pb-2">
         {[
-          { id: 'ALL', label: `All Network Partners (${partners.length})` },
-          { id: 'SUB_DSA', label: `Sub-DSAs (${partners.filter((p) => p.role === 'SUB_DSA').length})` },
-          { id: 'CHANNEL_PARTNER', label: `Channel Partners (${partners.filter((p) => p.role === 'CHANNEL_PARTNER').length})` },
-          { id: 'PENDING', label: `Pending KYC (${partners.filter((p) => p.partnerStatus === 'PENDING_APPROVAL').length})` },
+          { id: 'ALL', label: `All Network Partners (${cleanPartners.length})` },
+          { id: 'SUB_DSA', label: `Sub-DSAs (${cleanPartners.filter((p) => p.role === 'SUB_DSA').length})` },
+          { id: 'CHANNEL_PARTNER', label: `Channel Partners (${cleanPartners.filter((p) => p.role === 'CHANNEL_PARTNER').length})` },
+          { id: 'PENDING', label: `Pending KYC (${cleanPartners.filter((p) => p.partnerStatus === 'PENDING_APPROVAL').length})` },
         ].map((tab) => (
           <button
             key={tab.id}
@@ -675,7 +708,7 @@ export default function PartnerComplianceManager({
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {partners.length === 0 ? (
+              {cleanPartners.length === 0 ? (
                 <tr>
                   <td colSpan={isAdmin || isSupport || isSubDsa ? 7 : 6} className="px-4 py-12 text-center text-slate-400 text-sm">
                     {isSubDsa
@@ -684,7 +717,7 @@ export default function PartnerComplianceManager({
                   </td>
                 </tr>
               ) : (
-                partners
+                cleanPartners
                   .filter((p) => {
                     if (roleFilter === 'SUB_DSA') return p.role === 'SUB_DSA';
                     if (roleFilter === 'CHANNEL_PARTNER') return p.role === 'CHANNEL_PARTNER';

@@ -396,6 +396,58 @@ function createPortableStorage(storageFilePath: string): DatabaseAdapter {
         data.loan_applications.unshift(sataraApp1, sataraApp2);
       }
     }
+
+    // 4. Purge tejas duplicate alias and any duplicate users from users array
+    if (Array.isArray(data.users)) {
+      const seenIds = new Set<string>();
+      const seenEmails = new Set<string>();
+      const seenPans = new Set<string>();
+      const seenCodes = new Set<string>();
+      const cleaned: any[] = [];
+
+      const sortedUsers = [...data.users].sort((a, b) => {
+        if (!a || !b) return 0;
+        if (a.id === 'usr_tejas_subdsa_01') return -1;
+        if (b.id === 'usr_tejas_subdsa_01') return 1;
+        const aApproved = (a.partner_status === 'APPROVED' || a.partnerStatus === 'APPROVED') ? 1 : 0;
+        const bApproved = (b.partner_status === 'APPROVED' || b.partnerStatus === 'APPROVED') ? 1 : 0;
+        if (aApproved !== bApproved) return bApproved - aApproved;
+        const aCert = (a.certificate_number || a.certificateNumber) ? 1 : 0;
+        const bCert = (b.certificate_number || b.certificateNumber) ? 1 : 0;
+        if (aCert !== bCert) return bCert - aCert;
+        return 0;
+      });
+
+      for (const u of sortedUsers) {
+        if (!u) continue;
+        if (
+          u.id === 'usr_tejas_subdsa_alias' ||
+          (typeof u.email === 'string' && u.email.toLowerCase() === 'tejas.subdsa@quickfinsure.com') ||
+          (u.id !== 'usr_tejas_subdsa_01' && (u.name || '').toLowerCase().includes('tejas') && (u.role === 'SUB_DSA' || (u.name || '').toLowerCase().includes('sub-dsa')))
+        ) {
+          continue;
+        }
+        const id = u.id ? String(u.id).toLowerCase().trim() : null;
+        const email = u.email ? String(u.email).toLowerCase().trim() : null;
+        const panRaw = u.pan_number || u.panNumber;
+        const pan = panRaw ? String(panRaw).toUpperCase().trim() : null;
+        const codeRaw = u.partner_code || u.partnerCode;
+        const code = codeRaw ? String(codeRaw).toUpperCase().trim() : null;
+
+        if (id && seenIds.has(id)) continue;
+        if (email && seenEmails.has(email)) continue;
+        if (pan && pan.length === 10 && seenPans.has(pan)) continue;
+        if (code && seenCodes.has(code)) continue;
+
+        if (id) seenIds.add(id);
+        if (email) seenEmails.add(email);
+        if (pan && pan.length === 10) seenPans.add(pan);
+        if (code) seenCodes.add(code);
+
+        cleaned.push(u);
+      }
+      data.users = cleaned;
+    }
   }
 
   function safeDeepUnionMerge(primary: any, secondary: any): any {

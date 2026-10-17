@@ -8,7 +8,55 @@ export function listUsers(tenantId = 'default'): User[] {
     .prepare('SELECT * FROM users WHERE tenant_id = ? ORDER BY created_at DESC')
     .all(tenantId) as Record<string, unknown>[];
 
-  return rows.map(mapRowToUser);
+  const seenIds = new Set<string>();
+  const seenEmails = new Set<string>();
+  const seenPans = new Set<string>();
+  const seenCodes = new Set<string>();
+  const uniqueUsers: User[] = [];
+
+  // Sort rows so approved/certified canonical partner records are preserved over duplicates
+  const sortedRows = [...rows].sort((a, b) => {
+    if (a.id === 'usr_tejas_subdsa_01') return -1;
+    if (b.id === 'usr_tejas_subdsa_01') return 1;
+    const aApproved = a.partner_status === 'APPROVED' ? 1 : 0;
+    const bApproved = b.partner_status === 'APPROVED' ? 1 : 0;
+    if (aApproved !== bApproved) return bApproved - aApproved;
+    const aCert = a.certificate_number ? 1 : 0;
+    const bCert = b.certificate_number ? 1 : 0;
+    if (aCert !== bCert) return bCert - aCert;
+    return 0;
+  });
+
+  for (const row of sortedRows) {
+    const user = mapRowToUser(row);
+    // Remove obsolete duplicate alias for Tejas
+    if (
+      user.id === 'usr_tejas_subdsa_alias' ||
+      user.email === 'tejas.subdsa@quickfinsure.com' ||
+      (user.id !== 'usr_tejas_subdsa_01' && (user.name || '').toLowerCase().includes('tejas') && (user.role === 'SUB_DSA' || (user.name || '').toLowerCase().includes('sub-dsa')))
+    ) {
+      continue;
+    }
+
+    const id = user.id.toLowerCase().trim();
+    const email = (user.email || '').toLowerCase().trim();
+    const pan = (user.panNumber || '').toUpperCase().trim();
+    const code = (user.partnerCode || '').toUpperCase().trim();
+
+    if (id && seenIds.has(id)) continue;
+    if (email && seenEmails.has(email)) continue;
+    if (pan && pan.length === 10 && seenPans.has(pan)) continue;
+    if (code && seenCodes.has(code)) continue;
+
+    if (id) seenIds.add(id);
+    if (email) seenEmails.add(email);
+    if (pan && pan.length === 10) seenPans.add(pan);
+    if (code) seenCodes.add(code);
+
+    uniqueUsers.push(user);
+  }
+
+  return uniqueUsers;
 }
 
 export function getUserById(id: string): User | undefined {
