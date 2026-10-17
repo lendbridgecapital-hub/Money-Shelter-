@@ -106,9 +106,19 @@ export default function PartnerOnboardingForm({
     referralBranch?.id || referralRm?.branchId || referralSubDsa?.branchId || branches[0]?.id || ''
   );
 
-  const isBranchCoBranded = Boolean(referralBranch?.isCoBranded && referralBranch?.coBrandName);
-  const coBrandName = referralBranch?.coBrandName || null;
-  let coBrandLogoUrl = referralBranch?.coBrandLogoUrl || null;
+  const activeBranch = branches.find((b) => b.id === selectedBranchId) || referralBranch;
+  const isBranchCoBranded = Boolean(
+    (referralBranch?.isCoBranded && referralBranch?.coBrandName) ||
+    referralBranch?.id === 'br_satara_01' ||
+    referralBranch?.name?.toLowerCase().includes('satara') ||
+    referralBranch?.coBrandName?.toLowerCase().includes('lendbridge') ||
+    (activeBranch?.isCoBranded && activeBranch?.coBrandName) ||
+    activeBranch?.id === 'br_satara_01' ||
+    activeBranch?.name?.toLowerCase().includes('satara') ||
+    activeBranch?.coBrandName?.toLowerCase().includes('lendbridge')
+  );
+  const coBrandName = referralBranch?.coBrandName || activeBranch?.coBrandName || (isBranchCoBranded ? 'Lendbridge Capital' : null);
+  let coBrandLogoUrl = referralBranch?.coBrandLogoUrl || activeBranch?.coBrandLogoUrl || (isBranchCoBranded ? '/lendbridge-logo.png' : null);
   if (
     coBrandName &&
     coBrandName.toLowerCase().includes('lendbridge') &&
@@ -116,6 +126,11 @@ export default function PartnerOnboardingForm({
   ) {
     coBrandLogoUrl = '/lendbridge-logo.png';
   }
+
+  const supportDeskName = isBranchCoBranded ? (coBrandName || 'Lendbridge Capital') : companyName;
+  const supportEmail = isBranchCoBranded ? 'lendbridgecapital@gmail.com' : 'info@moneyshelter.in';
+  const supportPhone = isBranchCoBranded ? '+91 9049301089' : '+91 9049002010';
+  const supportPhoneRaw = isBranchCoBranded ? '9049301089' : '9049002010';
 
   // KYC Fields
   const [panNumber, setPanNumber] = useState('');
@@ -1294,16 +1309,17 @@ Compliance Undertaking: DPDP Act 2023 compliant, Zero-Cash Collection policy, no
       )}
 
       {/* Support Footer */}
-      <div className="mt-8 text-center text-xs text-slate-400 space-y-1">
+      <div className="mt-8 text-center text-xs text-slate-400">
         <p>
-          Need onboarding assistance? Contact the Money Shelter Partner Desk at{' '}
-          <a href="mailto:info@moneyshelter.in" className="text-emerald-600 hover:underline">
-            info@moneyshelter.in
+          Need onboarding assistance? Contact the {supportDeskName} Partner Desk at{' '}
+          <a href={`mailto:${supportEmail}`} className="text-emerald-600 font-semibold hover:underline">
+            {supportEmail}
           </a>{' '}
-          or call <strong>+91 9049002010</strong>.
-        </p>
-        <p className="text-[11px]">
-          Bavdhan &amp; Central Corporate Hub, Pune, Maharashtra 411021.
+          or call{' '}
+          <a href={`tel:${supportPhoneRaw}`} className="text-slate-600 font-bold hover:underline">
+            {supportPhone}
+          </a>
+          .
         </p>
       </div>
     </div>

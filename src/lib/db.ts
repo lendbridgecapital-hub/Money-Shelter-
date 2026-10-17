@@ -274,8 +274,8 @@ function createPortableStorage(storageFilePath: string): DatabaseAdapter {
           name: 'Satara Branch',
           code: 'STR01',
           address: 'Powai Naka, Satara, Maharashtra - 415001',
-          phone: '+91 2162 230011',
-          email: 'satara@quickfinsure.com',
+          phone: '+91 9049301089',
+          email: 'lendbridgecapital@gmail.com',
           is_co_branded: 1,
           co_brand_name: 'Lendbridge Capital',
           co_brand_logo_url: '/lendbridge-logo.png',
@@ -285,6 +285,8 @@ function createPortableStorage(storageFilePath: string): DatabaseAdapter {
         };
         data.branches.push(satara);
       } else {
+        satara.phone = '+91 9049301089';
+        satara.email = 'lendbridgecapital@gmail.com';
         satara.is_co_branded = 1;
         satara.co_brand_name = satara.co_brand_name || 'Lendbridge Capital';
         satara.co_brand_logo_url = '/lendbridge-logo.png';
