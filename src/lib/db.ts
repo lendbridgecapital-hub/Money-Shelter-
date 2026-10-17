@@ -397,6 +397,75 @@ function createPortableStorage(storageFilePath: string): DatabaseAdapter {
     }
   }
 
+  function safeDeepUnionMerge(primary: any, secondary: any): any {
+    if (!primary || typeof primary !== 'object') return secondary || {};
+    if (!secondary || typeof secondary !== 'object') return primary || {};
+
+    const result: any = { ...secondary, ...primary };
+
+    // Users: deep union merge by ID and Email
+    if (Array.isArray(primary.users) || Array.isArray(secondary.users)) {
+      const userMap = new Map<string, any>();
+      const emailMap = new Map<string, any>();
+
+      const addU = (u: any, isPrimary: boolean) => {
+        if (!u) return;
+        const id = u.id ? String(u.id) : null;
+        const email = u.email ? String(u.email).toLowerCase().trim() : null;
+        let existing = (id && userMap.get(id)) || (email && emailMap.get(email));
+        if (existing) {
+          const merged = isPrimary ? { ...existing, ...u } : { ...u, ...existing };
+          if (id) userMap.set(id, merged);
+          if (email) emailMap.set(email, merged);
+        } else {
+          if (id) userMap.set(id, { ...u });
+          if (email) emailMap.set(email, { ...u });
+        }
+      };
+
+      for (const u of (secondary.users || [])) addU(u, false);
+      for (const u of (primary.users || [])) addU(u, true);
+
+      result.users = Array.from(new Set([...userMap.values(), ...emailMap.values()]));
+    }
+
+    const collections = [
+      'loan_applications',
+      'branches',
+      'application_documents',
+      'status_history',
+      'banks',
+      'bank_products',
+      'bank_policy_cards',
+      'commissions',
+      'clawbacks',
+      'operational_remarks',
+      'partner_notifications',
+      'required_documents',
+      'email_logs',
+      'reward_ledger',
+      'reward_redemptions',
+    ];
+
+    for (const coll of collections) {
+      if (Array.isArray(primary[coll]) || Array.isArray(secondary[coll])) {
+        const itemMap = new Map<string, any>();
+        for (const item of (secondary[coll] || [])) {
+          if (item && item.id) itemMap.set(String(item.id), { ...item });
+        }
+        for (const item of (primary[coll] || [])) {
+          if (item && item.id) {
+            const existing = itemMap.get(String(item.id));
+            itemMap.set(String(item.id), existing ? { ...existing, ...item } : { ...item });
+          }
+        }
+        result[coll] = Array.from(itemMap.values());
+      }
+    }
+
+    return result;
+  }
+
   async function performNeonSync(immediate = false): Promise<void> {
     const dbUrl = getDbUrl();
     if (!dbUrl) return Promise.resolve();
@@ -426,9 +495,6 @@ function createPortableStorage(storageFilePath: string): DatabaseAdapter {
         if (payload && (payload as any).default) {
           payload = (payload as any).default;
         }
-        sanitizeBlobs(payload);
-        ensureLendbridgeAndBranchIntegrity(payload);
-        const jsonStr = JSON.stringify(payload);
 
         let querySuccess = false;
 
@@ -444,12 +510,47 @@ function createPortableStorage(storageFilePath: string): DatabaseAdapter {
               updated_at TIMESTAMPTZ DEFAULT NOW()
             );
           `);
+
+          // ANTI-WIPE SAFETY LOCK:
+          // Pull existing live state from Neon to guarantee live users/cases can NEVER be overwritten
+          try {
+            const rows = await queryFn("SELECT value FROM quickfinsure_store WHERE key = 'main_store' LIMIT 1;");
+            if (rows && rows.length > 0 && rows[0].value) {
+              let existing = rows[0].value;
+              if (typeof existing === 'string') {
+                try { existing = JSON.parse(existing); } catch {}
+              }
+              if (existing && existing.default) existing = existing.default;
+              if (existing && Array.isArray(existing.users) && existing.users.length > 0) {
+                payload = safeDeepUnionMerge(payload, existing);
+                cachedData = { ...cachedData, ...payload };
+              }
+            }
+          } catch (_) {}
+
+          sanitizeBlobs(payload);
+          ensureLendbridgeAndBranchIntegrity(payload);
+          const jsonStr = JSON.stringify(payload);
+
+          // Write main_store
           await queryFn(
             `INSERT INTO quickfinsure_store (key, value, updated_at) 
              VALUES ('main_store', $1::jsonb, NOW()) 
              ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, updated_at = NOW();`,
             [jsonStr]
           );
+
+          // Write hourly rolling backup snapshot
+          try {
+            const backupKey = `backup_${new Date().toISOString().slice(0, 13).replace(/[-T]/g, '_')}`;
+            await queryFn(
+              `INSERT INTO quickfinsure_store (key, value, updated_at)
+               VALUES ($1, $2::jsonb, NOW())
+               ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, updated_at = NOW();`,
+              [backupKey, jsonStr]
+            );
+          } catch (_) {}
+
           querySuccess = true;
         } catch (neonErr) {
           console.warn('[db] neon-serverless push failed, attempting pg pool fallback:', (neonErr as Error).message);
@@ -470,12 +571,45 @@ function createPortableStorage(storageFilePath: string): DatabaseAdapter {
                 updated_at TIMESTAMPTZ DEFAULT NOW()
               );
             `);
+
+            // ANTI-WIPE SAFETY LOCK:
+            try {
+              const res = await pool.query("SELECT value FROM quickfinsure_store WHERE key = 'main_store' LIMIT 1;");
+              if (res.rows && res.rows.length > 0 && res.rows[0].value) {
+                let existing = res.rows[0].value;
+                if (typeof existing === 'string') {
+                  try { existing = JSON.parse(existing); } catch {}
+                }
+                if (existing && existing.default) existing = existing.default;
+                if (existing && Array.isArray(existing.users) && existing.users.length > 0) {
+                  payload = safeDeepUnionMerge(payload, existing);
+                  cachedData = { ...cachedData, ...payload };
+                }
+              }
+            } catch (_) {}
+
+            sanitizeBlobs(payload);
+            ensureLendbridgeAndBranchIntegrity(payload);
+            const jsonStr = JSON.stringify(payload);
+
             await pool.query(
               `INSERT INTO quickfinsure_store (key, value, updated_at) 
                VALUES ('main_store', $1::jsonb, NOW()) 
                ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, updated_at = NOW();`,
               [jsonStr]
             );
+
+            // Write hourly rolling backup
+            try {
+              const backupKey = `backup_${new Date().toISOString().slice(0, 13).replace(/[-T]/g, '_')}`;
+              await pool.query(
+                `INSERT INTO quickfinsure_store (key, value, updated_at)
+                 VALUES ($1, $2::jsonb, NOW())
+                 ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, updated_at = NOW();`,
+                [backupKey, jsonStr]
+              );
+            } catch (_) {}
+
             querySuccess = true;
           } finally {
             await pool.end().catch(() => {});
@@ -510,48 +644,12 @@ function createPortableStorage(storageFilePath: string): DatabaseAdapter {
     syncTimeout = setTimeout(() => {
       syncTimeout = null;
       performNeonSync(false);
-    }, 200);
+    }, 150);
     return Promise.resolve();
   }
 
-
   function loadData(): StorageData {
-    const dbUrl = getDbUrl();
-
-    // 1. If Neon PostgreSQL is configured, ALWAYS pull fresh database snapshot on startup first!
-    if (dbUrl && !hasHydratedFromNeon) {
-      hasHydratedFromNeon = true;
-      try {
-        const helperPath = path.resolve(process.cwd(), 'scripts/sync-neon.js');
-        if (fs.existsSync(helperPath)) {
-          // eslint-disable-next-line @typescript-eslint/no-var-requires
-          const { spawnSync } = require('child_process');
-          const res = spawnSync(process.execPath, [helperPath, 'pull'], {
-            env: process.env,
-            encoding: 'utf8',
-            timeout: 10000,
-          });
-          if (res.stdout) {
-            let parsed = JSON.parse(res.stdout);
-            if (parsed && parsed.default) parsed = parsed.default;
-            if (parsed && typeof parsed === 'object' && Array.isArray(parsed.users) && parsed.users.length > 0) {
-              sanitizeBlobs(parsed);
-              cachedData = { ...defaultData, ...parsed };
-              ensureLendbridgeAndBranchIntegrity(cachedData);
-              try {
-                fs.writeFileSync(storageFilePath, JSON.stringify(cachedData, null, 2), 'utf8');
-                fs.writeFileSync(path.resolve(process.cwd(), 'data/initial-data.json'), JSON.stringify(cachedData, null, 2), 'utf8');
-              } catch {}
-              return cachedData;
-            }
-          }
-        }
-      } catch (neonErr) {
-        console.warn('[db] Note: Initial Neon sync failed, falling back to local files:', (neonErr as Error).message);
-      }
-    }
-
-    // 2. If storage file on disk has changed, reload it immediately
+    // 1. If storage file on disk exists (written by sync-neon.js init or previous mutation), load it!
     if (fs.existsSync(storageFilePath)) {
       try {
         const stats = fs.statSync(storageFilePath);
@@ -576,7 +674,7 @@ function createPortableStorage(storageFilePath: string): DatabaseAdapter {
       return cachedData;
     }
 
-    // 3. Fallback to initial-data.json ONLY if Neon is unavailable or empty
+    // 2. Check initial-data.json
     const initialSeedFilePath = path.resolve(process.cwd(), 'data/initial-data.json');
     if (fs.existsSync(initialSeedFilePath)) {
       try {
@@ -587,12 +685,13 @@ function createPortableStorage(storageFilePath: string): DatabaseAdapter {
           sanitizeBlobs(parsed);
           cachedData = { ...defaultData, ...parsed };
           ensureLendbridgeAndBranchIntegrity(cachedData);
+          hasHydratedFromNeon = true;
           return cachedData;
         }
       } catch {}
     }
 
-    // 4. Fallback to bundled initial seed snapshot
+    // 3. Fallback to bundled initial seed snapshot
     cachedData = { ...defaultData };
     ensureLendbridgeAndBranchIntegrity(cachedData);
     return cachedData;

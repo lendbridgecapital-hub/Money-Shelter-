@@ -731,78 +731,108 @@ function ensureLendbridgeAndBranchIntegrity(data) {
   }
 }
 
+function safeDeepUnionMerge(primary, secondary) {
+  if (!primary || typeof primary !== 'object') return secondary || {};
+  if (!secondary || typeof secondary !== 'object') return primary || {};
+
+  const result = { ...secondary, ...primary };
+
+  // Users: deep union merge by ID and Email
+  if (Array.isArray(primary.users) || Array.isArray(secondary.users)) {
+    const userMap = new Map();
+    const emailMap = new Map();
+
+    const addU = (u, isPrimary) => {
+      if (!u) return;
+      const id = u.id ? String(u.id) : null;
+      const email = u.email ? String(u.email).toLowerCase().trim() : null;
+      let existing = (id && userMap.get(id)) || (email && emailMap.get(email));
+      if (existing) {
+        const merged = isPrimary ? { ...existing, ...u } : { ...u, ...existing };
+        if (id) userMap.set(id, merged);
+        if (email) emailMap.set(email, merged);
+      } else {
+        if (id) userMap.set(id, { ...u });
+        if (email) emailMap.set(email, { ...u });
+      }
+    };
+
+    // First seed users, then live Neon users take priority
+    for (const u of (secondary.users || [])) addU(u, false);
+    for (const u of (primary.users || [])) addU(u, true);
+
+    result.users = Array.from(new Set([...userMap.values(), ...emailMap.values()]));
+  }
+
+  // All entity collections identified by 'id'
+  const collections = [
+    'loan_applications',
+    'branches',
+    'application_documents',
+    'status_history',
+    'banks',
+    'bank_products',
+    'bank_policy_cards',
+    'commissions',
+    'clawbacks',
+    'operational_remarks',
+    'partner_notifications',
+    'required_documents',
+    'email_logs',
+    'reward_ledger',
+    'reward_redemptions',
+  ];
+
+  for (const coll of collections) {
+    if (Array.isArray(primary[coll]) || Array.isArray(secondary[coll])) {
+      const itemMap = new Map();
+      for (const item of (secondary[coll] || [])) {
+        if (item && item.id) itemMap.set(String(item.id), { ...item });
+      }
+      for (const item of (primary[coll] || [])) {
+        if (item && item.id) {
+          const existing = itemMap.get(String(item.id));
+          itemMap.set(String(item.id), existing ? { ...existing, ...item } : { ...item });
+        }
+      }
+      result[coll] = Array.from(itemMap.values());
+    }
+  }
+
+  return result;
+}
+
 async function pullData(client) {
   await initSchema(client);
 
   let currentVal = null;
-  const rows = await client.query("SELECT value FROM quickfinsure_store WHERE key = 'main_store' LIMIT 1;");
-  if (rows && rows.length > 0 && rows[0].value) {
-    let val = rows[0].value;
-    if (typeof val === 'string') {
-      try { val = JSON.parse(val); } catch {}
+  try {
+    const rows = await client.query("SELECT value FROM quickfinsure_store WHERE key = 'main_store' LIMIT 1;");
+    if (rows && rows.length > 0 && rows[0].value) {
+      let val = rows[0].value;
+      if (typeof val === 'string') {
+        try { val = JSON.parse(val); } catch {}
+      }
+      if (val && val.default && (val.default.users || val.default.tenants)) {
+        val = val.default;
+      }
+      if (val && Array.isArray(val.users) && val.users.length > 0) {
+        currentVal = val;
+      }
     }
-    if (val && val.default && (val.default.users || val.default.tenants)) {
-      val = val.default;
-    }
-    if (val && Array.isArray(val.users) && val.users.length > 0) {
-      currentVal = val;
-    }
+  } catch (err) {
+    console.warn('[neon-sync] Warning fetching main_store:', err.message);
   }
 
   const seed = loadInitialSeedData();
-  let merged = currentVal ? { ...seed, ...currentVal } : seed;
-  let didMergeNew = !currentVal;
-
-  if (currentVal) {
-    // 1. Merge seed loan applications not yet in Neon (e.g. newly added seed or recovered records like Tejashree Jadhav)
-    if (Array.isArray(seed.loan_applications) && Array.isArray(merged.loan_applications)) {
-      const existingAppIds = new Set(merged.loan_applications.map((a) => a.id));
-      for (const app of seed.loan_applications) {
-        if (!existingAppIds.has(app.id)) {
-          merged.loan_applications.unshift(app);
-          didMergeNew = true;
-        }
-      }
-    }
-
-    // 2. Merge seed status history
-    if (Array.isArray(seed.status_history) && Array.isArray(merged.status_history)) {
-      const existingShIds = new Set(merged.status_history.map((s) => s.id));
-      for (const sh of seed.status_history) {
-        if (!existingShIds.has(sh.id)) {
-          merged.status_history.push(sh);
-          didMergeNew = true;
-        }
-      }
-    }
-
-    // 3. Merge seed documents
-    if (Array.isArray(seed.application_documents) && Array.isArray(merged.application_documents)) {
-      const existingDocIds = new Set(merged.application_documents.map((d) => d.id));
-      for (const doc of seed.application_documents) {
-        if (!existingDocIds.has(doc.id)) {
-          merged.application_documents.push(doc);
-          didMergeNew = true;
-        }
-      }
-    }
-
-    // 4. Merge bank policy cards
-    if (Array.isArray(seed.bank_policy_cards) && Array.isArray(merged.bank_policy_cards)) {
-      const existingCardIds = new Set(merged.bank_policy_cards.map((c) => c.id));
-      for (const card of seed.bank_policy_cards) {
-        if (!existingCardIds.has(card.id)) {
-          merged.bank_policy_cards.push(card);
-          didMergeNew = true;
-        }
-      }
-    }
-  }
+  // Safe deep union merge: Live Neon database is primary; seed adds any missing records
+  let merged = currentVal ? safeDeepUnionMerge(currentVal, seed) : seed;
 
   sanitizeUserBlobs(merged);
   ensureLendbridgeAndBranchIntegrity(merged);
 
-  if (didMergeNew) {
+  // If live Neon didn't exist or had fewer records than combined seed, push union back to Neon
+  if (!currentVal || (merged.users && merged.users.length > (currentVal.users ? currentVal.users.length : 0))) {
     await pushData(client, merged);
   }
 
@@ -822,15 +852,49 @@ async function pushData(client, data) {
   if (payload && payload.default && (payload.default.users || payload.default.tenants)) {
     payload = payload.default;
   }
+
+  // ANTI-WIPE SAFETY LOCK:
+  // Before overwriting main_store, fetch current live Neon state to ensure NO records are ever deleted
+  try {
+    const rows = await client.query("SELECT value FROM quickfinsure_store WHERE key = 'main_store' LIMIT 1;");
+    if (rows && rows.length > 0 && rows[0].value) {
+      let existing = rows[0].value;
+      if (typeof existing === 'string') {
+        try { existing = JSON.parse(existing); } catch {}
+      }
+      if (existing && existing.default) existing = existing.default;
+      if (existing && Array.isArray(existing.users) && existing.users.length > 0) {
+        // Deep union merge so existing users, cases, and logs in Neon are NEVER wiped
+        payload = safeDeepUnionMerge(payload, existing);
+      }
+    }
+  } catch (err) {
+    console.warn('[neon-push] Anti-wipe check warning:', err.message);
+  }
+
   sanitizeUserBlobs(payload);
   ensureLendbridgeAndBranchIntegrity(payload);
   const jsonStr = JSON.stringify(payload);
+
+  // 1. Write main_store
   await client.query(
     `INSERT INTO quickfinsure_store (key, value, updated_at) 
      VALUES ('main_store', $1::jsonb, NOW()) 
      ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, updated_at = NOW();`,
     [jsonStr]
   );
+
+  // 2. Write rolling hourly snapshot backup into quickfinsure_store
+  try {
+    const backupKey = `backup_${new Date().toISOString().slice(0, 13).replace(/[-T]/g, '_')}`;
+    await client.query(
+      `INSERT INTO quickfinsure_store (key, value, updated_at)
+       VALUES ($1, $2::jsonb, NOW())
+       ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, updated_at = NOW();`,
+      [backupKey, jsonStr]
+    );
+  } catch (_) {}
+
   try {
     const appPortablePath = path.resolve(process.cwd(), 'data/app-portable.json');
     const seedPath = path.resolve(process.cwd(), 'data/initial-data.json');
