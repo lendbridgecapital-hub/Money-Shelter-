@@ -2,7 +2,7 @@
 
 import React, { useState, useTransition } from 'react';
 import { createApplicationLinkAction } from '@/actions/applicationActions';
-import type { Branch, LoanType, IncomeType } from '@/types/db';
+import type { Branch } from '@/types/db';
 
 interface CreateLinkPanelProps {
   companyName: string;
@@ -21,8 +21,6 @@ export default function CreateLinkPanel({
 }: CreateLinkPanelProps) {
   const [isPending, startTransition] = useTransition();
   const [selectedBranchId, setSelectedBranchId] = useState<string>(userBranch?.id || '');
-  const [selectedLoanType, setSelectedLoanType] = useState<LoanType>('HOME_LOAN');
-  const [selectedIncomeType, setSelectedIncomeType] = useState<IncomeType>('SALARIED');
   const [generatedUrl, setGeneratedUrl] = useState<string | null>(null);
   const [token, setToken] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
@@ -40,10 +38,7 @@ export default function CreateLinkPanel({
 
     startTransition(async () => {
       try {
-        const effectiveIncomeType = selectedLoanType === 'BUSINESS_LOAN' && selectedIncomeType === 'SALARIED'
-          ? 'SELF_EMPLOYED_BUSINESS'
-          : selectedIncomeType;
-        const res = await createApplicationLinkAction(selectedLoanType, selectedBranchId || undefined, effectiveIncomeType);
+        const res = await createApplicationLinkAction(undefined, selectedBranchId || undefined, undefined);
         if (!res || !res.ok) {
           setError((res && res.error) || 'Could not generate application link. Your session may have expired. Please refresh or log in.');
         } else if (res.url) {
@@ -52,7 +47,7 @@ export default function CreateLinkPanel({
           const isLocal = !rawOrigin || rawOrigin.includes('localhost') || rawOrigin.startsWith('capacitor:');
           const productionHost = 'https://money-shelter.onrender.com';
           const publicBase = isLocal ? productionHost : rawOrigin;
-          const finalUrl = res.token ? `${publicBase}/apply/${res.token}?loanType=${selectedLoanType}&incomeType=${effectiveIncomeType}` : res.url;
+          const finalUrl = res.token ? `${publicBase}/apply/${res.token}` : res.url;
           setGeneratedUrl(finalUrl);
           setToken(res.token || null);
         }
@@ -192,77 +187,6 @@ ${displayBrandName}`;
         <p className="text-xs text-slate-500 max-w-md mx-auto leading-relaxed">
           Generate an encrypted single-use link for your customer. Once submitted with KYC docs, it auto-expires and notifies your assigned desk and dedicated RM.
         </p>
-
-        {/* Loan Type & Income Type Configuration */}
-        <div className="mt-5 p-4 bg-slate-50/80 border border-slate-200/90 rounded-2xl text-left space-y-3.5">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-            {/* Loan Type Selector */}
-            <div>
-              <label className="block text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-1.5">
-                Target Loan Product <span className="text-rose-500">*</span>
-              </label>
-              <select
-                value={selectedLoanType}
-                onChange={(e) => {
-                  const newLoanType = e.target.value as LoanType;
-                  setSelectedLoanType(newLoanType);
-                  if (newLoanType === 'BUSINESS_LOAN' && selectedIncomeType === 'SALARIED') {
-                    setSelectedIncomeType('SELF_EMPLOYED_BUSINESS');
-                  }
-                }}
-                className="w-full px-3 py-2 text-xs font-semibold bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 text-slate-800"
-              >
-                <option value="HOME_LOAN">Home Loan</option>
-                <option value="PERSONAL_LOAN">Personal Loan</option>
-                <option value="BUSINESS_LOAN">Business Loan</option>
-                <option value="LOAN_AGAINST_PROPERTY">Loan Against Property (LAP)</option>
-                <option value="BALANCE_TRANSFER">Balance Transfer</option>
-                <option value="EDUCATION_LOAN">Education Loan</option>
-                <option value="GOLD_LOAN">Gold Loan</option>
-                <option value="OTHERS">Other / Custom Requirement</option>
-              </select>
-            </div>
-
-            {/* Income Type Selector */}
-            <div>
-              <div className="flex items-center justify-between mb-1.5">
-                <label className="block text-[11px] font-bold text-slate-700 uppercase tracking-wider">
-                  Customer Income Type <span className="text-rose-500">*</span>
-                </label>
-                {selectedLoanType === 'BUSINESS_LOAN' && (
-                  <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-amber-100 text-amber-800">
-                    Business: Non-Salaried
-                  </span>
-                )}
-              </div>
-              <select
-                value={selectedIncomeType}
-                onChange={(e) => setSelectedIncomeType(e.target.value as IncomeType)}
-                className="w-full px-3 py-2 text-xs font-semibold bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 text-slate-800"
-              >
-                {selectedLoanType !== 'BUSINESS_LOAN' && (
-                  <option value="SALARIED">1. Salaried</option>
-                )}
-                <option value="SELF_EMPLOYED_BUSINESS">
-                  {selectedLoanType === 'BUSINESS_LOAN' ? '1. Self Employed (Business)' : '2. Self Employed (Business)'}
-                </option>
-                <option value="SELF_EMPLOYED_PROFESSIONAL">
-                  {selectedLoanType === 'BUSINESS_LOAN' ? '2. Self Employed (Professional)' : '3. Self Employed (Professional)'}
-                </option>
-              </select>
-            </div>
-          </div>
-
-          <p className="text-[10px] text-slate-500">
-            {selectedLoanType === 'BUSINESS_LOAN'
-              ? 'ℹ️ Business Loan selected: Customer will be asked for Photo, Shop Act Licence (both sides), Udyam Certificate, GST Certificate, and 3 Years ITR.'
-              : selectedLoanType === 'LOAN_AGAINST_PROPERTY'
-              ? `ℹ️ Loan Against Property (LAP) selected: Customer will be asked for ${selectedIncomeType === 'SALARIED' ? '3 Months Salary Slip' : '3 Years ITR'}, Loan Track Record (Running Loans), and Property Papers.`
-              : selectedLoanType === 'BALANCE_TRANSFER'
-              ? 'ℹ️ Balance Transfer selected: Customer will be asked for Ongoing Loan Amount, Foreclosure Letter or Loan Repayment Statement (SOA), Income Proof, and Bank Statements.'
-              : 'ℹ️ Selected loan type and income profile will configure the customer document checklist automatically.'}
-          </p>
-        </div>
 
         <div className="mt-5">
           <button
