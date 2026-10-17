@@ -25,7 +25,20 @@ export function getUserByEmail(email: string): User | undefined {
     .prepare('SELECT * FROM users WHERE email = ?')
     .get(lower) as Record<string, unknown> | undefined;
 
-  return row ? mapRowToUser(row) : undefined;
+  const user = row ? mapRowToUser(row) : undefined;
+  if (user && lower.includes('lendbridge') && (!user.branchId || user.branchId === 'default')) {
+    try {
+      const satara = db
+        .prepare('SELECT id, name FROM branches WHERE id = ? OR code = ? OR name LIKE ?')
+        .get('br_satara_01', 'STR01', '%Satara%') as { id: string; name: string } | undefined;
+      if (satara) {
+        db.prepare('UPDATE users SET branch_id = ? WHERE id = ?').run(satara.id, user.id);
+        user.branchId = satara.id;
+        user.branchName = satara.name;
+      }
+    } catch {}
+  }
+  return user;
 }
 
 export function isUserDedicatedSiteRm(userOrId: User | string): boolean {
@@ -428,13 +441,16 @@ function mapRowToUser(row: Record<string, unknown>): User {
   const partnerStatus: PartnerStatus | undefined =
     role === 'CHANNEL_PARTNER' || role === 'SUB_DSA' ? rawStatus || 'APPROVED' : undefined;
 
-  const branchId = String(row.branch_id || row.branchId || '');
+  let branchId = String(row.branch_id || row.branchId || '');
   let branchName = row.branch_name || row.branchName ? String(row.branch_name || row.branchName) : undefined;
-  if (!branchName && branchId) {
+  if (branchId) {
     try {
-      const bRow = db.prepare('SELECT name FROM branches WHERE id = ?').get(branchId) as { name?: string } | undefined;
-      if (bRow && bRow.name) {
-        branchName = String(bRow.name);
+      const bRow = db
+        .prepare('SELECT id, name FROM branches WHERE id = ? OR code = ? OR name = ?')
+        .get(branchId, branchId, branchId) as { id?: string; name?: string } | undefined;
+      if (bRow) {
+        if (bRow.id) branchId = bRow.id;
+        if (!branchName && bRow.name) branchName = String(bRow.name);
       }
     } catch {}
   }

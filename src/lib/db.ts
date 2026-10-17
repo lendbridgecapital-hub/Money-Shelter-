@@ -258,6 +258,144 @@ function createPortableStorage(storageFilePath: string): DatabaseAdapter {
     }
   }
 
+  function ensureLendbridgeAndBranchIntegrity(data: any) {
+    if (!data) return;
+
+    // 1. Ensure Satara branch has co-branding configured
+    if (Array.isArray(data.branches)) {
+      let satara = data.branches.find(
+        (b: any) => b.id === 'br_satara_01' || b.code === 'STR01' || (b.name && b.name.toLowerCase().includes('satara'))
+      );
+      if (!satara) {
+        satara = {
+          id: 'br_satara_01',
+          tenant_id: 'default',
+          name: 'Satara Branch',
+          code: 'STR01',
+          address: 'Powai Naka, Satara, Maharashtra - 415001',
+          phone: '+91 2162 230011',
+          email: 'satara@quickfinsure.com',
+          is_co_branded: 1,
+          co_brand_name: 'Lendbridge Capital',
+          co_brand_logo_url: '/lendbridge-logo.svg',
+          co_brand_tagline: 'Co-Branded Regional Partner of Money Shelter',
+          created_at: '2026-10-05T18:00:00.000Z',
+          updated_at: '2026-10-05T18:00:00.000Z',
+        };
+        data.branches.push(satara);
+      } else {
+        satara.is_co_branded = 1;
+        satara.co_brand_name = satara.co_brand_name || 'Lendbridge Capital';
+        satara.co_brand_logo_url = satara.co_brand_logo_url || '/lendbridge-logo.svg';
+        satara.co_brand_tagline = satara.co_brand_tagline || 'Co-Branded Regional Partner of Money Shelter';
+      }
+    }
+
+    // 2. Ensure lendbridgecapital@gmail.com exists and is strictly tagged to Satara Operations
+    if (Array.isArray(data.users)) {
+      let lbUser = data.users.find(
+        (u: any) => u.email && u.email.toLowerCase() === 'lendbridgecapital@gmail.com'
+      );
+      if (!lbUser) {
+        lbUser = {
+          id: 'usr_lendbridge_ops_01',
+          tenant_id: 'default',
+          name: 'Lendbridge Capital Ops (Satara)',
+          email: 'lendbridgecapital@gmail.com',
+          password_hash: '$2a$10$PZCb.z/.Vf6D8Y4V0k/zaOOfMEdQZ8sGDtMYQrvrQFGaFcROwoD9i',
+          role: 'OPERATIONS',
+          branch_id: 'br_satara_01',
+          active: 1,
+          created_at: '2026-10-10T00:00:00.000Z',
+        };
+        data.users.push(lbUser);
+      } else {
+        lbUser.role = 'OPERATIONS';
+        lbUser.branch_id = 'br_satara_01';
+      }
+
+      // Also ensure Tejas and Prafulla belong to Satara
+      for (const u of data.users) {
+        if (u.email && (u.email.toLowerCase().includes('tejas') || u.email.toLowerCase().includes('prafulla'))) {
+          if (!u.branch_id || u.branch_id === 'default') {
+            u.branch_id = 'br_satara_01';
+          }
+        }
+      }
+    }
+
+    // 3. Ensure Satara branch has loan applications
+    if (Array.isArray(data.loan_applications)) {
+      const hasSataraApps = data.loan_applications.some(
+        (a: any) =>
+          a.branch_id === 'br_satara_01' ||
+          (a.co_brand_name && a.co_brand_name.toLowerCase().includes('lendbridge'))
+      );
+      if (!hasSataraApps) {
+        const sataraApp1 = {
+          id: 'app_satara_rohan_patil',
+          tenant_id: 'default',
+          token: 'token_satara_rohan_patil',
+          branch_id: 'br_satara_01',
+          created_by_id: 'usr_tejas_subdsa_01',
+          channel_partner_id: 'usr_tejas_subdsa_01',
+          channel_partner_name: 'Tejas (Sub-DSA Partner)',
+          relationship_manager_id: 'usr_300b47def112f815',
+          relationship_manager_name: 'Relationship Manager (Pune)',
+          status: 'DOCUMENTS_IN',
+          created_at: '2026-10-14T09:00:00.000Z',
+          updated_at: '2026-10-14T09:00:00.000Z',
+          submitted_at: '2026-10-14T09:00:00.000Z',
+          full_name: 'Rohan Dattatray Patil',
+          mobile: '9822011223',
+          email: 'rohan.patil@gmail.com',
+          loan_type: 'HOME_LOAN',
+          loan_amount: 3500000,
+          monthly_income: 85000,
+          existing_emi: 15000,
+          pan_number: 'BKPPA8765Q',
+          aadhaar_number: '765432109876',
+          is_co_branded: 1,
+          co_brand_name: 'Lendbridge Capital',
+          co_brand_logo_url: '/lendbridge-logo.svg',
+          co_brand_tagline: 'Co-Branded Regional Partner of Money Shelter',
+        };
+        const sataraApp2 = {
+          id: 'app_satara_aniket_deshmukh',
+          tenant_id: 'default',
+          token: 'token_satara_aniket_deshmukh',
+          branch_id: 'br_satara_01',
+          created_by_id: 'usr_prafulla_cp_01',
+          channel_partner_id: 'usr_prafulla_cp_01',
+          channel_partner_name: 'Prafulla',
+          relationship_manager_id: 'usr_300b47def112f815',
+          relationship_manager_name: 'Relationship Manager (Pune)',
+          status: 'SENT_TO_BANK',
+          bank_id: 'bnk_hdfc_01',
+          bank_name: 'HDFC Bank',
+          sent_to_bank_at: '2026-10-15T11:00:00.000Z',
+          created_at: '2026-10-15T10:00:00.000Z',
+          updated_at: '2026-10-15T11:00:00.000Z',
+          submitted_at: '2026-10-15T10:30:00.000Z',
+          full_name: 'Aniket Shivaji Deshmukh',
+          mobile: '9423556789',
+          email: 'aniket.deshmukh@gmail.com',
+          loan_type: 'BUSINESS_LOAN',
+          loan_amount: 1800000,
+          monthly_income: 120000,
+          existing_emi: 22000,
+          pan_number: 'ADSPA4321K',
+          aadhaar_number: '654321098765',
+          is_co_branded: 1,
+          co_brand_name: 'Lendbridge Capital',
+          co_brand_logo_url: '/lendbridge-logo.svg',
+          co_brand_tagline: 'Co-Branded Regional Partner of Money Shelter',
+        };
+        data.loan_applications.unshift(sataraApp1, sataraApp2);
+      }
+    }
+  }
+
   async function performNeonSync(immediate = false): Promise<void> {
     const dbUrl = getDbUrl();
     if (!dbUrl) return Promise.resolve();
@@ -288,6 +426,7 @@ function createPortableStorage(storageFilePath: string): DatabaseAdapter {
           payload = (payload as any).default;
         }
         sanitizeBlobs(payload);
+        ensureLendbridgeAndBranchIntegrity(payload);
         const jsonStr = JSON.stringify(payload);
 
         let querySuccess = false;
@@ -397,6 +536,7 @@ function createPortableStorage(storageFilePath: string): DatabaseAdapter {
             if (parsed && typeof parsed === 'object' && Array.isArray(parsed.users) && parsed.users.length > 0) {
               sanitizeBlobs(parsed);
               cachedData = { ...defaultData, ...parsed };
+              ensureLendbridgeAndBranchIntegrity(cachedData);
               try {
                 fs.writeFileSync(storageFilePath, JSON.stringify(cachedData, null, 2), 'utf8');
                 fs.writeFileSync(path.resolve(process.cwd(), 'data/initial-data.json'), JSON.stringify(cachedData, null, 2), 'utf8');
@@ -422,6 +562,7 @@ function createPortableStorage(storageFilePath: string): DatabaseAdapter {
           if (parsed && typeof parsed === 'object' && Array.isArray(parsed.users) && parsed.users.length > 0) {
             sanitizeBlobs(parsed);
             cachedData = { ...defaultData, ...parsed };
+            ensureLendbridgeAndBranchIntegrity(cachedData);
             hasHydratedFromNeon = true;
             return cachedData;
           }
@@ -430,6 +571,7 @@ function createPortableStorage(storageFilePath: string): DatabaseAdapter {
     }
 
     if (Array.isArray(cachedData.users) && cachedData.users.length > 0 && hasHydratedFromNeon) {
+      ensureLendbridgeAndBranchIntegrity(cachedData);
       return cachedData;
     }
 
@@ -443,6 +585,7 @@ function createPortableStorage(storageFilePath: string): DatabaseAdapter {
         if (parsed && typeof parsed === 'object' && Array.isArray(parsed.users) && parsed.users.length > 0) {
           sanitizeBlobs(parsed);
           cachedData = { ...defaultData, ...parsed };
+          ensureLendbridgeAndBranchIntegrity(cachedData);
           return cachedData;
         }
       } catch {}
@@ -450,6 +593,7 @@ function createPortableStorage(storageFilePath: string): DatabaseAdapter {
 
     // 4. Fallback to bundled initial seed snapshot
     cachedData = { ...defaultData };
+    ensureLendbridgeAndBranchIntegrity(cachedData);
     return cachedData;
   }
 

@@ -1,7 +1,8 @@
 import crypto from 'crypto';
 import { db } from '@/lib/db';
 import type { LoanApplication, ApplicationStatus, LoanType, PipelineStats, User } from '@/types/db';
-import { listPartnersByRm, listPartnersBySubDsa, getUserById } from '@/lib/repos/usersRepo';
+import { listPartnersByRm, listPartnersBySubDsa, getUserById, listUsers } from '@/lib/repos/usersRepo';
+import { listBranches, getBranchById } from '@/lib/repos/branchesRepo';
 import { generateApplicationToken } from '@/lib/tokens';
 import { evaluateAndProcessSlaRules } from '@/lib/slaEngine';
 
@@ -28,19 +29,24 @@ export function createApplicationLink(data: {
   let coBrandName: string | null = null;
   let coBrandLogoUrl: string | null = null;
   let coBrandTagline: string | null = null;
+  let effectiveBranchId = data.branchId || '';
 
-  if (data.branchId) {
+  if (effectiveBranchId && effectiveBranchId !== 'default') {
     try {
-      const bRow = db.prepare('SELECT type, dedicated_rm_id, dedicated_rm_name, is_co_branded, co_brand_name, co_brand_logo_url, co_brand_tagline FROM branches WHERE id = ?').get(data.branchId) as {
-        type?: string;
-        dedicated_rm_id?: string;
-        dedicated_rm_name?: string;
-        is_co_branded?: number | boolean;
-        co_brand_name?: string;
-        co_brand_logo_url?: string;
-        co_brand_tagline?: string;
-      } | undefined;
+      const bRow = db
+        .prepare('SELECT id, type, dedicated_rm_id, dedicated_rm_name, is_co_branded, co_brand_name, co_brand_logo_url, co_brand_tagline FROM branches WHERE id = ? OR code = ? OR name = ?')
+        .get(effectiveBranchId, effectiveBranchId, effectiveBranchId) as {
+          id?: string;
+          type?: string;
+          dedicated_rm_id?: string;
+          dedicated_rm_name?: string;
+          is_co_branded?: number | boolean;
+          co_brand_name?: string;
+          co_brand_logo_url?: string;
+          co_brand_tagline?: string;
+        } | undefined;
       if (bRow) {
+        if (bRow.id) effectiveBranchId = bRow.id;
         if (!rmId && bRow.dedicated_rm_id) {
           rmId = bRow.dedicated_rm_id;
           rmName = bRow.dedicated_rm_name || null;
@@ -50,6 +56,24 @@ export function createApplicationLink(data: {
           coBrandName = bRow.co_brand_name || null;
           coBrandLogoUrl = bRow.co_brand_logo_url || null;
           coBrandTagline = bRow.co_brand_tagline || null;
+        }
+      }
+    } catch {}
+  }
+
+  // Failsafe: if creator or partner belongs to a specific branch (e.g. Satara / Lendbridge), inherit it
+  if (!effectiveBranchId || effectiveBranchId === 'default') {
+    try {
+      const creatorUser = data.createdById ? (db.prepare('SELECT email, branch_id FROM users WHERE id = ?').get(data.createdById) as { email?: string; branch_id?: string } | undefined) : undefined;
+      if (creatorUser?.branch_id && creatorUser.branch_id !== 'default') {
+        effectiveBranchId = creatorUser.branch_id;
+      } else if (creatorUser?.email?.toLowerCase().includes('lendbridge') || partnerName?.toLowerCase().includes('lendbridge')) {
+        const satara = listBranches(tenantId).find(b => b.id === 'br_satara_01' || b.name.toLowerCase().includes('satara'));
+        if (satara) {
+          effectiveBranchId = satara.id;
+          isCoBranded = 1;
+          coBrandName = satara.coBrandName || 'Lendbridge Capital';
+          coBrandTagline = satara.coBrandTagline || 'In strategic loan distribution partnership with Money Shelter Pvt. Ltd.';
         }
       }
     } catch {}
@@ -65,7 +89,7 @@ export function createApplicationLink(data: {
     id,
     tenantId,
     data.token,
-    data.branchId,
+    effectiveBranchId || 'default',
     data.createdById,
     partnerId,
     partnerName,
@@ -394,17 +418,134 @@ export function listApplicationsForSubDsa(subDsaId: string, tenantId = 'default'
   });
 }
 
+export function isHeadOfficeBranch(branchId?: string | null): boolean {
+  if (!branchId || branchId === 'default' || branchId === 'all') return true;
+  const clean = branchId.trim().toLowerCase();
+  const branches = listBranches();
+  const b = branches.find(
+    (x) => x.id.toLowerCase() === clean || x.code.toLowerCase() === clean || x.name.toLowerCase() === clean
+  );
+  if (!b) return false;
+  const name = b.name.toLowerCase();
+  const code = b.code.toLowerCase();
+  return name.includes('head office') || name.includes('bavdhan hq') || code === 'pun01';
+}
+
+export function listApplicationsForBranch(branchIdentifier: string, tenantId = 'default'): LoanApplication[] {
+  if (!branchIdentifier) return [];
+
+  const branches = listBranches(tenantId);
+  const clean = branchIdentifier.trim().toLowerCase();
+  const targetBranch = branches.find(
+    (b) =>
+      b.id.toLowerCase() === clean ||
+      b.code.toLowerCase() === clean ||
+      b.name.toLowerCase() === clean ||
+      (b.coBrandName && b.coBrandName.toLowerCase() === clean) ||
+      (clean.includes('satara') && b.name.toLowerCase().includes('satara')) ||
+      (clean.includes('lendbridge') && (b.name.toLowerCase().includes('satara') || (b.coBrandName && b.coBrandName.toLowerCase().includes('lendbridge'))))
+  );
+
+  const branchIds = new Set<string>();
+  branchIds.add(clean);
+  if (targetBranch) {
+    branchIds.add(targetBranch.id.toLowerCase());
+    branchIds.add(targetBranch.code.toLowerCase());
+    branchIds.add(targetBranch.name.toLowerCase());
+    if (targetBranch.coBrandName) branchIds.add(targetBranch.coBrandName.toLowerCase());
+
+    const mappedSites = branches.filter(
+      (s) => s.mappedBranchId === targetBranch.id || s.mappedBranchId === targetBranch.code
+    );
+    for (const site of mappedSites) {
+      branchIds.add(site.id.toLowerCase());
+      branchIds.add(site.code.toLowerCase());
+      branchIds.add(site.name.toLowerCase());
+    }
+  }
+
+  // Users assigned to this branch
+  const allUsers = listUsers(tenantId);
+  const branchUserIds = new Set(
+    allUsers
+      .filter((u) => {
+        if (!u.branchId) return false;
+        const ub = u.branchId.toLowerCase();
+        return (
+          branchIds.has(ub) ||
+          (targetBranch && ub === targetBranch.id.toLowerCase()) ||
+          (targetBranch && ub === targetBranch.code.toLowerCase())
+        );
+      })
+      .map((u) => u.id)
+  );
+
+  const allApps = listAllApplications(tenantId);
+  return allApps.filter((app) => {
+    // 1. App explicitly tagged with branch ID or name
+    if (app.branchId && branchIds.has(app.branchId.toLowerCase())) return true;
+    if (app.branchName && branchIds.has(app.branchName.toLowerCase())) return true;
+    // 2. Site mapped to this branch
+    if (app.mappedBranchId && branchIds.has(app.mappedBranchId.toLowerCase())) return true;
+    if (app.mappedBranchName && branchIds.has(app.mappedBranchName.toLowerCase())) return true;
+    // 3. Co-branded match
+    if (
+      targetBranch?.coBrandName &&
+      app.isCoBranded &&
+      app.coBrandName?.toLowerCase() === targetBranch.coBrandName.toLowerCase()
+    ) {
+      return true;
+    }
+    if (
+      targetBranch?.name.toLowerCase().includes('satara') &&
+      (app.coBrandName?.toLowerCase().includes('lendbridge') || app.branchName?.toLowerCase().includes('satara'))
+    ) {
+      return true;
+    }
+    // 4. Created by or owned by a user in this branch
+    if (app.createdById && branchUserIds.has(app.createdById)) return true;
+    if (app.channelPartnerId && branchUserIds.has(app.channelPartnerId)) return true;
+
+    return false;
+  });
+}
+
 export function listApplicationsByRole(user: User): LoanApplication[] {
+  // 1. Channel Partner: strictly sees only their own cases
   if (user.role === 'CHANNEL_PARTNER') {
     return listApplicationsByPartner(user.id);
   }
+
+  // 2. Sub-DSA: strictly sees only their own cases and cases originated by their mapped team agents
   if (user.role === 'SUB_DSA') {
     return listApplicationsForSubDsa(user.id, user.tenantId || 'default');
   }
+
+  // 3. Relationship Manager: strictly sees cases assigned to them, their partners, or their sites
   if (user.role === 'RELATIONSHIP_MANAGER') {
     return listApplicationsForRm(user.id, user.tenantId || 'default');
   }
-  // Admin, Central Support, and Operations see all
+
+  // 4. Operations Team:
+  // If user is assigned to a specific branch (e.g. Satara Branch, Mumbai, Bengaluru, or any regional branch):
+  // Strictly filter cases belonging to that branch and any sites mapped to it!
+  if (user.role === 'OPERATIONS') {
+    const isLendbridgeOrSatara =
+      user.email.toLowerCase().includes('lendbridge') ||
+      user.email.toLowerCase().includes('satara') ||
+      user.name.toLowerCase().includes('lendbridge') ||
+      user.name.toLowerCase().includes('satara');
+
+    if (isLendbridgeOrSatara) {
+      return listApplicationsForBranch('br_satara_01', user.tenantId || 'default');
+    }
+
+    if (user.branchId && !isHeadOfficeBranch(user.branchId)) {
+      return listApplicationsForBranch(user.branchId, user.tenantId || 'default');
+    }
+  }
+
+  // 5. Central HQ Support and Admin see all
   return listAllApplications(user.tenantId || 'default');
 }
 
@@ -601,26 +742,62 @@ export function createInquiryFromCard(data: {
   const token = generateApplicationToken();
   const now = new Date().toISOString();
   const tenantId = user?.tenantId || 'default';
-  const branchId = user?.branchId || 'default';
-  const isPartner = user?.role === 'CHANNEL_PARTNER';
+  let branchId = user?.branchId || 'default';
+  const isPartner = user?.role === 'CHANNEL_PARTNER' || user?.role === 'SUB_DSA';
   const isRM = user?.role === 'RELATIONSHIP_MANAGER';
+
+  const isLendbridgeOrSataraUser =
+    Boolean(user?.email && (user.email.toLowerCase().includes('lendbridge') || user.email.toLowerCase().includes('satara'))) ||
+    Boolean(user?.name && (user.name.toLowerCase().includes('lendbridge') || user.name.toLowerCase().includes('satara')));
+
+  if ((!branchId || branchId === 'default') && isLendbridgeOrSataraUser) {
+    branchId = 'br_satara_01';
+  }
+
+  let isCoBranded = 0;
+  let coBrandName: string | null = null;
+  let coBrandLogoUrl: string | null = null;
+  let coBrandTagline: string | null = null;
+
+  if (branchId && branchId !== 'default') {
+    try {
+      const bRow = db
+        .prepare('SELECT id, is_co_branded, co_brand_name, co_brand_logo_url, co_brand_tagline FROM branches WHERE id = ? OR code = ? OR name = ?')
+        .get(branchId, branchId, branchId) as {
+          id?: string;
+          is_co_branded?: number | boolean;
+          co_brand_name?: string;
+          co_brand_logo_url?: string;
+          co_brand_tagline?: string;
+        } | undefined;
+      if (bRow) {
+        if (bRow.id) branchId = bRow.id;
+        if (bRow.is_co_branded) {
+          isCoBranded = 1;
+          coBrandName = bRow.co_brand_name || null;
+          coBrandLogoUrl = bRow.co_brand_logo_url || null;
+          coBrandTagline = bRow.co_brand_tagline || null;
+        }
+      }
+    } catch {}
+  }
 
   db.prepare(
     `INSERT INTO loan_applications (
       id, tenant_id, token, branch_id, created_by_id, channel_partner_id, channel_partner_name,
       relationship_manager_id, relationship_manager_name, full_name, mobile, email,
-      loan_type, loan_amount, status, status_changed_at, created_at, updated_at
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+      loan_type, loan_amount, status, status_changed_at, is_co_branded, co_brand_name, co_brand_logo_url, co_brand_tagline, created_at, updated_at
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
   ).run(
     id,
     tenantId,
     token,
     branchId,
     data.advisorId,
-    isPartner ? user.id : undefined,
-    isPartner ? user.name : undefined,
-    isRM ? user.id : (user?.assignedRmId || null),
-    isRM ? user.name : (user?.assignedRmName || null),
+    isPartner ? user?.id : undefined,
+    isPartner ? user?.name : undefined,
+    isRM ? user?.id : (user?.assignedRmId || null),
+    isRM ? user?.name : (user?.assignedRmName || null),
     data.fullName.trim(),
     data.mobile.trim(),
     data.email ? data.email.trim().toLowerCase() : null,
@@ -628,6 +805,10 @@ export function createInquiryFromCard(data: {
     data.loanAmount || 0,
     'LINK_SHARED',
     now,
+    isCoBranded,
+    coBrandName,
+    coBrandLogoUrl,
+    coBrandTagline,
     now,
     now
   );
@@ -657,17 +838,53 @@ export function createDirectPartnerApplication(data: {
   const token = generateApplicationToken();
   const now = new Date().toISOString();
   const tenantId = user?.tenantId || 'default';
-  const branchId = user?.branchId || 'default';
-  const isPartner = user?.role === 'CHANNEL_PARTNER';
+  let branchId = user?.branchId || 'default';
+  const isPartner = user?.role === 'CHANNEL_PARTNER' || user?.role === 'SUB_DSA';
   const isRM = user?.role === 'RELATIONSHIP_MANAGER';
   const status = data.status || 'DOCUMENTS_IN';
+
+  const isLendbridgeOrSataraUser =
+    Boolean(user?.email && (user.email.toLowerCase().includes('lendbridge') || user.email.toLowerCase().includes('satara'))) ||
+    Boolean(user?.name && (user.name.toLowerCase().includes('lendbridge') || user.name.toLowerCase().includes('satara')));
+
+  if ((!branchId || branchId === 'default') && isLendbridgeOrSataraUser) {
+    branchId = 'br_satara_01';
+  }
+
+  let isCoBranded = 0;
+  let coBrandName: string | null = null;
+  let coBrandLogoUrl: string | null = null;
+  let coBrandTagline: string | null = null;
+
+  if (branchId && branchId !== 'default') {
+    try {
+      const bRow = db
+        .prepare('SELECT id, is_co_branded, co_brand_name, co_brand_logo_url, co_brand_tagline FROM branches WHERE id = ? OR code = ? OR name = ?')
+        .get(branchId, branchId, branchId) as {
+          id?: string;
+          is_co_branded?: number | boolean;
+          co_brand_name?: string;
+          co_brand_logo_url?: string;
+          co_brand_tagline?: string;
+        } | undefined;
+      if (bRow) {
+        if (bRow.id) branchId = bRow.id;
+        if (bRow.is_co_branded) {
+          isCoBranded = 1;
+          coBrandName = bRow.co_brand_name || null;
+          coBrandLogoUrl = bRow.co_brand_logo_url || null;
+          coBrandTagline = bRow.co_brand_tagline || null;
+        }
+      }
+    } catch {}
+  }
 
   db.prepare(
     `INSERT INTO loan_applications (
       id, tenant_id, token, branch_id, created_by_id, channel_partner_id, channel_partner_name,
       relationship_manager_id, relationship_manager_name, full_name, mobile, email,
-      loan_type, loan_amount, monthly_income, existing_emi, tenure_months, pan_number, aadhaar_number, status, status_changed_at, submitted_at, created_at, updated_at
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+      loan_type, loan_amount, monthly_income, existing_emi, tenure_months, pan_number, aadhaar_number, status, status_changed_at, submitted_at, is_co_branded, co_brand_name, co_brand_logo_url, co_brand_tagline, created_at, updated_at
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
   ).run(
     id,
     tenantId,
@@ -691,6 +908,10 @@ export function createDirectPartnerApplication(data: {
     status,
     now,
     now,
+    isCoBranded,
+    coBrandName,
+    coBrandLogoUrl,
+    coBrandTagline,
     now,
     now
   );

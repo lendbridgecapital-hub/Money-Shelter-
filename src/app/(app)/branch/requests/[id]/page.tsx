@@ -1,7 +1,12 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { requireUser } from '@/lib/auth';
-import { getApplicationById } from '@/lib/repos/applicationsRepo';
+import {
+  getApplicationById,
+  listApplicationsForSubDsa,
+  listApplicationsForBranch,
+  isHeadOfficeBranch,
+} from '@/lib/repos/applicationsRepo';
 import { getUserById } from '@/lib/repos/usersRepo';
 import { listDocumentsForApplication } from '@/lib/repos/documentsRepo';
 import { listStatusHistory } from '@/lib/repos/statusHistoryRepo';
@@ -37,6 +42,11 @@ export default async function RequestDetailPage({ params }: { params: { id: stri
     if (application.channelPartnerId !== user.id && application.createdById !== user.id) {
       notFound();
     }
+  } else if (user.role === 'SUB_DSA') {
+    const allowed = listApplicationsForSubDsa(user.id, user.tenantId || 'default');
+    if (!allowed.some((a) => a.id === application.id)) {
+      notFound();
+    }
   } else if (user.role === 'RELATIONSHIP_MANAGER') {
     const isDirectRM = application.relationshipManagerId === user.id || application.createdById === user.id;
     let isAssignedPartnerApp = false;
@@ -56,6 +66,23 @@ export default async function RequestDetailPage({ params }: { params: { id: stri
 
     if (!isDirectRM && !isAssignedPartnerApp && !isOperatingBranchRM) {
       notFound();
+    }
+  } else if (user.role === 'OPERATIONS') {
+    const isLendbridgeOrSatara =
+      user.email.toLowerCase().includes('lendbridge') ||
+      user.email.toLowerCase().includes('satara') ||
+      user.name.toLowerCase().includes('lendbridge') ||
+      user.name.toLowerCase().includes('satara');
+
+    const branchToFilter = isLendbridgeOrSatara
+      ? 'br_satara_01'
+      : (user.branchId && !isHeadOfficeBranch(user.branchId) ? user.branchId : null);
+
+    if (branchToFilter) {
+      const branchApps = listApplicationsForBranch(branchToFilter, user.tenantId || 'default');
+      if (!branchApps.some((a) => a.id === application.id)) {
+        notFound();
+      }
     }
   }
 
