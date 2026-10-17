@@ -366,12 +366,6 @@ export function getDocumentGroupsForApplication(
           helperText: 'Official bank foreclosure letter or 12-month loan repayment statement (PDF or image)',
           accept: '.pdf,image/*',
         },
-        {
-          name: 'existing_sanction_letter',
-          label: 'Existing Loan Sanction Letter / Amortization Schedule',
-          helperText: 'Optional copy of original sanction letter or repayment schedule',
-          accept: '.pdf,image/*',
-        },
       ],
     });
 
