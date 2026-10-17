@@ -12,7 +12,7 @@ export function getBaseUrl(): string {
   if (process.env.NEXTAUTH_URL && !process.env.NEXTAUTH_URL.includes('localhost')) {
     return process.env.NEXTAUTH_URL.replace(/\/$/, '');
   }
-  return 'https://quicfinsure.onrender.com';
+  return 'https://money-shelter.onrender.com';
 }
 
 function getOpsAndSupportUsers(tenantId = 'default'): User[] {

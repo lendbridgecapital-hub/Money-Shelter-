@@ -68,7 +68,7 @@ export default async function RequestDetailPage({ params }: { params: { id: stri
     process.env.APP_BASE_URL ||
     process.env.RENDER_EXTERNAL_URL ||
     (process.env.NEXTAUTH_URL && !process.env.NEXTAUTH_URL.includes('localhost') ? process.env.NEXTAUTH_URL : '') ||
-    'https://quicfinsure.onrender.com';
+    'https://money-shelter.onrender.com';
 
   const docsByCategory = documents.reduce<Record<string, typeof documents>>((acc, doc) => {
     (acc[doc.category] ||= []).push(doc);

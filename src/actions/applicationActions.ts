@@ -98,7 +98,7 @@ export async function createApplicationLinkAction(
       process.env.APP_BASE_URL ||
       process.env.RENDER_EXTERNAL_URL ||
       process.env.NEXTAUTH_URL ||
-      'https://quicfinsure.onrender.com';
+      'https://money-shelter.onrender.com';
     const cleanBase = base.replace(/\/$/, '');
     const url = `${cleanBase}/apply/${token}${loanType ? `?loanType=${loanType}` : ''}`;
 
@@ -347,7 +347,7 @@ export async function submitDirectPartnerLoanAction(formData: FormData): Promise
       process.env.APP_BASE_URL ||
       process.env.RENDER_EXTERNAL_URL ||
       process.env.NEXTAUTH_URL ||
-      'https://quicfinsure.onrender.com';
+      'https://money-shelter.onrender.com';
     const cleanBase = base.replace(/\/$/, '');
     const url = `${cleanBase}/apply/${application.token}`;
 

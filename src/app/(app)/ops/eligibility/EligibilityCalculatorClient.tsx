@@ -723,7 +723,7 @@ export default function EligibilityCalculatorClient({
                         offerData,
                         typeof window !== 'undefined'
                           ? (selectedApp?.id ? `${window.location.origin}/offer/eligibility/${selectedApp.id}` : window.location.href)
-                          : 'https://quicfinsure.onrender.com'
+                          : 'https://money-shelter.onrender.com'
                       )}
                       target="_blank"
                       rel="noopener noreferrer"

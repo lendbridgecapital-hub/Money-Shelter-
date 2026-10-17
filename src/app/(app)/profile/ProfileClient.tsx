@@ -30,10 +30,10 @@ export default function ProfileClient({ user, settings }: Props) {
 
   const cardPath = `/card/${user.id}`;
   const getPublicBase = () => {
-    if (typeof window === 'undefined') return 'https://quicfinsure.onrender.com';
+    if (typeof window === 'undefined') return 'https://money-shelter.onrender.com';
     const origin = window.location.origin;
     if (!origin || origin.includes('localhost') || origin.startsWith('capacitor:')) {
-      return 'https://quicfinsure.onrender.com';
+      return 'https://money-shelter.onrender.com';
     }
     return origin;
   };
