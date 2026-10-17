@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { getBranchByCodeOrSlug } from '@/lib/repos/branchesRepo';
 import { getCompanySettings } from '@/lib/settings';
 import CoBrandedLoginForm from '@/components/CoBrandedLoginForm';
+import LendbridgePartnerLoginForm from '@/components/LendbridgePartnerLoginForm';
 
 interface PageProps {
   params: {
@@ -12,6 +13,14 @@ interface PageProps {
 }
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+  const cleanCode = params.branchCode.toLowerCase();
+  if (cleanCode === 'lendbridge' || cleanCode === 'lendbridge-capital' || cleanCode === 'lendbridgecapital') {
+    return {
+      title: 'Lendbridge Capital — Channel Partner Login | Money Shelter',
+      description: 'Official Channel Partner & DSA Login Portal for Lendbridge Capital in strategic partnership with Money Shelter.',
+    };
+  }
+
   const branch = getBranchByCodeOrSlug(params.branchCode);
   const settings = await getCompanySettings();
   if (!branch) {
@@ -29,8 +38,14 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 }
 
 export default async function CoBrandedLoginPage({ params }: PageProps) {
-  const branch = getBranchByCodeOrSlug(params.branchCode);
   const settings = await getCompanySettings();
+  const cleanCode = params.branchCode.toLowerCase();
+
+  if (cleanCode === 'lendbridge' || cleanCode === 'lendbridge-capital' || cleanCode === 'lendbridgecapital') {
+    return <LendbridgePartnerLoginForm companySettings={settings} />;
+  }
+
+  const branch = getBranchByCodeOrSlug(params.branchCode);
 
   if (!branch) {
     return (

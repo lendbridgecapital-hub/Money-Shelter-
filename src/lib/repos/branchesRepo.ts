@@ -41,7 +41,7 @@ export function getBranchByCodeOrSlug(identifier: string, tenantId = 'default'):
   if (!identifier) return undefined;
   const clean = identifier.trim().toLowerCase();
   const branches = listBranches(tenantId);
-  return branches.find((b) =>
+  const found = branches.find((b) =>
     b.code.toLowerCase() === clean ||
     b.id.toLowerCase() === clean ||
     b.name.toLowerCase() === clean ||
@@ -49,6 +49,39 @@ export function getBranchByCodeOrSlug(identifier: string, tenantId = 'default'):
     (b.coBrandName && b.coBrandName.toLowerCase() === clean) ||
     (b.coBrandName && b.coBrandName.toLowerCase().replace(/\s+/g, '-') === clean)
   );
+
+  if (found) return found;
+
+  // Dedicated fallback for Lendbridge Capital partner desk
+  if (clean === 'lendbridge' || clean === 'lendbridge-capital' || clean === 'lendbridgecapital') {
+    const satara = branches.find((b) => b.id === 'br_satara_01' || b.name.toLowerCase().includes('satara'));
+    if (satara) {
+      return {
+        ...satara,
+        isCoBranded: true,
+        coBrandName: satara.coBrandName || 'Lendbridge Capital',
+        coBrandTagline: satara.coBrandTagline || 'In strategic loan distribution partnership with Money Shelter Pvt. Ltd.',
+      };
+    }
+    return {
+      id: 'br_lendbridge_01',
+      tenantId: 'default',
+      name: 'Satara Branch',
+      code: 'STR01',
+      type: 'BRANCH',
+      address: 'Powai Naka, Satara, Maharashtra - 415001',
+      phone: '+91 2162 230011',
+      email: 'partners@lendbridgecapital.com',
+      isCoBranded: true,
+      coBrandName: 'Lendbridge Capital',
+      coBrandTagline: 'In strategic loan distribution partnership with Money Shelter Pvt. Ltd.',
+      coBrandLogoUrl: null,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+  }
+
+  return undefined;
 }
 
 export function branchCodeExists(code: string, excludeId?: string): boolean {
