@@ -124,13 +124,13 @@ export default function MobileDrawer({
         ? 'Share Onboarding Link'
         : 'Partner Onboard Form',
       href: isOps && branchId
-        ? `/partner/onboard?branchId=${encodeURIComponent(branchId)}`
+        ? (isSatara ? `/lendbridge/onboard` : `/partner/onboard?branchId=${encodeURIComponent(branchId)}`)
         : isSubDsa && userId
-        ? `/partner/onboard?subDsaId=${userId}${isSatara ? '&branchId=br_satara_01' : ''}`
+        ? (isSatara ? `/lendbridge/onboard?subDsaId=${userId}` : `/partner/onboard?subDsaId=${userId}`)
         : isRM && userId
-        ? `/partner/onboard?rmId=${userId}${isSatara ? '&branchId=br_satara_01' : ''}`
+        ? (isSatara ? `/lendbridge/onboard?rmId=${userId}` : `/partner/onboard?rmId=${userId}`)
         : isSatara
-        ? '/partner/onboard?branchId=br_satara_01'
+        ? '/lendbridge/onboard'
         : '/partner/onboard',
       icon: '🔗',
       show: isAdmin || isSupport || (isRM && !isDedicatedSiteRm) || isSubDsa || isOps,

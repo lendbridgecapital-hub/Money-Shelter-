@@ -32,8 +32,9 @@ export default function SubDsaCommandHub({ user }: Props) {
   );
 
   const origin = typeof window !== 'undefined' ? window.location.origin : '';
-  const sataraParam = isSatara ? '&branchId=br_satara_01' : '';
-  const agentReferralLink = `${origin}/partner/onboard?subDsaId=${user.id}&code=${user.partnerCode || ''}${sataraParam}`;
+  const agentReferralLink = isSatara
+    ? `${origin}/lendbridge/onboard?subDsaId=${user.id}&code=${user.partnerCode || ''}`
+    : `${origin}/partner/onboard?subDsaId=${user.id}&code=${user.partnerCode || ''}`;
 
   const copyAgentLink = () => {
     navigator.clipboard.writeText(agentReferralLink);

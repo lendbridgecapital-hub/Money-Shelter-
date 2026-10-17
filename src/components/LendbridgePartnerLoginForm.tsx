@@ -137,7 +137,7 @@ export default function LendbridgePartnerLoginForm({}: LendbridgePartnerLoginFor
           <p className="text-xs text-slate-500">
             Want to become a Lendbridge Capital partner?{' '}
             <Link
-              href="/partner/onboard?branchId=br_satara_01"
+              href="/lendbridge/onboard"
               className="font-bold text-blue-700 hover:text-blue-900 transition-colors"
             >
               Onboard &amp; Sign Partner Agreement →

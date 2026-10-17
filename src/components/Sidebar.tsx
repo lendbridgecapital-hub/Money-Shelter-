@@ -147,13 +147,13 @@ export default function Sidebar({
         ? 'Share Onboarding Link'
         : 'Public Onboard Link',
       href: isOps && branchId
-        ? `/partner/onboard?branchId=${encodeURIComponent(branchId)}`
+        ? (isSatara ? `/lendbridge/onboard` : `/partner/onboard?branchId=${encodeURIComponent(branchId)}`)
         : isSubDsa && userId
-        ? `/partner/onboard?subDsaId=${userId}${isSatara ? '&branchId=br_satara_01' : ''}`
+        ? (isSatara ? `/lendbridge/onboard?subDsaId=${userId}` : `/partner/onboard?subDsaId=${userId}`)
         : isRM && userId
-        ? `/partner/onboard?rmId=${userId}${isSatara ? '&branchId=br_satara_01' : ''}`
+        ? (isSatara ? `/lendbridge/onboard?rmId=${userId}` : `/partner/onboard?rmId=${userId}`)
         : isSatara
-        ? '/partner/onboard?branchId=br_satara_01'
+        ? '/lendbridge/onboard'
         : '/partner/onboard',
       icon: '🔗',
       description: isOps

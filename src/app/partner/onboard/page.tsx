@@ -4,6 +4,9 @@ import { getCompanySettings } from '@/lib/settings';
 import { getUserById, getPartnerByCode } from '@/lib/repos/usersRepo';
 import PartnerOnboardingForm from '@/components/PartnerOnboardingForm';
 
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 export async function generateMetadata({
   searchParams,
 }: {
@@ -41,12 +44,13 @@ export async function generateMetadata({
   }
 
   if (isSatara) {
-    const roleTitle = isExplicitSubDsa ? 'Sub-DSA Master Partner' : 'Channel Partner & Sub-DSA';
-    const brandTitle = `Lendbridge Capital — ${roleTitle} Registration (Satara Branch)`;
+    const roleTitle = isExplicitSubDsa ? 'Sub-DSA Master Partner' : 'Channel Partner';
+    const brandTitle = `Lendbridge Capital — ${roleTitle} Registration`;
     const brandDesc = isExplicitSubDsa
-      ? 'Join Lendbridge Capital (Satara Branch) as an authorized Sub-DSA Master Partner. Build your agency network, earn override commissions, and originate loans.'
-      : 'Join Lendbridge Capital (Satara Branch) as an authorized Channel Partner. Execute referral agreement digitally, get instant payouts and receive your partner code.';
+      ? 'WHERE BORROWING MEETS TRUST • Build your agency network, earn override commissions, and originate loans with Lendbridge Capital (Satara Branch).'
+      : 'WHERE BORROWING MEETS TRUST • Join Lendbridge Capital (Satara Branch) as an authorized Channel Partner. Execute referral agreement digitally, get instant payouts and receive your partner code.';
     const logoUrl = 'https://money-shelter.onrender.com/lendbridge-logo.png';
+    const currentUrl = `https://money-shelter.onrender.com/partner/onboard?${isExplicitSubDsa ? 'role=SUB_DSA&' : ''}branchId=br_satara_01`;
 
     return {
       title: brandTitle,
@@ -54,8 +58,16 @@ export async function generateMetadata({
       openGraph: {
         title: brandTitle,
         description: brandDesc,
+        url: currentUrl,
         siteName: 'Lendbridge Capital',
-        images: [{ url: logoUrl, width: 800, height: 400, alt: 'Lendbridge Capital Logo' }],
+        images: [
+          {
+            url: logoUrl,
+            width: 800,
+            height: 400,
+            alt: 'Lendbridge Capital Logo',
+          },
+        ],
         type: 'website',
       },
       twitter: {
@@ -68,10 +80,28 @@ export async function generateMetadata({
     };
   }
 
+  const title = isExplicitSubDsa
+    ? 'Sub-DSA Master Partner Onboarding — Money Shelter'
+    : 'Channel Partner Onboarding — Money Shelter';
+  const desc = 'WHERE MONEY MEETS TRUST • Official partner registration and digital referral agreement with Money Shelter Pvt. Ltd.';
+  const defaultLogo = 'https://money-shelter.onrender.com/money-shelter-logo.png';
+
   return {
-    title: 'Partner Onboarding — Money Shelter Sub-DSA & Channel Partner Registration',
-    description:
-      'Join Money Shelter Pvt. Ltd. as an authorized Channel Partner & Sub-DSA. Execute referral agreement digitally and receive your partner code.',
+    title,
+    description: desc,
+    openGraph: {
+      title,
+      description: desc,
+      siteName: 'Money Shelter',
+      images: [{ url: defaultLogo, width: 800, height: 400, alt: 'Money Shelter Logo' }],
+      type: 'website',
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title,
+      description: desc,
+      images: [defaultLogo],
+    },
   };
 }
 

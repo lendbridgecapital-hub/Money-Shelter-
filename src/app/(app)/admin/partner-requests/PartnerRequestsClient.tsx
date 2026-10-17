@@ -427,21 +427,29 @@ export default function PartnerRequestsClient({
           {userBranch && (
             <>
               <Link
-                href={`/partner/onboard?branchId=${encodeURIComponent(userBranch.id)}`}
+                href={
+                  userBranch.id === 'br_satara_01' || userBranch.name.toLowerCase().includes('satara')
+                    ? '/lendbridge/onboard'
+                    : `/partner/onboard?branchId=${encodeURIComponent(userBranch.id)}`
+                }
                 target="_blank"
                 className="px-3 py-1.5 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-emerald-800 text-xs font-semibold rounded-lg transition inline-flex items-center gap-1.5"
               >
                 <span>🔗</span>
-                <span>Branch Partner Form</span>
+                <span>{userBranch.id === 'br_satara_01' || userBranch.name.toLowerCase().includes('satara') ? 'Lendbridge Partner Form' : 'Branch Partner Form'}</span>
                 <span>↗</span>
               </Link>
               <Link
-                href={`/partner/onboard?role=SUB_DSA&branchId=${encodeURIComponent(userBranch.id)}`}
+                href={
+                  userBranch.id === 'br_satara_01' || userBranch.name.toLowerCase().includes('satara')
+                    ? '/lendbridge/sub-dsa'
+                    : `/partner/onboard?role=SUB_DSA&branchId=${encodeURIComponent(userBranch.id)}`
+                }
                 target="_blank"
                 className="px-3 py-1.5 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 text-indigo-800 text-xs font-semibold rounded-lg transition inline-flex items-center gap-1.5"
               >
                 <span>🏢</span>
-                <span>Branch Sub-DSA Form</span>
+                <span>{userBranch.id === 'br_satara_01' || userBranch.name.toLowerCase().includes('satara') ? 'Lendbridge Sub-DSA Form' : 'Branch Sub-DSA Form'}</span>
                 <span>↗</span>
               </Link>
             </>

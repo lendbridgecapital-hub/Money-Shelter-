@@ -239,14 +239,21 @@ export default function PartnerComplianceManager({
       ? '&branchId=br_satara_01'
       : (selectedShareBranchId && selectedShareBranchId !== 'all' ? `&branchId=${encodeURIComponent(selectedShareBranchId)}` : '');
 
+    if (isSatara) {
+      if (isSubDsa && currentUserId) {
+        return `${origin}/lendbridge/onboard?subDsaId=${currentUserId}`;
+      }
+      if (isRM && currentUserId) {
+        return `${origin}/lendbridge/onboard?rmId=${currentUserId}`;
+      }
+      return `${origin}/lendbridge/onboard`;
+    }
+
     if (isSubDsa && currentUserId) {
       return `${origin}/partner/onboard?subDsaId=${currentUserId}${branchParam}`;
     }
     if (isRM && currentUserId) {
       return `${origin}/partner/onboard?rmId=${currentUserId}${branchParam}`;
-    }
-    if (isSatara) {
-      return `${origin}/partner/onboard?branchId=br_satara_01`;
     }
     if (selectedShareBranchId && selectedShareBranchId !== 'all') {
       return `${origin}/partner/onboard?branchId=${encodeURIComponent(selectedShareBranchId)}`;
@@ -260,13 +267,18 @@ export default function PartnerComplianceManager({
       ? '&branchId=br_satara_01'
       : (selectedShareBranchId && selectedShareBranchId !== 'all' ? `&branchId=${encodeURIComponent(selectedShareBranchId)}` : '');
 
+    if (isSatara) {
+      if (isRM && currentUserId) {
+        return `${origin}/lendbridge/sub-dsa?rmId=${currentUserId}`;
+      }
+      const refParam = currentUserId ? `?ref=${currentUserId}` : '';
+      return `${origin}/lendbridge/sub-dsa${refParam}`;
+    }
+
     if (isRM && currentUserId) {
       return `${origin}/partner/onboard?role=SUB_DSA&rmId=${currentUserId}${branchParam}`;
     }
     const refParam = currentUserId ? `&ref=${currentUserId}` : '';
-    if (isSatara) {
-      return `${origin}/partner/onboard?role=SUB_DSA&branchId=br_satara_01${refParam}`;
-    }
     if (selectedShareBranchId && selectedShareBranchId !== 'all') {
       return `${origin}/partner/onboard?role=SUB_DSA&branchId=${encodeURIComponent(selectedShareBranchId)}${refParam}`;
     }
