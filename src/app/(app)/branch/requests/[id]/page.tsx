@@ -5,7 +5,7 @@ import {
   getApplicationById,
   listApplicationsForSubDsa,
   listApplicationsForBranch,
-  isHeadOfficeBranch,
+  isPuneHqOperationsUser,
 } from '@/lib/repos/applicationsRepo';
 import { getUserById } from '@/lib/repos/usersRepo';
 import { listDocumentsForApplication } from '@/lib/repos/documentsRepo';
@@ -68,19 +68,22 @@ export default async function RequestDetailPage({ params }: { params: { id: stri
       notFound();
     }
   } else if (user.role === 'OPERATIONS') {
-    const isLendbridgeOrSatara =
-      user.email.toLowerCase().includes('lendbridge') ||
-      user.email.toLowerCase().includes('satara') ||
-      user.name.toLowerCase().includes('lendbridge') ||
-      user.name.toLowerCase().includes('satara');
+    if (!isPuneHqOperationsUser(user)) {
+      const isLendbridgeOrSatara =
+        user.email.toLowerCase().includes('lendbridge') ||
+        user.email.toLowerCase().includes('satara') ||
+        user.name.toLowerCase().includes('lendbridge') ||
+        user.name.toLowerCase().includes('satara') ||
+        user.branchId === 'br_satara_01';
 
-    const branchToFilter = isLendbridgeOrSatara
-      ? 'br_satara_01'
-      : (user.branchId && !isHeadOfficeBranch(user.branchId) ? user.branchId : null);
+      const branchToFilter = isLendbridgeOrSatara ? 'br_satara_01' : (user.branchId || null);
 
-    if (branchToFilter) {
-      const branchApps = listApplicationsForBranch(branchToFilter, user.tenantId || 'default');
-      if (!branchApps.some((a) => a.id === application.id)) {
+      if (branchToFilter) {
+        const branchApps = listApplicationsForBranch(branchToFilter, user.tenantId || 'default');
+        if (!branchApps.some((a) => a.id === application.id)) {
+          notFound();
+        }
+      } else {
         notFound();
       }
     }

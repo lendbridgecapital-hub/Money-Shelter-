@@ -2,7 +2,7 @@ import { redirect } from 'next/navigation';
 import { requireUser } from '@/lib/auth';
 import { listAllNetworkPartners, listPartnersByRm, listPartnersBySubDsa, listRelationshipManagers, isUserDedicatedSiteRm } from '@/lib/repos/usersRepo';
 import { listBranches } from '@/lib/repos/branchesRepo';
-import { listAllApplications, listApplicationsForSubDsa } from '@/lib/repos/applicationsRepo';
+import { listApplicationsByRole } from '@/lib/repos/applicationsRepo';
 import { listRewardLedger } from '@/lib/repos/rewardsRepo';
 import PartnerComplianceManager from './PartnerComplianceManager';
 
@@ -32,10 +32,7 @@ export default async function PartnersPage() {
   const relationshipManagers = listRelationshipManagers(user.tenantId || 'default');
 
   // Fetch applications & rewards for team activity inspection
-  const applications =
-    user.role === 'SUB_DSA'
-      ? listApplicationsForSubDsa(user.id, user.tenantId || 'default')
-      : listAllApplications(user.tenantId || 'default');
+  const applications = listApplicationsByRole(user);
 
   const rewardLedger = listRewardLedger({ tenantId: user.tenantId || 'default' });
 

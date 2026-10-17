@@ -419,16 +419,68 @@ export function listApplicationsForSubDsa(subDsaId: string, tenantId = 'default'
 }
 
 export function isHeadOfficeBranch(branchId?: string | null): boolean {
-  if (!branchId || branchId === 'default' || branchId === 'all') return true;
+  if (!branchId) return false;
   const clean = branchId.trim().toLowerCase();
+  if (clean === 'default' || clean === 'all') return false;
   const branches = listBranches();
   const b = branches.find(
     (x) => x.id.toLowerCase() === clean || x.code.toLowerCase() === clean || x.name.toLowerCase() === clean
   );
-  if (!b) return false;
+  if (!b) {
+    return clean.includes('pune') || clean.includes('bavdhan') || clean === 'pun01';
+  }
   const name = b.name.toLowerCase();
   const code = b.code.toLowerCase();
-  return name.includes('head office') || name.includes('bavdhan hq') || code === 'pun01';
+  return (
+    name.includes('pune') ||
+    name.includes('head office') ||
+    name.includes('bavdhan') ||
+    code === 'pun01' ||
+    b.id === 'br_c95492722e36abe1'
+  );
+}
+
+export function isPuneHqOperationsUser(user: User): boolean {
+  if (user.role !== 'OPERATIONS' && user.role !== 'ADMIN' && user.role !== 'CENTRAL_SUPPORT') {
+    return false;
+  }
+  if (user.role === 'ADMIN' || user.role === 'CENTRAL_SUPPORT') {
+    return true;
+  }
+  const email = (user.email || '').toLowerCase();
+  const name = (user.name || '').toLowerCase();
+  if (
+    email.includes('lendbridge') ||
+    email.includes('satara') ||
+    name.includes('lendbridge') ||
+    name.includes('satara') ||
+    user.branchId === 'br_satara_01' ||
+    user.branchId === 'STR01'
+  ) {
+    return false;
+  }
+
+  // Check branch ID / name / code / email
+  if (user.branchId && isHeadOfficeBranch(user.branchId)) {
+    return true;
+  }
+  if (
+    user.branchName &&
+    (user.branchName.toLowerCase().includes('pune') ||
+      user.branchName.toLowerCase().includes('bavdhan') ||
+      user.branchName.toLowerCase().includes('head office'))
+  ) {
+    return true;
+  }
+  if (
+    email === 'ops@quickfinsure.com' ||
+    email === 'ops@moneyshelter.in' ||
+    email.includes('pune')
+  ) {
+    return true;
+  }
+
+  return false;
 }
 
 export function listApplicationsForBranch(branchIdentifier: string, tenantId = 'default'): LoanApplication[] {
@@ -527,25 +579,33 @@ export function listApplicationsByRole(user: User): LoanApplication[] {
   }
 
   // 4. Operations Team:
-  // If user is assigned to a specific branch (e.g. Satara Branch, Mumbai, Bengaluru, or any regional branch):
-  // Strictly filter cases belonging to that branch and any sites mapped to it!
+  // - Main Operation Hub is "Pune HQ": users in Pune HQ Operations can see all cases logged in from anywhere!
+  // - Rest of all operations users (e.g. Satara Branch / Lendbridge Capital, Mumbai, Bengaluru):
+  //   Strictly see ONLY their branch's cases!
   if (user.role === 'OPERATIONS') {
+    if (isPuneHqOperationsUser(user)) {
+      return listAllApplications(user.tenantId || 'default');
+    }
+
     const isLendbridgeOrSatara =
       user.email.toLowerCase().includes('lendbridge') ||
       user.email.toLowerCase().includes('satara') ||
       user.name.toLowerCase().includes('lendbridge') ||
-      user.name.toLowerCase().includes('satara');
+      user.name.toLowerCase().includes('satara') ||
+      user.branchId === 'br_satara_01';
 
     if (isLendbridgeOrSatara) {
       return listApplicationsForBranch('br_satara_01', user.tenantId || 'default');
     }
 
-    if (user.branchId && !isHeadOfficeBranch(user.branchId)) {
+    if (user.branchId) {
       return listApplicationsForBranch(user.branchId, user.tenantId || 'default');
     }
+
+    return [];
   }
 
-  // 5. Central HQ Support and Admin see all
+  // 5. Admin and Central HQ Support have full rights and see all
   return listAllApplications(user.tenantId || 'default');
 }
 

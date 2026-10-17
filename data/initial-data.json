@@ -507,7 +507,7 @@
       "relationship_manager_name": "Relationship Manager (Pune)",
       "status": "DOCUMENTS_IN",
       "created_at": "2026-10-14T09:00:00.000Z",
-      "updated_at": "2026-10-14T09:00:00.000Z",
+      "updated_at": "2026-10-17T02:45:17.587Z",
       "submitted_at": "2026-10-14T09:00:00.000Z",
       "full_name": "Rohan Dattatray Patil",
       "mobile": "9822011223",
@@ -521,7 +521,8 @@
       "is_co_branded": 1,
       "co_brand_name": "Lendbridge Capital",
       "co_brand_logo_url": "/lendbridge-logo.svg",
-      "co_brand_tagline": "Co-Branded Regional Partner of Money Shelter"
+      "co_brand_tagline": "Co-Branded Regional Partner of Money Shelter",
+      "tat_alerts_sent": "{\"DOCUMENTS_IN_RED\":\"2026-10-17T02:45:17.587Z\"}"
     },
     {
       "id": "app_satara_aniket_deshmukh",
@@ -566,7 +567,7 @@
       "relationship_manager_name": "Relationship Manager (Pune)",
       "status": "DOCUMENTS_IN",
       "created_at": "2026-10-05T08:30:00.000Z",
-      "updated_at": "2026-10-05T08:30:00.000Z",
+      "updated_at": "2026-10-17T02:45:17.587Z",
       "submitted_at": "2026-10-05T08:30:00.000Z",
       "full_name": "Tejashree Jadhav",
       "mobile": "9822154321",
@@ -576,7 +577,8 @@
       "monthly_income": 65000,
       "existing_emi": 12000,
       "pan_number": "ABCDE1234F",
-      "aadhaar_number": "987654321012"
+      "aadhaar_number": "987654321012",
+      "tat_alerts_sent": "{\"DOCUMENTS_IN_RED\":\"2026-10-17T02:45:17.587Z\"}"
     },
     {
       "id": "app_cf9c8a12a2f70de2",
@@ -588,9 +590,11 @@
       "channel_partner_name": "Channel Partner (Apex Wealth)",
       "relationship_manager_id": "usr_300b47def112f815",
       "relationship_manager_name": "Relationship Manager (Pune)",
-      "status": "LINK_SHARED",
+      "status": "FAILED",
       "created_at": "2026-09-25T20:17:17.797Z",
-      "updated_at": "2026-09-25T20:17:17.797Z"
+      "updated_at": "2026-10-17T02:45:17.587Z",
+      "status_changed_at": "2026-10-17T02:45:17.587Z",
+      "tat_alerts_sent": "{}"
     },
     {
       "id": "app_b51a60e91273e0e6",
@@ -604,13 +608,14 @@
       "relationship_manager_name": "Relationship Manager (Pune)",
       "status": "DOCUMENTS_IN",
       "created_at": "2026-09-25T20:17:17.808Z",
-      "updated_at": "2026-09-25T20:17:17.814Z",
+      "updated_at": "2026-10-17T02:45:17.587Z",
       "full_name": "Rahul Anant Deshmukh",
       "mobile": "9876543210",
       "email": "rahul.deshmukh@gmail.com",
       "loan_type": "HOME_LOAN",
       "loan_amount": 3500000,
-      "submitted_at": "2026-09-25T20:17:17.814Z"
+      "submitted_at": "2026-09-25T20:17:17.814Z",
+      "tat_alerts_sent": "{\"DOCUMENTS_IN_RED\":\"2026-10-17T02:45:17.587Z\"}"
     },
     {
       "id": "app_6e2e4f1b63328a25",
@@ -624,7 +629,7 @@
       "relationship_manager_name": "Relationship Manager (Pune)",
       "status": "SENT_TO_BANK",
       "created_at": "2026-09-25T20:17:17.831Z",
-      "updated_at": "2026-09-25T20:17:17.842Z",
+      "updated_at": "2026-10-17T02:45:17.587Z",
       "full_name": "Priya Shrikant Sharma",
       "mobile": "9822114455",
       "email": "priya.sharma@yahoo.com",
@@ -633,7 +638,8 @@
       "submitted_at": "2026-09-25T20:17:17.838Z",
       "bank_id": "bnk_f03cc189959f135b",
       "bank_name": "HDFC Bank",
-      "sent_to_bank_at": "2026-09-25T20:17:17.842Z"
+      "sent_to_bank_at": "2026-09-25T20:17:17.842Z",
+      "tat_alerts_sent": "{\"SENT_TO_BANK_ORANGE\":\"2026-10-17T02:45:17.587Z\"}"
     },
     {
       "id": "app_5ea22d43376eafcc",
@@ -647,7 +653,7 @@
       "relationship_manager_name": "Relationship Manager (Pune)",
       "status": "DOCUMENTS_REQUIRED",
       "created_at": "2026-09-25T20:17:17.863Z",
-      "updated_at": "2026-09-25T20:17:17.877Z",
+      "updated_at": "2026-10-17T02:45:17.587Z",
       "full_name": "Amit Jayant Patel",
       "mobile": "9890123456",
       "email": "amit.patel@pateltech.com",
@@ -656,7 +662,8 @@
       "submitted_at": "2026-09-25T20:17:17.871Z",
       "bank_id": "bnk_25a55dbb6381610c",
       "bank_name": "ICICI Bank",
-      "sent_to_bank_at": "2026-09-25T20:17:17.874Z"
+      "sent_to_bank_at": "2026-09-25T20:17:17.874Z",
+      "tat_alerts_sent": "{\"DOCUMENTS_REQUIRED_ORANGE\":\"2026-10-17T02:45:17.587Z\"}"
     },
     {
       "id": "app_0d09e57f6a4537be",
@@ -758,7 +765,7 @@
       "relationship_manager_name": null,
       "status": "SENT_TO_BANK",
       "created_at": "2026-09-26T06:08:14.301Z",
-      "updated_at": "2026-09-26T06:15:14.359Z",
+      "updated_at": "2026-10-17T02:45:17.587Z",
       "full_name": "test two",
       "mobile": "9877665654",
       "email": "test@two.cp",
@@ -767,7 +774,8 @@
       "submitted_at": "2026-09-26T06:11:16.194Z",
       "bank_id": "bnk_f03cc189959f135b",
       "bank_name": "HDFC Bank",
-      "sent_to_bank_at": "2026-09-26T06:15:14.359Z"
+      "sent_to_bank_at": "2026-09-26T06:15:14.359Z",
+      "tat_alerts_sent": "{\"SENT_TO_BANK_ORANGE\":\"2026-10-17T02:45:17.587Z\"}"
     },
     {
       "id": "app_3c6ea7302e95f055",
@@ -779,9 +787,11 @@
       "channel_partner_name": "Channel Partner",
       "relationship_manager_id": "usr_300b47def112f815",
       "relationship_manager_name": "Relationship Manager (Pune)",
-      "status": "LINK_SHARED",
+      "status": "FAILED",
       "created_at": "2026-09-26T15:22:32.540Z",
-      "updated_at": "2026-09-26T15:22:32.540Z"
+      "updated_at": "2026-10-17T02:45:17.587Z",
+      "status_changed_at": "2026-10-17T02:45:17.587Z",
+      "tat_alerts_sent": "{}"
     },
     {
       "id": "app_d6047db53c070635",
@@ -793,9 +803,11 @@
       "channel_partner_name": "Channel Partner (Apex Wealth)",
       "relationship_manager_id": "usr_300b47def112f815",
       "relationship_manager_name": "Relationship Manager (Pune)",
-      "status": "LINK_SHARED",
+      "status": "FAILED",
       "created_at": "2026-09-26T21:26:13.725Z",
-      "updated_at": "2026-09-26T21:26:13.725Z"
+      "updated_at": "2026-10-17T02:45:17.587Z",
+      "status_changed_at": "2026-10-17T02:45:17.587Z",
+      "tat_alerts_sent": "{}"
     },
     {
       "id": "app_0f3f936d24153723",
@@ -807,9 +819,11 @@
       "channel_partner_name": "Channel Partner (Apex Wealth)",
       "relationship_manager_id": "usr_300b47def112f815",
       "relationship_manager_name": "Relationship Manager (Pune)",
-      "status": "LINK_SHARED",
+      "status": "FAILED",
       "created_at": "2026-09-27T05:37:04.169Z",
-      "updated_at": "2026-09-27T05:37:04.169Z"
+      "updated_at": "2026-10-17T02:45:17.587Z",
+      "status_changed_at": "2026-10-17T02:45:17.587Z",
+      "tat_alerts_sent": "{}"
     },
     {
       "id": "app_d6bdc7c9aa906157",
@@ -821,9 +835,11 @@
       "channel_partner_name": "Channel Partner (Apex Wealth)",
       "relationship_manager_id": "usr_300b47def112f815",
       "relationship_manager_name": "Relationship Manager (Pune)",
-      "status": "LINK_SHARED",
+      "status": "FAILED",
       "created_at": "2026-09-27T05:57:56.817Z",
-      "updated_at": "2026-09-27T05:57:56.817Z"
+      "updated_at": "2026-10-17T02:45:17.587Z",
+      "status_changed_at": "2026-10-17T02:45:17.587Z",
+      "tat_alerts_sent": "{}"
     },
     {
       "id": "app_54afa5e03e6a4da2",
@@ -835,9 +851,11 @@
       "channel_partner_name": "Channel Partner (Apex Wealth)",
       "relationship_manager_id": "usr_300b47def112f815",
       "relationship_manager_name": "Relationship Manager (Pune)",
-      "status": "LINK_SHARED",
+      "status": "FAILED",
       "created_at": "2026-09-27T06:03:15.205Z",
-      "updated_at": "2026-09-27T06:03:15.205Z"
+      "updated_at": "2026-10-17T02:45:17.587Z",
+      "status_changed_at": "2026-10-17T02:45:17.587Z",
+      "tat_alerts_sent": "{}"
     },
     {
       "id": "app_e76c6ef2ab94e086",
@@ -887,9 +905,11 @@
       "email": "testborrower@gmail.com",
       "loan_type": "PERSONAL_LOAN",
       "loan_amount": 500000,
-      "status": "LINK_SHARED",
+      "status": "FAILED",
       "created_at": "2026-09-27T08:42:20.662Z",
-      "updated_at": "2026-09-27T08:42:20.662Z"
+      "updated_at": "2026-10-17T02:45:17.587Z",
+      "status_changed_at": "2026-10-17T02:45:17.587Z",
+      "tat_alerts_sent": "{}"
     },
     {
       "id": "app_9cccc23f5fdb05c1",
@@ -901,9 +921,11 @@
       "channel_partner_name": "Channel Partner (Apex Wealth)",
       "relationship_manager_id": "usr_300b47def112f815",
       "relationship_manager_name": "Relationship Manager (Pune)",
-      "status": "LINK_SHARED",
+      "status": "FAILED",
       "created_at": "2026-09-27T17:48:38.917Z",
-      "updated_at": "2026-09-27T17:48:38.917Z"
+      "updated_at": "2026-10-17T02:45:17.587Z",
+      "status_changed_at": "2026-10-17T02:45:17.587Z",
+      "tat_alerts_sent": "{}"
     },
     {
       "id": "app_27e65265ec6bb683",
@@ -915,9 +937,11 @@
       "channel_partner_name": "Channel Partner (Apex Wealth)",
       "relationship_manager_id": "usr_300b47def112f815",
       "relationship_manager_name": "Relationship Manager (Pune)",
-      "status": "LINK_SHARED",
+      "status": "FAILED",
       "created_at": "2026-09-27T17:49:35.623Z",
-      "updated_at": "2026-09-27T17:49:35.623Z"
+      "updated_at": "2026-10-17T02:45:17.587Z",
+      "status_changed_at": "2026-10-17T02:45:17.587Z",
+      "tat_alerts_sent": "{}"
     },
     {
       "id": "app_0f43fb78d920d987",
@@ -929,9 +953,11 @@
       "channel_partner_name": "Channel Partner (Apex Wealth)",
       "relationship_manager_id": "usr_300b47def112f815",
       "relationship_manager_name": "Relationship Manager (Pune)",
-      "status": "LINK_SHARED",
+      "status": "FAILED",
       "created_at": "2026-09-27T17:51:31.840Z",
-      "updated_at": "2026-09-27T17:51:31.840Z"
+      "updated_at": "2026-10-17T02:45:17.587Z",
+      "status_changed_at": "2026-10-17T02:45:17.587Z",
+      "tat_alerts_sent": "{}"
     },
     {
       "id": "app_be89bf81ef31f30c",
@@ -943,9 +969,11 @@
       "channel_partner_name": "Channel Partner (Apex Wealth)",
       "relationship_manager_id": "usr_300b47def112f815",
       "relationship_manager_name": "Relationship Manager (Pune)",
-      "status": "LINK_SHARED",
+      "status": "FAILED",
       "created_at": "2026-09-27T17:52:05.291Z",
-      "updated_at": "2026-09-27T17:52:05.291Z"
+      "updated_at": "2026-10-17T02:45:17.587Z",
+      "status_changed_at": "2026-10-17T02:45:17.587Z",
+      "tat_alerts_sent": "{}"
     },
     {
       "id": "app_ebbde4382440028d",
@@ -957,9 +985,11 @@
       "channel_partner_name": "Channel Partner (Apex Wealth)",
       "relationship_manager_id": "usr_300b47def112f815",
       "relationship_manager_name": "Relationship Manager (Pune)",
-      "status": "LINK_SHARED",
+      "status": "FAILED",
       "created_at": "2026-09-28T06:23:14.133Z",
-      "updated_at": "2026-09-28T06:23:14.133Z"
+      "updated_at": "2026-10-17T02:45:17.587Z",
+      "status_changed_at": "2026-10-17T02:45:17.587Z",
+      "tat_alerts_sent": "{}"
     },
     {
       "id": "app_4073eba55a3b545f",
@@ -1004,9 +1034,11 @@
       "channel_partner_name": "Channel Partner (Apex Wealth)",
       "relationship_manager_id": "usr_300b47def112f815",
       "relationship_manager_name": "Relationship Manager (Pune)",
-      "status": "LINK_SHARED",
+      "status": "FAILED",
       "created_at": "2026-09-28T13:16:05.615Z",
-      "updated_at": "2026-09-28T13:16:05.615Z"
+      "updated_at": "2026-10-17T02:45:17.587Z",
+      "status_changed_at": "2026-10-17T02:45:17.587Z",
+      "tat_alerts_sent": "{}"
     },
     {
       "id": "app_166d9a6cd6bcf202",
@@ -1051,9 +1083,11 @@
       "channel_partner_name": "Channel Partner (Apex Wealth)",
       "relationship_manager_id": "usr_300b47def112f815",
       "relationship_manager_name": "Relationship Manager (Pune)",
-      "status": "LINK_SHARED",
+      "status": "FAILED",
       "created_at": "2026-09-28T14:46:57.192Z",
-      "updated_at": "2026-09-28T14:46:57.192Z"
+      "updated_at": "2026-10-17T02:45:17.587Z",
+      "status_changed_at": "2026-10-17T02:45:17.587Z",
+      "tat_alerts_sent": "{}"
     },
     {
       "id": "app_5272b62255bb44ae",
@@ -1065,9 +1099,11 @@
       "channel_partner_name": "Channel Partner",
       "relationship_manager_id": null,
       "relationship_manager_name": null,
-      "status": "LINK_SHARED",
+      "status": "FAILED",
       "created_at": "2026-09-28T14:55:24.050Z",
-      "updated_at": "2026-09-28T14:55:24.050Z"
+      "updated_at": "2026-10-17T02:45:17.587Z",
+      "status_changed_at": "2026-10-17T02:45:17.587Z",
+      "tat_alerts_sent": "{}"
     },
     {
       "id": "app_ea98a941398796fc",
@@ -1079,9 +1115,11 @@
       "channel_partner_name": "Channel Partner (Apex Wealth)",
       "relationship_manager_id": "usr_300b47def112f815",
       "relationship_manager_name": "Relationship Manager (Pune)",
-      "status": "LINK_SHARED",
+      "status": "FAILED",
       "created_at": "2026-09-28T14:57:01.539Z",
-      "updated_at": "2026-09-28T14:57:01.539Z"
+      "updated_at": "2026-10-17T02:45:17.587Z",
+      "status_changed_at": "2026-10-17T02:45:17.587Z",
+      "tat_alerts_sent": "{}"
     },
     {
       "id": "app_c46588b3ee18aeae",
@@ -1093,9 +1131,11 @@
       "channel_partner_name": "Channel Partner (Apex Wealth)",
       "relationship_manager_id": "usr_300b47def112f815",
       "relationship_manager_name": "Relationship Manager (Pune)",
-      "status": "LINK_SHARED",
+      "status": "FAILED",
       "created_at": "2026-09-28T16:34:16.391Z",
-      "updated_at": "2026-09-28T16:34:16.391Z"
+      "updated_at": "2026-10-17T02:45:17.587Z",
+      "status_changed_at": "2026-10-17T02:45:17.587Z",
+      "tat_alerts_sent": "{}"
     }
   ],
   "application_documents": [
@@ -1993,6 +2033,142 @@
       "note": "Applicant KYC & Loan Requirement submitted by Channel Partner. Staged in Documents In bucket for Operations review.",
       "changed_by_id": "usr_c465ccc6caaec25c",
       "changed_at": "2026-10-05T08:30:00.000Z"
+    },
+    {
+      "id": "sh_71a797e9b739a71b",
+      "application_id": "app_c46588b3ee18aeae",
+      "status": "FAILED",
+      "note": "Application link auto-expired after 7 days of customer inactivity. Status marked as Failed in Failed / Rejected bucket.",
+      "changed_by_id": "SYSTEM_SLA_ENGINE",
+      "changed_at": "2026-10-17T02:45:17.640Z"
+    },
+    {
+      "id": "sh_de3ddce57667e8d5",
+      "application_id": "app_ea98a941398796fc",
+      "status": "FAILED",
+      "note": "Application link auto-expired after 7 days of customer inactivity. Status marked as Failed in Failed / Rejected bucket.",
+      "changed_by_id": "SYSTEM_SLA_ENGINE",
+      "changed_at": "2026-10-17T02:45:17.674Z"
+    },
+    {
+      "id": "sh_1b1c8fadac8ec37d",
+      "application_id": "app_5272b62255bb44ae",
+      "status": "FAILED",
+      "note": "Application link auto-expired after 7 days of customer inactivity. Status marked as Failed in Failed / Rejected bucket.",
+      "changed_by_id": "SYSTEM_SLA_ENGINE",
+      "changed_at": "2026-10-17T02:45:17.704Z"
+    },
+    {
+      "id": "sh_50222828ac73395b",
+      "application_id": "app_7d73ec99f6dea02a",
+      "status": "FAILED",
+      "note": "Application link auto-expired after 7 days of customer inactivity. Status marked as Failed in Failed / Rejected bucket.",
+      "changed_by_id": "SYSTEM_SLA_ENGINE",
+      "changed_at": "2026-10-17T02:45:17.738Z"
+    },
+    {
+      "id": "sh_dfdd7de036d8492c",
+      "application_id": "app_35cc2a7fa96b2e75",
+      "status": "FAILED",
+      "note": "Application link auto-expired after 7 days of customer inactivity. Status marked as Failed in Failed / Rejected bucket.",
+      "changed_by_id": "SYSTEM_SLA_ENGINE",
+      "changed_at": "2026-10-17T02:45:17.771Z"
+    },
+    {
+      "id": "sh_776e31a9dc1309ad",
+      "application_id": "app_ebbde4382440028d",
+      "status": "FAILED",
+      "note": "Application link auto-expired after 7 days of customer inactivity. Status marked as Failed in Failed / Rejected bucket.",
+      "changed_by_id": "SYSTEM_SLA_ENGINE",
+      "changed_at": "2026-10-17T02:45:17.804Z"
+    },
+    {
+      "id": "sh_51f8d35ad2726750",
+      "application_id": "app_be89bf81ef31f30c",
+      "status": "FAILED",
+      "note": "Application link auto-expired after 7 days of customer inactivity. Status marked as Failed in Failed / Rejected bucket.",
+      "changed_by_id": "SYSTEM_SLA_ENGINE",
+      "changed_at": "2026-10-17T02:45:17.861Z"
+    },
+    {
+      "id": "sh_9ee564e1c08919ac",
+      "application_id": "app_0f43fb78d920d987",
+      "status": "FAILED",
+      "note": "Application link auto-expired after 7 days of customer inactivity. Status marked as Failed in Failed / Rejected bucket.",
+      "changed_by_id": "SYSTEM_SLA_ENGINE",
+      "changed_at": "2026-10-17T02:45:17.898Z"
+    },
+    {
+      "id": "sh_37cd651a8db92216",
+      "application_id": "app_27e65265ec6bb683",
+      "status": "FAILED",
+      "note": "Application link auto-expired after 7 days of customer inactivity. Status marked as Failed in Failed / Rejected bucket.",
+      "changed_by_id": "SYSTEM_SLA_ENGINE",
+      "changed_at": "2026-10-17T02:45:17.933Z"
+    },
+    {
+      "id": "sh_5d494382d95fd907",
+      "application_id": "app_9cccc23f5fdb05c1",
+      "status": "FAILED",
+      "note": "Application link auto-expired after 7 days of customer inactivity. Status marked as Failed in Failed / Rejected bucket.",
+      "changed_by_id": "SYSTEM_SLA_ENGINE",
+      "changed_at": "2026-10-17T02:45:17.964Z"
+    },
+    {
+      "id": "sh_7f6f95e39e4df483",
+      "application_id": "app_f7658b734196aa24",
+      "status": "FAILED",
+      "note": "Application link auto-expired after 7 days of customer inactivity. Status marked as Failed in Failed / Rejected bucket.",
+      "changed_by_id": "SYSTEM_SLA_ENGINE",
+      "changed_at": "2026-10-17T02:45:17.994Z"
+    },
+    {
+      "id": "sh_06daf3a8bb591d97",
+      "application_id": "app_54afa5e03e6a4da2",
+      "status": "FAILED",
+      "note": "Application link auto-expired after 7 days of customer inactivity. Status marked as Failed in Failed / Rejected bucket.",
+      "changed_by_id": "SYSTEM_SLA_ENGINE",
+      "changed_at": "2026-10-17T02:45:18.024Z"
+    },
+    {
+      "id": "sh_7446397ff9a4e230",
+      "application_id": "app_d6bdc7c9aa906157",
+      "status": "FAILED",
+      "note": "Application link auto-expired after 7 days of customer inactivity. Status marked as Failed in Failed / Rejected bucket.",
+      "changed_by_id": "SYSTEM_SLA_ENGINE",
+      "changed_at": "2026-10-17T02:45:18.047Z"
+    },
+    {
+      "id": "sh_edc52f34846bd91b",
+      "application_id": "app_0f3f936d24153723",
+      "status": "FAILED",
+      "note": "Application link auto-expired after 7 days of customer inactivity. Status marked as Failed in Failed / Rejected bucket.",
+      "changed_by_id": "SYSTEM_SLA_ENGINE",
+      "changed_at": "2026-10-17T02:45:18.081Z"
+    },
+    {
+      "id": "sh_8665517139b5133f",
+      "application_id": "app_d6047db53c070635",
+      "status": "FAILED",
+      "note": "Application link auto-expired after 7 days of customer inactivity. Status marked as Failed in Failed / Rejected bucket.",
+      "changed_by_id": "SYSTEM_SLA_ENGINE",
+      "changed_at": "2026-10-17T02:45:18.173Z"
+    },
+    {
+      "id": "sh_0b1819ee8ce4a282",
+      "application_id": "app_3c6ea7302e95f055",
+      "status": "FAILED",
+      "note": "Application link auto-expired after 7 days of customer inactivity. Status marked as Failed in Failed / Rejected bucket.",
+      "changed_by_id": "SYSTEM_SLA_ENGINE",
+      "changed_at": "2026-10-17T02:45:18.215Z"
+    },
+    {
+      "id": "sh_f503aff48ecb8f74",
+      "application_id": "app_cf9c8a12a2f70de2",
+      "status": "FAILED",
+      "note": "Application link auto-expired after 7 days of customer inactivity. Status marked as Failed in Failed / Rejected bucket.",
+      "changed_by_id": "SYSTEM_SLA_ENGINE",
+      "changed_at": "2026-10-17T02:45:18.349Z"
     }
   ],
   "banks": [
@@ -2788,6 +2964,325 @@
       "message": "vasant la has submitted Sub-DSA onboarding. Pending KYC verification.",
       "read": 0,
       "created_at": "2026-09-28T17:16:42.194Z"
+    },
+    {
+      "id": "notif_c58fec70b471cb49",
+      "tenant_id": "default",
+      "recipient_id": "usr_b10b93143d89bfaa",
+      "recipient_role": "ADMIN",
+      "application_id": "app_satara_rohan_patil",
+      "title": "🚨 Warning Alarm: Critical TAT Breach on Case Rohan Dattatray Patil",
+      "message": "Case for Rohan Dattatray Patil (9822011223) has been waiting in Documents In bucket for 2d 17h (exceeding standard 30m limit). Immediate administrative action is required.",
+      "read": 0,
+      "created_at": "2026-10-17T02:45:17.599Z"
+    },
+    {
+      "id": "notif_a9ba156cf4e9b601",
+      "tenant_id": "default",
+      "recipient_id": "usr_b10b93143d89bfaa",
+      "recipient_role": "ADMIN",
+      "application_id": "app_tejashree_jadhav_2026",
+      "title": "🚨 Warning Alarm: Critical TAT Breach on Case Tejashree Jadhav",
+      "message": "Case for Tejashree Jadhav (9822154321) has been waiting in Documents In bucket for 11d 18h (exceeding standard 30m limit). Immediate administrative action is required.",
+      "read": 0,
+      "created_at": "2026-10-17T02:45:17.617Z"
+    },
+    {
+      "id": "notif_586b7996b17ffa4f",
+      "tenant_id": "default",
+      "recipient_id": "usr_c465ccc6caaec25c",
+      "recipient_role": "CHANNEL_PARTNER",
+      "application_id": "app_c46588b3ee18aeae",
+      "title": "❌ Case Link Expired: app_d587a11e18f6abb1b493d3e3",
+      "message": "The loan application link for app_d587a11e18f6abb1b493d3e3 has expired after 7 days without customer submission. Case status is marked as Failed.",
+      "read": 0,
+      "created_at": "2026-10-17T02:45:17.648Z"
+    },
+    {
+      "id": "notif_a455deaafff54f3a",
+      "tenant_id": "default",
+      "recipient_id": "usr_c465ccc6caaec25c",
+      "recipient_role": "CHANNEL_PARTNER",
+      "application_id": "app_ea98a941398796fc",
+      "title": "❌ Case Link Expired: app_dcd7625cf9d71073184bf447",
+      "message": "The loan application link for app_dcd7625cf9d71073184bf447 has expired after 7 days without customer submission. Case status is marked as Failed.",
+      "read": 0,
+      "created_at": "2026-10-17T02:45:17.681Z"
+    },
+    {
+      "id": "notif_255bcc62de8d3976",
+      "tenant_id": "default",
+      "recipient_id": "usr_b10b93143d89bfaa",
+      "recipient_role": "CHANNEL_PARTNER",
+      "application_id": "app_5272b62255bb44ae",
+      "title": "❌ Case Link Expired: app_17a0e2a85f05e9d0f09a2347",
+      "message": "The loan application link for app_17a0e2a85f05e9d0f09a2347 has expired after 7 days without customer submission. Case status is marked as Failed.",
+      "read": 0,
+      "created_at": "2026-10-17T02:45:17.711Z"
+    },
+    {
+      "id": "notif_26919ba4b2eb3bdb",
+      "tenant_id": "default",
+      "recipient_id": "usr_c465ccc6caaec25c",
+      "recipient_role": "CHANNEL_PARTNER",
+      "application_id": "app_7d73ec99f6dea02a",
+      "title": "❌ Case Link Expired: app_b7195025be3493b6127257ea",
+      "message": "The loan application link for app_b7195025be3493b6127257ea has expired after 7 days without customer submission. Case status is marked as Failed.",
+      "read": 0,
+      "created_at": "2026-10-17T02:45:17.747Z"
+    },
+    {
+      "id": "notif_7e708e8b2a1d374d",
+      "tenant_id": "default",
+      "recipient_id": "usr_c465ccc6caaec25c",
+      "recipient_role": "CHANNEL_PARTNER",
+      "application_id": "app_35cc2a7fa96b2e75",
+      "title": "❌ Case Link Expired: app_57ed46d9fd7e9a11b18eabe5",
+      "message": "The loan application link for app_57ed46d9fd7e9a11b18eabe5 has expired after 7 days without customer submission. Case status is marked as Failed.",
+      "read": 0,
+      "created_at": "2026-10-17T02:45:17.780Z"
+    },
+    {
+      "id": "notif_f887729fde867b1d",
+      "tenant_id": "default",
+      "recipient_id": "usr_c465ccc6caaec25c",
+      "recipient_role": "CHANNEL_PARTNER",
+      "application_id": "app_ebbde4382440028d",
+      "title": "❌ Case Link Expired: app_5e27202580a6bacdfc75e20e",
+      "message": "The loan application link for app_5e27202580a6bacdfc75e20e has expired after 7 days without customer submission. Case status is marked as Failed.",
+      "read": 0,
+      "created_at": "2026-10-17T02:45:17.811Z"
+    },
+    {
+      "id": "notif_cdcc5360c90025b6",
+      "tenant_id": "default",
+      "recipient_id": "usr_c465ccc6caaec25c",
+      "recipient_role": "CHANNEL_PARTNER",
+      "application_id": "app_be89bf81ef31f30c",
+      "title": "❌ Case Link Expired: app_90c160427227880c2a6e9c6e",
+      "message": "The loan application link for app_90c160427227880c2a6e9c6e has expired after 7 days without customer submission. Case status is marked as Failed.",
+      "read": 0,
+      "created_at": "2026-10-17T02:45:17.870Z"
+    },
+    {
+      "id": "notif_2abf401061edb51d",
+      "tenant_id": "default",
+      "recipient_id": "usr_c465ccc6caaec25c",
+      "recipient_role": "CHANNEL_PARTNER",
+      "application_id": "app_0f43fb78d920d987",
+      "title": "❌ Case Link Expired: app_38be4b1388233cc4aa2ba73a",
+      "message": "The loan application link for app_38be4b1388233cc4aa2ba73a has expired after 7 days without customer submission. Case status is marked as Failed.",
+      "read": 0,
+      "created_at": "2026-10-17T02:45:17.907Z"
+    },
+    {
+      "id": "notif_54047391c30e22ba",
+      "tenant_id": "default",
+      "recipient_id": "usr_c465ccc6caaec25c",
+      "recipient_role": "CHANNEL_PARTNER",
+      "application_id": "app_27e65265ec6bb683",
+      "title": "❌ Case Link Expired: app_d437eb8e08051522d2dcd5f8",
+      "message": "The loan application link for app_d437eb8e08051522d2dcd5f8 has expired after 7 days without customer submission. Case status is marked as Failed.",
+      "read": 0,
+      "created_at": "2026-10-17T02:45:17.942Z"
+    },
+    {
+      "id": "notif_cb77eb181d0daceb",
+      "tenant_id": "default",
+      "recipient_id": "usr_c465ccc6caaec25c",
+      "recipient_role": "CHANNEL_PARTNER",
+      "application_id": "app_9cccc23f5fdb05c1",
+      "title": "❌ Case Link Expired: app_9bfe105b72eed490619c9f7e",
+      "message": "The loan application link for app_9bfe105b72eed490619c9f7e has expired after 7 days without customer submission. Case status is marked as Failed.",
+      "read": 0,
+      "created_at": "2026-10-17T02:45:17.972Z"
+    },
+    {
+      "id": "notif_7b615842305c8812",
+      "tenant_id": "default",
+      "recipient_id": "usr_c465ccc6caaec25c",
+      "recipient_role": "CHANNEL_PARTNER",
+      "application_id": "app_f7658b734196aa24",
+      "title": "❌ Case Link Expired: Test Borrower From Card",
+      "message": "The loan application link for Test Borrower From Card has expired after 7 days without customer submission. Case status is marked as Failed.",
+      "read": 0,
+      "created_at": "2026-10-17T02:45:18.000Z"
+    },
+    {
+      "id": "notif_c4a79cc7c5998a59",
+      "tenant_id": "default",
+      "recipient_id": "usr_c465ccc6caaec25c",
+      "recipient_role": "CHANNEL_PARTNER",
+      "application_id": "app_54afa5e03e6a4da2",
+      "title": "❌ Case Link Expired: app_aa360a9d771fec37b30afb93",
+      "message": "The loan application link for app_aa360a9d771fec37b30afb93 has expired after 7 days without customer submission. Case status is marked as Failed.",
+      "read": 0,
+      "created_at": "2026-10-17T02:45:18.029Z"
+    },
+    {
+      "id": "notif_450ded6682ab72cc",
+      "tenant_id": "default",
+      "recipient_id": "usr_c465ccc6caaec25c",
+      "recipient_role": "CHANNEL_PARTNER",
+      "application_id": "app_d6bdc7c9aa906157",
+      "title": "❌ Case Link Expired: app_eafa8007258a6dcd40a012e4",
+      "message": "The loan application link for app_eafa8007258a6dcd40a012e4 has expired after 7 days without customer submission. Case status is marked as Failed.",
+      "read": 0,
+      "created_at": "2026-10-17T02:45:18.055Z"
+    },
+    {
+      "id": "notif_e13f0544a5bf6cb5",
+      "tenant_id": "default",
+      "recipient_id": "usr_c465ccc6caaec25c",
+      "recipient_role": "CHANNEL_PARTNER",
+      "application_id": "app_0f3f936d24153723",
+      "title": "❌ Case Link Expired: app_29c1a9359d8b7159af6ddb56",
+      "message": "The loan application link for app_29c1a9359d8b7159af6ddb56 has expired after 7 days without customer submission. Case status is marked as Failed.",
+      "read": 0,
+      "created_at": "2026-10-17T02:45:18.135Z"
+    },
+    {
+      "id": "notif_eb60e341be63e4df",
+      "tenant_id": "default",
+      "recipient_id": "usr_c465ccc6caaec25c",
+      "recipient_role": "CHANNEL_PARTNER",
+      "application_id": "app_d6047db53c070635",
+      "title": "❌ Case Link Expired: app_1840436c6bf29ae7f0c8c2ee",
+      "message": "The loan application link for app_1840436c6bf29ae7f0c8c2ee has expired after 7 days without customer submission. Case status is marked as Failed.",
+      "read": 0,
+      "created_at": "2026-10-17T02:45:18.185Z"
+    },
+    {
+      "id": "notif_d15ef6adf73475e9",
+      "tenant_id": "default",
+      "recipient_id": "usr_300b47def112f815",
+      "recipient_role": "CHANNEL_PARTNER",
+      "application_id": "app_3c6ea7302e95f055",
+      "title": "❌ Case Link Expired: app_fa24827fcc7c03fa0a8fa5da",
+      "message": "The loan application link for app_fa24827fcc7c03fa0a8fa5da has expired after 7 days without customer submission. Case status is marked as Failed.",
+      "read": 0,
+      "created_at": "2026-10-17T02:45:18.222Z"
+    },
+    {
+      "id": "notif_4cc6611143e42b33",
+      "tenant_id": "default",
+      "recipient_id": "usr_lendbridge_ops_01",
+      "recipient_role": "OPERATIONS",
+      "application_id": "app_8ddd4dc65bcbe9cd",
+      "title": "⚠️ Bank Follow-Up Required: HDFC Bank",
+      "message": "Please take follow up with bank HDFC Bank for case test two. Case has been in Sent to Bank bucket for over 48 hours.",
+      "read": 0,
+      "created_at": "2026-10-17T02:45:18.234Z"
+    },
+    {
+      "id": "notif_8e66ba4093f6b590",
+      "tenant_id": "default",
+      "recipient_id": "usr_98e4038bd7756e46",
+      "recipient_role": "OPERATIONS",
+      "application_id": "app_8ddd4dc65bcbe9cd",
+      "title": "⚠️ Bank Follow-Up Required: HDFC Bank",
+      "message": "Please take follow up with bank HDFC Bank for case test two. Case has been in Sent to Bank bucket for over 48 hours.",
+      "read": 0,
+      "created_at": "2026-10-17T02:45:18.240Z"
+    },
+    {
+      "id": "notif_308702b2b8265a3d",
+      "tenant_id": "default",
+      "recipient_id": "usr_60c53afcf5a771b7",
+      "recipient_role": "OPERATIONS",
+      "application_id": "app_8ddd4dc65bcbe9cd",
+      "title": "⚠️ Bank Follow-Up Required: HDFC Bank",
+      "message": "Please take follow up with bank HDFC Bank for case test two. Case has been in Sent to Bank bucket for over 48 hours.",
+      "read": 0,
+      "created_at": "2026-10-17T02:45:18.248Z"
+    },
+    {
+      "id": "notif_97a32ed86b302a02",
+      "tenant_id": "default",
+      "recipient_id": "usr_b10b93143d89bfaa",
+      "recipient_role": "ADMIN",
+      "application_id": "app_8ddd4dc65bcbe9cd",
+      "title": "⚠️ Bank Follow-Up Required: HDFC Bank",
+      "message": "Please take follow up with bank HDFC Bank for case test two. Case has been in Sent to Bank bucket for over 48 hours.",
+      "read": 0,
+      "created_at": "2026-10-17T02:45:18.256Z"
+    },
+    {
+      "id": "notif_91cf549a27d3c139",
+      "tenant_id": "default",
+      "recipient_id": "usr_c465ccc6caaec25c",
+      "recipient_role": "CHANNEL_PARTNER",
+      "application_id": "app_5ea22d43376eafcc",
+      "title": "⚠️ Action Required: Pending Documents Follow-up",
+      "message": "Please contact customer Amit Jayant Patel (9890123456) for pending documents. Case has been in Docs Required bucket for over 12 hours.",
+      "read": 0,
+      "created_at": "2026-10-17T02:45:18.269Z"
+    },
+    {
+      "id": "notif_0c7e20bbdb1b0fa8",
+      "tenant_id": "default",
+      "recipient_id": "usr_lendbridge_ops_01",
+      "recipient_role": "OPERATIONS",
+      "application_id": "app_6e2e4f1b63328a25",
+      "title": "⚠️ Bank Follow-Up Required: HDFC Bank",
+      "message": "Please take follow up with bank HDFC Bank for case Priya Shrikant Sharma. Case has been in Sent to Bank bucket for over 48 hours.",
+      "read": 0,
+      "created_at": "2026-10-17T02:45:18.285Z"
+    },
+    {
+      "id": "notif_b724fc6a51c76227",
+      "tenant_id": "default",
+      "recipient_id": "usr_98e4038bd7756e46",
+      "recipient_role": "OPERATIONS",
+      "application_id": "app_6e2e4f1b63328a25",
+      "title": "⚠️ Bank Follow-Up Required: HDFC Bank",
+      "message": "Please take follow up with bank HDFC Bank for case Priya Shrikant Sharma. Case has been in Sent to Bank bucket for over 48 hours.",
+      "read": 0,
+      "created_at": "2026-10-17T02:45:18.292Z"
+    },
+    {
+      "id": "notif_81db3c8a959e2e04",
+      "tenant_id": "default",
+      "recipient_id": "usr_60c53afcf5a771b7",
+      "recipient_role": "OPERATIONS",
+      "application_id": "app_6e2e4f1b63328a25",
+      "title": "⚠️ Bank Follow-Up Required: HDFC Bank",
+      "message": "Please take follow up with bank HDFC Bank for case Priya Shrikant Sharma. Case has been in Sent to Bank bucket for over 48 hours.",
+      "read": 0,
+      "created_at": "2026-10-17T02:45:18.301Z"
+    },
+    {
+      "id": "notif_35cdf6b53b0a1232",
+      "tenant_id": "default",
+      "recipient_id": "usr_b10b93143d89bfaa",
+      "recipient_role": "ADMIN",
+      "application_id": "app_6e2e4f1b63328a25",
+      "title": "⚠️ Bank Follow-Up Required: HDFC Bank",
+      "message": "Please take follow up with bank HDFC Bank for case Priya Shrikant Sharma. Case has been in Sent to Bank bucket for over 48 hours.",
+      "read": 0,
+      "created_at": "2026-10-17T02:45:18.311Z"
+    },
+    {
+      "id": "notif_febe46e940939989",
+      "tenant_id": "default",
+      "recipient_id": "usr_b10b93143d89bfaa",
+      "recipient_role": "ADMIN",
+      "application_id": "app_b51a60e91273e0e6",
+      "title": "🚨 Warning Alarm: Critical TAT Breach on Case Rahul Anant Deshmukh",
+      "message": "Case for Rahul Anant Deshmukh (9876543210) has been waiting in Documents In bucket for 21d 6h (exceeding standard 30m limit). Immediate administrative action is required.",
+      "read": 0,
+      "created_at": "2026-10-17T02:45:18.327Z"
+    },
+    {
+      "id": "notif_38733c80204618d5",
+      "tenant_id": "default",
+      "recipient_id": "usr_c465ccc6caaec25c",
+      "recipient_role": "CHANNEL_PARTNER",
+      "application_id": "app_cf9c8a12a2f70de2",
+      "title": "❌ Case Link Expired: app_a12a6dd36c600b2da494b27b",
+      "message": "The loan application link for app_a12a6dd36c600b2da494b27b has expired after 7 days without customer submission. Case status is marked as Failed.",
+      "read": 0,
+      "created_at": "2026-10-17T02:45:18.357Z"
     }
   ],
   "required_documents": [
@@ -2845,6 +3340,7 @@
       "created_at": "2026-09-28T14:51:20.928Z"
     }
   ],
+  "email_logs": [],
   "bank_policy_cards": [
     {
       "id": "bpc_00000001",
@@ -3042,5 +3538,7 @@
       "created_at": "2026-10-03T11:29:54.484Z",
       "updated_at": "2026-10-03T11:29:54.484Z"
     }
-  ]
+  ],
+  "reward_ledger": [],
+  "reward_redemptions": []
 }
