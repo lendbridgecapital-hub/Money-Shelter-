@@ -360,16 +360,20 @@ Compliance Undertaking: DPDP Act 2023 compliant, Zero-Cash Collection policy, no
       {/* Brand Header */}
       <div className="text-center mb-6 sm:mb-8">
         {isBranchCoBranded && coBrandLogoUrl ? (
-          <div className="flex items-center justify-center gap-3 mb-3">
-            <div className="p-2 rounded-2xl bg-white border border-slate-200 shadow-md">
+          <div className="flex items-center justify-center gap-3 sm:gap-4 mb-4">
+            <div className="h-20 sm:h-24 w-36 sm:w-44 px-3 sm:px-4 py-2 sm:py-2.5 rounded-2xl bg-white border border-slate-200/90 shadow-md flex items-center justify-center shrink-0 transition-shadow hover:shadow-lg">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={coBrandLogoUrl}
                 alt={coBrandName || 'Partner'}
-                className="h-10 object-contain"
+                className="h-14 sm:h-16 w-auto max-w-[130px] sm:max-w-[155px] max-h-full object-contain transition-transform hover:scale-105 duration-200"
+                onError={(e) => {
+                  (e.currentTarget as HTMLImageElement).src = '/lendbridge-logo.png';
+                }}
               />
             </div>
-            <span className="text-slate-400 font-bold text-sm">×</span>
-            <div className="p-2 rounded-2xl bg-white border border-slate-200 shadow-md">
+            <span className="text-slate-400 font-extrabold text-lg sm:text-xl select-none">×</span>
+            <div className="h-20 sm:h-24 w-36 sm:w-44 px-3 sm:px-4 py-2 sm:py-2.5 rounded-2xl bg-white border border-slate-200/90 shadow-md flex items-center justify-center shrink-0 transition-shadow hover:shadow-lg">
               <MoneyShelterLogo variant="dark" size="md" />
             </div>
           </div>
