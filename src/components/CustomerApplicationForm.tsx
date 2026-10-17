@@ -340,7 +340,7 @@ export default function CustomerApplicationForm({ token, settings, branch, initi
         <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-600 leading-relaxed mb-6">
           <p className="font-semibold text-slate-900 mb-1">Self-Attestation Undertaking:</p>
           I hereby declare that all information and uploaded documents submitted by me are true, correct, and complete
-          to the best of my knowledge. I authorize <strong>{settings.companyName}</strong> and its partner financial
+          to the best of my knowledge. I authorize <strong>{branch?.id === 'br_satara_01' || branch?.code === 'STR01' || branch?.isCoBranded || branch?.name?.toLowerCase().includes('satara') ? 'Lendbridge Capital' : settings.companyName}</strong> and its partner financial
           institutions to verify my details, fetch my credit bureau report (CIBIL / Experian), and process my loan
           application in accordance with applicable banking and RBI regulations.
         </div>

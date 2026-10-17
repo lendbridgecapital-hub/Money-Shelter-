@@ -1,3 +1,4 @@
+import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { getApplicationByToken } from '@/lib/repos/applicationsRepo';
@@ -6,6 +7,45 @@ import { getUserById } from '@/lib/repos/usersRepo';
 import { getCompanySettings } from '@/lib/settings';
 import { LOAN_TYPE_LABELS, formatCurrencyINR } from '@/lib/format';
 import ExitFormButton from '@/components/ExitFormButton';
+
+export async function generateMetadata({
+  params,
+}: {
+  params: { token: string };
+}): Promise<Metadata> {
+  const application = getApplicationByToken(params.token);
+  const settings = await getCompanySettings(application?.tenantId || 'default');
+  const branch = application?.branchId ? getBranchById(application.branchId) : null;
+
+  const isSatara = Boolean(
+    application?.branchId === 'br_satara_01' ||
+    branch?.id === 'br_satara_01' ||
+    branch?.code === 'STR01' ||
+    application?.isCoBranded ||
+    branch?.isCoBranded ||
+    application?.coBrandName?.toLowerCase().includes('lendbridge') ||
+    branch?.name?.toLowerCase().includes('satara')
+  );
+
+  if (isSatara) {
+    return {
+      title: 'Application Submitted Successfully — Lendbridge Capital',
+      description: 'Your loan application and KYC documents have been received by Lendbridge Capital (Satara Branch).',
+      openGraph: {
+        title: 'Application Submitted Successfully — Lendbridge Capital',
+        description: 'Your loan application and KYC documents have been received by Lendbridge Capital (Satara Branch).',
+        siteName: 'Lendbridge Capital',
+        images: [{ url: 'https://money-shelter.onrender.com/lendbridge-logo.png' }],
+      },
+      icons: [{ rel: 'icon', url: '/lendbridge-logo.png' }],
+    };
+  }
+
+  return {
+    title: `Application Submitted — ${settings.companyName}`,
+    description: `Your loan application has been received by ${settings.companyName}.`,
+  };
+}
 
 export default async function ApplicationSuccessPage({ params }: { params: { token: string } }) {
   const application = getApplicationByToken(params.token);
@@ -40,10 +80,20 @@ export default async function ApplicationSuccessPage({ params }: { params: { tok
   const settings = await getCompanySettings(application.tenantId || 'default');
   const branch = getBranchById(application.branchId);
 
-  const isCoBranded = Boolean(application.isCoBranded || branch?.isCoBranded);
-  const coBrandName = application.coBrandName || branch?.coBrandName || null;
-  const coBrandLogoUrl = application.coBrandLogoUrl || branch?.coBrandLogoUrl || null;
-  const coBrandTagline = application.coBrandTagline || branch?.coBrandTagline || null;
+  const isSatara = Boolean(
+    application.branchId === 'br_satara_01' ||
+    branch?.id === 'br_satara_01' ||
+    branch?.code === 'STR01' ||
+    application.isCoBranded ||
+    branch?.isCoBranded ||
+    application.coBrandName?.toLowerCase().includes('lendbridge') ||
+    branch?.name?.toLowerCase().includes('satara')
+  );
+
+  const isCoBranded = Boolean(application.isCoBranded || branch?.isCoBranded || isSatara);
+  const coBrandName = isSatara ? 'Lendbridge Capital' : (application.coBrandName || branch?.coBrandName || null);
+  const coBrandLogoUrl = isSatara ? '/lendbridge-logo.png' : (application.coBrandLogoUrl || branch?.coBrandLogoUrl || null);
+  const coBrandTagline = isSatara ? 'Satara Regional Branch' : (application.coBrandTagline || branch?.coBrandTagline || null);
 
   const advisor = application.channelPartnerId
     ? getUserById(application.channelPartnerId)
@@ -51,15 +101,24 @@ export default async function ApplicationSuccessPage({ params }: { params: { tok
     ? getUserById(application.createdById)
     : undefined;
   const advisorName = advisor?.name || application.channelPartnerName || application.createdByName || 'Your Financial Advisor';
-  const advisorPhone = advisor?.phone || branch?.phone || settings.supportPhone;
-  const advisorEmail = advisor?.email || branch?.email || settings.officialEmail;
+  const advisorPhone = isSatara ? '+91 9049301089' : (advisor?.phone || branch?.phone || settings.supportPhone);
+  const advisorEmail = isSatara ? 'lendbridgecapital@gmail.com' : (advisor?.email || branch?.email || settings.officialEmail);
   const cleanPhone = advisorPhone ? advisorPhone.replace(/[^0-9]/g, '').slice(-10) : '';
 
   return (
     <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4 sm:p-6">
       <div className="max-w-xl w-full bg-white border border-slate-200 rounded-3xl p-6 sm:p-10 text-center shadow-lg">
-        {/* Dual Brand Logos when Co-Branded */}
-        {isCoBranded && coBrandName && (
+        {/* Brand Logo Header */}
+        {isSatara ? (
+          <div className="flex items-center justify-center gap-2.5 mb-6 pb-4 border-b border-slate-100">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/lendbridge-logo.png" alt="Lendbridge Capital" className="h-9 max-w-[160px] object-contain" />
+            <div className="text-left border-l border-slate-200 pl-2.5">
+              <p className="font-extrabold text-slate-900 text-xs leading-tight">Lendbridge Capital</p>
+              <p className="text-[10px] text-slate-500">Satara Regional Branch</p>
+            </div>
+          </div>
+        ) : isCoBranded && coBrandName ? (
           <div className="flex items-center justify-center gap-3 mb-6 pb-4 border-b border-slate-100">
             {coBrandLogoUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
@@ -75,7 +134,7 @@ export default async function ApplicationSuccessPage({ params }: { params: { tok
               <span className="font-bold text-slate-700 text-xs">{settings.companyName}</span>
             )}
           </div>
-        )}
+        ) : null}
 
         {/* Success Icon */}
         <div
@@ -97,7 +156,7 @@ export default async function ApplicationSuccessPage({ params }: { params: { tok
         </h1>
         <p className="text-xs sm:text-sm text-slate-500 max-w-md mx-auto mb-6">
           Your loan application and KYC documents have been securely submitted to{' '}
-          <strong>{isCoBranded && coBrandName ? `${coBrandName} in partnership with ${settings.companyName}` : settings.companyName}</strong>. A confirmation email has been sent to your registered address.
+          <strong>{isSatara ? 'Lendbridge Capital' : isCoBranded && coBrandName ? `${coBrandName} in partnership with ${settings.companyName}` : settings.companyName}</strong>. A confirmation email has been sent to your registered address.
         </p>
 
         {/* Prominent Partner Contact & "Please Call Your Financial Advisor" Section */}
@@ -241,7 +300,16 @@ export default async function ApplicationSuccessPage({ params }: { params: { tok
         </div>
 
         <div className="pt-4 border-t border-slate-100 text-[11px] text-slate-400">
-          {settings.footerText}
+          {isSatara ? (
+            <div>
+              <p className="font-semibold text-slate-700">© 2026 Lendbridge Capital (Satara Branch). All rights reserved.</p>
+              <p className="mt-1 text-slate-500">
+                Email: lendbridgecapital@gmail.com · Support: +91 9049301089
+              </p>
+            </div>
+          ) : (
+            settings.footerText
+          )}
         </div>
       </div>
     </div>

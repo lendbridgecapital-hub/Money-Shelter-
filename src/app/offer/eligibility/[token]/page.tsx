@@ -1,5 +1,6 @@
 import { notFound } from 'next/navigation';
 import { getApplicationByToken } from '@/lib/repos/applicationsRepo';
+import { getBranchById } from '@/lib/repos/branchesRepo';
 import { getCompanySettings } from '@/lib/settings';
 import { listBankPolicyCards } from '@/lib/repos/policyCardsRepo';
 import { evaluateCustomerAgainstAllCards } from '@/lib/policyEngine';
@@ -11,11 +12,31 @@ export const dynamic = 'force-dynamic';
 
 export async function generateMetadata({ params }: { params: { token: string } }) {
   const application = getApplicationByToken(params.token);
+  const branch = application?.branchId ? getBranchById(application.branchId) : null;
+  const isSatara = Boolean(
+    application?.branchId === 'br_satara_01' ||
+    branch?.id === 'br_satara_01' ||
+    branch?.code === 'STR01' ||
+    application?.isCoBranded ||
+    branch?.isCoBranded ||
+    application?.coBrandName?.toLowerCase().includes('lendbridge') ||
+    branch?.name?.toLowerCase().includes('satara')
+  );
+
+  const brandName = isSatara ? 'Lendbridge Capital' : 'Money Shelter';
   return {
     title: application?.fullName
-      ? `Loan Eligibility Offer — ${application.fullName} | Money Shelter`
-      : 'Loan Eligibility Offer | Money Shelter',
-    description: 'Official tentative loan eligibility assessment and multi-bank offer letter.',
+      ? `Loan Eligibility Offer — ${application.fullName} | ${brandName}`
+      : `Loan Eligibility Offer | ${brandName}`,
+    description: `Official tentative loan eligibility assessment and multi-bank offer letter by ${brandName}.`,
+    openGraph: {
+      title: application?.fullName
+        ? `Loan Eligibility Offer — ${application.fullName} | ${brandName}`
+        : `Loan Eligibility Offer | ${brandName}`,
+      description: `Official tentative loan eligibility assessment and multi-bank offer letter by ${brandName}.`,
+      siteName: brandName,
+      images: isSatara ? [{ url: 'https://money-shelter.onrender.com/lendbridge-logo.png' }] : undefined,
+    },
   };
 }
 

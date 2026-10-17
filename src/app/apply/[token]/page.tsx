@@ -1,3 +1,4 @@
+import type { Metadata } from 'next';
 import Link from 'next/link';
 import { getApplicationByToken, updateApplicationStatus } from '@/lib/repos/applicationsRepo';
 import { getBranchById } from '@/lib/repos/branchesRepo';
@@ -8,6 +9,78 @@ import CustomerApplicationForm from '@/components/CustomerApplicationForm';
 import CustomerRequiredDocsUploader from '@/components/CustomerRequiredDocsUploader';
 import ExitFormButton from '@/components/ExitFormButton';
 import type { LoanType } from '@/types/db';
+
+export async function generateMetadata({
+  params,
+}: {
+  params: { token: string };
+}): Promise<Metadata> {
+  const application = getApplicationByToken(params.token);
+  const settings = await getCompanySettings(application?.tenantId || 'default');
+  const branch = application?.branchId ? getBranchById(application.branchId) : null;
+
+  const isSatara = Boolean(
+    application?.branchId === 'br_satara_01' ||
+    branch?.id === 'br_satara_01' ||
+    branch?.code === 'STR01' ||
+    application?.isCoBranded ||
+    branch?.isCoBranded ||
+    application?.coBrandName?.toLowerCase().includes('lendbridge') ||
+    branch?.name?.toLowerCase().includes('satara')
+  );
+
+  if (isSatara) {
+    const brandTitle = 'Lendbridge Capital — Customer Document Desk';
+    const brandDesc = 'WHERE BORROWING MEETS TRUST • Upload and submit your loan KYC documents securely through Lendbridge Capital (Satara Branch).';
+    const logoUrl = 'https://money-shelter.onrender.com/lendbridge-logo.png';
+
+    return {
+      title: brandTitle,
+      description: brandDesc,
+      openGraph: {
+        title: brandTitle,
+        description: brandDesc,
+        url: `https://money-shelter.onrender.com/apply/${params.token}`,
+        siteName: 'Lendbridge Capital',
+        images: [
+          {
+            url: logoUrl,
+            width: 800,
+            height: 400,
+            alt: 'Lendbridge Capital Logo',
+          },
+        ],
+        type: 'website',
+      },
+      twitter: {
+        card: 'summary_large_image',
+        title: brandTitle,
+        description: brandDesc,
+        images: [logoUrl],
+      },
+      icons: [{ rel: 'icon', url: '/lendbridge-logo.png' }],
+    };
+  }
+
+  const title = settings.portalTitle || `${settings.companyName} — Where Money Meets Trust`;
+  const desc = settings.tagline || 'WHERE MONEY MEETS TRUST';
+  return {
+    title,
+    description: desc,
+    openGraph: {
+      title,
+      description: desc,
+      siteName: settings.companyName,
+      images: settings.logoUrl ? [{ url: settings.logoUrl }] : undefined,
+    },
+    twitter: {
+      card: 'summary',
+      title,
+      description: desc,
+    },
+    icons: settings.faviconUrl ? [{ rel: 'icon', url: settings.faviconUrl }] : undefined,
+  };
+}
 
 export default async function CustomerApplyPage({
   params,
@@ -77,10 +150,20 @@ export default async function CustomerApplyPage({
   const settings = await getCompanySettings(application.tenantId || 'default');
   const branch = getBranchById(application.branchId);
 
-  const isCoBranded = Boolean(application.isCoBranded || branch?.isCoBranded);
-  const coBrandName = application.coBrandName || branch?.coBrandName || null;
-  const coBrandLogoUrl = application.coBrandLogoUrl || branch?.coBrandLogoUrl || null;
-  const coBrandTagline = application.coBrandTagline || branch?.coBrandTagline || null;
+  const isSatara = Boolean(
+    application.branchId === 'br_satara_01' ||
+    branch?.id === 'br_satara_01' ||
+    branch?.code === 'STR01' ||
+    application.isCoBranded ||
+    branch?.isCoBranded ||
+    application.coBrandName?.toLowerCase().includes('lendbridge') ||
+    branch?.name?.toLowerCase().includes('satara')
+  );
+
+  const isCoBranded = Boolean(application.isCoBranded || branch?.isCoBranded || isSatara);
+  const coBrandName = isSatara ? 'Lendbridge Capital' : (application.coBrandName || branch?.coBrandName || null);
+  const coBrandLogoUrl = isSatara ? '/lendbridge-logo.png' : (application.coBrandLogoUrl || branch?.coBrandLogoUrl || null);
+  const coBrandTagline = isSatara ? 'Satara Regional Branch • Customer Document Portal' : (application.coBrandTagline || branch?.coBrandTagline || null);
 
   // Check 7-Day Auto-Expiry or FAILED bucket status
   const nowMs = Date.now();
@@ -101,7 +184,7 @@ export default async function CustomerApplyPage({
       ? getUserById(application.createdById)
       : undefined;
     const advisorName = advisor?.name || application.channelPartnerName || application.createdByName || 'Your Financial Advisor';
-    const advisorPhone = advisor?.phone || branch?.phone || settings.supportPhone;
+    const advisorPhone = isSatara ? '+91 9049301089' : (advisor?.phone || branch?.phone || settings.supportPhone);
     const cleanPhone = advisorPhone ? advisorPhone.replace(/[^0-9]/g, '').slice(-10) : '';
 
     return (
@@ -119,7 +202,7 @@ export default async function CustomerApplyPage({
             <p><strong>Bucket:</strong> Failed / Expired</p>
             <p><strong>Expiry Reason:</strong> 7 days validity window exceeded</p>
             <p><strong>Assigned Advisor:</strong> {advisorName}</p>
-            {branch?.name && <p><strong>Branch:</strong> {branch.name}</p>}
+            {branch?.name && <p><strong>Branch:</strong> {isSatara ? 'Lendbridge Capital — Satara Branch' : branch.name}</p>}
           </div>
 
           <p className="text-xs text-slate-600 font-semibold mb-4">
@@ -151,7 +234,20 @@ export default async function CustomerApplyPage({
         >
           <div className="max-w-4xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between">
             <div className="flex items-center gap-3">
-              {isCoBranded && coBrandName ? (
+              {isSatara ? (
+                <div className="flex items-center gap-2.5 sm:gap-3">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src="/lendbridge-logo.png"
+                    alt="Lendbridge Capital"
+                    className="h-8 sm:h-9 max-w-[150px] object-contain"
+                  />
+                  <div className="hidden sm:block border-l border-slate-200 pl-3">
+                    <p className="font-extrabold text-slate-900 text-xs sm:text-sm leading-tight">Lendbridge Capital</p>
+                    <p className="text-[10px] text-slate-500 font-medium">Satara Regional Branch</p>
+                  </div>
+                </div>
+              ) : isCoBranded && coBrandName ? (
                 <div className="flex items-center gap-2 sm:gap-2.5">
                   {coBrandLogoUrl ? (
                     // eslint-disable-next-line @next/next/no-img-element
@@ -180,7 +276,7 @@ export default async function CustomerApplyPage({
                   {settings.companyName.charAt(0)}
                 </div>
               )}
-              {!isCoBranded && (
+              {!isCoBranded && !isSatara && (
                 <span className="font-bold text-slate-900 text-sm hidden sm:inline">
                   {settings.companyName}
                 </span>
@@ -203,9 +299,20 @@ export default async function CustomerApplyPage({
           />
         </main>
 
-        <footer className="max-w-4xl mx-auto px-4 sm:px-6 mt-16 pt-8 border-t border-slate-200 text-center text-xs text-slate-400">
-          <p className="font-medium text-slate-500">{settings.footerText}</p>
-        </footer>
+        {isSatara ? (
+          <footer className="max-w-4xl mx-auto px-4 sm:px-6 mt-16 pt-8 border-t border-slate-200 text-center text-xs text-slate-500">
+            <p className="font-semibold text-slate-700">© 2026 Lendbridge Capital (Satara Branch). All rights reserved.</p>
+            <p className="mt-1.5 text-slate-500">
+              <span>Email: <a href="mailto:lendbridgecapital@gmail.com" className="text-emerald-700 font-medium hover:underline">lendbridgecapital@gmail.com</a> · </span>
+              <span>Support: <a href="tel:9049301089" className="text-emerald-700 font-medium hover:underline">+91 9049301089</a></span>
+            </p>
+            <p className="mt-1 text-[11px] text-slate-400">Powai Naka, Satara, Maharashtra - 415001</p>
+          </footer>
+        ) : (
+          <footer className="max-w-4xl mx-auto px-4 sm:px-6 mt-16 pt-8 border-t border-slate-200 text-center text-xs text-slate-400">
+            <p className="font-medium text-slate-500">{settings.footerText}</p>
+          </footer>
+        )}
       </div>
     );
   }
@@ -311,7 +418,24 @@ export default async function CustomerApplyPage({
       >
         <div className="max-w-4xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            {isCoBranded && coBrandName ? (
+            {isSatara ? (
+              <div className="flex items-center gap-2.5 sm:gap-3">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src="/lendbridge-logo.png"
+                  alt="Lendbridge Capital"
+                  className="h-8 sm:h-9 max-w-[150px] object-contain"
+                />
+                <div>
+                  <h1 className="font-extrabold text-slate-900 text-xs sm:text-sm leading-tight">
+                    Lendbridge Capital
+                  </h1>
+                  <p className="text-[10px] text-slate-500 font-medium">
+                    Satara Regional Branch • Customer Document Portal
+                  </p>
+                </div>
+              </div>
+            ) : isCoBranded && coBrandName ? (
               <div className="flex items-center gap-2 sm:gap-2.5">
                 {coBrandLogoUrl ? (
                   // eslint-disable-next-line @next/next/no-img-element
@@ -340,27 +464,29 @@ export default async function CustomerApplyPage({
                 {settings.companyName.charAt(0)}
               </div>
             )}
-            <div>
-              <h1 className="font-bold text-slate-900 text-sm sm:text-base leading-tight">
-                {isCoBranded && coBrandName ? (
-                  <span>
-                    {coBrandName}{' '}
-                    <span className="text-slate-400 font-normal text-xs">({branch?.name || 'Branch'})</span>
-                  </span>
-                ) : (
-                  settings.companyName
-                )}
-              </h1>
-              <p className="text-[11px] text-slate-500">
-                {isCoBranded
-                  ? coBrandTagline || `In partnership with ${settings.companyName}`
-                  : branch
-                  ? branch.type === 'SITE'
-                    ? `🏗️ ${branch.name} — Direct Project Desk`
-                    : `${branch.name} Branch`
-                  : 'Digital Loan Origination Desk'}
-              </p>
-            </div>
+            {!isSatara && (
+              <div>
+                <h1 className="font-bold text-slate-900 text-sm sm:text-base leading-tight">
+                  {isCoBranded && coBrandName ? (
+                    <span>
+                      {coBrandName}{' '}
+                      <span className="text-slate-400 font-normal text-xs">({branch?.name || 'Branch'})</span>
+                    </span>
+                  ) : (
+                    settings.companyName
+                  )}
+                </h1>
+                <p className="text-[11px] text-slate-500">
+                  {isCoBranded
+                    ? coBrandTagline || `In partnership with ${settings.companyName}`
+                    : branch
+                    ? branch.type === 'SITE'
+                      ? `🏗️ ${branch.name} — Direct Project Desk`
+                      : `${branch.name} Branch`
+                    : 'Digital Loan Origination Desk'}
+                </p>
+              </div>
+            )}
           </div>
 
           <div className="flex items-center gap-2">
@@ -379,16 +505,21 @@ export default async function CustomerApplyPage({
           <div className="flex items-center gap-2 mb-2 flex-wrap">
             <span
               className="inline-block text-[11px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full"
-              style={{ backgroundColor: `${settings.primaryColor}15`, color: settings.primaryColor }}
+              style={{ backgroundColor: `${isSatara ? '#059669' : settings.primaryColor}15`, color: isSatara ? '#059669' : settings.primaryColor }}
             >
               Digital Loan Origination
             </span>
-            {isCoBranded && coBrandName && (
+            {isSatara ? (
+              <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-900 border border-emerald-200">
+                <span>🏢</span>
+                <span>Lendbridge Capital — Satara Branch</span>
+              </span>
+            ) : isCoBranded && coBrandName ? (
               <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-purple-100 text-purple-900 border border-purple-200">
                 <span>🤝</span>
                 <span>{coBrandName} Co-Branded Portal</span>
               </span>
-            )}
+            ) : null}
             {branch?.type === 'SITE' && (
               <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-900 border border-amber-200">
                 <span>🏗️</span>
@@ -397,17 +528,33 @@ export default async function CustomerApplyPage({
             )}
           </div>
           <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
-            Apply for Your Loan in Minutes
+            {isSatara ? 'Apply for Your Loan with Lendbridge Capital' : 'Apply for Your Loan in Minutes'}
           </h2>
           <p className="text-xs sm:text-sm text-slate-500 mt-1 max-w-2xl">
-            {isCoBranded && coBrandName
+            {isSatara
+              ? 'Submit your loan requirements and KYC documents securely through Lendbridge Capital (Satara Branch). Instant pre-eligibility with 40+ premier lending institutions.'
+              : isCoBranded && coBrandName
               ? `Submit your loan requirements through ${coBrandName} in strategic partnership with ${settings.companyName}. Instant pre-eligibility with 40+ premier lending institutions.`
               : branch?.type === 'SITE'
               ? `Submit your loan documents directly for ${branch.name}. All information will be securely reviewed by our dedicated project desk.`
               : 'Submit your loan requirements and KYC documents in our encrypted portal. Fast approval with top lending banks.'}
           </p>
 
-          {isCoBranded && coBrandName && (
+          {isSatara ? (
+            <div className="mt-4 p-3.5 bg-gradient-to-r from-emerald-50 via-teal-50/50 to-slate-50 border border-emerald-200 rounded-2xl flex items-center gap-3 max-w-2xl shadow-2xs">
+              <div className="w-9 h-9 rounded-xl bg-emerald-700 text-white font-bold flex items-center justify-center shrink-0 text-base shadow-2xs">
+                🏢
+              </div>
+              <div>
+                <p className="text-xs font-bold text-slate-900">
+                  Lendbridge Capital • Satara Branch
+                </p>
+                <p className="text-[11px] text-slate-600 mt-0.5">
+                  Powai Naka, Satara, Maharashtra - 415001 • Direct loan origination facility backed by 40+ premier banks & NBFCs with fast end-to-end processing.
+                </p>
+              </div>
+            </div>
+          ) : isCoBranded && coBrandName ? (
             <div className="mt-4 p-3.5 bg-gradient-to-r from-purple-50 via-emerald-50/50 to-slate-50 border border-purple-200/90 rounded-2xl flex items-center gap-3 max-w-2xl shadow-2xs">
               <div className="w-9 h-9 rounded-xl bg-purple-700 text-white font-bold flex items-center justify-center shrink-0 text-base shadow-2xs">
                 🤝
@@ -421,7 +568,7 @@ export default async function CustomerApplyPage({
                 </p>
               </div>
             </div>
-          )}
+          ) : null}
 
           {branch?.type === 'SITE' && (
             <div className="mt-4 p-3.5 bg-gradient-to-r from-amber-50 to-orange-50/40 border border-amber-200 rounded-2xl flex items-center gap-3 max-w-2xl">
@@ -454,13 +601,24 @@ export default async function CustomerApplyPage({
       </main>
 
       {/* Branded Footer */}
-      <footer className="max-w-4xl mx-auto px-4 sm:px-6 mt-16 pt-8 border-t border-slate-200 text-center text-xs text-slate-400">
-        <p className="font-medium text-slate-500">{settings.footerText}</p>
-        <p className="mt-1">
-          {settings.officialEmail && <span>Email: {settings.officialEmail} · </span>}
-          {settings.supportPhone && <span>Support: {settings.supportPhone}</span>}
-        </p>
-      </footer>
+      {isSatara ? (
+        <footer className="max-w-4xl mx-auto px-4 sm:px-6 mt-16 pt-8 border-t border-slate-200 text-center text-xs text-slate-500">
+          <p className="font-semibold text-slate-700">© 2026 Lendbridge Capital (Satara Branch). All rights reserved.</p>
+          <p className="mt-1.5 text-slate-500">
+            <span>Email: <a href="mailto:lendbridgecapital@gmail.com" className="text-emerald-700 font-medium hover:underline">lendbridgecapital@gmail.com</a> · </span>
+            <span>Support: <a href="tel:9049301089" className="text-emerald-700 font-medium hover:underline">+91 9049301089</a></span>
+          </p>
+          <p className="mt-1 text-[11px] text-slate-400">Powai Naka, Satara, Maharashtra - 415001</p>
+        </footer>
+      ) : (
+        <footer className="max-w-4xl mx-auto px-4 sm:px-6 mt-16 pt-8 border-t border-slate-200 text-center text-xs text-slate-400">
+          <p className="font-medium text-slate-500">{settings.footerText}</p>
+          <p className="mt-1">
+            {settings.officialEmail && <span>Email: {settings.officialEmail} · </span>}
+            {settings.supportPhone && <span>Support: {settings.supportPhone}</span>}
+          </p>
+        </footer>
+      )}
     </div>
   );
 }

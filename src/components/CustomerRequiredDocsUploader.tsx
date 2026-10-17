@@ -212,14 +212,18 @@ export default function CustomerRequiredDocsUploader({
       </div>
 
       {/* Advisor Support Contact */}
-      <div className="bg-slate-100/70 border border-slate-200 rounded-2xl p-4 text-center text-xs text-slate-600">
-        <p>
-          Need help? Contact your advisor{' '}
-          <strong>{application.channelPartnerName || application.createdByName || 'Desk'}</strong>
-          {branch?.phone ? ` at ${branch.phone}` : ''}
-          {settings.officialEmail ? ` or email ${settings.officialEmail}` : ''}.
-        </p>
-      </div>
+      {(() => {
+        const isSatara = branch?.id === 'br_satara_01' || branch?.code === 'STR01' || branch?.isCoBranded || branch?.name?.toLowerCase().includes('satara');
+        return (
+          <div className="bg-slate-100/70 border border-slate-200 rounded-2xl p-4 text-center text-xs text-slate-600">
+            <p>
+              Need help? Contact your advisor{' '}
+              <strong>{application.channelPartnerName || application.createdByName || (isSatara ? 'Lendbridge Capital Desk' : 'Desk')}</strong>
+              {isSatara ? ' at +91 9049301089 or email lendbridgecapital@gmail.com' : `${branch?.phone ? ` at ${branch.phone}` : ''}${settings.officialEmail ? ` or email ${settings.officialEmail}` : ''}`}.
+            </p>
+          </div>
+        );
+      })()}
     </div>
   );
 }

@@ -67,24 +67,39 @@ export default function CreateLinkPanel({
   const advisorName = partnerName || 'Financial Advisor';
   const shareUrl = generatedUrl || '';
 
-  // WhatsApp message: Advisor name, company name, and link on a separate line for 100% clickability
-  const siteTagText = isSite && activeBranch ? ` for ${activeBranch.name}` : '';
-  const whatsappMessage = `Hello! I am your financial advisor ${advisorName}. Please complete your loan application with ${companyName || 'Money Shelter'}${siteTagText} by uploading your documents here:
+  const isSatara = Boolean(
+    activeBranch?.id === 'br_satara_01' ||
+    activeBranch?.code === 'STR01' ||
+    activeBranch?.isCoBranded ||
+    activeBranch?.name?.toLowerCase().includes('satara') ||
+    userBranch?.id === 'br_satara_01' ||
+    userBranch?.code === 'STR01' ||
+    userBranch?.isCoBranded ||
+    userBranch?.name?.toLowerCase().includes('satara')
+  );
+
+  const displayBrandName = isSatara
+    ? (activeBranch?.coBrandName || userBranch?.coBrandName || 'Lendbridge Capital')
+    : (companyName || 'Money Shelter');
+
+  // WhatsApp message: Advisor name, brand name, and link on a separate line for 100% clickability
+  const siteTagText = isSite && activeBranch ? ` for ${activeBranch.name}` : (isSatara ? ' (Satara Branch)' : '');
+  const whatsappMessage = `Hello! I am your financial advisor ${advisorName}. Please complete your loan application with ${displayBrandName}${siteTagText} by uploading your documents here:
 
 ${shareUrl}`;
 
   const whatsappHref = `https://api.whatsapp.com/send?text=${encodeURIComponent(whatsappMessage)}`;
 
-  const emailSubject = `Loan Application Link — ${companyName || 'Money Shelter'}${siteTagText}`;
+  const emailSubject = `Loan Application Link — ${displayBrandName}${siteTagText}`;
   const emailBody = `Hello! I am your financial advisor ${advisorName}.
 
-Please complete your loan application with ${companyName || 'Money Shelter'}${siteTagText} by uploading your documents here:
+Please complete your loan application with ${displayBrandName}${siteTagText} by uploading your documents here:
 
 ${shareUrl}
 
 Warm regards,
 ${advisorName}
-${companyName || 'Money Shelter'}`;
+${displayBrandName}`;
   const emailHref = `mailto:?subject=${encodeURIComponent(emailSubject)}&body=${encodeURIComponent(emailBody)}`;
 
   return (
