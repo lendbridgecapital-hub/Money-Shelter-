@@ -1,7 +1,7 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { requireRole } from '@/lib/auth';
+import { requireRole, requireUser } from '@/lib/auth';
 import { syncDatabase } from '@/lib/db';
 import * as branchesRepo from '@/lib/repos/branchesRepo';
 import type { ActionResult } from '@/actions/settingsActions';
@@ -9,6 +9,7 @@ import type { ActionResult } from '@/actions/settingsActions';
 import * as usersRepo from '@/lib/repos/usersRepo';
 import type { BranchType } from '@/types/db';
 import { saveUploadedFile } from '@/lib/uploads';
+import { isPuneHqOperationsUser } from '@/lib/repos/applicationsRepo';
 
 export async function createBranchAction(formData: FormData): Promise<ActionResult> {
   try {
@@ -94,7 +95,56 @@ export async function createBranchAction(formData: FormData): Promise<ActionResu
 
 export async function updateBranchAction(id: string, formData: FormData): Promise<ActionResult> {
   try {
-    await requireRole('ADMIN');
+    const sessionUser = await requireUser();
+    const existingBranch = branchesRepo.getBranchById(id);
+    if (!existingBranch) {
+      return { ok: false, error: 'Branch or site not found.' };
+    }
+
+    const isPuneHq = sessionUser.role === 'OPERATIONS' && isPuneHqOperationsUser(sessionUser);
+    const isGlobal = sessionUser.role === 'ADMIN' || isPuneHq;
+
+    if (!isGlobal) {
+      if (sessionUser.role !== 'OPERATIONS') {
+        return { ok: false, error: 'You do not have permission to do this.' };
+      }
+      if (existingBranch.type !== 'SITE') {
+        return { ok: false, error: 'Access Denied: Regional branch operations can only edit project sites.' };
+      }
+
+      let userBranchId = sessionUser.branchId;
+      if (
+        !userBranchId &&
+        (sessionUser.email?.toLowerCase().includes('lendbridge') ||
+          sessionUser.email?.toLowerCase().includes('satara') ||
+          sessionUser.name?.toLowerCase().includes('lendbridge') ||
+          sessionUser.name?.toLowerCase().includes('satara'))
+      ) {
+        userBranchId = 'br_satara_01';
+      }
+
+      const allBranches = branchesRepo.listBranches(sessionUser.tenantId || 'default');
+      const userBranch = userBranchId
+        ? allBranches.find(
+            (b) =>
+              b.id.toLowerCase() === userBranchId!.toLowerCase() ||
+              b.code.toLowerCase() === userBranchId!.toLowerCase() ||
+              b.name.toLowerCase() === userBranchId!.toLowerCase()
+          )
+        : null;
+
+      if (!userBranch) {
+        return { ok: false, error: 'Branch operations user has no assigned branch.' };
+      }
+
+      const isMapped =
+        existingBranch.mappedBranchId?.toLowerCase() === userBranch.id.toLowerCase() ||
+        existingBranch.mappedBranchId?.toLowerCase() === userBranch.code.toLowerCase();
+
+      if (!isMapped) {
+        return { ok: false, error: 'Access Denied: You can only edit sites mapped to your branch.' };
+      }
+    }
 
     const name = String(formData.get('name') || '').trim();
     const code = String(formData.get('code') || '').trim();
@@ -262,6 +312,7 @@ export async function createSiteForBranchAction(formData: FormData): Promise<Act
       name,
       code,
       type: 'SITE',
+      status: 'APPROVED',
       mappedBranchId: parentB.id,
       mappedBranchName: parentB.name,
       address: address || null,
@@ -277,6 +328,7 @@ export async function createSiteForBranchAction(formData: FormData): Promise<Act
     });
 
     await syncDatabase();
+    revalidatePath('/admin/partner-requests');
     revalidatePath('/admin/partners');
     revalidatePath('/admin/branches');
     revalidatePath('/admin/sites');
@@ -284,7 +336,7 @@ export async function createSiteForBranchAction(formData: FormData): Promise<Act
 
     return {
       ok: true,
-      message: `Direct Construction Site "${name}" (${code}) created successfully under ${parentB.name}.`,
+      message: `Direct Construction Site "${name}" (${code}) created and approved successfully under ${parentB.name}.`,
     };
   } catch (err) {
     return {
@@ -293,6 +345,149 @@ export async function createSiteForBranchAction(formData: FormData): Promise<Act
         err instanceof Error && err.message === 'FORBIDDEN'
           ? 'You do not have permission to create project sites.'
           : 'Failed to create project site. Please check the inputs and try again.',
+    };
+  }
+}
+
+export async function approveSiteAction(siteId: string): Promise<ActionResult> {
+  try {
+    const user = await requireUser();
+    const allowedRoles = ['ADMIN', 'CENTRAL_SUPPORT', 'OPERATIONS'];
+    if (!allowedRoles.includes(user.role)) {
+      return { ok: false, error: 'Unauthorized to approve project sites.' };
+    }
+
+    const site = branchesRepo.getBranchById(siteId);
+    if (!site) {
+      return { ok: false, error: 'Project site not found.' };
+    }
+
+    const isPuneHq = user.role === 'OPERATIONS' && isPuneHqOperationsUser(user);
+    const isGlobal = user.role === 'ADMIN' || user.role === 'CENTRAL_SUPPORT' || isPuneHq;
+
+    if (!isGlobal) {
+      let userBranchId = user.branchId;
+      if (
+        !userBranchId &&
+        (user.email?.toLowerCase().includes('lendbridge') ||
+          user.email?.toLowerCase().includes('satara') ||
+          user.name?.toLowerCase().includes('lendbridge') ||
+          user.name?.toLowerCase().includes('satara'))
+      ) {
+        userBranchId = 'br_satara_01';
+      }
+
+      const allBranches = branchesRepo.listBranches(user.tenantId || 'default');
+      const userBranch = userBranchId
+        ? allBranches.find(
+            (b) =>
+              b.id.toLowerCase() === userBranchId!.toLowerCase() ||
+              b.code.toLowerCase() === userBranchId!.toLowerCase() ||
+              b.name.toLowerCase() === userBranchId!.toLowerCase()
+          )
+        : null;
+
+      if (!userBranch) {
+        return { ok: false, error: 'Branch operations user has no assigned branch.' };
+      }
+
+      const isMapped =
+        site.mappedBranchId?.toLowerCase() === userBranch.id.toLowerCase() ||
+        site.mappedBranchId?.toLowerCase() === userBranch.code.toLowerCase();
+
+      if (!isMapped) {
+        return { ok: false, error: 'Access Denied: You are only authorized to approve sites mapped to your branch.' };
+      }
+    }
+
+    branchesRepo.updateBranch(siteId, { status: 'APPROVED' });
+    await syncDatabase();
+
+    revalidatePath('/admin/partner-requests');
+    revalidatePath('/admin/partners');
+    revalidatePath('/admin/sites');
+    revalidatePath('/admin/branches');
+    revalidatePath('/branch/create-link');
+
+    return {
+      ok: true,
+      message: `Project Site "${site.name}" (${site.code}) approved successfully! Direct customer loans and partner originations are now active.`,
+    };
+  } catch (err) {
+    return {
+      ok: false,
+      error: err instanceof Error ? err.message : 'Failed to approve project site.',
+    };
+  }
+}
+
+export async function rejectSiteAction(siteId: string, reason?: string): Promise<ActionResult> {
+  try {
+    const user = await requireUser();
+    const allowedRoles = ['ADMIN', 'CENTRAL_SUPPORT', 'OPERATIONS'];
+    if (!allowedRoles.includes(user.role)) {
+      return { ok: false, error: 'Unauthorized to reject project sites.' };
+    }
+
+    const site = branchesRepo.getBranchById(siteId);
+    if (!site) {
+      return { ok: false, error: 'Project site not found.' };
+    }
+
+    const isPuneHq = user.role === 'OPERATIONS' && isPuneHqOperationsUser(user);
+    const isGlobal = user.role === 'ADMIN' || user.role === 'CENTRAL_SUPPORT' || isPuneHq;
+
+    if (!isGlobal) {
+      let userBranchId = user.branchId;
+      if (
+        !userBranchId &&
+        (user.email?.toLowerCase().includes('lendbridge') ||
+          user.email?.toLowerCase().includes('satara') ||
+          user.name?.toLowerCase().includes('lendbridge') ||
+          user.name?.toLowerCase().includes('satara'))
+      ) {
+        userBranchId = 'br_satara_01';
+      }
+
+      const allBranches = branchesRepo.listBranches(user.tenantId || 'default');
+      const userBranch = userBranchId
+        ? allBranches.find(
+            (b) =>
+              b.id.toLowerCase() === userBranchId!.toLowerCase() ||
+              b.code.toLowerCase() === userBranchId!.toLowerCase() ||
+              b.name.toLowerCase() === userBranchId!.toLowerCase()
+          )
+        : null;
+
+      if (!userBranch) {
+        return { ok: false, error: 'Branch operations user has no assigned branch.' };
+      }
+
+      const isMapped =
+        site.mappedBranchId?.toLowerCase() === userBranch.id.toLowerCase() ||
+        site.mappedBranchId?.toLowerCase() === userBranch.code.toLowerCase();
+
+      if (!isMapped) {
+        return { ok: false, error: 'Access Denied: You are only authorized to manage sites mapped to your branch.' };
+      }
+    }
+
+    branchesRepo.updateBranch(siteId, { status: 'REJECTED' });
+    await syncDatabase();
+
+    revalidatePath('/admin/partner-requests');
+    revalidatePath('/admin/partners');
+    revalidatePath('/admin/sites');
+    revalidatePath('/admin/branches');
+
+    return {
+      ok: true,
+      message: `Project Site "${site.name}" (${site.code}) rejected.${reason ? ` Reason: ${reason}` : ''}`,
+    };
+  } catch (err) {
+    return {
+      ok: false,
+      error: err instanceof Error ? err.message : 'Failed to reject project site.',
     };
   }
 }

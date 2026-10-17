@@ -243,6 +243,7 @@ export interface CompanySettings {
 }
 
 export type BranchType = 'BRANCH' | 'SITE';
+export type SiteStatus = 'PENDING_APPROVAL' | 'APPROVED' | 'REJECTED';
 
 export interface Branch {
   id: string;
@@ -250,6 +251,7 @@ export interface Branch {
   name: string;
   code: string;
   type?: BranchType; // 'BRANCH' | 'SITE' (Direct Company Construction Project)
+  status?: SiteStatus; // 'PENDING_APPROVAL' | 'APPROVED' | 'REJECTED'
   mappedBranchId?: string | null; // Regional operating branch that handles operations for this site
   mappedBranchName?: string | null;
   address?: string | null;

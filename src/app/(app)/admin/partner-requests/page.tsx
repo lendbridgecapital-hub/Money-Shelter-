@@ -1,12 +1,13 @@
 import { requireUser } from '@/lib/auth';
 import { listPartnerRequests, listRelationshipManagers } from '@/lib/repos/usersRepo';
 import { listBranches } from '@/lib/repos/branchesRepo';
+import { isPuneHqOperationsUser } from '@/lib/repos/applicationsRepo';
 import { redirect } from 'next/navigation';
 import PartnerRequestsClient from './PartnerRequestsClient';
 
 export const metadata = {
-  title: 'Partner Onboarding Approvals — Central Support Desk',
-  description: 'Review Channel Partner onboarding applications, verify KYC & Sub-DSA agreements, assign RMs, and approve associations.',
+  title: 'Partner & Site Onboarding Approvals — Operations & Support Desk',
+  description: 'Review Channel Partner onboarding applications, verify KYC & Sub-DSA agreements, approve construction project sites, and issue Certificates of Association.',
 };
 
 export default async function PartnerRequestsPage() {
@@ -16,27 +17,97 @@ export default async function PartnerRequestsPage() {
     redirect('/dashboard');
   }
 
+  const isOps = user.role === 'OPERATIONS';
+  const isPuneHq = isPuneHqOperationsUser(user);
+  const isRegionalBranchOps = isOps && !isPuneHq;
+
+  const allBranches = listBranches(user.tenantId || 'default');
+  let userBranchId = user.branchId;
+  if (
+    !userBranchId &&
+    (user.email?.toLowerCase().includes('lendbridge') ||
+      user.email?.toLowerCase().includes('satara') ||
+      user.name?.toLowerCase().includes('lendbridge') ||
+      user.name?.toLowerCase().includes('satara'))
+  ) {
+    userBranchId = 'br_satara_01';
+  }
+
+  const userBranch = userBranchId
+    ? allBranches.find(
+        (b) =>
+          b.id.toLowerCase() === userBranchId.toLowerCase() ||
+          b.code.toLowerCase() === userBranchId.toLowerCase() ||
+          b.name.toLowerCase() === userBranchId.toLowerCase()
+      )
+    : null;
+
+  // Direct Company Construction Project Sites
+  const branchSites = isRegionalBranchOps && userBranch
+    ? allBranches.filter(
+        (b) => b.type === 'SITE' && (b.mappedBranchId === userBranch.id || b.mappedBranchId === userBranch.code)
+      )
+    : allBranches.filter((b) => b.type === 'SITE');
+
   let partners = listPartnerRequests(undefined, user.tenantId || 'default');
   let relationshipManagers = listRelationshipManagers(user.tenantId || 'default');
-  const branches = listBranches(user.tenantId || 'default');
 
-  // Branch restriction: If user is not Super Admin or Central Support, restrict strictly to their own branch
-  if (user.role !== 'ADMIN' && user.role !== 'CENTRAL_SUPPORT') {
+  if (isRegionalBranchOps && userBranch) {
+    const allowedBranchIds = new Set<string>();
+    allowedBranchIds.add(userBranch.id.toLowerCase());
+    allowedBranchIds.add(userBranch.code.toLowerCase());
+    allowedBranchIds.add(userBranch.name.toLowerCase());
+    if (userBranch.coBrandName) allowedBranchIds.add(userBranch.coBrandName.toLowerCase());
+    for (const site of branchSites) {
+      allowedBranchIds.add(site.id.toLowerCase());
+      allowedBranchIds.add(site.code.toLowerCase());
+      allowedBranchIds.add(site.name.toLowerCase());
+    }
+
+    partners = partners.filter((p) => {
+      if (p.branchId && allowedBranchIds.has(p.branchId.toLowerCase())) return true;
+      if (p.branchName && allowedBranchIds.has(p.branchName.toLowerCase())) return true;
+      if (
+        userBranch.id === 'br_satara_01' &&
+        (p.email.toLowerCase().includes('satara') ||
+          p.email.toLowerCase().includes('lendbridge') ||
+          (p.branchName && p.branchName.toLowerCase().includes('satara')) ||
+          p.branchId === 'STR01')
+      ) {
+        return true;
+      }
+      return false;
+    });
+
+    relationshipManagers = relationshipManagers.filter((rm) => {
+      if (!rm.branchId) return false;
+      const bId = rm.branchId.toLowerCase();
+      return (
+        bId === userBranch.id.toLowerCase() ||
+        bId === userBranch.code.toLowerCase() ||
+        branchSites.some((s) => s.id.toLowerCase() === bId || s.code.toLowerCase() === bId)
+      );
+    });
+  } else if (user.role === 'RELATIONSHIP_MANAGER') {
     if (user.branchId) {
       partners = partners.filter((p) => p.branchId === user.branchId);
       relationshipManagers = relationshipManagers.filter((rm) => rm.branchId === user.branchId);
-    } else {
-      partners = [];
     }
   }
+
+  const branches = isRegionalBranchOps && userBranch ? [userBranch, ...branchSites] : allBranches;
 
   return (
     <PartnerRequestsClient
       initialPartners={partners}
       relationshipManagers={relationshipManagers}
       branches={branches}
+      branchSites={branchSites}
+      userBranch={userBranch || undefined}
+      isRegionalBranchOps={isRegionalBranchOps}
       currentUserRole={user.role}
       currentUserName={user.name}
+      currentUserId={user.id}
     />
   );
 }

@@ -56,6 +56,7 @@ CREATE TABLE IF NOT EXISTS branches (
   name TEXT NOT NULL,
   code TEXT NOT NULL,
   type TEXT NOT NULL DEFAULT 'BRANCH', -- 'BRANCH' or 'SITE'
+  status TEXT DEFAULT 'APPROVED',
   mapped_branch_id TEXT,
   mapped_branch_name TEXT,
   address TEXT,

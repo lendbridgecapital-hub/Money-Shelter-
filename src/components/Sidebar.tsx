@@ -76,11 +76,11 @@ export default function Sidebar({
   // Partner-related sub-items grouped into the collapsible "Partners" drawer
   const partnerSubItems = [
     {
-      label: 'Partner Approvals',
+      label: isOps ? 'Onboarding Approvals' : 'Partner Approvals',
       href: '/admin/partner-requests',
       icon: '🤝',
-      description: 'Review requests & assign RMs',
-      show: isAdmin || isSupport,
+      description: isOps ? 'Approve partners, Sub-DSAs & sites' : 'Review requests & assign RMs',
+      show: isAdmin || isSupport || isOps,
       external: false,
     },
     {

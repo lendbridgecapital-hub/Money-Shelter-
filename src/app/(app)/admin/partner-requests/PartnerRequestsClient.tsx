@@ -10,27 +10,41 @@ import {
   requestPartnerDocsAction,
   rejectPartnerAction,
 } from '@/actions/partnerOnboardingActions';
+import {
+  approveSiteAction,
+  rejectSiteAction,
+  createSiteForBranchAction,
+  updateBranchAction,
+} from '@/actions/branchActions';
 
 interface Props {
   initialPartners: User[];
   relationshipManagers: User[];
   branches?: Branch[];
+  branchSites?: Branch[];
+  userBranch?: Branch;
+  isRegionalBranchOps?: boolean;
   currentUserRole: Role;
   currentUserName: string;
+  currentUserId?: string;
 }
 
 export default function PartnerRequestsClient({
   initialPartners,
   relationshipManagers,
   branches = [],
+  branchSites = [],
+  userBranch,
+  isRegionalBranchOps = false,
   currentUserRole,
   currentUserName,
+  currentUserId,
 }: Props) {
   const router = useRouter();
 
   // State
   const [selectedStatus, setSelectedStatus] = useState<PartnerStatus | 'ALL'>('PENDING_APPROVAL');
-  const [selectedRoleFilter, setSelectedRoleFilter] = useState<'ALL' | 'SUB_DSA' | 'CHANNEL_PARTNER'>('ALL');
+  const [selectedRoleFilter, setSelectedRoleFilter] = useState<'ALL' | 'SUB_DSA' | 'CHANNEL_PARTNER' | 'SITE'>('ALL');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedPartner, setSelectedPartner] = useState<User | null>(null);
 
@@ -44,6 +58,42 @@ export default function PartnerRequestsClient({
 
   // Preview Modal for Document Images / PDFs
   const [previewDoc, setPreviewDoc] = useState<{ title: string; url: string } | null>(null);
+
+  // Site Onboard & Edit States
+  const [showAddSiteModal, setShowAddSiteModal] = useState(false);
+  const [siteName, setSiteName] = useState('');
+  const [siteCode, setSiteCode] = useState('');
+  const [siteDeveloper, setSiteDeveloper] = useState('');
+  const [siteAddress, setSiteAddress] = useState('');
+  const [sitePhone, setSitePhone] = useState('');
+  const [siteEmail, setSiteEmail] = useState('');
+  const [siteDedicatedRmId, setSiteDedicatedRmId] = useState('');
+  const [siteLoading, setSiteLoading] = useState(false);
+  const [siteFeedback, setSiteFeedback] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+
+  const [editingSite, setEditingSite] = useState<Branch | null>(null);
+  const [editSiteName, setEditSiteName] = useState('');
+  const [editSiteCode, setEditSiteCode] = useState('');
+  const [editSiteDeveloper, setEditSiteDeveloper] = useState('');
+  const [editSiteAddress, setEditSiteAddress] = useState('');
+  const [editSitePhone, setEditSitePhone] = useState('');
+  const [editSiteEmail, setEditSiteEmail] = useState('');
+  const [editSiteDedicatedRmId, setEditSiteDedicatedRmId] = useState('');
+
+  const [copiedLink, setCopiedLink] = useState<string | null>(null);
+
+  const getOrigin = () => {
+    if (typeof window !== 'undefined' && window.location.origin) {
+      return window.location.origin;
+    }
+    return 'https://money-shelter.onrender.com';
+  };
+
+  const copyToClipboard = (text: string, key: string) => {
+    navigator.clipboard.writeText(text);
+    setCopiedLink(key);
+    setTimeout(() => setCopiedLink(null), 2000);
+  };
 
   // Filter partners
   const filteredPartners = initialPartners.filter((p) => {
@@ -62,18 +112,44 @@ export default function PartnerRequestsClient({
     return matchName || matchEmail || matchPhone || matchPan || matchCode;
   });
 
+  // Filter sites
+  const filteredSites = branchSites.filter((s) => {
+    const status = s.status || 'APPROVED';
+    if (selectedStatus !== 'ALL' && status !== selectedStatus) return false;
+
+    if (!searchQuery.trim()) return true;
+    const q = searchQuery.toLowerCase();
+    const matchName = (s.name || '').toLowerCase().includes(q);
+    const matchCode = (s.code || '').toLowerCase().includes(q);
+    const matchDev = (s.developerName || '').toLowerCase().includes(q);
+    const matchAddr = (s.address || '').toLowerCase().includes(q);
+    const matchRm = (s.dedicatedRmName || '').toLowerCase().includes(q);
+    return matchName || matchCode || matchDev || matchAddr || matchRm;
+  });
+
   // Status counts for badge tabs
-  const countPending = initialPartners.filter((p) => (p.partnerStatus || 'APPROVED') === 'PENDING_APPROVAL').length;
+  const countPending =
+    initialPartners.filter((p) => (p.partnerStatus || 'APPROVED') === 'PENDING_APPROVAL').length +
+    branchSites.filter((s) => s.status === 'PENDING_APPROVAL').length;
   const countDocsReq = initialPartners.filter((p) => p.partnerStatus === 'DOCUMENTS_REQUIRED').length;
-  const countApproved = initialPartners.filter((p) => (p.partnerStatus || 'APPROVED') === 'APPROVED').length;
-  const countRejected = initialPartners.filter((p) => p.partnerStatus === 'REJECTED').length;
+  const countApproved =
+    initialPartners.filter((p) => (p.partnerStatus || 'APPROVED') === 'APPROVED').length +
+    branchSites.filter((s) => (s.status || 'APPROVED') === 'APPROVED').length;
+  const countRejected =
+    initialPartners.filter((p) => p.partnerStatus === 'REJECTED').length +
+    branchSites.filter((s) => s.status === 'REJECTED').length;
   const countSubDsas = initialPartners.filter((p) => p.role === 'SUB_DSA').length;
   const countAgents = initialPartners.filter((p) => p.role === 'CHANNEL_PARTNER').length;
+  const countSites = branchSites.length;
 
   const openReviewModal = (partner: User) => {
     setSelectedPartner(partner);
-    setAssignedRmId(partner.assignedRmId || (relationshipManagers[0] ? relationshipManagers[0].id : ''));
-    setCommissionRateInput(partner.commissionRate !== undefined && partner.commissionRate !== null ? String(partner.commissionRate) : '');
+    setAssignedRmId(
+      partner.assignedRmId || (relationshipManagers[0] ? relationshipManagers[0].id : (currentUserId || ''))
+    );
+    setCommissionRateInput(
+      partner.commissionRate !== undefined && partner.commissionRate !== null ? String(partner.commissionRate) : ''
+    );
     setReviewRemark('');
     setActionType(null);
     setFeedback(null);
@@ -85,21 +161,30 @@ export default function PartnerRequestsClient({
     setFeedback(null);
   };
 
+  const openEditSiteModal = (site: Branch) => {
+    setEditingSite(site);
+    setEditSiteName(site.name || '');
+    setEditSiteCode(site.code || '');
+    setEditSiteDeveloper(site.developerName || '');
+    setEditSiteAddress(site.address || '');
+    setEditSitePhone(site.phone || '');
+    setEditSiteEmail(site.email || '');
+    setEditSiteDedicatedRmId(site.dedicatedRmId || '');
+    setSiteFeedback(null);
+  };
+
   // Execution Handlers
   const handleApprove = async () => {
     if (!selectedPartner) return;
-    if (!assignedRmId) {
-      setFeedback({ type: 'error', message: 'Please select a Relationship Manager to assign.' });
-      return;
-    }
+    const effectiveRmId = assignedRmId || (relationshipManagers[0] ? relationshipManagers[0].id : (currentUserId || ''));
 
     setIsSubmitting(true);
     setFeedback(null);
 
     const res = await approvePartnerAction({
       partnerId: selectedPartner.id,
-      assignedRmId,
-      remark: reviewRemark.trim() || 'Verified and approved by Central Support.',
+      assignedRmId: effectiveRmId,
+      remark: reviewRemark.trim() || `Verified and approved by ${currentUserName || 'Operations'}.`,
       commissionRate: commissionRateInput.trim() ? Number(commissionRateInput) : null,
     });
 
@@ -112,6 +197,103 @@ export default function PartnerRequestsClient({
       }, 1800);
     } else {
       setFeedback({ type: 'error', message: res.error || 'Failed to approve partner.' });
+    }
+  };
+
+  const handleApproveSite = async (siteId: string) => {
+    setIsSubmitting(true);
+    const res = await approveSiteAction(siteId);
+    setIsSubmitting(false);
+    if (res.ok) {
+      alert(res.message || 'Project site approved successfully!');
+      router.refresh();
+    } else {
+      alert(res.error || 'Failed to approve project site.');
+    }
+  };
+
+  const handleRejectSite = async (siteId: string) => {
+    const reason = prompt('Please enter the reason for rejecting this project site:');
+    if (reason === null) return;
+    setIsSubmitting(true);
+    const res = await rejectSiteAction(siteId, reason);
+    setIsSubmitting(false);
+    if (res.ok) {
+      alert(res.message || 'Project site rejected.');
+      router.refresh();
+    } else {
+      alert(res.error || 'Failed to reject site.');
+    }
+  };
+
+  const handleCreateSite = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!siteName.trim()) {
+      setSiteFeedback({ type: 'error', message: 'Project site name is required.' });
+      return;
+    }
+    setSiteLoading(true);
+    setSiteFeedback(null);
+
+    const fd = new FormData();
+    fd.append('name', siteName.trim());
+    if (siteCode.trim()) fd.append('code', siteCode.trim());
+    if (siteDeveloper.trim()) fd.append('developerName', siteDeveloper.trim());
+    if (siteAddress.trim()) fd.append('address', siteAddress.trim());
+    if (sitePhone.trim()) fd.append('phone', sitePhone.trim());
+    if (siteEmail.trim()) fd.append('email', siteEmail.trim());
+    if (siteDedicatedRmId) fd.append('dedicatedRmId', siteDedicatedRmId);
+    if (userBranch?.id) fd.append('mappedBranchId', userBranch.id);
+
+    const res = await createSiteForBranchAction(fd);
+    setSiteLoading(false);
+
+    if (res.ok) {
+      setSiteFeedback({ type: 'success', message: res.message || 'Project site created and approved successfully!' });
+      setTimeout(() => {
+        setShowAddSiteModal(false);
+        setSiteName('');
+        setSiteCode('');
+        setSiteDeveloper('');
+        setSiteAddress('');
+        setSitePhone('');
+        setSiteEmail('');
+        setSiteDedicatedRmId('');
+        setSiteFeedback(null);
+        router.refresh();
+      }, 1200);
+    } else {
+      setSiteFeedback({ type: 'error', message: res.error || 'Failed to create project site.' });
+    }
+  };
+
+  const handleUpdateSite = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingSite) return;
+    setSiteLoading(true);
+    setSiteFeedback(null);
+
+    const fd = new FormData();
+    fd.append('name', editSiteName.trim());
+    fd.append('code', editSiteCode.trim());
+    fd.append('developerName', editSiteDeveloper.trim());
+    fd.append('address', editSiteAddress.trim());
+    fd.append('phone', editSitePhone.trim());
+    fd.append('email', editSiteEmail.trim());
+    fd.append('dedicatedRmId', editSiteDedicatedRmId || '');
+
+    const res = await updateBranchAction(editingSite.id, fd);
+    setSiteLoading(false);
+
+    if (res.ok) {
+      setSiteFeedback({ type: 'success', message: res.message || 'Project site updated successfully!' });
+      setTimeout(() => {
+        setEditingSite(null);
+        setSiteFeedback(null);
+        router.refresh();
+      }, 1000);
+    } else {
+      setSiteFeedback({ type: 'error', message: res.error || 'Failed to update project site.' });
     }
   };
 
@@ -174,30 +356,53 @@ export default function PartnerRequestsClient({
       {/* Header Banner */}
       <div className="bg-white border border-slate-200/90 rounded-2xl p-4 sm:p-5 shadow-2xs flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             <span className="w-8 h-8 rounded-lg bg-emerald-600 text-white font-black text-sm flex items-center justify-center shadow-xs">
               🛡️
             </span>
             <h1 className="text-base sm:text-lg font-bold text-slate-900">
-              Central Support — Partner Onboarding Desk
+              {currentUserRole === 'OPERATIONS'
+                ? isRegionalBranchOps
+                  ? `${userBranch?.name || 'Branch'} Operations — Onboarding & Approvals Desk`
+                  : 'Pune HQ Operations — Central Onboarding Desk'
+                : 'Central Support — Partner Onboarding Desk'}
             </h1>
             <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-50 text-emerald-800 border border-emerald-200/60">
-              {currentUserRole === 'CENTRAL_SUPPORT' ? 'Central Support Manager' : 'Executive Admin'}
+              {currentUserRole === 'OPERATIONS'
+                ? isRegionalBranchOps
+                  ? `${userBranch?.name || 'Regional Branch'} Operations`
+                  : 'Pune HQ Central Hub'
+                : currentUserRole === 'CENTRAL_SUPPORT'
+                ? 'Central Support Manager'
+                : 'Executive Admin'}
             </span>
           </div>
           <p className="text-xs text-slate-500 mt-1 max-w-2xl">
-            Verify submitted Sub-DSA applications, inspect PAN & Aadhaar documents, review authorized partner agreements, assign Branch Relationship Managers, and issue Certificates of Association.
+            {currentUserRole === 'OPERATIONS'
+              ? 'Review and approve Channel Partners, Sub-DSAs, and Construction Sites for your branch. Verify KYC documents, assign Relationship Managers, configure commission slabs, and issue Certificates of Association.'
+              : 'Verify submitted Sub-DSA applications, inspect PAN & Aadhaar documents, review authorized partner agreements, assign Branch Relationship Managers, and issue Certificates of Association.'}
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
+          {userBranch && (
+            <Link
+              href={`/partner/onboard?branchId=${encodeURIComponent(userBranch.id)}`}
+              target="_blank"
+              className="px-3 py-1.5 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-emerald-800 text-xs font-semibold rounded-lg transition inline-flex items-center gap-1.5"
+            >
+              <span>🔗</span>
+              <span>Branch Onboard Form</span>
+              <span>↗</span>
+            </Link>
+          )}
           <Link
             href="/partner/onboard"
             target="_blank"
             className="px-3 py-1.5 bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-700 text-xs font-semibold rounded-lg transition inline-flex items-center gap-1.5"
           >
             <span>🔗</span>
-            <span>Public Onboard Form</span>
+            <span>Public Form</span>
             <span>↗</span>
           </Link>
         </div>
@@ -336,13 +541,210 @@ export default function PartnerRequestsClient({
               <span>👤 Partners</span>
               <span className="px-1 py-0.2 rounded-full text-[9px] bg-black/20 font-mono">{countAgents}</span>
             </button>
+            <button
+              type="button"
+              onClick={() => setSelectedRoleFilter('SITE')}
+              className={`px-2.5 py-1 rounded-md text-[11px] font-bold transition flex items-center gap-1 ${
+                selectedRoleFilter === 'SITE' ? 'bg-amber-600 text-white shadow-2xs' : 'text-amber-700 hover:bg-amber-50'
+              }`}
+            >
+              <span>🏗️ Project Sites</span>
+              <span className="px-1 py-0.2 rounded-full text-[9px] bg-black/20 font-mono">{countSites}</span>
+            </button>
           </div>
         </div>
       </div>
 
       {/* Main Table View */}
       <div className="bg-white border border-slate-200/90 rounded-2xl shadow-2xs overflow-hidden">
-        {filteredPartners.length === 0 ? (
+        {selectedRoleFilter === 'SITE' ? (
+          <div>
+            <div className="p-3.5 bg-slate-50 border-b border-slate-200/90 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5">
+              <div className="flex items-center gap-2">
+                <span className="text-base">🏗️</span>
+                <div>
+                  <h3 className="text-xs font-bold text-slate-900">
+                    Direct Company Construction Project Sites (APF)
+                  </h3>
+                  <p className="text-[11px] text-slate-500">
+                    Verify & approve builder projects mapped to {userBranch?.name || 'your branch'}. Deploy dedicated RMs and share project-coded application links.
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setSiteFeedback(null);
+                  setShowAddSiteModal(true);
+                }}
+                className="px-3 py-1.5 bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold rounded-lg shadow-2xs transition inline-flex items-center gap-1.5 self-start sm:self-auto shrink-0"
+              >
+                <span>+</span>
+                <span>Onboard / Add Project Site</span>
+              </button>
+            </div>
+
+            {filteredSites.length === 0 ? (
+              <div className="p-8 text-center space-y-2">
+                <span className="text-3xl block">🏗️</span>
+                <h3 className="text-sm font-bold text-slate-800">No project sites found</h3>
+                <p className="text-xs text-slate-400 max-w-sm mx-auto">
+                  There are currently no construction project sites under this filter queue.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSiteFeedback(null);
+                    setShowAddSiteModal(true);
+                  }}
+                  className="mt-2 px-3 py-1.5 bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold rounded-lg shadow-2xs transition inline-flex items-center gap-1"
+                >
+                  <span>+ Add Project Site Now</span>
+                </button>
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-left">
+                  <thead>
+                    <tr className="bg-slate-50/80 text-[10px] uppercase font-bold text-slate-400 border-b border-slate-100">
+                      <th className="px-3.5 py-2">Project Site & APF Code</th>
+                      <th className="px-3.5 py-2">Developer / Builder</th>
+                      <th className="px-3.5 py-2">Dedicated Site RM</th>
+                      <th className="px-3.5 py-2">Direct Origination Links</th>
+                      <th className="px-3.5 py-2">Status</th>
+                      <th className="px-3.5 py-2 text-right">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100 text-xs">
+                    {filteredSites.map((site) => {
+                      const isPending = site.status === 'PENDING_APPROVAL';
+                      const isRejected = site.status === 'REJECTED';
+
+                      const customerApplyUrl = `${getOrigin()}/apply?site=${encodeURIComponent(site.code)}`;
+                      const partnerOnboardUrl = `${getOrigin()}/partner/onboard?siteCode=${encodeURIComponent(site.code)}`;
+
+                      return (
+                        <tr key={site.id} className="hover:bg-slate-50/70 transition-colors">
+                          <td className="px-3.5 py-2.5">
+                            <div className="flex items-center gap-2">
+                              <div className="w-8 h-8 rounded-lg bg-amber-100 text-amber-800 font-black text-xs flex items-center justify-center shrink-0 border border-amber-300 shadow-2xs">
+                                🏗️
+                              </div>
+                              <div>
+                                <p className="font-bold text-slate-900 leading-tight">{site.name}</p>
+                                <div className="flex items-center gap-1.5 mt-0.5">
+                                  <span className="font-mono text-[10px] font-bold px-1.5 py-0.2 rounded bg-amber-50 text-amber-900 border border-amber-200">
+                                    APF: {site.code}
+                                  </span>
+                                  {site.address && (
+                                    <span className="text-[10px] text-slate-400 truncate max-w-[140px]">
+                                      {site.address}
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                          </td>
+
+                          <td className="px-3.5 py-2.5 text-slate-700">
+                            <strong>{site.developerName || 'Direct Developer'}</strong>
+                            <span className="text-[10px] text-slate-400 block">
+                              {site.mappedBranchName ? `Mapped to ${site.mappedBranchName}` : 'Company Direct'}
+                            </span>
+                          </td>
+
+                          <td className="px-3.5 py-2.5">
+                            {site.dedicatedRmName ? (
+                              <div>
+                                <span className="font-semibold text-slate-900 block">{site.dedicatedRmName}</span>
+                                <span className="text-[10px] text-slate-400">Dedicated RM</span>
+                              </div>
+                            ) : (
+                              <span className="text-slate-400 italic text-[11px]">Unassigned</span>
+                            )}
+                          </td>
+
+                          <td className="px-3.5 py-2.5">
+                            <div className="flex flex-col gap-1 max-w-[200px]">
+                              <button
+                                type="button"
+                                onClick={() => copyToClipboard(customerApplyUrl, `site-apply-${site.id}`)}
+                                className="px-2 py-1 bg-slate-100 hover:bg-slate-200 border border-slate-200 text-slate-700 rounded text-[10px] font-semibold text-left transition flex items-center justify-between"
+                              >
+                                <span className="truncate">🔗 Customer Link</span>
+                                <span className="font-bold ml-1 text-emerald-600">
+                                  {copiedLink === `site-apply-${site.id}` ? '✓ Copied' : 'Copy'}
+                                </span>
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => copyToClipboard(partnerOnboardUrl, `site-onboard-${site.id}`)}
+                                className="px-2 py-1 bg-slate-100 hover:bg-slate-200 border border-slate-200 text-slate-700 rounded text-[10px] font-semibold text-left transition flex items-center justify-between"
+                              >
+                                <span className="truncate">🤝 Partner Link</span>
+                                <span className="font-bold ml-1 text-indigo-600">
+                                  {copiedLink === `site-onboard-${site.id}` ? '✓ Copied' : 'Copy'}
+                                </span>
+                              </button>
+                            </div>
+                          </td>
+
+                          <td className="px-3.5 py-2.5">
+                            {isPending ? (
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold border bg-amber-50 text-amber-800 border-amber-200">
+                                ⏳ Pending Approval
+                              </span>
+                            ) : isRejected ? (
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold border bg-rose-50 text-rose-800 border-rose-200">
+                                ✕ Rejected
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold border bg-emerald-50 text-emerald-800 border-emerald-200">
+                                ✓ Active APF
+                              </span>
+                            )}
+                          </td>
+
+                          <td className="px-3.5 py-2.5 text-right">
+                            <div className="flex items-center justify-end gap-1.5 flex-wrap">
+                              {isPending && (
+                                <>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleApproveSite(site.id)}
+                                    disabled={isSubmitting}
+                                    className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded text-[11px] font-bold transition shadow-2xs"
+                                  >
+                                    ✓ Approve
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleRejectSite(site.id)}
+                                    disabled={isSubmitting}
+                                    className="px-2 py-1 bg-rose-50 hover:bg-rose-100 border border-rose-200 text-rose-700 rounded text-[11px] font-bold transition"
+                                  >
+                                    ✕
+                                  </button>
+                                </>
+                              )}
+                              <button
+                                type="button"
+                                onClick={() => openEditSiteModal(site)}
+                                className="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 border border-slate-200 text-slate-700 rounded text-[11px] font-semibold transition"
+                              >
+                                ✏️ Edit
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        ) : filteredPartners.length === 0 ? (
           <div className="p-8 text-center space-y-2">
             <span className="text-3xl block">📭</span>
             <h3 className="text-sm font-bold text-slate-800">No partner requests found</h3>
@@ -750,6 +1152,11 @@ export default function PartnerRequestsClient({
                     className="w-full px-3 py-2 border border-slate-200 rounded-lg text-xs bg-white focus:ring-2 focus:ring-emerald-500 focus:outline-none"
                   >
                     <option value="">-- Choose Relationship Manager --</option>
+                    {currentUserId && (
+                      <option value={currentUserId}>
+                        {currentUserName} (Direct Branch Operations Desk)
+                      </option>
+                    )}
                     {relationshipManagers.map((rm) => (
                       <option key={rm.id} value={rm.id}>
                         {rm.name} ({rm.branchName || 'Head Office'} • {rm.phone || rm.email})
@@ -932,6 +1339,320 @@ export default function PartnerRequestsClient({
                 )}
               </div>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* ONBOARD DIRECT PROJECT SITE MODAL                                         */}
+      {/* ========================================================================= */}
+      {showAddSiteModal && (
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-5 overflow-y-auto">
+          <div className="bg-white border border-slate-200 rounded-2xl shadow-2xl max-w-lg w-full overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+            <div className="px-5 py-3.5 border-b border-slate-200 flex items-center justify-between bg-slate-50/80">
+              <div className="flex items-center gap-2">
+                <span className="text-base">🏗️</span>
+                <h2 className="text-sm font-extrabold text-slate-900">
+                  Onboard & Approve Construction Site (APF)
+                </h2>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowAddSiteModal(false)}
+                className="w-7 h-7 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-200/60 flex items-center justify-center text-sm font-bold transition"
+              >
+                ✕
+              </button>
+            </div>
+
+            <form onSubmit={handleCreateSite} className="p-5 space-y-3.5 text-xs">
+              {siteFeedback && (
+                <div
+                  className={`p-3 rounded-xl border text-xs font-semibold ${
+                    siteFeedback.type === 'success'
+                      ? 'bg-emerald-50 border-emerald-200 text-emerald-800'
+                      : 'bg-rose-50 border-rose-200 text-rose-800'
+                  }`}
+                >
+                  {siteFeedback.message}
+                </div>
+              )}
+
+              <div>
+                <label className="text-[11px] font-bold text-slate-700 block mb-1">
+                  Project / Construction Site Name *
+                </label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. Green Acres Residency"
+                  value={siteName}
+                  onChange={(e) => setSiteName(e.target.value)}
+                  className="w-full px-3 py-2 border border-slate-200 rounded-lg text-xs bg-slate-50 focus:bg-white focus:ring-2 focus:ring-amber-500 focus:outline-none"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-[11px] font-bold text-slate-700 block mb-1">
+                    Developer / Builder Name
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="e.g. Prestige Group"
+                    value={siteDeveloper}
+                    onChange={(e) => setSiteDeveloper(e.target.value)}
+                    className="w-full px-3 py-2 border border-slate-200 rounded-lg text-xs bg-slate-50 focus:bg-white focus:ring-2 focus:ring-amber-500 focus:outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="text-[11px] font-bold text-slate-700 block mb-1">
+                    Site Code (Leave blank to auto-gen)
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="e.g. STR-ST-101"
+                    value={siteCode}
+                    onChange={(e) => setSiteCode(e.target.value)}
+                    className="w-full px-3 py-2 border border-slate-200 rounded-lg text-xs font-mono uppercase bg-slate-50 focus:bg-white focus:ring-2 focus:ring-amber-500 focus:outline-none"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="text-[11px] font-bold text-slate-700 block mb-1">
+                  Site Location Address
+                </label>
+                <input
+                  type="text"
+                  placeholder="e.g. Survey No. 42, Powai Naka, Satara"
+                  value={siteAddress}
+                  onChange={(e) => setSiteAddress(e.target.value)}
+                  className="w-full px-3 py-2 border border-slate-200 rounded-lg text-xs bg-slate-50 focus:bg-white focus:ring-2 focus:ring-amber-500 focus:outline-none"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-[11px] font-bold text-slate-700 block mb-1">
+                    Site Contact Phone
+                  </label>
+                  <input
+                    type="tel"
+                    placeholder="+91 98765 43210"
+                    value={sitePhone}
+                    onChange={(e) => setSitePhone(e.target.value)}
+                    className="w-full px-3 py-2 border border-slate-200 rounded-lg text-xs bg-slate-50 focus:bg-white focus:ring-2 focus:ring-amber-500 focus:outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="text-[11px] font-bold text-slate-700 block mb-1">
+                    Site Contact Email
+                  </label>
+                  <input
+                    type="email"
+                    placeholder="sales@project.com"
+                    value={siteEmail}
+                    onChange={(e) => setSiteEmail(e.target.value)}
+                    className="w-full px-3 py-2 border border-slate-200 rounded-lg text-xs bg-slate-50 focus:bg-white focus:ring-2 focus:ring-amber-500 focus:outline-none"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="text-[11px] font-bold text-slate-700 block mb-1">
+                  Assign Dedicated Site Relationship Manager (RM)
+                </label>
+                <select
+                  value={siteDedicatedRmId}
+                  onChange={(e) => setSiteDedicatedRmId(e.target.value)}
+                  className="w-full px-3 py-2 border border-slate-200 rounded-lg text-xs bg-slate-50 focus:bg-white focus:ring-2 focus:ring-amber-500 focus:outline-none"
+                >
+                  <option value="">-- No Dedicated RM (Can assign later) --</option>
+                  {currentUserId && (
+                    <option value={currentUserId}>
+                      {currentUserName} (Direct Branch Operations Desk)
+                    </option>
+                  )}
+                  {relationshipManagers.map((rm) => (
+                    <option key={rm.id} value={rm.id}>
+                      {rm.name} ({rm.phone || rm.email})
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="pt-2 border-t border-slate-100 flex items-center justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => setShowAddSiteModal(false)}
+                  className="px-3.5 py-2 border border-slate-200 text-slate-600 rounded-lg text-xs font-semibold hover:bg-slate-100"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={siteLoading}
+                  className="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-lg text-xs font-bold shadow-2xs transition disabled:opacity-50 inline-flex items-center gap-1.5"
+                >
+                  {siteLoading ? 'Onboarding Site…' : '✓ Onboard & Approve Site'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* EDIT PROJECT SITE MODAL                                                   */}
+      {/* ========================================================================= */}
+      {editingSite && (
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-5 overflow-y-auto">
+          <div className="bg-white border border-slate-200 rounded-2xl shadow-2xl max-w-lg w-full overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+            <div className="px-5 py-3.5 border-b border-slate-200 flex items-center justify-between bg-slate-50/80">
+              <div className="flex items-center gap-2">
+                <span className="text-base">✏️</span>
+                <h2 className="text-sm font-extrabold text-slate-900">
+                  Edit Construction Site: {editingSite.name}
+                </h2>
+              </div>
+              <button
+                type="button"
+                onClick={() => setEditingSite(null)}
+                className="w-7 h-7 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-200/60 flex items-center justify-center text-sm font-bold transition"
+              >
+                ✕
+              </button>
+            </div>
+
+            <form onSubmit={handleUpdateSite} className="p-5 space-y-3.5 text-xs">
+              {siteFeedback && (
+                <div
+                  className={`p-3 rounded-xl border text-xs font-semibold ${
+                    siteFeedback.type === 'success'
+                      ? 'bg-emerald-50 border-emerald-200 text-emerald-800'
+                      : 'bg-rose-50 border-rose-200 text-rose-800'
+                  }`}
+                >
+                  {siteFeedback.message}
+                </div>
+              )}
+
+              <div>
+                <label className="text-[11px] font-bold text-slate-700 block mb-1">
+                  Project / Construction Site Name *
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={editSiteName}
+                  onChange={(e) => setEditSiteName(e.target.value)}
+                  className="w-full px-3 py-2 border border-slate-200 rounded-lg text-xs bg-slate-50 focus:bg-white focus:ring-2 focus:ring-amber-500 focus:outline-none"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-[11px] font-bold text-slate-700 block mb-1">
+                    Developer / Builder Name
+                  </label>
+                  <input
+                    type="text"
+                    value={editSiteDeveloper}
+                    onChange={(e) => setEditSiteDeveloper(e.target.value)}
+                    className="w-full px-3 py-2 border border-slate-200 rounded-lg text-xs bg-slate-50 focus:bg-white focus:ring-2 focus:ring-amber-500 focus:outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="text-[11px] font-bold text-slate-700 block mb-1">
+                    Site Code
+                  </label>
+                  <input
+                    type="text"
+                    value={editSiteCode}
+                    onChange={(e) => setEditSiteCode(e.target.value)}
+                    className="w-full px-3 py-2 border border-slate-200 rounded-lg text-xs font-mono uppercase bg-slate-50 focus:bg-white focus:ring-2 focus:ring-amber-500 focus:outline-none"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="text-[11px] font-bold text-slate-700 block mb-1">
+                  Site Location Address
+                </label>
+                <input
+                  type="text"
+                  value={editSiteAddress}
+                  onChange={(e) => setEditSiteAddress(e.target.value)}
+                  className="w-full px-3 py-2 border border-slate-200 rounded-lg text-xs bg-slate-50 focus:bg-white focus:ring-2 focus:ring-amber-500 focus:outline-none"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-[11px] font-bold text-slate-700 block mb-1">
+                    Site Contact Phone
+                  </label>
+                  <input
+                    type="tel"
+                    value={editSitePhone}
+                    onChange={(e) => setEditSitePhone(e.target.value)}
+                    className="w-full px-3 py-2 border border-slate-200 rounded-lg text-xs bg-slate-50 focus:bg-white focus:ring-2 focus:ring-amber-500 focus:outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="text-[11px] font-bold text-slate-700 block mb-1">
+                    Site Contact Email
+                  </label>
+                  <input
+                    type="email"
+                    value={editSiteEmail}
+                    onChange={(e) => setEditSiteEmail(e.target.value)}
+                    className="w-full px-3 py-2 border border-slate-200 rounded-lg text-xs bg-slate-50 focus:bg-white focus:ring-2 focus:ring-amber-500 focus:outline-none"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="text-[11px] font-bold text-slate-700 block mb-1">
+                  Dedicated Site Relationship Manager (RM)
+                </label>
+                <select
+                  value={editSiteDedicatedRmId}
+                  onChange={(e) => setEditSiteDedicatedRmId(e.target.value)}
+                  className="w-full px-3 py-2 border border-slate-200 rounded-lg text-xs bg-slate-50 focus:bg-white focus:ring-2 focus:ring-amber-500 focus:outline-none"
+                >
+                  <option value="">-- No Dedicated RM --</option>
+                  {currentUserId && (
+                    <option value={currentUserId}>
+                      {currentUserName} (Direct Branch Operations Desk)
+                    </option>
+                  )}
+                  {relationshipManagers.map((rm) => (
+                    <option key={rm.id} value={rm.id}>
+                      {rm.name} ({rm.phone || rm.email})
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="pt-2 border-t border-slate-100 flex items-center justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => setEditingSite(null)}
+                  className="px-3.5 py-2 border border-slate-200 text-slate-600 rounded-lg text-xs font-semibold hover:bg-slate-100"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={siteLoading}
+                  className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold shadow-2xs transition disabled:opacity-50 inline-flex items-center gap-1.5"
+                >
+                  {siteLoading ? 'Saving Changes…' : '✓ Save Changes'}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

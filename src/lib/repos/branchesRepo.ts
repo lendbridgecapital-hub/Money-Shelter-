@@ -99,6 +99,7 @@ export function createBranch(data: {
   name: string;
   code: string;
   type?: Branch['type'];
+  status?: Branch['status'];
   mappedBranchId?: string | null;
   mappedBranchName?: string | null;
   address?: string | null;
@@ -119,6 +120,7 @@ export function createBranch(data: {
   const tenantId = data.tenantId || 'default';
   const code = data.code.trim().toUpperCase();
   const type = data.type || 'BRANCH';
+  const status = data.status || 'APPROVED';
   const isCoBranded = Boolean(data.isCoBranded);
   const coBrandName = data.coBrandName ? data.coBrandName.trim() : null;
   const coBrandLogoUrl = data.coBrandLogoUrl ? data.coBrandLogoUrl.trim() : null;
@@ -135,15 +137,16 @@ export function createBranch(data: {
 
   db.prepare(
     `INSERT INTO branches (
-      id, tenant_id, name, code, type, mapped_branch_id, mapped_branch_name, address, phone, email,
+      id, tenant_id, name, code, type, status, mapped_branch_id, mapped_branch_name, address, phone, email,
       dedicated_rm_id, dedicated_rm_name, developer_name, is_co_branded, co_brand_name, co_brand_logo_url, co_brand_tagline, created_at, updated_at
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
   ).run(
     id,
     tenantId,
     data.name.trim(),
     code,
     type,
+    status,
     mappedBranchId,
     mappedBranchName,
     data.address || null,
@@ -166,6 +169,7 @@ export function createBranch(data: {
     name: data.name.trim(),
     code,
     type,
+    status,
     mappedBranchId,
     mappedBranchName,
     address: data.address || null,
@@ -251,6 +255,10 @@ export function updateBranch(id: string, data: Partial<Branch>): void {
     updates.push('co_brand_tagline = ?');
     params.push(data.coBrandTagline ? data.coBrandTagline.trim() : null);
   }
+  if (data.status !== undefined) {
+    updates.push('status = ?');
+    params.push(data.status);
+  }
 
   updates.push('updated_at = ?');
   params.push(new Date().toISOString());
@@ -282,6 +290,7 @@ function mapRowToBranch(row: Record<string, unknown>): Branch {
     name: String(row.name),
     code: String(row.code),
     type: (row.type as Branch['type']) || 'BRANCH',
+    status: (row.status as Branch['status']) || 'APPROVED',
     mappedBranchId: row.mapped_branch_id || row.mappedBranchId ? String(row.mapped_branch_id || row.mappedBranchId) : null,
     mappedBranchName: row.mapped_branch_name || row.mappedBranchName ? String(row.mapped_branch_name || row.mappedBranchName) : null,
     address: row.address ? String(row.address) : null,

@@ -81,10 +81,10 @@ export default function MobileDrawer({
       show: !isSupport,
     },
     {
-      label: 'Partner Approvals',
+      label: isOps ? 'Onboarding Approvals' : 'Partner Approvals',
       href: '/admin/partner-requests',
       icon: '🤝',
-      show: isAdmin || isSupport,
+      show: isAdmin || isSupport || isOps,
     },
     {
       label: isOps
