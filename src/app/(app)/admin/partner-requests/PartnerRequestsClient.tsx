@@ -425,15 +425,26 @@ export default function PartnerRequestsClient({
 
         <div className="flex items-center gap-2 flex-wrap">
           {userBranch && (
-            <Link
-              href={`/partner/onboard?branchId=${encodeURIComponent(userBranch.id)}`}
-              target="_blank"
-              className="px-3 py-1.5 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-emerald-800 text-xs font-semibold rounded-lg transition inline-flex items-center gap-1.5"
-            >
-              <span>🔗</span>
-              <span>Branch Onboard Form</span>
-              <span>↗</span>
-            </Link>
+            <>
+              <Link
+                href={`/partner/onboard?branchId=${encodeURIComponent(userBranch.id)}`}
+                target="_blank"
+                className="px-3 py-1.5 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-emerald-800 text-xs font-semibold rounded-lg transition inline-flex items-center gap-1.5"
+              >
+                <span>🔗</span>
+                <span>Branch Partner Form</span>
+                <span>↗</span>
+              </Link>
+              <Link
+                href={`/partner/onboard?role=SUB_DSA&branchId=${encodeURIComponent(userBranch.id)}`}
+                target="_blank"
+                className="px-3 py-1.5 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 text-indigo-800 text-xs font-semibold rounded-lg transition inline-flex items-center gap-1.5"
+              >
+                <span>🏢</span>
+                <span>Branch Sub-DSA Form</span>
+                <span>↗</span>
+              </Link>
+            </>
           )}
           <Link
             href="/partner/onboard"

@@ -218,4 +218,16 @@ button, nav {
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
   }
+
+  .crm-scale-wrapper {
+    zoom: 1 !important;
+  }
 }
+
+/* High-Density Compact Layout: Reduce entire CRM size by 20% on desktop/laptops */
+@media screen and (min-width: 768px) {
+  .crm-scale-wrapper {
+    zoom: 0.80;
+  }
+}
+

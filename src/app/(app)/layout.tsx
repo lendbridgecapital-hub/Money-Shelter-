@@ -42,7 +42,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   const effectiveBranchId = userBranch?.id || session.user.branchId;
 
   return (
-    <div className="flex flex-col md:flex-row min-h-screen w-full max-w-full overflow-x-hidden bg-slate-50">
+    <div className="flex flex-col md:flex-row min-h-screen w-full max-w-full overflow-x-hidden bg-slate-50 crm-scale-wrapper">
       {/* 1. Desktop Sidebar (hidden on mobile, visible on desktop) */}
       <Sidebar
         role={session.user.role}

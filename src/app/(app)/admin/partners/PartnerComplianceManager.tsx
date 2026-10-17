@@ -206,8 +206,24 @@ export default function PartnerComplianceManager({
 
   const getSubDsaOnboardingUrl = () => {
     const origin = typeof window !== 'undefined' ? window.location.origin : '';
+    if (isBranchOps && userBranchId) {
+      return `${origin}/partner/onboard?role=SUB_DSA&branchId=${encodeURIComponent(userBranchId)}`;
+    }
+    if (isRM && currentUserId) {
+      return `${origin}/partner/onboard?role=SUB_DSA&rmId=${currentUserId}`;
+    }
     const refParam = currentUserId ? `&ref=${currentUserId}` : '';
     return `${origin}/partner/onboard?role=SUB_DSA${refParam}`;
+  };
+
+  const openDirectOnboard = (role: 'CHANNEL_PARTNER' | 'SUB_DSA') => {
+    setSelectedOnboardRole(role);
+    setOnboardError(null);
+    setOnboardSuccess(null);
+    if (isBranchOps && userBranchId) {
+      setSelectedBranchId(userBranchId);
+    }
+    setShowOnboardModal(true);
   };
 
   const copyOnboardingLink = () => {
@@ -255,8 +271,11 @@ export default function PartnerComplianceManager({
 
   const shareSubDsaViaWhatsApp = () => {
     const link = getSubDsaOnboardingUrl();
+    const branchTitle = userBranchName || 'our branch';
     const text = encodeURIComponent(
-      `Hello! We invite you to join Money Shelter as an authorized Sub-DSA. Build your own agent team, earn override commissions on your network's business, and access direct loan disbursements: ${link}`
+      isBranchOps
+        ? `Hello! Join ${branchTitle} distribution network as an authorized Sub-DSA (Master Partner) with Money Shelter. Recruit channel partners, manage retail loan originations, and earn direct overrides on every disbursement. Register directly using our branch Sub-DSA link: ${link}`
+        : `Hello! We invite you to join Money Shelter as an authorized Sub-DSA. Build your own agent team, earn override commissions on your network's business, and access direct loan disbursements: ${link}`
     );
     window.open(`https://api.whatsapp.com/send?text=${text}`, '_blank');
   };
@@ -458,119 +477,152 @@ export default function PartnerComplianceManager({
           </p>
         </div>
 
-        <div className="flex items-center gap-2 self-start sm:self-auto flex-wrap">
-          {/* Add Project Site Option for Branch Operations, Admin, and Central Support */}
-          {(isBranchOps || isAdmin || isSupport) && (
-            <button
-              type="button"
-              onClick={() => {
-                setSiteError(null);
-                setSiteSuccess(null);
-                setShowAddSiteModal(true);
-              }}
-              className="px-4 py-2.5 bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold rounded-xl shadow-xs transition inline-flex items-center gap-1.5 active:scale-95 cursor-pointer"
-            >
-              <span>🏗️ Add Project Site</span>
-            </button>
-          )}
-
-          {(isAdmin || (isRM && !isDedicatedSiteRm)) && (
-            <button
-              type="button"
-              onClick={() => setShowSubDsaModal(true)}
-              className="px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-xl shadow-xs transition inline-flex items-center gap-1.5 active:scale-95 cursor-pointer"
-            >
-              <span>🏢 Appoint Sub-DSA</span>
-            </button>
-          )}
-
-          {(isAdmin || isBranchOps || (isRM && !isDedicatedSiteRm)) && (
-            <button
-              type="button"
-              onClick={() => {
-                setSelectedOnboardRole('CHANNEL_PARTNER');
-                setOnboardError(null);
-                setOnboardSuccess(null);
-                if (isBranchOps && userBranchId) {
-                  setSelectedBranchId(userBranchId);
-                }
-                setShowOnboardModal(true);
-              }}
-              className="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl shadow-xs transition inline-flex items-center gap-1.5 active:scale-95 cursor-pointer"
-            >
-              <span>➕ {isBranchOps ? 'Onboard Branch Partner' : 'Onboard New Partner'}</span>
-            </button>
-          )}
-        </div>
       </div>
 
-      {/* Partner Onboarding Link Banner */}
+      {/* Partner & Sub-DSA Onboarding Cards (Unified self-contained cards with zero repeated buttons) */}
       {!isDedicatedSiteRm && (
-        <div className="bg-gradient-to-r from-emerald-50/70 via-white to-slate-50/50 border border-emerald-200 rounded-xl p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 shadow-2xs">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-emerald-600 text-white flex items-center justify-center text-lg shrink-0 shadow-xs">
-              🤝
-            </div>
-            <div>
-              <div className="flex items-center gap-2 flex-wrap">
-                <h2 className="text-xs font-bold text-slate-900 uppercase tracking-wide">
-                  {isSubDsa
-                    ? 'My Agent Referral & Onboarding Link'
-                    : isRM
-                    ? 'My Partner Onboarding Link (Auto-Assign)'
-                    : isBranchOps
-                    ? `${userBranchName || 'Branch'} Partner Referral & Onboarding Link`
-                    : 'Public Partner Self-Registration Link'}
-                </h2>
-                <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-100 text-emerald-800">
-                  {isSubDsa
-                    ? '⚡ 0.1% Team Override Engine'
-                    : isRM
-                    ? '⚡ Auto-Assigns To You'
-                    : isBranchOps
-                    ? `⚡ Locked to ${userBranchName || 'Branch'}`
-                    : 'Self-Registration & Sub-DSA'}
-                </span>
+        <div className={`grid grid-cols-1 ${!isSubDsa ? 'lg:grid-cols-2' : ''} gap-3.5`}>
+          {/* 1. Channel Partner Link Card (Emerald) */}
+          <div className="bg-gradient-to-br from-emerald-50/70 via-white to-slate-50/50 border border-emerald-200/90 rounded-2xl p-4 flex flex-col justify-between gap-3 shadow-2xs hover:border-emerald-300 transition">
+            <div className="flex items-start gap-3">
+              <div className="w-10 h-10 rounded-xl bg-emerald-600 text-white flex items-center justify-center text-lg shrink-0 shadow-xs">
+                🤝
               </div>
-              <p className="text-[11px] text-slate-500 mt-0.5">
-                {isSubDsa
-                  ? 'Share this link with prospective agents. Any partner who registers through this link will be automatically mapped under your Sub-DSA network.'
-                  : isRM
-                  ? 'Share this link with prospective partners. Any partner who registers through this link will be automatically assigned to you.'
-                  : isBranchOps
-                  ? `Share this link with prospective channel partners. Any partner registering through this link will be mapped strictly under ${userBranchName || 'your branch'}.`
-                  : 'Share this link with prospective partners to submit PAN & Aadhaar KYC, review the Sub-DSA agreement, and complete mobile OTP verification.'}
-              </p>
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  <h2 className="text-xs font-bold text-slate-900 uppercase tracking-wide">
+                    {isSubDsa
+                      ? 'My Agent Referral & Onboarding Link'
+                      : isRM
+                      ? 'Channel Partner Onboarding Link'
+                      : isBranchOps
+                      ? `${userBranchName || 'Branch'} Channel Partner Link`
+                      : 'Public Partner Registration Link'}
+                  </h2>
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-100 text-emerald-800">
+                    {isSubDsa
+                      ? 'Agent Network'
+                      : isBranchOps
+                      ? `Locked to ${userBranchName || 'Branch'}`
+                      : 'Direct Origination'}
+                  </span>
+                </div>
+                <p className="text-[11px] text-slate-500 mt-0.5 leading-snug">
+                  {isSubDsa
+                    ? 'Share with prospective agents. Any partner registering through this link will map automatically under your Sub-DSA network.'
+                    : isRM
+                    ? 'Share with prospective partners to auto-assign directly to your RM portfolio.'
+                    : isBranchOps
+                    ? `Share with prospective channel partners. Any partner registering through this link will be mapped strictly under ${userBranchName || 'your branch'}.`
+                    : 'Share with prospective partners to submit KYC, agree to terms, and register online.'}
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-1.5 pt-2 border-t border-emerald-100/80 flex-wrap">
+              <button
+                type="button"
+                onClick={copyOnboardingLink}
+                className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-lg shadow-2xs transition inline-flex items-center gap-1 cursor-pointer"
+              >
+                <span>{copiedLink ? '✓ Copied' : isBranchOps ? '📋 Copy Partner Link' : (isRM || isSubDsa) ? '📋 Copy My Link' : '📋 Copy Link'}</span>
+              </button>
+              <a
+                href={getOnboardingUrl()}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="px-2.5 py-1.5 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-semibold rounded-lg transition inline-flex items-center gap-1 cursor-pointer"
+              >
+                <span>Preview</span>
+                <span>↗</span>
+              </a>
+              {(isRM || isSubDsa || isBranchOps) && (
+                <button
+                  type="button"
+                  onClick={shareViaWhatsApp}
+                  className="px-2.5 py-1.5 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-emerald-800 text-xs font-bold rounded-lg transition inline-flex items-center gap-1 cursor-pointer"
+                >
+                  <span>WhatsApp</span>
+                </button>
+              )}
+              {(isAdmin || isBranchOps || isRM) && (
+                <button
+                  type="button"
+                  onClick={() => openDirectOnboard('CHANNEL_PARTNER')}
+                  className="ml-auto px-2.5 py-1.5 bg-white border border-emerald-300 hover:bg-emerald-50 text-emerald-800 text-xs font-bold rounded-lg transition inline-flex items-center gap-1 cursor-pointer"
+                >
+                  <span>➕ Instant Onboard</span>
+                </button>
+              )}
             </div>
           </div>
 
-          <div className="flex items-center gap-2 shrink-0 flex-wrap">
-            <button
-              type="button"
-              onClick={copyOnboardingLink}
-              className="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-lg shadow-2xs transition inline-flex items-center gap-1.5 cursor-pointer"
-            >
-              <span>{copiedLink ? '✓ Copied Link' : isBranchOps ? '📋 Copy Branch Link' : (isRM || isSubDsa) ? '📋 Copy My Link' : '📋 Copy Link'}</span>
-            </button>
-            <a
-              href={getOnboardingUrl()}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="px-3 py-2 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-semibold rounded-lg transition inline-flex items-center gap-1 cursor-pointer"
-            >
-              <span>Preview Form</span>
-              <span>↗</span>
-            </a>
-            {(isRM || isSubDsa || isBranchOps) && (
-              <button
-                type="button"
-                onClick={shareViaWhatsApp}
-                className="px-3 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-lg shadow-2xs transition inline-flex items-center gap-1 cursor-pointer"
-              >
-                <span>WhatsApp</span>
-              </button>
-            )}
-          </div>
+          {/* 2. Sub-DSA Onboarding Link Card (Indigo) - For Branch Ops, Admin, and RM */}
+          {!isSubDsa && (
+            <div className="bg-gradient-to-br from-indigo-50/70 via-white to-slate-50/50 border border-indigo-200/90 rounded-2xl p-4 flex flex-col justify-between gap-3 shadow-2xs hover:border-indigo-300 transition">
+              <div className="flex items-start gap-3">
+                <div className="w-10 h-10 rounded-xl bg-indigo-600 text-white flex items-center justify-center text-lg shrink-0 shadow-xs">
+                  🏢
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    <h2 className="text-xs font-bold text-slate-900 uppercase tracking-wide">
+                      {isBranchOps
+                        ? `${userBranchName || 'Branch'} Sub-DSA Onboarding Link`
+                        : isRM
+                        ? 'Sub-DSA Master Onboarding Link'
+                        : 'Sub-DSA Master Partner Link'}
+                    </h2>
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-indigo-100 text-indigo-800">
+                      ⚡ 0.1% Team Override Engine
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-slate-500 mt-0.5 leading-snug">
+                    {isBranchOps
+                      ? `Share with Master DSAs & agencies to recruit their own agent networks mapped under ${userBranchName || 'your branch'} with override payouts.`
+                      : 'Share with agency leaders to recruit and build their own sub-agent network with override commissions.'}
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-1.5 pt-2 border-t border-indigo-100/80 flex-wrap">
+                <button
+                  type="button"
+                  onClick={copySubDsaLink}
+                  className="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-lg shadow-2xs transition inline-flex items-center gap-1 cursor-pointer"
+                >
+                  <span>{copiedSubDsaLink ? '✓ Copied' : '📋 Copy Sub-DSA Link'}</span>
+                </button>
+                <a
+                  href={getSubDsaOnboardingUrl()}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-2.5 py-1.5 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-semibold rounded-lg transition inline-flex items-center gap-1 cursor-pointer"
+                >
+                  <span>Preview</span>
+                  <span>↗</span>
+                </a>
+                {(isRM || isBranchOps) && (
+                  <button
+                    type="button"
+                    onClick={shareSubDsaViaWhatsApp}
+                    className="px-2.5 py-1.5 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 text-indigo-800 text-xs font-bold rounded-lg transition inline-flex items-center gap-1 cursor-pointer"
+                  >
+                    <span>WhatsApp</span>
+                  </button>
+                )}
+                {(isAdmin || isBranchOps || isRM) && (
+                  <button
+                    type="button"
+                    onClick={() => openDirectOnboard('SUB_DSA')}
+                    className="ml-auto px-2.5 py-1.5 bg-white border border-indigo-300 hover:bg-indigo-50 text-indigo-800 text-xs font-bold rounded-lg transition inline-flex items-center gap-1 cursor-pointer"
+                  >
+                    <span>🏢 Appoint Sub-DSA</span>
+                  </button>
+                )}
+              </div>
+            </div>
+          )}
         </div>
       )}
 
