@@ -100,6 +100,9 @@ export default function EmailSettingsForm({ settings }: { settings: CompanySetti
                 placeholder={settings.smtpPassword ? '•••••••••••• (leave blank to keep)' : 'Enter SMTP password'}
                 className="w-full px-3.5 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
+              <p className="text-[11px] text-slate-500 mt-1">
+                For Gmail: Use a 16-character <strong>Google App Password</strong> (from myaccount.google.com/apppasswords), NOT your regular Google password.
+              </p>
             </div>
           </div>
 
@@ -123,7 +126,7 @@ export default function EmailSettingsForm({ settings }: { settings: CompanySetti
               className="rounded border-slate-300 text-blue-600 focus:ring-blue-500"
             />
             <label htmlFor="smtpSecure" className="text-sm font-medium text-slate-700">
-              Use SSL/TLS (usually checked for port 465, leave unchecked for 587 STARTTLS)
+              Use SSL/TLS (leave <strong>UNCHECKED</strong> for Port 587 STARTTLS; check only for Port 465)
             </label>
           </div>
 

@@ -99,6 +99,8 @@ export async function sendTestEmail(toEmail: string): Promise<ActionResult> {
         error:
           result.reason === 'SMTP_NOT_CONFIGURED'
             ? 'SMTP is not fully configured yet — fill in host, user, and password first.'
+            : result.error
+            ? `Failed to send: ${result.error}`
             : 'Failed to send — double-check your SMTP host, port, and credentials.',
       };
     }

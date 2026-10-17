@@ -46,15 +46,29 @@ export async function sendMail({ to, subject, html, from, tenantId }: SendMailOp
   }
 
   try {
-    const transporter = nodemailer.createTransport({
-      host: smtpHost,
-      port: smtpPort,
-      secure: smtpSecure,
-      auth: {
-        user: smtpUser,
-        pass: smtpPassword,
-      },
-    });
+    const isGmail = smtpHost.toLowerCase().includes('gmail');
+    const cleanPassword = smtpPassword ? smtpPassword.replace(/\s+/g, '') : '';
+    const effectiveSecure = smtpPort === 465 ? true : smtpPort === 587 ? false : Boolean(smtpSecure);
+
+    const transporter = nodemailer.createTransport(
+      isGmail
+        ? {
+            service: 'gmail',
+            auth: {
+              user: smtpUser,
+              pass: cleanPassword,
+            },
+          }
+        : {
+            host: smtpHost,
+            port: smtpPort,
+            secure: effectiveSecure,
+            auth: {
+              user: smtpUser,
+              pass: cleanPassword,
+            },
+          }
+    );
 
     const fromAddress =
       from ||
