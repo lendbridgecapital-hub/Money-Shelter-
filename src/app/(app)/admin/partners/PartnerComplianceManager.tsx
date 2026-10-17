@@ -62,6 +62,20 @@ export default function PartnerComplianceManager({
   const [selectedOnboardRole, setSelectedOnboardRole] = useState<'CHANNEL_PARTNER' | 'SUB_DSA'>('CHANNEL_PARTNER');
   const [roleFilter, setRoleFilter] = useState<'ALL' | 'SUB_DSA' | 'CHANNEL_PARTNER' | 'PENDING'>('ALL');
 
+  // Universal Share Modal State
+  const [shareConfig, setShareConfig] = useState<{
+    title: string;
+    subtitle: string;
+    roleName: string;
+    url: string;
+    shareText: string;
+    emailSubject: string;
+    badge: string;
+    icon: string;
+    colorTheme: 'emerald' | 'indigo';
+  } | null>(null);
+  const [copiedShareLink, setCopiedShareLink] = useState(false);
+
   // Direct Onboard Modal State
   const [showOnboardModal, setShowOnboardModal] = useState(false);
   const [onboardLoading, setOnboardLoading] = useState(false);
@@ -278,6 +292,71 @@ export default function PartnerComplianceManager({
         : `Hello! We invite you to join Money Shelter as an authorized Sub-DSA. Build your own agent team, earn override commissions on your network's business, and access direct loan disbursements: ${link}`
     );
     window.open(`https://api.whatsapp.com/send?text=${text}`, '_blank');
+  };
+
+  const openShareModal = (type: 'CHANNEL_PARTNER' | 'SUB_DSA') => {
+    const branchTitle = userBranchName || 'our branch';
+    if (type === 'CHANNEL_PARTNER') {
+      const url = getOnboardingUrl();
+      const shareText = isSubDsa
+        ? `Hi! Join my agency network at Money Shelter as an authorized Channel Partner (Agent). Submit retail loans digitally, get instant bank approvals, and earn top commission slabs on every disbursement. Register directly using my link: ${url}`
+        : isBranchOps
+        ? `Hello! Join ${branchTitle} loan distribution network as an authorized Channel Partner with Money Shelter. Digital lead sourcing, real-time file tracking, and direct bank payouts. Register directly using our branch onboarding link: ${url}`
+        : `Hello! Register as an authorized Channel Partner with Money Shelter using my direct onboarding link: ${url}`;
+
+      setShareConfig({
+        title: isBranchOps ? `${branchTitle} Channel Partner Onboarding` : 'Channel Partner Registration',
+        subtitle: `Official onboarding link for prospective channel partners and agents under ${branchTitle}.`,
+        roleName: 'Channel Partner (Agent)',
+        url,
+        shareText,
+        emailSubject: `Invitation: Join ${branchTitle} as an Authorized Channel Partner (Money Shelter)`,
+        badge: isBranchOps ? `Locked to ${branchTitle}` : 'Direct Origination',
+        icon: '🤝',
+        colorTheme: 'emerald',
+      });
+    } else {
+      const url = getSubDsaOnboardingUrl();
+      const shareText = isBranchOps
+        ? `Hello! Join ${branchTitle} distribution network as an authorized Sub-DSA (Master Partner) with Money Shelter. Recruit channel partners, manage retail loan originations, and earn direct overrides on every disbursement. Register directly using our branch Sub-DSA link: ${url}`
+        : `Hello! We invite you to join Money Shelter as an authorized Sub-DSA. Build your own agent team, earn override commissions on your network's business, and access direct loan disbursements: ${url}`;
+
+      setShareConfig({
+        title: isBranchOps ? `${branchTitle} Sub-DSA Master Partner Onboarding` : 'Sub-DSA Master Partner Registration',
+        subtitle: `Share with Master DSAs and agency leaders to build and manage their own partner team under ${branchTitle}.`,
+        roleName: 'Sub-DSA (Master Tier Partner)',
+        url,
+        shareText,
+        emailSubject: `Invitation: Appoint as Authorized Sub-DSA Master Partner (${branchTitle})`,
+        badge: '⚡ 0.1% Team Override Engine',
+        icon: '🏢',
+        colorTheme: 'indigo',
+      });
+    }
+  };
+
+  const copyModalLink = () => {
+    if (!shareConfig) return;
+    navigator.clipboard.writeText(shareConfig.url);
+    setCopiedShareLink(true);
+    setTimeout(() => setCopiedShareLink(false), 2500);
+  };
+
+  const handleDeviceShare = async () => {
+    if (!shareConfig) return;
+    if (typeof navigator !== 'undefined' && navigator.share) {
+      try {
+        await navigator.share({
+          title: shareConfig.title,
+          text: shareConfig.shareText,
+          url: shareConfig.url,
+        });
+      } catch {
+        // User cancelled
+      }
+    } else {
+      copyModalLink();
+    }
   };
 
   async function handleCreateSite(e: React.FormEvent) {
@@ -527,6 +606,14 @@ export default function PartnerComplianceManager({
               >
                 <span>{copiedLink ? '✓ Copied' : isBranchOps ? '📋 Copy Partner Link' : (isRM || isSubDsa) ? '📋 Copy My Link' : '📋 Copy Link'}</span>
               </button>
+              <button
+                type="button"
+                onClick={() => openShareModal('CHANNEL_PARTNER')}
+                className="px-2.5 py-1.5 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-emerald-800 text-xs font-bold rounded-lg transition inline-flex items-center gap-1 cursor-pointer"
+                title="Share link via WhatsApp, Email, SMS, Telegram, Apps or QR Code"
+              >
+                <span>📤 Share Link</span>
+              </button>
               <a
                 href={getOnboardingUrl()}
                 target="_blank"
@@ -592,6 +679,14 @@ export default function PartnerComplianceManager({
                   className="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-lg shadow-2xs transition inline-flex items-center gap-1 cursor-pointer"
                 >
                   <span>{copiedSubDsaLink ? '✓ Copied' : '📋 Copy Sub-DSA Link'}</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => openShareModal('SUB_DSA')}
+                  className="px-2.5 py-1.5 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 text-indigo-800 text-xs font-bold rounded-lg transition inline-flex items-center gap-1 cursor-pointer"
+                  title="Share link via WhatsApp, Email, SMS, Telegram, Apps or QR Code"
+                >
+                  <span>📤 Share Link</span>
                 </button>
                 <a
                   href={getSubDsaOnboardingUrl()}
@@ -1978,6 +2073,159 @@ export default function PartnerComplianceManager({
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Universal Share Onboarding Link Modal */}
+      {shareConfig && (
+        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl max-w-lg w-full p-5 sm:p-6 shadow-2xl space-y-4 animate-in fade-in zoom-in-95 duration-150">
+            {/* Header */}
+            <div className="flex justify-between items-start border-b border-slate-100 pb-3">
+              <div className="flex items-center gap-2.5">
+                <div
+                  className={`w-10 h-10 rounded-xl text-white flex items-center justify-center text-xl font-bold shadow-xs ${
+                    shareConfig.colorTheme === 'emerald' ? 'bg-emerald-600' : 'bg-indigo-600'
+                  }`}
+                >
+                  {shareConfig.icon}
+                </div>
+                <div>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <h3 className="text-sm font-bold text-slate-900">{shareConfig.title}</h3>
+                    <span
+                      className={`text-[10px] font-bold px-2 py-0.5 rounded ${
+                        shareConfig.colorTheme === 'emerald'
+                          ? 'bg-emerald-100 text-emerald-800'
+                          : 'bg-indigo-100 text-indigo-800'
+                      }`}
+                    >
+                      {shareConfig.badge}
+                    </span>
+                  </div>
+                  <p className="text-xs text-slate-500 mt-0.5">{shareConfig.subtitle}</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShareConfig(null)}
+                className="text-slate-400 hover:text-slate-600 font-bold p-1 rounded-lg hover:bg-slate-100 transition"
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Direct URL with Copy Button */}
+            <div className="space-y-1.5">
+              <label className="block text-xs font-semibold text-slate-700">
+                Official Registration URL
+              </label>
+              <div className="flex items-center gap-2">
+                <input
+                  type="text"
+                  readOnly
+                  value={shareConfig.url}
+                  className="w-full px-3 py-2 text-xs font-mono bg-slate-50 border border-slate-200 rounded-lg text-slate-800 select-all"
+                  onClick={(e) => (e.target as HTMLInputElement).select()}
+                />
+                <button
+                  type="button"
+                  onClick={copyModalLink}
+                  className={`px-3.5 py-2 text-xs font-bold rounded-lg shadow-2xs transition whitespace-nowrap text-white cursor-pointer ${
+                    shareConfig.colorTheme === 'emerald'
+                      ? 'bg-emerald-600 hover:bg-emerald-700'
+                      : 'bg-indigo-600 hover:bg-indigo-700'
+                  }`}
+                >
+                  {copiedShareLink ? '✓ Copied' : '📋 Copy'}
+                </button>
+              </div>
+            </div>
+
+            {/* Quick Share Grid */}
+            <div className="space-y-1.5">
+              <label className="block text-xs font-semibold text-slate-700">
+                Share Across Channels
+              </label>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                {/* WhatsApp */}
+                <a
+                  href={`https://api.whatsapp.com/send?text=${encodeURIComponent(shareConfig.shareText)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="p-2.5 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-emerald-900 rounded-xl flex flex-col items-center justify-center gap-1 text-center transition cursor-pointer"
+                >
+                  <span className="text-lg">📲</span>
+                  <span className="text-[11px] font-bold">WhatsApp</span>
+                </a>
+
+                {/* Email */}
+                <a
+                  href={`mailto:?subject=${encodeURIComponent(shareConfig.emailSubject)}&body=${encodeURIComponent(shareConfig.shareText)}`}
+                  className="p-2.5 bg-sky-50 hover:bg-sky-100 border border-sky-200 text-sky-900 rounded-xl flex flex-col items-center justify-center gap-1 text-center transition cursor-pointer"
+                >
+                  <span className="text-lg">✉️</span>
+                  <span className="text-[11px] font-bold">Email</span>
+                </a>
+
+                {/* SMS */}
+                <a
+                  href={`sms:?body=${encodeURIComponent(shareConfig.shareText)}`}
+                  className="p-2.5 bg-amber-50 hover:bg-amber-100 border border-amber-200 text-amber-900 rounded-xl flex flex-col items-center justify-center gap-1 text-center transition cursor-pointer"
+                >
+                  <span className="text-lg">💬</span>
+                  <span className="text-[11px] font-bold">SMS</span>
+                </a>
+
+                {/* Telegram */}
+                <a
+                  href={`https://t.me/share/url?url=${encodeURIComponent(shareConfig.url)}&text=${encodeURIComponent(shareConfig.shareText)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="p-2.5 bg-blue-50 hover:bg-blue-100 border border-blue-200 text-blue-900 rounded-xl flex flex-col items-center justify-center gap-1 text-center transition cursor-pointer"
+                >
+                  <span className="text-lg">✈️</span>
+                  <span className="text-[11px] font-bold">Telegram</span>
+                </a>
+              </div>
+            </div>
+
+            {/* Device Share Button (if supported) & QR Code Preview */}
+            <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl flex flex-col sm:flex-row items-center justify-between gap-3">
+              <div className="flex items-center gap-3">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={`https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=${encodeURIComponent(shareConfig.url)}`}
+                  alt="Onboarding QR Code"
+                  className="w-16 h-16 rounded-lg border border-slate-200 bg-white p-1 shrink-0"
+                />
+                <div>
+                  <p className="text-xs font-bold text-slate-800">Scan QR to Register</p>
+                  <p className="text-[10px] text-slate-500 mt-0.5 leading-snug">
+                    Display at branch reception counter or download for flyers.
+                  </p>
+                  <a
+                    href={`https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(shareConfig.url)}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    download="partner-onboarding-qr.png"
+                    className="text-[10px] font-bold text-emerald-700 hover:underline mt-1 inline-block"
+                  >
+                    📥 Download High-Res QR
+                  </a>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={handleDeviceShare}
+                className="w-full sm:w-auto px-4 py-2 bg-slate-900 hover:bg-black text-white text-xs font-bold rounded-lg shadow-2xs transition inline-flex items-center justify-center gap-1.5 cursor-pointer whitespace-nowrap"
+              >
+                <span>📱</span>
+                <span>Device Share</span>
+              </button>
+            </div>
           </div>
         </div>
       )}
