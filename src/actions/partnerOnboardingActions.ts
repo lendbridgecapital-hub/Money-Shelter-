@@ -148,7 +148,8 @@ export async function completePartnerOnboardingAction(payload: {
     return { ok: false, error: 'You must read and agree to the Partnership / Referral Agreement.' };
   }
 
-  if (emailExists(email)) {
+  const existingUser = getUserByEmail(email);
+  if (existingUser && existingUser.partnerStatus !== 'PENDING_APPROVAL') {
     return { ok: false, error: 'An account with this email address already exists. Please sign in or use another email.' };
   }
 

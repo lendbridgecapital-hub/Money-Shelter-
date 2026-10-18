@@ -478,6 +478,67 @@ export function createPartnerOnboarding(data: {
   const cleanPanDocUrl = saveBase64Document(data.panDocumentUrl, 'partners', 'pan');
   const cleanAadhaarDocUrl = saveBase64Document(data.aadhaarDocumentUrl, 'partners', 'aadhaar');
 
+  const existingPending = getUserByEmail(email);
+  if (existingPending && (existingPending.partnerStatus === 'PENDING_APPROVAL' || existingPending.role === targetRole)) {
+    try {
+      db.prepare(
+        `UPDATE users SET
+          name = ?,
+          password_hash = ?,
+          role = ?,
+          branch_id = ?,
+          phone = ?,
+          father_spouse_name = ?,
+          address = ?,
+          pan_number = ?,
+          pan_document_url = COALESCE(?, pan_document_url),
+          aadhaar_number = ?,
+          aadhaar_document_url = COALESCE(?, aadhaar_document_url),
+          agreement_accepted = 1,
+          agreement_signed_at = ?,
+          agreement_authorized_text = ?,
+          assigned_rm_id = ?,
+          assigned_rm_name = ?,
+          parent_sub_dsa_id = ?,
+          parent_sub_dsa_name = ?
+        WHERE id = ?`
+      ).run(
+        data.name.trim(),
+        data.passwordHash,
+        targetRole,
+        branchId,
+        data.phone.trim(),
+        data.fatherSpouseName.trim(),
+        data.address.trim(),
+        data.panNumber.trim().toUpperCase(),
+        cleanPanDocUrl || null,
+        data.aadhaarNumber.trim(),
+        cleanAadhaarDocUrl || null,
+        now,
+        data.agreementAuthorizedText || null,
+        data.assignedRmId || null,
+        data.assignedRmName || null,
+        data.parentSubDsaId || null,
+        data.parentSubDsaName || null,
+        existingPending.id
+      );
+    } catch (updateErr) {
+      console.warn('[usersRepo] UPDATE pending user failed, proceeding with object:', updateErr);
+    }
+
+    const updated = getUserById(existingPending.id);
+    return updated || {
+      ...existingPending,
+      name: data.name.trim(),
+      phone: data.phone.trim(),
+      partnerCode: existingPending.partnerCode || partnerCode,
+      partnerStatus: 'PENDING_APPROVAL',
+      agreementAccepted: true,
+      agreementSignedAt: now,
+      agreementAuthorizedText: data.agreementAuthorizedText || null,
+    };
+  }
+
   try {
     db.prepare(
       `INSERT INTO users (
