@@ -87,30 +87,22 @@ export default function PartnerComplianceManager({
   const cleanPartners = React.useMemo(() => {
     const seenIds = new Set<string>();
     const seenEmails = new Set<string>();
-    const seenPans = new Set<string>();
     const seenCodes = new Set<string>();
-    const seenPhones = new Set<string>();
     return partners.filter((p) => {
       if (p.id === 'usr_tejas_subdsa_alias' || p.email === 'tejas.subdsa@quickfinsure.com') {
         return false;
       }
       const id = (p.id || '').toLowerCase().trim();
       const email = (p.email || '').toLowerCase().trim();
-      const pan = (p.panNumber || '').toUpperCase().trim();
       const code = (p.partnerCode || '').toUpperCase().trim();
-      const phone = (p.phone || '').replace(/\D/g, '').slice(-10);
 
       if (id && seenIds.has(id)) return false;
       if (email && seenEmails.has(email)) return false;
-      if (pan && pan.length === 10 && seenPans.has(pan)) return false;
       if (code && seenCodes.has(code)) return false;
-      if (phone && phone.length === 10 && seenPhones.has(phone)) return false;
 
       if (id) seenIds.add(id);
       if (email) seenEmails.add(email);
-      if (pan && pan.length === 10) seenPans.add(pan);
       if (code) seenCodes.add(code);
-      if (phone && phone.length === 10) seenPhones.add(phone);
 
       return true;
     });

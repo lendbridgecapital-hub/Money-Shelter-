@@ -167,6 +167,16 @@ export async function completePartnerOnboardingAction(payload: {
       if (bObj) branchId = bObj.id;
     }
 
+    if (
+      (!branchId || branchId === 'default' || branchId === 'br_c95492722e36abe1') &&
+      (payload.agreementAuthorizedText?.toLowerCase().includes('lendbridge') ||
+        payload.agreementAuthorizedText?.toLowerCase().includes('satara') ||
+        payload.branchId?.toLowerCase().includes('satara') ||
+        payload.branchId?.toUpperCase() === 'STR01')
+    ) {
+      branchId = 'br_satara_01';
+    }
+
     let assignedRmId = payload.assignedRmId || null;
     let assignedRmName = payload.assignedRmName || null;
 

@@ -16,8 +16,8 @@ export function listUsers(tenantId = 'default'): User[] {
 
   // Sort rows so approved/certified canonical partner records are preserved over duplicates
   const sortedRows = [...rows].sort((a, b) => {
-    if (a.id === 'usr_tejas_subdsa_01') return -1;
-    if (b.id === 'usr_tejas_subdsa_01') return 1;
+    if (a.id === 'usr_tejas_subdsa_alias') return 1;
+    if (b.id === 'usr_tejas_subdsa_alias') return -1;
     const aApproved = a.partner_status === 'APPROVED' ? 1 : 0;
     const bApproved = b.partner_status === 'APPROVED' ? 1 : 0;
     if (aApproved !== bApproved) return bApproved - aApproved;
@@ -32,25 +32,21 @@ export function listUsers(tenantId = 'default'): User[] {
     // Remove obsolete duplicate alias for Tejas
     if (
       user.id === 'usr_tejas_subdsa_alias' ||
-      user.email === 'tejas.subdsa@quickfinsure.com' ||
-      (user.id !== 'usr_tejas_subdsa_01' && (user.name || '').toLowerCase().includes('tejas') && (user.role === 'SUB_DSA' || (user.name || '').toLowerCase().includes('sub-dsa')))
+      user.email === 'tejas.subdsa@quickfinsure.com'
     ) {
       continue;
     }
 
     const id = user.id.toLowerCase().trim();
     const email = (user.email || '').toLowerCase().trim();
-    const pan = (user.panNumber || '').toUpperCase().trim();
     const code = (user.partnerCode || '').toUpperCase().trim();
 
     if (id && seenIds.has(id)) continue;
     if (email && seenEmails.has(email)) continue;
-    if (pan && pan.length === 10 && seenPans.has(pan)) continue;
     if (code && seenCodes.has(code)) continue;
 
     if (id) seenIds.add(id);
     if (email) seenEmails.add(email);
-    if (pan && pan.length === 10) seenPans.add(pan);
     if (code) seenCodes.add(code);
 
     uniqueUsers.push(user);
@@ -468,7 +464,16 @@ export function createPartnerOnboarding(data: {
   const now = new Date().toISOString();
   const email = data.email.trim().toLowerCase();
   const tenantId = data.tenantId || 'default';
-  const branchId = data.branchId || 'br_c95492722e36abe1'; // Default HQ branch
+  let branchId = data.branchId || 'br_c95492722e36abe1'; // Default HQ branch
+  if (
+    (!data.branchId || data.branchId === 'default' || data.branchId === 'br_c95492722e36abe1') &&
+    (data.agreementAuthorizedText?.toLowerCase().includes('lendbridge') ||
+      data.agreementAuthorizedText?.toLowerCase().includes('satara') ||
+      data.email.toLowerCase().includes('satara') ||
+      data.email.toLowerCase().includes('lendbridge'))
+  ) {
+    branchId = 'br_satara_01';
+  }
   const randomSuffix = Math.floor(1000 + Math.random() * 9000);
   const targetRole: Role = data.role === 'SUB_DSA' ? 'SUB_DSA' : 'CHANNEL_PARTNER';
   const prefix = targetRole === 'SUB_DSA' ? 'QFS-SUB' : 'QFS-PRT';

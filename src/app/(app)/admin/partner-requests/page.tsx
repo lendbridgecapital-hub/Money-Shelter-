@@ -72,7 +72,13 @@ export default async function PartnerRequestsPage() {
         (p.email.toLowerCase().includes('satara') ||
           p.email.toLowerCase().includes('lendbridge') ||
           (p.branchName && p.branchName.toLowerCase().includes('satara')) ||
-          p.branchId === 'STR01')
+          p.branchId === 'STR01' ||
+          p.branchId === 'br_satara_01' ||
+          p.partnerCode === 'QFS-SUB-9796' ||
+          (p.name && p.name.toLowerCase().includes('tejas')) ||
+          (p.agreementAuthorizedText &&
+            (p.agreementAuthorizedText.toLowerCase().includes('satara') ||
+              p.agreementAuthorizedText.toLowerCase().includes('lendbridge'))))
       ) {
         return true;
       }

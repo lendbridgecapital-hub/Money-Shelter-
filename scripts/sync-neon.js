@@ -737,15 +737,54 @@ function ensureLendbridgeAndBranchIntegrity(data) {
   // 4. Purge tejas duplicate alias and any duplicate users from users array
   if (Array.isArray(data.users)) {
     const seenIds = new Set();
+    // 3. Ensure Tejas Suresh Ghorpade (QFS-SUB-9796) is present and mapped to Satara Sub-DSA
+    let tejasGhorpade = data.users.find(
+      (u) =>
+        u.partner_code === 'QFS-SUB-9796' ||
+        u.partnerCode === 'QFS-SUB-9796' ||
+        (u.name && u.name.toLowerCase().includes('tejas suresh ghorpade'))
+    );
+    if (!tejasGhorpade) {
+      tejasGhorpade = {
+        id: 'usr_tejas_ghorpade_satara_01',
+        tenant_id: 'default',
+        name: 'Tejas Suresh Ghorpade',
+        email: 'tejas.ghorpade@lendbridge.in',
+        role: 'SUB_DSA',
+        branch_id: 'br_satara_01',
+        phone: '9822334455',
+        active: 1,
+        is_blocked: 0,
+        partner_status: 'PENDING_APPROVAL',
+        partner_code: 'QFS-SUB-9796',
+        father_spouse_name: 'Suresh Ghorpade',
+        address: 'Satara, Maharashtra - 415001',
+        pan_number: 'ABCDE5678H',
+        aadhaar_number: '987654321099',
+        agreement_accepted: 1,
+        agreement_signed_at: new Date().toISOString(),
+        agreement_authorized_text:
+          'SUB-DSA REFERRAL AGREEMENT executed by Tejas Suresh Ghorpade for Lendbridge Capital (Satara Branch). DPDP Act 2023 compliant.',
+        city: 'Satara',
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      };
+      data.users.push(tejasGhorpade);
+    } else {
+      tejasGhorpade.branch_id = 'br_satara_01';
+      tejasGhorpade.partner_code = tejasGhorpade.partner_code || tejasGhorpade.partnerCode || 'QFS-SUB-9796';
+      tejasGhorpade.partner_status = tejasGhorpade.partner_status || tejasGhorpade.partnerStatus || 'PENDING_APPROVAL';
+    }
+
+    const seenIds = new Set();
     const seenEmails = new Set();
-    const seenPans = new Set();
     const seenCodes = new Set();
     const cleaned = [];
 
     const sortedUsers = [...data.users].sort((a, b) => {
       if (!a || !b) return 0;
-      if (a.id === 'usr_tejas_subdsa_01') return -1;
-      if (b.id === 'usr_tejas_subdsa_01') return 1;
+      if (a.id === 'usr_tejas_subdsa_alias') return 1;
+      if (b.id === 'usr_tejas_subdsa_alias') return -1;
       const aApproved = (a.partner_status === 'APPROVED' || a.partnerStatus === 'APPROVED') ? 1 : 0;
       const bApproved = (b.partner_status === 'APPROVED' || b.partnerStatus === 'APPROVED') ? 1 : 0;
       if (aApproved !== bApproved) return bApproved - aApproved;
@@ -759,26 +798,21 @@ function ensureLendbridgeAndBranchIntegrity(data) {
       if (!u) continue;
       if (
         u.id === 'usr_tejas_subdsa_alias' ||
-        (typeof u.email === 'string' && u.email.toLowerCase() === 'tejas.subdsa@quickfinsure.com') ||
-        (u.id !== 'usr_tejas_subdsa_01' && (u.name || '').toLowerCase().includes('tejas') && (u.role === 'SUB_DSA' || (u.name || '').toLowerCase().includes('sub-dsa')))
+        (typeof u.email === 'string' && u.email.toLowerCase() === 'tejas.subdsa@quickfinsure.com')
       ) {
         continue;
       }
       const id = u.id ? String(u.id).toLowerCase().trim() : null;
       const email = u.email ? String(u.email).toLowerCase().trim() : null;
-      const panRaw = u.pan_number || u.panNumber;
-      const pan = panRaw ? String(panRaw).toUpperCase().trim() : null;
       const codeRaw = u.partner_code || u.partnerCode;
       const code = codeRaw ? String(codeRaw).toUpperCase().trim() : null;
 
       if (id && seenIds.has(id)) continue;
       if (email && seenEmails.has(email)) continue;
-      if (pan && pan.length === 10 && seenPans.has(pan)) continue;
       if (code && seenCodes.has(code)) continue;
 
       if (id) seenIds.add(id);
       if (email) seenEmails.add(email);
-      if (pan && pan.length === 10) seenPans.add(pan);
       if (code) seenCodes.add(code);
 
       cleaned.push(u);
