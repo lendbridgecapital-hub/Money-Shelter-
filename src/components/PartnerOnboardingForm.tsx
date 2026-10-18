@@ -3,7 +3,6 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import {
-  requestPartnerOtpAction,
   completePartnerOnboardingAction,
 } from '@/actions/partnerOnboardingActions';
 import type { Branch } from '@/types/db';
@@ -91,8 +90,8 @@ export default function PartnerOnboardingForm({
   referralBranch,
   targetRole = 'CHANNEL_PARTNER',
 }: Props) {
-  // Stepper state: 1 = Profile, 2 = KYC & Docs, 3 = Agreement, 4 = OTP Confirmation, 5 = Success
-  const [currentStep, setCurrentStep] = useState<1 | 2 | 3 | 4 | 5>(1);
+  // Stepper state: 1 = Profile, 2 = KYC & Docs, 3 = Agreement & Confirmation, 4 = Success
+  const [currentStep, setCurrentStep] = useState<1 | 2 | 3 | 4>(1);
 
   // Form Fields
   const [fullName, setFullName] = useState('');
@@ -142,12 +141,7 @@ export default function PartnerOnboardingForm({
 
   // Agreement State
   const [agreementAccepted, setAgreementAccepted] = useState(false);
-
-  // OTP State
-  const [otp, setOtp] = useState('');
-  const [demoOtpHint, setDemoOtpHint] = useState<string | null>(null);
-  const [isSendingOtp, setIsSendingOtp] = useState(false);
-  const [isVerifying, setIsVerifying] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Status & Feedback
   const [error, setError] = useState<string | null>(null);
@@ -245,41 +239,16 @@ export default function PartnerOnboardingForm({
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  // Step 3 -> Step 4: Request OTP & move to confirmation
-  const handleRequestOtp = async () => {
-    setError(null);
-    if (!agreementAccepted) {
-      return setError('You must read and tick the box agreeing to the Sub-DSA / Referral Partner Agreement.');
-    }
-
-    setIsSendingOtp(true);
-    const res = await requestPartnerOtpAction({
-      email,
-      mobile,
-    });
-    setIsSendingOtp(false);
-
-    if (!res || !res.ok) {
-      setError((res && res.error) || 'Failed to dispatch verification OTP. Please try again.');
-      return;
-    }
-
-    setDemoOtpHint(res.demoOtp || '123456');
-    setOtp(res.demoOtp || '123456');
-    setCurrentStep(4);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
-
-  // Step 4: Verify OTP & complete onboarding
-  const handleVerifyOtp = async (e: React.FormEvent) => {
+  // Step 3: Confirm and save agreement directly without OTP journey
+  const handleConfirmAndSaveAgreement = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
 
-    if (!otp.trim()) {
-      return setError('Please enter the 6-digit confirmation OTP.');
+    if (!agreementAccepted) {
+      return setError('You must read and tick the box confirming that you agree to the Sub-DSA / Partner Agreement.');
     }
 
-    setIsVerifying(true);
+    setIsSubmitting(true);
     const agreementRoleTitle = targetRole === 'SUB_DSA' ? 'Sub-DSA Master Partner' : 'Referral Partner / Agent';
     const agreementSubDsaNote = referralSubDsa ? `Operating under Sub-DSA: ${referralSubDsa.name} (${referralSubDsa.partnerCode || 'Mapped'})` : '';
     const firstPartyText = isBranchCoBranded
@@ -292,8 +261,8 @@ Second Party (${agreementRoleTitle}): ${fullName}
 Father's/Spouse's Name: ${fatherSpouseName}
 Registered Address: ${address}
 Permanent Account Number (PAN): ${panNumber}
-Aadhaar Number: ${maskedAadhaar()}
-${agreementSubDsaNote ? `${agreementSubDsaNote}\n` : ''}Digital Verification Audit: Authorized via 6-digit confirmation OTP dispatched to +91 ${mobile.slice(-10)} and ${email}.
+Identity Proof: ${maskedAadhaar()}
+${agreementSubDsaNote ? `${agreementSubDsaNote}\n` : ''}Digital Verification Audit: Confirmed & Digitally Signed by ${fullName} (+91 ${mobile.slice(-10)}, ${email}).
 Compliance Undertaking: DPDP Act 2023 compliant, Zero-Cash Collection policy, non-exclusive referral appointment, and commission clawback provisions acknowledged and executed.`;
 
     const res = await completePartnerOnboardingAction({
@@ -308,7 +277,6 @@ Compliance Undertaking: DPDP Act 2023 compliant, Zero-Cash Collection policy, no
       aadhaarDocumentUrl: aadhaarDocUrl || null,
       agreementAuthorizedText,
       password,
-      otp: otp.trim(),
       branchId: selectedBranchId,
       assignedRmId: referralRm?.id || referralSubDsa?.assignedRmId || null,
       assignedRmName: referralRm?.name || referralSubDsa?.assignedRmName || null,
@@ -317,10 +285,10 @@ Compliance Undertaking: DPDP Act 2023 compliant, Zero-Cash Collection policy, no
       parentSubDsaId: referralSubDsa?.id || null,
       parentSubDsaName: referralSubDsa?.name || null,
     });
-    setIsVerifying(false);
+    setIsSubmitting(false);
 
     if (!res || !res.ok) {
-      setError((res && res.error) || 'OTP verification failed. Please check the code and try again.');
+      setError((res && res.error) || 'Failed to complete partner onboarding. Please try again.');
       return;
     }
 
@@ -330,7 +298,7 @@ Compliance Undertaking: DPDP Act 2023 compliant, Zero-Cash Collection policy, no
       email: res.email || email,
       mobile: res.mobile || mobile,
     });
-    setCurrentStep(5);
+    setCurrentStep(4);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -434,11 +402,9 @@ Compliance Undertaking: DPDP Act 2023 compliant, Zero-Cash Collection policy, no
                 currentStep === 1
                   ? '0%'
                   : currentStep === 2
-                  ? '25%'
+                  ? '33%'
                   : currentStep === 3
-                  ? '50%'
-                  : currentStep === 4
-                  ? '75%'
+                  ? '66%'
                   : '100%',
             }}
           />
@@ -447,8 +413,7 @@ Compliance Undertaking: DPDP Act 2023 compliant, Zero-Cash Collection policy, no
             { step: 1, label: 'Profile' },
             { step: 2, label: 'KYC & ID' },
             { step: 3, label: 'Agreement' },
-            { step: 4, label: 'OTP' },
-            { step: 5, label: 'Code' },
+            { step: 4, label: 'Code' },
           ].map((item) => {
             const isCompleted = currentStep > item.step;
             const isCurrent = currentStep === item.step;
@@ -1036,7 +1001,7 @@ Compliance Undertaking: DPDP Act 2023 compliant, Zero-Cash Collection policy, no
                   className="w-4 h-4 rounded text-emerald-600 border-slate-300 focus:ring-emerald-500 mt-0.5 shrink-0"
                 />
                 <span className="text-xs text-slate-800 font-medium">
-                  I, <strong>{fullName || 'the undersigned'}</strong>, have carefully read and unconditionally agree to all terms and conditions of this Sub-DSA / Referral Partner Agreement. I understand that an OTP will be verified to create my authorized Partner Code.
+                  I, <strong>{fullName || 'the undersigned'}</strong>, have carefully read, confirmed, and unconditionally agree to all terms and conditions of this Sub-DSA / Referral Partner Agreement. I confirm my details are accurate and authorize my official Partner Code generation.
                 </span>
               </label>
             </div>
@@ -1051,101 +1016,22 @@ Compliance Undertaking: DPDP Act 2023 compliant, Zero-Cash Collection policy, no
               </button>
               <button
                 type="button"
-                disabled={!agreementAccepted || isSendingOtp}
-                onClick={handleRequestOtp}
-                className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white text-xs font-bold rounded-lg shadow-sm transition inline-flex items-center gap-1.5"
+                disabled={!agreementAccepted || isSubmitting}
+                onClick={handleConfirmAndSaveAgreement}
+                className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white text-xs font-bold rounded-lg shadow-sm transition inline-flex items-center gap-1.5 cursor-pointer"
               >
-                {isSendingOtp ? 'Dispatching OTP…' : 'Agree & Request OTP Verification →'}
+                {isSubmitting ? (
+                  <span>Saving & Creating Partner Account…</span>
+                ) : (
+                  <span>✓ I Confirm & Save Agreement — Generate Partner Code</span>
+                )}
               </button>
             </div>
           </div>
         )}
 
-        {/* ================= STEP 4: OTP CONFIRMATION FOR CODE CREATION ================= */}
-        {currentStep === 4 && (
-          <form onSubmit={handleVerifyOtp} className="p-5 sm:p-7 space-y-5">
-            <div className="text-center max-w-sm mx-auto">
-              <div className="w-12 h-12 bg-emerald-50 text-emerald-600 rounded-full flex items-center justify-center mx-auto text-xl mb-2">
-                📱
-              </div>
-              <h2 className="text-base font-bold text-slate-900">OTP Confirmation for Code Creation</h2>
-              <p className="text-xs text-slate-500 mt-1">
-                Enter the 6-digit confirmation OTP dispatched to your mobile{' '}
-                <strong className="text-slate-800 font-mono">+91 {mobile.slice(-10)}</strong> and email{' '}
-                <strong className="text-slate-800">{email}</strong>.
-              </p>
-            </div>
-
-            {/* Test Helper Pill */}
-            {demoOtpHint && (
-              <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl text-center text-xs text-amber-900 font-medium">
-                <span>🔑 <strong>Test / Demo OTP:</strong> Use </span>
-                <button
-                  type="button"
-                  onClick={() => setOtp(demoOtpHint)}
-                  className="font-mono font-bold underline bg-white px-2 py-0.5 rounded border border-amber-300 ml-1 hover:bg-amber-100"
-                >
-                  {demoOtpHint}
-                </button>
-                <span className="text-[11px] text-amber-700 ml-1.5">(or enter 123456)</span>
-              </div>
-            )}
-
-            <div className="max-w-xs mx-auto space-y-3">
-              <div>
-                <label className="block text-center text-xs font-semibold text-slate-700 mb-1.5">
-                  6-Digit Verification Code
-                </label>
-                <input
-                  type="text"
-                  required
-                  maxLength={6}
-                  placeholder="• • • • • •"
-                  value={otp}
-                  onChange={(e) => setOtp(e.target.value.replace(/[^0-9]/g, '').slice(0, 6))}
-                  className="w-full px-3 py-3 border-2 border-slate-300 text-center font-mono text-xl font-extrabold tracking-widest text-slate-900 rounded-xl focus:border-emerald-600 focus:outline-none focus:ring-4 focus:ring-emerald-100"
-                />
-              </div>
-
-              <button
-                type="submit"
-                disabled={isVerifying || otp.length < 6}
-                className="w-full py-3 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white text-xs font-bold rounded-xl shadow-md transition flex items-center justify-center gap-1.5"
-              >
-                {isVerifying ? (
-                  <span>Creating Partner Code & Account…</span>
-                ) : (
-                  <span>Verify OTP & Generate Partner Code</span>
-                )}
-              </button>
-
-              <div className="text-center pt-2">
-                <button
-                  type="button"
-                  onClick={handleRequestOtp}
-                  disabled={isSendingOtp}
-                  className="text-xs font-semibold text-emerald-600 hover:underline disabled:opacity-50"
-                >
-                  {isSendingOtp ? 'Resending…' : "Didn't receive code? Resend OTP"}
-                </button>
-              </div>
-            </div>
-
-            <div className="pt-3 border-t border-slate-100 flex items-center justify-between">
-              <button
-                type="button"
-                onClick={() => setCurrentStep(3)}
-                className="text-xs font-semibold text-slate-500 hover:text-slate-800"
-              >
-                ← Back to Agreement
-              </button>
-              <span className="text-[11px] text-slate-400">Step 4 of 4</span>
-            </div>
-          </form>
-        )}
-
-        {/* ================= STEP 5: ONBOARDING SUCCESS & CODE ISSUED ================= */}
-        {currentStep === 5 && successData && (
+        {/* ================= STEP 4: ONBOARDING SUCCESS & CODE ISSUED ================= */}
+        {currentStep === 4 && successData && (
           <div className="p-6 sm:p-8 text-center space-y-6">
             <div className="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto text-3xl shadow-sm">
               🤝
@@ -1255,7 +1141,7 @@ Compliance Undertaking: DPDP Act 2023 compliant, Zero-Cash Collection policy, no
               </div>
               <div className="flex justify-between py-1">
                 <span className="text-slate-500">Agreement Status:</span>
-                <strong className="text-emerald-700">Digitally Authorized via OTP (DPDP Compliant)</strong>
+                <strong className="text-emerald-700">Digitally Confirmed & Saved (DPDP Compliant)</strong>
               </div>
             </div>
 

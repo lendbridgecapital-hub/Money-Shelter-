@@ -105,7 +105,7 @@ export async function completePartnerOnboardingAction(payload: {
   aadhaarDocumentUrl?: string | null;
   agreementAuthorizedText?: string | null;
   password: string;
-  otp: string;
+  otp?: string;
   branchId?: string;
   assignedRmId?: string | null;
   assignedRmName?: string | null;
@@ -122,7 +122,6 @@ export async function completePartnerOnboardingAction(payload: {
   const panNumber = (payload.panNumber || '').trim().toUpperCase();
   const aadhaarNumber = (payload.aadhaarNumber || '').trim().replace(/[^0-9]/g, '');
   const password = payload.password || '';
-  const otp = (payload.otp || '').trim();
   const targetRole = payload.targetRole === 'SUB_DSA' ? 'SUB_DSA' : 'CHANNEL_PARTNER';
 
   if (!fullName) return { ok: false, error: 'Full name is required.' };
@@ -149,17 +148,6 @@ export async function completePartnerOnboardingAction(payload: {
     return { ok: false, error: 'You must read and agree to the Partnership / Referral Agreement.' };
   }
 
-  // OTP Verification
-  const stored = otpStore.get(email);
-  const isDemoOtp = otp === '123456';
-  const isValidOtp = stored && stored.otp === otp && Date.now() <= stored.expiresAt;
-  const isAnySixDigits = /^\d{6}$/.test(otp);
-
-  // Accept demo OTP, matched stored OTP, or any 6-digit OTP
-  if (!isDemoOtp && !isValidOtp && !isAnySixDigits) {
-    return { ok: false, error: 'Invalid or expired OTP. Please enter a valid 6-digit confirmation code.' };
-  }
-
   if (emailExists(email)) {
     return { ok: false, error: 'An account with this email address already exists. Please sign in or use another email.' };
   }
@@ -168,6 +156,15 @@ export async function completePartnerOnboardingAction(payload: {
     const passwordHash = await bcrypt.hash(password, 10);
     const branches = listBranches();
     let branchId = payload.branchId || (branches[0] ? branches[0].id : 'default');
+    if (branchId) {
+      const bObj = branches.find(
+        (b) =>
+          b.id === branchId ||
+          b.code.toLowerCase() === branchId.toLowerCase() ||
+          b.name.toLowerCase().includes(branchId.toLowerCase())
+      );
+      if (bObj) branchId = bObj.id;
+    }
 
     let assignedRmId = payload.assignedRmId || null;
     let assignedRmName = payload.assignedRmName || null;

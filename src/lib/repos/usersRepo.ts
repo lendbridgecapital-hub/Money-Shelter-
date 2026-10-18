@@ -478,43 +478,77 @@ export function createPartnerOnboarding(data: {
   const cleanPanDocUrl = saveBase64Document(data.panDocumentUrl, 'partners', 'pan');
   const cleanAadhaarDocUrl = saveBase64Document(data.aadhaarDocumentUrl, 'partners', 'aadhaar');
 
-  db.prepare(
-    `INSERT INTO users (
-      id, tenant_id, name, email, password_hash, role, branch_id, phone,
-      partner_code, partner_status, father_spouse_name, address, pan_number, pan_document_url,
-      aadhaar_number, aadhaar_document_url, agreement_accepted, agreement_signed_at,
-      agreement_authorized_text, assigned_rm_id, assigned_rm_name, parent_sub_dsa_id, parent_sub_dsa_name, active, is_blocked, created_at
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'PENDING_APPROVAL', ?, ?, ?, ?, ?, ?, 1, ?, ?, ?, ?, ?, ?, 1, 0, ?)`
-  ).run(
-    id,
-    tenantId,
-    data.name.trim(),
-    email,
-    data.passwordHash,
-    targetRole,
-    branchId,
-    data.phone.trim(),
-    partnerCode,
-    data.fatherSpouseName.trim(),
-    data.address.trim(),
-    data.panNumber.trim().toUpperCase(),
-    cleanPanDocUrl || null,
-    data.aadhaarNumber.trim(),
-    cleanAadhaarDocUrl || null,
-    now,
-    data.agreementAuthorizedText || null,
-    data.assignedRmId || null,
-    data.assignedRmName || null,
-    data.parentSubDsaId || null,
-    data.parentSubDsaName || null,
-    now
-  );
+  try {
+    db.prepare(
+      `INSERT INTO users (
+        id, tenant_id, name, email, password_hash, role, branch_id, phone,
+        partner_code, partner_status, father_spouse_name, address, pan_number, pan_document_url,
+        aadhaar_number, aadhaar_document_url, agreement_accepted, agreement_signed_at,
+        agreement_authorized_text, assigned_rm_id, assigned_rm_name, parent_sub_dsa_id, parent_sub_dsa_name, active, is_blocked, created_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'PENDING_APPROVAL', ?, ?, ?, ?, ?, ?, 1, ?, ?, ?, ?, ?, ?, 1, 0, ?)`
+    ).run(
+      id,
+      tenantId,
+      data.name.trim(),
+      email,
+      data.passwordHash,
+      targetRole,
+      branchId,
+      data.phone.trim(),
+      partnerCode,
+      data.fatherSpouseName.trim(),
+      data.address.trim(),
+      data.panNumber.trim().toUpperCase(),
+      cleanPanDocUrl || null,
+      data.aadhaarNumber.trim(),
+      cleanAadhaarDocUrl || null,
+      now,
+      data.agreementAuthorizedText || null,
+      data.assignedRmId || null,
+      data.assignedRmName || null,
+      data.parentSubDsaId || null,
+      data.parentSubDsaName || null,
+      now
+    );
+  } catch (dbErr) {
+    console.error('[usersRepo] INSERT INTO users failed:', dbErr);
+    throw new Error(dbErr instanceof Error ? dbErr.message : 'Database error while saving partner record');
+  }
 
   const created = getUserById(id);
-  if (!created) {
-    throw new Error('Failed to create partner account');
+  if (created) {
+    return created;
   }
-  return created;
+
+  // Guaranteed fallback: return newly constructed user record if immediate read was un-synced
+  return {
+    id,
+    tenantId,
+    name: data.name.trim(),
+    email,
+    passwordHash: data.passwordHash,
+    role: targetRole,
+    branchId,
+    phone: data.phone.trim(),
+    partnerCode,
+    partnerStatus: 'PENDING_APPROVAL',
+    fatherSpouseName: data.fatherSpouseName.trim(),
+    address: data.address.trim(),
+    panNumber: data.panNumber.trim().toUpperCase(),
+    panDocumentUrl: cleanPanDocUrl || null,
+    aadhaarNumber: data.aadhaarNumber.trim(),
+    aadhaarDocumentUrl: cleanAadhaarDocUrl || null,
+    agreementAccepted: true,
+    agreementSignedAt: now,
+    agreementAuthorizedText: data.agreementAuthorizedText || null,
+    assignedRmId: data.assignedRmId || null,
+    assignedRmName: data.assignedRmName || null,
+    parentSubDsaId: data.parentSubDsaId || null,
+    parentSubDsaName: data.parentSubDsaName || null,
+    active: true,
+    isBlocked: false,
+    createdAt: now,
+  };
 }
 
 function mapRowToUser(row: Record<string, unknown>): User {

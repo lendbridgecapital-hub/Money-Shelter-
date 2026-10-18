@@ -746,7 +746,7 @@ function createPortableStorage(storageFilePath: string): DatabaseAdapter {
       } catch {}
     }
 
-    if (Array.isArray(cachedData.users) && cachedData.users.length > 0 && hasHydratedFromNeon) {
+    if (Array.isArray(cachedData.users) && cachedData.users.length > 0) {
       ensureLendbridgeAndBranchIntegrity(cachedData);
       return cachedData;
     }
@@ -776,9 +776,13 @@ function createPortableStorage(storageFilePath: string): DatabaseAdapter {
 
   function saveData(data: StorageData) {
     cachedData = data;
+    memoryData = data;
+    hasHydratedFromNeon = true;
     try {
       fs.writeFileSync(storageFilePath, JSON.stringify(data, null, 2), 'utf8');
       lastDiskMtime = fs.statSync(storageFilePath).mtimeMs;
+    } catch {}
+    try {
       const initialSeedFilePath = path.resolve(process.cwd(), 'data/initial-data.json');
       fs.writeFileSync(initialSeedFilePath, JSON.stringify(data, null, 2), 'utf8');
     } catch {
