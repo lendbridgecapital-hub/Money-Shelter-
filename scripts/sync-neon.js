@@ -736,7 +736,6 @@ function ensureLendbridgeAndBranchIntegrity(data) {
 
   // 4. Purge tejas duplicate alias and any duplicate users from users array
   if (Array.isArray(data.users)) {
-    const seenIds = new Set();
     // 3. Ensure Tejas Suresh Ghorpade (QFS-SUB-9796) is present and mapped to Satara Sub-DSA
     let tejasGhorpade = data.users.find(
       (u) =>
