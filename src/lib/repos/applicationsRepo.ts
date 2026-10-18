@@ -608,7 +608,8 @@ export function listApplicationsByRole(user: User): LoanApplication[] {
       user.email.toLowerCase().includes('satara') ||
       user.name.toLowerCase().includes('lendbridge') ||
       user.name.toLowerCase().includes('satara') ||
-      user.branchId === 'br_satara_01';
+      user.branchId === 'br_satara_01' ||
+      user.branchId?.toUpperCase() === 'STR01';
 
     if (isLendbridgeOrSatara) {
       return listApplicationsForBranch('br_satara_01', user.tenantId || 'default');

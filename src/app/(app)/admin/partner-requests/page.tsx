@@ -24,7 +24,7 @@ export default async function PartnerRequestsPage() {
   const allBranches = listBranches(user.tenantId || 'default');
   let userBranchId = user.branchId;
   if (
-    !userBranchId &&
+    (!userBranchId || userBranchId === 'default') &&
     (user.email?.toLowerCase().includes('lendbridge') ||
       user.email?.toLowerCase().includes('satara') ||
       user.name?.toLowerCase().includes('lendbridge') ||
@@ -38,7 +38,9 @@ export default async function PartnerRequestsPage() {
         (b) =>
           b.id.toLowerCase() === userBranchId.toLowerCase() ||
           b.code.toLowerCase() === userBranchId.toLowerCase() ||
-          b.name.toLowerCase() === userBranchId.toLowerCase()
+          b.name.toLowerCase() === userBranchId.toLowerCase() ||
+          (userBranchId.toLowerCase().includes('satara') &&
+            (b.id === 'br_satara_01' || b.code === 'STR01' || b.name.toLowerCase().includes('satara')))
       )
     : null;
 

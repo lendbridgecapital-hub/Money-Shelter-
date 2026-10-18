@@ -403,16 +403,11 @@ function createPortableStorage(storageFilePath: string): DatabaseAdapter {
         }
         const id = u.id ? String(u.id).toLowerCase().trim() : null;
         const email = u.email ? String(u.email).toLowerCase().trim() : null;
-        const codeRaw = u.partner_code || u.partnerCode;
-        const code = codeRaw ? String(codeRaw).toUpperCase().trim() : null;
-
         if (id && seenIds.has(id)) continue;
         if (email && seenEmails.has(email)) continue;
-        if (code && seenCodes.has(code)) continue;
 
         if (id) seenIds.add(id);
         if (email) seenEmails.add(email);
-        if (code) seenCodes.add(code);
 
         cleaned.push(u);
       }

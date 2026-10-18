@@ -167,13 +167,18 @@ export async function completePartnerOnboardingAction(payload: {
       if (bObj) branchId = bObj.id;
     }
 
-    if (
-      (!branchId || branchId === 'default' || branchId === 'br_c95492722e36abe1') &&
-      (payload.agreementAuthorizedText?.toLowerCase().includes('lendbridge') ||
-        payload.agreementAuthorizedText?.toLowerCase().includes('satara') ||
-        payload.branchId?.toLowerCase().includes('satara') ||
-        payload.branchId?.toUpperCase() === 'STR01')
-    ) {
+    const isLendbridgeSatara = Boolean(
+      payload.branchId === 'br_satara_01' ||
+      payload.branchId?.toLowerCase().includes('satara') ||
+      payload.branchId?.toLowerCase().includes('lendbridge') ||
+      payload.branchId?.toUpperCase() === 'STR01' ||
+      payload.agreementAuthorizedText?.toLowerCase().includes('lendbridge') ||
+      payload.agreementAuthorizedText?.toLowerCase().includes('satara') ||
+      payload.email?.toLowerCase().includes('satara') ||
+      payload.email?.toLowerCase().includes('lendbridge')
+    );
+
+    if (isLendbridgeSatara) {
       branchId = 'br_satara_01';
     }
 

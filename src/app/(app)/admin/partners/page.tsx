@@ -27,7 +27,7 @@ export default async function PartnersPage() {
   const allBranches = listBranches(user.tenantId || 'default');
   let userBranchId = user.branchId;
   if (
-    !userBranchId &&
+    (!userBranchId || userBranchId === 'default') &&
     (user.email?.toLowerCase().includes('lendbridge') ||
       user.email?.toLowerCase().includes('satara') ||
       user.name?.toLowerCase().includes('lendbridge') ||
@@ -41,7 +41,9 @@ export default async function PartnersPage() {
         (b) =>
           b.id.toLowerCase() === userBranchId.toLowerCase() ||
           b.code.toLowerCase() === userBranchId.toLowerCase() ||
-          b.name.toLowerCase() === userBranchId.toLowerCase()
+          b.name.toLowerCase() === userBranchId.toLowerCase() ||
+          (userBranchId.toLowerCase().includes('satara') &&
+            (b.id === 'br_satara_01' || b.code === 'STR01' || b.name.toLowerCase().includes('satara')))
       )
     : null;
 
@@ -79,11 +81,18 @@ export default async function PartnersPage() {
       if (p.branchId && allowedBranchIds.has(p.branchId.toLowerCase())) return true;
       if (p.branchName && allowedBranchIds.has(p.branchName.toLowerCase())) return true;
       if (
-        userBranch.id === 'br_satara_01' &&
-        (p.email.toLowerCase().includes('satara') ||
-          p.email.toLowerCase().includes('lendbridge') ||
+        (userBranch.id === 'br_satara_01' || userBranch.code === 'STR01' || userBranch.name.toLowerCase().includes('satara')) &&
+        (p.branchId === 'br_satara_01' ||
+          p.branchId === 'STR01' ||
           (p.branchName && p.branchName.toLowerCase().includes('satara')) ||
-          p.branchId === 'STR01')
+          p.email.toLowerCase().includes('satara') ||
+          p.email.toLowerCase().includes('lendbridge') ||
+          p.partnerCode === 'QFS-SUB-9796' ||
+          (p.city && p.city.toLowerCase().includes('satara')) ||
+          (p.name && p.name.toLowerCase().includes('tejas')) ||
+          (p.agreementAuthorizedText &&
+            (p.agreementAuthorizedText.toLowerCase().includes('satara') ||
+              p.agreementAuthorizedText.toLowerCase().includes('lendbridge'))))
       ) {
         return true;
       }

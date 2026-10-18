@@ -277,7 +277,14 @@ Compliance Undertaking: DPDP Act 2023 compliant, Zero-Cash Collection policy, no
       aadhaarDocumentUrl: aadhaarDocUrl || null,
       agreementAuthorizedText,
       password,
-      branchId: selectedBranchId,
+      branchId:
+        (isBranchCoBranded ? 'br_satara_01' : '') ||
+        selectedBranchId ||
+        referralBranch?.id ||
+        referralRm?.branchId ||
+        referralSubDsa?.branchId ||
+        branches[0]?.id ||
+        'default',
       assignedRmId: referralRm?.id || referralSubDsa?.assignedRmId || null,
       assignedRmName: referralRm?.name || referralSubDsa?.assignedRmName || null,
       agreementAccepted: true,

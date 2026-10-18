@@ -98,11 +98,9 @@ export default function PartnerComplianceManager({
 
       if (id && seenIds.has(id)) return false;
       if (email && seenEmails.has(email)) return false;
-      if (code && seenCodes.has(code)) return false;
 
       if (id) seenIds.add(id);
       if (email) seenEmails.add(email);
-      if (code) seenCodes.add(code);
 
       return true;
     });

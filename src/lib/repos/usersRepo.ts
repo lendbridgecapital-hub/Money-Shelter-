@@ -39,15 +39,12 @@ export function listUsers(tenantId = 'default'): User[] {
 
     const id = user.id.toLowerCase().trim();
     const email = (user.email || '').toLowerCase().trim();
-    const code = (user.partnerCode || '').toUpperCase().trim();
 
     if (id && seenIds.has(id)) continue;
     if (email && seenEmails.has(email)) continue;
-    if (code && seenCodes.has(code)) continue;
 
     if (id) seenIds.add(id);
     if (email) seenEmails.add(email);
-    if (code) seenCodes.add(code);
 
     uniqueUsers.push(user);
   }
@@ -465,13 +462,18 @@ export function createPartnerOnboarding(data: {
   const email = data.email.trim().toLowerCase();
   const tenantId = data.tenantId || 'default';
   let branchId = data.branchId || 'br_c95492722e36abe1'; // Default HQ branch
-  if (
-    (!data.branchId || data.branchId === 'default' || data.branchId === 'br_c95492722e36abe1') &&
-    (data.agreementAuthorizedText?.toLowerCase().includes('lendbridge') ||
-      data.agreementAuthorizedText?.toLowerCase().includes('satara') ||
-      data.email.toLowerCase().includes('satara') ||
-      data.email.toLowerCase().includes('lendbridge'))
-  ) {
+  const isLendbridgeSatara = Boolean(
+    data.branchId === 'br_satara_01' ||
+    data.branchId?.toLowerCase().includes('satara') ||
+    data.branchId?.toLowerCase().includes('lendbridge') ||
+    data.branchId?.toUpperCase() === 'STR01' ||
+    data.agreementAuthorizedText?.toLowerCase().includes('lendbridge') ||
+    data.agreementAuthorizedText?.toLowerCase().includes('satara') ||
+    data.email.toLowerCase().includes('satara') ||
+    data.email.toLowerCase().includes('lendbridge')
+  );
+
+  if (isLendbridgeSatara) {
     branchId = 'br_satara_01';
   }
   const randomSuffix = Math.floor(1000 + Math.random() * 9000);
