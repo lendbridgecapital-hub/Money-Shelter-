@@ -500,7 +500,9 @@ export function createPartnerOnboarding(data: {
           assigned_rm_id = ?,
           assigned_rm_name = ?,
           parent_sub_dsa_id = ?,
-          parent_sub_dsa_name = ?
+          parent_sub_dsa_name = ?,
+          created_at = COALESCE(created_at, ?),
+          updated_at = ?
         WHERE id = ?`
       ).run(
         data.name.trim(),
@@ -520,6 +522,8 @@ export function createPartnerOnboarding(data: {
         data.assignedRmName || null,
         data.parentSubDsaId || null,
         data.parentSubDsaName || null,
+        now,
+        now,
         existingPending.id
       );
     } catch (updateErr) {
@@ -536,6 +540,8 @@ export function createPartnerOnboarding(data: {
       agreementAccepted: true,
       agreementSignedAt: now,
       agreementAuthorizedText: data.agreementAuthorizedText || null,
+      createdAt: existingPending.createdAt || now,
+      updatedAt: now,
     };
   }
 
@@ -545,8 +551,8 @@ export function createPartnerOnboarding(data: {
         id, tenant_id, name, email, password_hash, role, branch_id, phone,
         partner_code, partner_status, father_spouse_name, address, pan_number, pan_document_url,
         aadhaar_number, aadhaar_document_url, agreement_accepted, agreement_signed_at,
-        agreement_authorized_text, assigned_rm_id, assigned_rm_name, parent_sub_dsa_id, parent_sub_dsa_name, active, is_blocked, created_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'PENDING_APPROVAL', ?, ?, ?, ?, ?, ?, 1, ?, ?, ?, ?, ?, ?, 1, 0, ?)`
+        agreement_authorized_text, assigned_rm_id, assigned_rm_name, parent_sub_dsa_id, parent_sub_dsa_name, active, is_blocked, created_at, updated_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'PENDING_APPROVAL', ?, ?, ?, ?, ?, ?, 1, ?, ?, ?, ?, ?, ?, 1, 0, ?, ?)`
     ).run(
       id,
       tenantId,
@@ -569,6 +575,7 @@ export function createPartnerOnboarding(data: {
       data.assignedRmName || null,
       data.parentSubDsaId || null,
       data.parentSubDsaName || null,
+      now,
       now
     );
   } catch (dbErr) {
@@ -609,6 +616,7 @@ export function createPartnerOnboarding(data: {
     active: true,
     isBlocked: false,
     createdAt: now,
+    updatedAt: now,
   };
 }
 
@@ -673,7 +681,8 @@ function mapRowToUser(row: Record<string, unknown>): User {
     firmName: row.firm_name || row.firmName ? String(row.firm_name || row.firmName) : null,
     bio: row.bio ? String(row.bio) : null,
     city: row.city ? String(row.city) : null,
-    createdAt: String(row.created_at || row.createdAt || ''),
+    createdAt: String(row.created_at || row.createdAt || row.agreement_signed_at || row.agreementSignedAt || new Date().toISOString()),
+    updatedAt: row.updated_at || row.updatedAt ? String(row.updated_at || row.updatedAt) : null,
   };
 }
 

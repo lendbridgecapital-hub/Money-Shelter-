@@ -5,7 +5,7 @@ import { getApplicationByToken } from '@/lib/repos/applicationsRepo';
 import { getBranchById } from '@/lib/repos/branchesRepo';
 import { getUserById } from '@/lib/repos/usersRepo';
 import { getCompanySettings } from '@/lib/settings';
-import { LOAN_TYPE_LABELS, formatCurrencyINR } from '@/lib/format';
+import { LOAN_TYPE_LABELS, formatCurrencyINR, formatDateTime } from '@/lib/format';
 import ExitFormButton from '@/components/ExitFormButton';
 
 export async function generateMetadata({
@@ -257,6 +257,13 @@ export default async function ApplicationSuccessPage({ params }: { params: { tok
           <div className="flex justify-between items-center">
             <span className="text-slate-400">Assigned Branch</span>
             <span className="font-semibold text-slate-800">{branch?.name || 'Head Office'}</span>
+          </div>
+          <div className="flex justify-between items-center">
+            <span className="text-slate-400">Submitted On</span>
+            <span className="font-mono font-semibold text-slate-700 text-[11px] flex items-center gap-1">
+              <span>🕒</span>
+              <span>{formatDateTime(application.submittedAt || application.createdAt)}</span>
+            </span>
           </div>
           <div className="flex justify-between items-center pt-2 border-t border-slate-200">
             <span className="text-slate-400">Current Status</span>

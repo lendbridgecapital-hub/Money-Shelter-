@@ -326,6 +326,7 @@ export interface User {
   bio?: string | null;
   city?: string | null;
   createdAt: string;
+  updatedAt?: string | null;
 }
 
 export interface LoanApplication {

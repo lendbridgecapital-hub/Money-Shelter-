@@ -771,7 +771,7 @@ function mapRowToApplication(row: Record<string, unknown>): LoanApplication {
     commissionAmount: row.commission_amount || row.commissionAmount ? Number(row.commission_amount || row.commissionAmount) : null,
     commissionStatus: (row.commission_status || row.commissionStatus) as 'PENDING' | 'PAID' | 'CLAWBACK' | null,
     eligibilityOfferJson: row.eligibility_offer_json || row.eligibilityOfferJson ? String(row.eligibility_offer_json || row.eligibilityOfferJson) : null,
-    createdAt: String(row.created_at || row.createdAt || ''),
+    createdAt: String(row.created_at || row.createdAt || row.submitted_at || row.submittedAt || new Date().toISOString()),
     submittedAt: row.submitted_at || row.submittedAt ? String(row.submitted_at || row.submittedAt) : null,
     updatedAt: row.updated_at || row.updatedAt ? String(row.updated_at || row.updatedAt) : null,
     statusChangedAt: row.status_changed_at || row.statusChangedAt ? String(row.status_changed_at || row.statusChangedAt) : null,

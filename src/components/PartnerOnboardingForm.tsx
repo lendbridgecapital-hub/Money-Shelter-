@@ -1139,6 +1139,12 @@ Compliance Undertaking: DPDP Act 2023 compliant, Zero-Cash Collection policy, no
                 <span className="text-slate-500">Registered Mobile:</span>
                 <strong className="text-slate-800">+91 {successData.mobile}</strong>
               </div>
+              <div className="flex justify-between py-1 border-b border-slate-200/60">
+                <span className="text-slate-500">Execution Timestamp:</span>
+                <strong className="text-slate-800 font-mono text-[11px]">
+                  {new Date().toLocaleString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true })}
+                </strong>
+              </div>
               <div className="flex justify-between py-1">
                 <span className="text-slate-500">Agreement Status:</span>
                 <strong className="text-emerald-700">Digitally Confirmed & Saved (DPDP Compliant)</strong>

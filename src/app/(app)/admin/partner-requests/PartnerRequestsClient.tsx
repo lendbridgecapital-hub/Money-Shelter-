@@ -923,9 +923,15 @@ export default function PartnerRequestsClient({
                         )}
                       </td>
 
-                      {/* Date */}
-                      <td className="px-3.5 py-2.5 text-[11px] text-slate-500">
-                        {formatDate(partner.createdAt)}
+                      {/* Date & Time */}
+                      <td className="px-3.5 py-2.5 text-[11px] text-slate-500 whitespace-nowrap">
+                        <span className="font-semibold text-slate-800 block">
+                          {formatDate(partner.createdAt)}
+                        </span>
+                        <span className="text-[10px] text-slate-400 font-mono flex items-center gap-1 mt-0.5">
+                          <span>🕒</span>
+                          <span>{formatDateTime(partner.createdAt).split(',')[1]?.trim() || ''}</span>
+                        </span>
                       </td>
 
                       {/* Status */}
@@ -1161,7 +1167,7 @@ export default function PartnerRequestsClient({
                     <span>Executed Sub-DSA Agreement & Legal Authorization</span>
                   </h3>
                   <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
-                    Digitally Authorized via OTP
+                    Digitally Confirmed & Authorized
                   </span>
                 </div>
 

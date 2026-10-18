@@ -101,6 +101,7 @@ function initDatabase(): DatabaseAdapter {
       'ALTER TABLE users ADD COLUMN blocked_reason TEXT',
       'ALTER TABLE users ADD COLUMN parent_sub_dsa_id TEXT',
       'ALTER TABLE users ADD COLUMN parent_sub_dsa_name TEXT',
+      'ALTER TABLE users ADD COLUMN updated_at TEXT',
       'ALTER TABLE bank_products ADD COLUMN sub_dsa_rate REAL DEFAULT 0.1',
       'ALTER TABLE commissions ADD COLUMN channel_partner_name TEXT',
       'ALTER TABLE commissions ADD COLUMN bank_id TEXT',

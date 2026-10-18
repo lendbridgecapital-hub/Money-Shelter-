@@ -403,14 +403,20 @@ export default function RequestTable({
                         : ''
                     }`}
                   >
-                    {/* 1. Created (Timestamp shifted to first before Applicant) */}
+                    {/* 1. Created / Submitted Timestamp */}
                     <td className="px-3 lg:px-4 py-2.5 lg:py-3 whitespace-nowrap">
                       <p className="font-semibold text-slate-800 text-xs">
-                        {formatDate(app.createdAt)}
+                        {formatDate(app.submittedAt || app.createdAt)}
                       </p>
-                      <p className="text-[10px] lg:text-[11px] text-slate-400 mt-0.5">
-                        {formatDateTime(app.createdAt).split(',')[1]?.trim() || ''}
+                      <p className="text-[10px] lg:text-[11px] text-slate-500 mt-0.5 flex items-center gap-1 font-mono">
+                        <span>🕒</span>
+                        <span>{formatDateTime(app.submittedAt || app.createdAt).split(',')[1]?.trim() || ''}</span>
                       </p>
+                      {app.submittedAt && (
+                        <span className="text-[9px] font-semibold text-emerald-700 bg-emerald-50 px-1 py-0.2 rounded border border-emerald-200 mt-0.5 inline-block">
+                          Form Submitted
+                        </span>
+                      )}
                     </td>
 
                     {/* 2. Applicant / Customer */}

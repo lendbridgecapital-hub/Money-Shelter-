@@ -10,7 +10,7 @@ import {
   updatePartnerCommissionRateAction,
 } from '@/actions/partnerOnboardingActions';
 import { createSiteForBranchAction } from '@/actions/branchActions';
-import { formatDate, LOAN_TYPE_LABELS, STATUS_LABELS, formatCurrencyINR } from '@/lib/format';
+import { formatDate, formatDateTime, LOAN_TYPE_LABELS, STATUS_LABELS, formatCurrencyINR } from '@/lib/format';
 
 interface Props {
   partners: User[];
@@ -1150,8 +1150,12 @@ export default function PartnerComplianceManager({
                           </span>
                         )}
                       </td>
-                      <td className="px-4 py-3.5 text-xs text-slate-400">
-                        {formatDate(p.createdAt)}
+                      <td className="px-4 py-3.5 text-xs text-slate-500 whitespace-nowrap">
+                        <span className="font-semibold text-slate-800 block">{formatDate(p.createdAt)}</span>
+                        <span className="text-[10px] text-slate-400 font-mono flex items-center gap-1 mt-0.5">
+                          <span>🕒</span>
+                          <span>{formatDateTime(p.createdAt).split(',')[1]?.trim() || ''}</span>
+                        </span>
                       </td>
                       {(isAdmin || isSupport || isRM) && (
                         <td className="px-4 py-3.5 text-right">
