@@ -742,6 +742,7 @@ function ensureLendbridgeAndBranchIntegrity(data) {
       (u) =>
         u.partner_code === 'QFS-SUB-9796' ||
         u.partnerCode === 'QFS-SUB-9796' ||
+        (u.email && u.email.toLowerCase() === 'ghorpadets@gmail.com') ||
         (u.name && u.name.toLowerCase().includes('tejas suresh ghorpade'))
     );
     if (!tejasGhorpade) {
@@ -749,10 +750,10 @@ function ensureLendbridgeAndBranchIntegrity(data) {
         id: 'usr_tejas_ghorpade_satara_01',
         tenant_id: 'default',
         name: 'Tejas Suresh Ghorpade',
-        email: 'tejas.ghorpade@lendbridge.in',
+        email: 'ghorpadets@gmail.com',
         role: 'SUB_DSA',
         branch_id: 'br_satara_01',
-        phone: '9822334455',
+        phone: '8796974799',
         active: 1,
         is_blocked: 0,
         partner_status: 'PENDING_APPROVAL',
@@ -762,18 +763,22 @@ function ensureLendbridgeAndBranchIntegrity(data) {
         pan_number: 'ABCDE5678H',
         aadhaar_number: '987654321099',
         agreement_accepted: 1,
-        agreement_signed_at: new Date().toISOString(),
+        agreement_signed_at: '2026-10-18T18:17:23.000Z',
         agreement_authorized_text:
           'SUB-DSA REFERRAL AGREEMENT executed by Tejas Suresh Ghorpade for Lendbridge Capital (Satara Branch). DPDP Act 2023 compliant.',
         city: 'Satara',
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
+        created_at: '2026-10-18T18:17:23.000Z',
+        updated_at: '2026-10-18T18:17:23.000Z',
       };
       data.users.push(tejasGhorpade);
     } else {
+      tejasGhorpade.name = 'Tejas Suresh Ghorpade';
+      tejasGhorpade.email = 'ghorpadets@gmail.com';
+      tejasGhorpade.phone = tejasGhorpade.phone || '8796974799';
+      tejasGhorpade.role = 'SUB_DSA';
       tejasGhorpade.branch_id = 'br_satara_01';
-      tejasGhorpade.partner_code = tejasGhorpade.partner_code || tejasGhorpade.partnerCode || 'QFS-SUB-9796';
-      tejasGhorpade.partner_status = tejasGhorpade.partner_status || tejasGhorpade.partnerStatus || 'PENDING_APPROVAL';
+      tejasGhorpade.partner_code = 'QFS-SUB-9796';
+      tejasGhorpade.partner_status = 'PENDING_APPROVAL';
     }
 
     const seenIds = new Set();

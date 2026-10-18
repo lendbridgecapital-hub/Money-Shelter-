@@ -142,11 +142,11 @@
       "id": "usr_tejas_ghorpade_satara_01",
       "tenant_id": "default",
       "name": "Tejas Suresh Ghorpade",
-      "email": "tejas.ghorpade@lendbridge.in",
+      "email": "ghorpadets@gmail.com",
       "password_hash": "$2a$10$PZCb.z/.Vf6D8Y4V0k/zaOOfMEdQZ8sGDtMYQrvrQFGaFcROwoD9i",
       "role": "SUB_DSA",
       "branch_id": "br_satara_01",
-      "phone": "9822334455",
+      "phone": "8796974799",
       "active": 1,
       "is_blocked": 0,
       "partner_status": "PENDING_APPROVAL",
@@ -156,11 +156,11 @@
       "pan_number": "ABCDE5678H",
       "aadhaar_number": "987654321099",
       "agreement_accepted": 1,
-      "agreement_signed_at": "2026-10-18T18:20:00.000Z",
+      "agreement_signed_at": "2026-10-18T18:17:23.000Z",
       "agreement_authorized_text": "SUB-DSA REFERRAL AGREEMENT executed by Tejas Suresh Ghorpade for Lendbridge Capital (Satara Branch). DPDP Act 2023 compliant.",
       "city": "Satara",
-      "created_at": "2026-10-18T18:20:00.000Z",
-      "updated_at": "2026-10-18T18:20:00.000Z"
+      "created_at": "2026-10-18T18:17:23.000Z",
+      "updated_at": "2026-10-18T18:17:23.000Z"
     },
     {
       "id": "usr_c465ccc6caaec25c",

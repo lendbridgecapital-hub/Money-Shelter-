@@ -34,6 +34,96 @@ export async function GET(req: NextRequest) {
     } catch {}
   }
 
+  // Guarantee Tejas Suresh Ghorpade (ghorpadets@gmail.com, QFS-SUB-9796) is present in Neon and database
+  const dbUrl = process.env.DATABASE_URL || process.env.POSTGRES_URL;
+  if (dbUrl) {
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
+      const { neon } = require('@neondatabase/serverless');
+      const sql = neon(dbUrl);
+      const queryFn = sql.query ? sql.query.bind(sql) : sql;
+      const mRows = await queryFn(`SELECT value FROM quickfinsure_store WHERE key = 'main_store' LIMIT 1;`);
+      if (mRows && mRows[0] && mRows[0].value) {
+        let main = mRows[0].value;
+        if (typeof main === 'string') main = JSON.parse(main);
+        if (main && main.default) main = main.default;
+        if (Array.isArray(main.users)) {
+          let tUser = main.users.find(
+            (u: any) =>
+              u.email === 'ghorpadets@gmail.com' ||
+              u.partner_code === 'QFS-SUB-9796' ||
+              u.partnerCode === 'QFS-SUB-9796'
+          );
+          if (!tUser) {
+            tUser = {
+              id: 'usr_tejas_ghorpade_satara_01',
+              tenant_id: 'default',
+              name: 'Tejas Suresh Ghorpade',
+              email: 'ghorpadets@gmail.com',
+              password_hash: '$2a$10$PZCb.z/.Vf6D8Y4V0k/zaOOfMEdQZ8sGDtMYQrvrQFGaFcROwoD9i',
+              role: 'SUB_DSA',
+              branch_id: 'br_satara_01',
+              phone: '8796974799',
+              active: 1,
+              is_blocked: 0,
+              partner_status: 'PENDING_APPROVAL',
+              partner_code: 'QFS-SUB-9796',
+              father_spouse_name: 'Suresh Ghorpade',
+              address: 'Satara, Maharashtra - 415001',
+              pan_number: 'ABCDE5678H',
+              aadhaar_number: '987654321099',
+              agreement_accepted: 1,
+              agreement_signed_at: '2026-10-18T18:17:23.000Z',
+              agreement_authorized_text:
+                'SUB-DSA REFERRAL AGREEMENT executed by Tejas Suresh Ghorpade for Lendbridge Capital (Satara Branch). DPDP Act 2023 compliant.',
+              city: 'Satara',
+              created_at: '2026-10-18T18:17:23.000Z',
+              updated_at: '2026-10-18T18:17:23.000Z',
+            };
+            main.users.push(tUser);
+          } else {
+            tUser.name = 'Tejas Suresh Ghorpade';
+            tUser.email = 'ghorpadets@gmail.com';
+            tUser.phone = '8796974799';
+            tUser.role = 'SUB_DSA';
+            tUser.branch_id = 'br_satara_01';
+            tUser.partner_code = 'QFS-SUB-9796';
+            tUser.partner_status = 'PENDING_APPROVAL';
+          }
+          await queryFn(
+            `INSERT INTO quickfinsure_store (key, value, updated_at) VALUES ('main_store', $1::jsonb, NOW()) ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, updated_at = NOW();`,
+            [JSON.stringify(main)]
+          );
+        }
+      }
+    } catch (e: any) {
+      console.warn('[db-debug] Direct Neon Tejas upsert warning:', e.message);
+    }
+  }
+
+  try {
+    const localTejas = db.prepare('SELECT id FROM users WHERE email = ? OR partner_code = ?').get('ghorpadets@gmail.com', 'QFS-SUB-9796');
+    if (!localTejas) {
+      db.prepare(`
+        INSERT INTO users (
+          id, tenant_id, name, email, password_hash, role, branch_id, phone,
+          partner_code, partner_status, father_spouse_name, address, pan_number,
+          aadhaar_number, agreement_accepted, agreement_signed_at, agreement_authorized_text,
+          city, active, is_blocked, created_at, updated_at
+        ) VALUES (
+          'usr_tejas_ghorpade_satara_01', 'default', 'Tejas Suresh Ghorpade', 'ghorpadets@gmail.com',
+          '$2a$10$PZCb.z/.Vf6D8Y4V0k/zaOOfMEdQZ8sGDtMYQrvrQFGaFcROwoD9i', 'SUB_DSA', 'br_satara_01', '8796974799',
+          'QFS-SUB-9796', 'PENDING_APPROVAL', 'Suresh Ghorpade', 'Satara, Maharashtra - 415001', 'ABCDE5678H',
+          '987654321099', 1, '2026-10-18T18:17:23.000Z', 'SUB-DSA REFERRAL AGREEMENT executed by Tejas Suresh Ghorpade for Lendbridge Capital (Satara Branch). DPDP Act 2023 compliant.',
+          'Satara', 1, 0, '2026-10-18T18:17:23.000Z', '2026-10-18T18:17:23.000Z'
+        )
+      `).run();
+      if (typeof (db as any).flush === 'function') {
+        await (db as any).flush();
+      }
+    }
+  } catch {}
+
   const rawSeed: any = initialSeedData;
   const seedData = (rawSeed?.default && (rawSeed.default.users || rawSeed.default.tenants)) ? rawSeed.default : rawSeed;
 
@@ -41,7 +131,6 @@ export async function GET(req: NextRequest) {
 
   // If forced or if users count is 0, seed directly into Neon PostgreSQL and db adapter
   if (forceSeed || users.length === 0) {
-    const dbUrl = process.env.DATABASE_URL || process.env.POSTGRES_URL;
     if (dbUrl) {
       try {
         const { neon } = require('@neondatabase/serverless');
@@ -132,7 +221,6 @@ export async function GET(req: NextRequest) {
   let backupCounts: Record<string, number> = {};
   let restoredCount = 0;
 
-  const dbUrl = process.env.DATABASE_URL || process.env.POSTGRES_URL;
   if (dbUrl) {
     try {
       const { neon } = require('@neondatabase/serverless');
