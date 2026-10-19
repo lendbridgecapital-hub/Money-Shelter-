@@ -15,11 +15,11 @@ export const metadata: Metadata = {
     title: 'Lendbridge Capital — Sub-DSA Master Partner Registration',
     description:
       'WHERE BORROWING MEETS TRUST • Partner with Lendbridge Capital (Satara Branch) as an authorized Sub-DSA (Master Partner). Recruit channel partners, manage retail loan originations, and earn direct overrides on every disbursement.',
-    url: 'https://money-shelter.onrender.com/lendbridge/sub-dsa',
+    url: 'https://money-shelter.vercel.app/lendbridge/sub-dsa',
     siteName: 'Lendbridge Capital',
     images: [
       {
-        url: 'https://money-shelter.onrender.com/lendbridge-logo.png',
+        url: 'https://money-shelter.vercel.app/lendbridge-logo.png',
         width: 800,
         height: 400,
         alt: 'Lendbridge Capital Logo',
@@ -32,7 +32,7 @@ export const metadata: Metadata = {
     title: 'Lendbridge Capital — Sub-DSA Master Partner Registration',
     description:
       'WHERE BORROWING MEETS TRUST • Partner with Lendbridge Capital (Satara Branch) as an authorized Sub-DSA (Master Partner).',
-    images: ['https://money-shelter.onrender.com/lendbridge-logo.png'],
+    images: ['https://money-shelter.vercel.app/lendbridge-logo.png'],
   },
   icons: [{ rel: 'icon', url: '/lendbridge-logo.png' }],
 };
