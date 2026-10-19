@@ -32,7 +32,7 @@ export async function generateMetadata({
         title: 'Loan Sanction Offer & Acceptance Letter — Lendbridge Capital',
         description: 'Review and digitally accept your sanctioned loan offer with Lendbridge Capital (Satara Branch).',
         siteName: 'Lendbridge Capital',
-        images: [{ url: 'https://money-shelter.onrender.com/lendbridge-logo.png' }],
+        images: [{ url: 'https://money-shelter.vercel.app/lendbridge-logo.png' }],
       },
       icons: [{ rel: 'icon', url: '/lendbridge-logo.png' }],
     };

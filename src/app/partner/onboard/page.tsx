@@ -49,8 +49,8 @@ export async function generateMetadata({
     const brandDesc = isExplicitSubDsa
       ? 'WHERE BORROWING MEETS TRUST • Build your agency network, earn override commissions, and originate loans with Lendbridge Capital (Satara Branch).'
       : 'WHERE BORROWING MEETS TRUST • Join Lendbridge Capital (Satara Branch) as an authorized Channel Partner. Execute referral agreement digitally, get instant payouts and receive your partner code.';
-    const logoUrl = 'https://money-shelter.onrender.com/lendbridge-logo.png';
-    const currentUrl = `https://money-shelter.onrender.com/partner/onboard?${isExplicitSubDsa ? 'role=SUB_DSA&' : ''}branchId=br_satara_01`;
+    const logoUrl = 'https://money-shelter.vercel.app/lendbridge-logo.png';
+    const currentUrl = `https://money-shelter.vercel.app/partner/onboard?${isExplicitSubDsa ? 'role=SUB_DSA&' : ''}branchId=br_satara_01`;
 
     return {
       title: brandTitle,
@@ -84,7 +84,7 @@ export async function generateMetadata({
     ? 'Sub-DSA Master Partner Onboarding — Money Shelter'
     : 'Channel Partner Onboarding — Money Shelter';
   const desc = 'WHERE MONEY MEETS TRUST • Official partner registration and digital referral agreement with Money Shelter Pvt. Ltd.';
-  const defaultLogo = 'https://money-shelter.onrender.com/money-shelter-logo.png';
+  const defaultLogo = 'https://money-shelter.vercel.app/money-shelter-logo.png';
 
   return {
     title,

@@ -15,11 +15,11 @@ export const metadata: Metadata = {
     title: 'Lendbridge Capital — Channel Partner Registration',
     description:
       'WHERE BORROWING MEETS TRUST • Join Lendbridge Capital (Satara Branch) as an authorized Channel Partner. Submit retail and commercial loan files digitally, get rapid bank approvals, and earn top commission slabs.',
-    url: 'https://money-shelter.onrender.com/lendbridge/onboard',
+    url: 'https://money-shelter.vercel.app/lendbridge/onboard',
     siteName: 'Lendbridge Capital',
     images: [
       {
-        url: 'https://money-shelter.onrender.com/lendbridge-logo.png',
+        url: 'https://money-shelter.vercel.app/lendbridge-logo.png',
         width: 800,
         height: 400,
         alt: 'Lendbridge Capital Logo',
@@ -32,7 +32,7 @@ export const metadata: Metadata = {
     title: 'Lendbridge Capital — Channel Partner Registration',
     description:
       'WHERE BORROWING MEETS TRUST • Join Lendbridge Capital (Satara Branch) as an authorized Channel Partner.',
-    images: ['https://money-shelter.onrender.com/lendbridge-logo.png'],
+    images: ['https://money-shelter.vercel.app/lendbridge-logo.png'],
   },
   icons: [{ rel: 'icon', url: '/lendbridge-logo.png' }],
 };

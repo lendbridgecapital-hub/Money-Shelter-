@@ -12,7 +12,7 @@ export const metadata: Metadata = {
     description:
       'Official Channel Partner, Sub-DSA and Branch Employee login portal for Lendbridge Capital (Satara Branch).',
     siteName: 'Lendbridge Capital',
-    images: [{ url: 'https://money-shelter.onrender.com/lendbridge-logo.png' }],
+    images: [{ url: 'https://money-shelter.vercel.app/lendbridge-logo.png' }],
   },
   icons: {
     icon: '/lendbridge-logo.png',

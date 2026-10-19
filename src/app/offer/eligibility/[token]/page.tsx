@@ -35,7 +35,7 @@ export async function generateMetadata({ params }: { params: { token: string } }
         : `Loan Eligibility Offer | ${brandName}`,
       description: `Official tentative loan eligibility assessment and multi-bank offer letter by ${brandName}.`,
       siteName: brandName,
-      images: isSatara ? [{ url: 'https://money-shelter.onrender.com/lendbridge-logo.png' }] : undefined,
+      images: isSatara ? [{ url: 'https://money-shelter.vercel.app/lendbridge-logo.png' }] : undefined,
     },
   };
 }

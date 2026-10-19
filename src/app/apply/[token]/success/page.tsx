@@ -35,7 +35,7 @@ export async function generateMetadata({
         title: 'Application Submitted Successfully — Lendbridge Capital',
         description: 'Your loan application and KYC documents have been received by Lendbridge Capital (Satara Branch).',
         siteName: 'Lendbridge Capital',
-        images: [{ url: 'https://money-shelter.onrender.com/lendbridge-logo.png' }],
+        images: [{ url: 'https://money-shelter.vercel.app/lendbridge-logo.png' }],
       },
       icons: [{ rel: 'icon', url: '/lendbridge-logo.png' }],
     };

@@ -26,6 +26,21 @@ function safeRevalidate(path: string) {
   }
 }
 
+function getPublicAppBaseUrl(): string {
+  const raw =
+    process.env.APP_BASE_URL ||
+    process.env.NEXT_PUBLIC_SITE_URL ||
+    (process.env.VERCEL_PROJECT_PRODUCTION_URL ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}` : null) ||
+    (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : null) ||
+    (process.env.NEXTAUTH_URL && !process.env.NEXTAUTH_URL.includes('localhost') ? process.env.NEXTAUTH_URL : null) ||
+    'https://money-shelter.vercel.app';
+  let clean = raw.trim().replace(/\/$/, '');
+  if (clean.includes('money-shelter.onrender.com') || (process.env.NODE_ENV === 'production' && clean.includes('localhost'))) {
+    clean = 'https://money-shelter.vercel.app';
+  }
+  return clean;
+}
+
 export type CreateLinkResult = ActionResult & { url?: string; token?: string };
 
 export async function createApplicationLinkAction(
@@ -97,15 +112,7 @@ export async function createApplicationLinkAction(
       changedById: user.id,
     });
 
-    const base =
-      process.env.APP_BASE_URL ||
-      process.env.NEXT_PUBLIC_SITE_URL ||
-      (process.env.VERCEL_PROJECT_PRODUCTION_URL ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}` : null) ||
-      (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : null) ||
-      process.env.RENDER_EXTERNAL_URL ||
-      process.env.NEXTAUTH_URL ||
-      'https://money-shelter.vercel.app';
-    const cleanBase = base.replace(/\/$/, '');
+    const cleanBase = getPublicAppBaseUrl();
     const params = new URLSearchParams();
     if (loanType) params.set('loanType', loanType);
     if (incomeType) params.set('incomeType', incomeType);
@@ -353,15 +360,7 @@ export async function submitDirectPartnerLoanAction(formData: FormData): Promise
       changedById: user.id,
     });
 
-    const base =
-      process.env.APP_BASE_URL ||
-      process.env.NEXT_PUBLIC_SITE_URL ||
-      (process.env.VERCEL_PROJECT_PRODUCTION_URL ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}` : null) ||
-      (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : null) ||
-      process.env.RENDER_EXTERNAL_URL ||
-      process.env.NEXTAUTH_URL ||
-      'https://money-shelter.vercel.app';
-    const cleanBase = base.replace(/\/$/, '');
+    const cleanBase = getPublicAppBaseUrl();
     const url = `${cleanBase}/apply/${application.token}`;
 
     // MAIL SYSTEM DISPATCH: Send notification emails to branch and customer

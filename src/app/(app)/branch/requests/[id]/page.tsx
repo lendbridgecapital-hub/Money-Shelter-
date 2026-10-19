@@ -101,11 +101,15 @@ export default async function RequestDetailPage({ params }: { params: { id: stri
   const banks = listBanks(application.tenantId || 'default');
   const requiredDocs = listRequiredDocuments(application.id);
   const remarks = listRemarksForApplication(application.id);
-  const baseUrl =
+  const rawBaseUrl =
     process.env.APP_BASE_URL ||
-    process.env.RENDER_EXTERNAL_URL ||
+    (process.env.VERCEL_PROJECT_PRODUCTION_URL ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}` : '') ||
+    (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : '') ||
     (process.env.NEXTAUTH_URL && !process.env.NEXTAUTH_URL.includes('localhost') ? process.env.NEXTAUTH_URL : '') ||
-    'https://money-shelter.onrender.com';
+    'https://money-shelter.vercel.app';
+  const baseUrl = rawBaseUrl.includes('money-shelter.onrender.com')
+    ? 'https://money-shelter.vercel.app'
+    : rawBaseUrl.replace(/\/$/, '');
 
   const docsByCategory = documents.reduce<Record<string, typeof documents>>((acc, doc) => {
     (acc[doc.category] ||= []).push(doc);

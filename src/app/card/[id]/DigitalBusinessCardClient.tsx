@@ -64,10 +64,10 @@ export default function DigitalBusinessCardClient({ advisor, companySettings }: 
   }
 
   function getPublicCardUrl() {
-    if (typeof window === 'undefined') return `https://money-shelter.onrender.com/card/${advisor.id}`;
+    if (typeof window === 'undefined') return `https://money-shelter.vercel.app/card/${advisor.id}`;
     const origin = window.location.origin;
     if (!origin || origin.includes('localhost') || origin.startsWith('capacitor:')) {
-      return `https://money-shelter.onrender.com/card/${advisor.id}`;
+      return `https://money-shelter.vercel.app/card/${advisor.id}`;
     }
     return `${origin}/card/${advisor.id}`;
   }

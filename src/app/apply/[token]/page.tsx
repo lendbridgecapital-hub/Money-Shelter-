@@ -32,7 +32,7 @@ export async function generateMetadata({
   if (isSatara) {
     const brandTitle = 'Lendbridge Capital — Customer Document Desk';
     const brandDesc = 'WHERE BORROWING MEETS TRUST • Upload and submit your loan KYC documents securely through Lendbridge Capital (Satara Branch).';
-    const logoUrl = 'https://money-shelter.onrender.com/lendbridge-logo.png';
+    const logoUrl = 'https://money-shelter.vercel.app/lendbridge-logo.png';
 
     return {
       title: brandTitle,
@@ -40,7 +40,7 @@ export async function generateMetadata({
       openGraph: {
         title: brandTitle,
         description: brandDesc,
-        url: `https://money-shelter.onrender.com/apply/${params.token}`,
+        url: `https://money-shelter.vercel.app/apply/${params.token}`,
         siteName: 'Lendbridge Capital',
         images: [
           {

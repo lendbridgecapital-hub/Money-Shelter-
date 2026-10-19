@@ -56,12 +56,11 @@
   <script>
     const CANDIDATES = [
       localStorage.getItem("moneyshelter_server_url"),
-      "https://money-shelter.vercel.app/login",
-      "https://money-shelter.onrender.com/login",
-      "https://quicfinsure.onrender.com/login"
+      "https://money-shelter.vercel.app/lendbridge/login",
+      "https://money-shelter.vercel.app/login"
     ].filter(Boolean);
 
-    let activeUrl = CANDIDATES[0] || "https://money-shelter.vercel.app/login";
+    let activeUrl = CANDIDATES[0] || "https://money-shelter.vercel.app/lendbridge/login";
     document.getElementById("serverUrlInput").value = activeUrl;
 
     function setStatus(loading, title, msg, isError = false) {

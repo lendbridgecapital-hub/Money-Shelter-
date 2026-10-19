@@ -87,7 +87,7 @@ export default function PartnerRequestsClient({
     if (typeof window !== 'undefined' && window.location.origin) {
       return window.location.origin;
     }
-    return 'https://money-shelter.onrender.com';
+    return 'https://money-shelter.vercel.app';
   };
 
   const copyToClipboard = (text: string, key: string) => {
