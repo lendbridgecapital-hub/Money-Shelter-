@@ -51,6 +51,8 @@ export async function GET(req: NextRequest) {
           let tUser = main.users.find(
             (u: any) =>
               u.email === 'ghorpadets@gmail.com' ||
+              u.partner_code === 'LBC-STR-SUB-9796' ||
+              u.partnerCode === 'LBC-STR-SUB-9796' ||
               u.partner_code === 'QFS-SUB-9796' ||
               u.partnerCode === 'QFS-SUB-9796'
           );
@@ -66,8 +68,8 @@ export async function GET(req: NextRequest) {
               phone: '8796974799',
               active: 1,
               is_blocked: 0,
-              partner_status: 'PENDING_APPROVAL',
-              partner_code: 'QFS-SUB-9796',
+              partner_status: 'APPROVED',
+              partner_code: 'LBC-STR-SUB-9796',
               father_spouse_name: 'Suresh Ghorpade',
               address: 'Satara, Maharashtra - 415001',
               pan_number: 'ABCDE5678H',
@@ -79,8 +81,16 @@ export async function GET(req: NextRequest) {
               agreement_authorized_text:
                 'SUB-DSA REFERRAL AGREEMENT executed by Tejas Suresh Ghorpade for Lendbridge Capital (Satara Branch). DPDP Act 2023 compliant.',
               city: 'Satara',
+              certificate_number: 'LBC-STR-SUB-CERT-2026-9796',
+              certificate_issued_at: '2026-10-19T09:00:00.000Z',
+              approved_at: '2026-10-19T09:00:00.000Z',
+              approved_by_id: 'usr_lendbridge_ops_01',
+              approved_by_name: 'Rutuja (Lendbridge Capital - Satara Ops)',
+              assigned_rm_id: 'usr_lendbridge_ops_01',
+              assigned_rm_name: 'Rutuja (Lendbridge Capital - Satara Ops)',
+              commission_rate: 1.5,
               created_at: '2026-10-18T18:17:23.000Z',
-              updated_at: '2026-10-18T18:17:23.000Z',
+              updated_at: '2026-10-19T09:00:00.000Z',
             };
             main.users.push(tUser);
           } else {
@@ -89,20 +99,18 @@ export async function GET(req: NextRequest) {
             tUser.phone = '8796974799';
             tUser.role = 'SUB_DSA';
             tUser.branch_id = 'br_satara_01';
-            tUser.partner_code = tUser.partner_code || 'QFS-SUB-9796';
-            tUser.partner_status = tUser.partner_status || 'APPROVED';
+            tUser.partner_code = 'LBC-STR-SUB-9796';
+            tUser.partner_status = 'APPROVED';
             tUser.pan_document_url = tUser.pan_document_url || '/uploads/partners/1790971777138_wsrnzn_pan_document_url.png';
             tUser.aadhaar_document_url = tUser.aadhaar_document_url || '/uploads/partners/1790971777168_rr0mfp_aadhaar_document_url.png';
-            if (tUser.partner_status === 'APPROVED' && !tUser.certificate_number) {
-              tUser.certificate_number = 'QFS-SUB-CERT-2026-9796';
-              tUser.certificate_issued_at = tUser.certificate_issued_at || '2026-10-19T09:00:00.000Z';
-              tUser.approved_at = tUser.approved_at || '2026-10-19T09:00:00.000Z';
-              tUser.approved_by_id = tUser.approved_by_id || 'usr_lendbridge_ops_01';
-              tUser.approved_by_name = tUser.approved_by_name || 'Rutuja (Lendbridge Capital - Satara Ops)';
-              tUser.assigned_rm_id = tUser.assigned_rm_id || 'usr_lendbridge_ops_01';
-              tUser.assigned_rm_name = tUser.assigned_rm_name || 'Rutuja (Lendbridge Capital - Satara Ops)';
-              tUser.commission_rate = tUser.commission_rate ?? 1.5;
-            }
+            tUser.certificate_number = 'LBC-STR-SUB-CERT-2026-9796';
+            tUser.certificate_issued_at = tUser.certificate_issued_at || '2026-10-19T09:00:00.000Z';
+            tUser.approved_at = tUser.approved_at || '2026-10-19T09:00:00.000Z';
+            tUser.approved_by_id = tUser.approved_by_id || 'usr_lendbridge_ops_01';
+            tUser.approved_by_name = tUser.approved_by_name || 'Rutuja (Lendbridge Capital - Satara Ops)';
+            tUser.assigned_rm_id = tUser.assigned_rm_id || 'usr_lendbridge_ops_01';
+            tUser.assigned_rm_name = tUser.assigned_rm_name || 'Rutuja (Lendbridge Capital - Satara Ops)';
+            tUser.commission_rate = tUser.commission_rate ?? 1.5;
           }
           await queryFn(
             `INSERT INTO quickfinsure_store (key, value, updated_at) VALUES ('main_store', $1::jsonb, NOW()) ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, updated_at = NOW();`,
@@ -116,7 +124,7 @@ export async function GET(req: NextRequest) {
   }
 
   try {
-    const localTejas = db.prepare('SELECT id FROM users WHERE email = ? OR partner_code = ?').get('ghorpadets@gmail.com', 'QFS-SUB-9796');
+    const localTejas = db.prepare('SELECT id FROM users WHERE email = ? OR partner_code IN (?, ?)').get('ghorpadets@gmail.com', 'LBC-STR-SUB-9796', 'QFS-SUB-9796');
     if (!localTejas) {
       db.prepare(`
         INSERT INTO users (
@@ -129,7 +137,7 @@ export async function GET(req: NextRequest) {
         ) VALUES (
           'usr_tejas_ghorpade_satara_01', 'default', 'Tejas Suresh Ghorpade', 'ghorpadets@gmail.com',
           '$2a$10$PZCb.z/.Vf6D8Y4V0k/zaOOfMEdQZ8sGDtMYQrvrQFGaFcROwoD9i', 'SUB_DSA', 'br_satara_01', '8796974799',
-          'QFS-SUB-9796', 'APPROVED', 'QFS-SUB-CERT-2026-9796', '2026-10-19T09:00:00.000Z', '2026-10-19T09:00:00.000Z',
+          'LBC-STR-SUB-9796', 'APPROVED', 'LBC-STR-SUB-CERT-2026-9796', '2026-10-19T09:00:00.000Z', '2026-10-19T09:00:00.000Z',
           'usr_lendbridge_ops_01', 'Rutuja (Lendbridge Capital - Satara Ops)', 'usr_lendbridge_ops_01', 'Rutuja (Lendbridge Capital - Satara Ops)', 1.5,
           'Suresh Ghorpade', 'Satara, Maharashtra - 415001', 'ABCDE5678H', '/uploads/partners/1790971777138_wsrnzn_pan_document_url.png',
           '987654321099', '/uploads/partners/1790971777168_rr0mfp_aadhaar_document_url.png', 1, '2026-10-18T18:17:23.000Z', 'SUB-DSA REFERRAL AGREEMENT executed by Tejas Suresh Ghorpade for Lendbridge Capital (Satara Branch). DPDP Act 2023 compliant.',
@@ -142,11 +150,12 @@ export async function GET(req: NextRequest) {
     } else {
       db.prepare(`
         UPDATE users SET
-          partner_status = COALESCE(partner_status, 'APPROVED'),
-          certificate_number = COALESCE(certificate_number, 'QFS-SUB-CERT-2026-9796'),
+          partner_code = 'LBC-STR-SUB-9796',
+          partner_status = 'APPROVED',
+          certificate_number = 'LBC-STR-SUB-CERT-2026-9796',
           pan_document_url = COALESCE(pan_document_url, '/uploads/partners/1790971777138_wsrnzn_pan_document_url.png'),
           aadhaar_document_url = COALESCE(aadhaar_document_url, '/uploads/partners/1790971777168_rr0mfp_aadhaar_document_url.png')
-        WHERE email = 'ghorpadets@gmail.com' OR partner_code = 'QFS-SUB-9796'
+        WHERE email = 'ghorpadets@gmail.com' OR partner_code IN ('LBC-STR-SUB-9796', 'QFS-SUB-9796')
       `).run();
       if (typeof (db as any).flush === 'function') {
         await (db as any).flush();

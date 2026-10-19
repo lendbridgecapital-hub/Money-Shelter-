@@ -18,6 +18,7 @@ import {
   resubmitPartnerDocuments,
   updatePartnerCommissionRate,
   isUserDedicatedSiteRm,
+  generatePartnerCode,
 } from '@/lib/repos/usersRepo';
 import { listBranches } from '@/lib/repos/branchesRepo';
 import { createNotification } from '@/lib/repos/workflowRepo';
@@ -330,8 +331,7 @@ export async function directAdminOnboardPartnerAction(payload: {
     }
 
     const passwordHash = await bcrypt.hash(password, 10);
-    const randomSuffix = Math.floor(1000 + Math.random() * 9000);
-    const partnerCode = isSubDsa ? `QFS-SUB-${randomSuffix}` : `QFS-PRT-${randomSuffix}`;
+    const partnerCode = generatePartnerCode(isSubDsa ? 'SUB_DSA' : 'CHANNEL_PARTNER', branchId);
 
     const created = createUser({
       name: fullName,

@@ -312,8 +312,10 @@ Compliance Undertaking: DPDP Act 2023 compliant, Zero-Cash Collection policy, no
       return;
     }
 
+    const fallbackPrefix = isBranchCoBranded ? 'LBC-STR' : 'MS-PNE';
+    const fallbackTag = targetRole === 'SUB_DSA' ? 'SUB' : 'PRT';
     setSuccessData({
-      partnerCode: res.partnerCode || 'QFS-PRT-0000',
+      partnerCode: res.partnerCode || `${fallbackPrefix}-${fallbackTag}-PENDING`,
       partnerName: res.partnerName || fullName,
       email: res.email || email,
       mobile: res.mobile || mobile,

@@ -99,7 +99,7 @@ export default function SubDsaCommandHub({ user }: Props) {
                 </span>
               </div>
               <p className="text-[11px] text-slate-500 mt-0.5">
-                Share with agents. Anyone registering maps under your Sub-DSA code ({user.partnerCode || 'QFS-SUB'}).
+                Share with agents. Anyone registering maps under your Sub-DSA code ({user.partnerCode || (user.branchId === 'br_satara_01' ? 'LBC-STR-SUB' : 'MS-PNE-SUB')}).
               </p>
             </div>
             <button

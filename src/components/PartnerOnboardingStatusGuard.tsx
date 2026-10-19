@@ -244,7 +244,9 @@ export default function PartnerOnboardingStatusGuard({
 
       <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-xl text-xs text-emerald-950">
         <span>Partner Reference Code: </span>
-        <strong className="font-mono text-sm">{partner.partnerCode || 'QFS-PRT-PENDING'}</strong>
+        <strong className="font-mono text-sm">
+          {partner.partnerCode || (partner.branchId === 'br_satara_01' ? (partner.role === 'SUB_DSA' ? 'LBC-STR-SUB-PENDING' : 'LBC-STR-PRT-PENDING') : (partner.role === 'SUB_DSA' ? 'MS-PNE-SUB-PENDING' : 'MS-PNE-PRT-PENDING'))}
+        </strong>
       </div>
 
       <div className="pt-2">

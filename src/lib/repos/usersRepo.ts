@@ -132,10 +132,8 @@ export function createUser(data: {
   const tenantId = data.tenantId || 'default';
 
   if (data.role === 'CHANNEL_PARTNER' || data.role === 'SUB_DSA') {
-    const randomSuffix = Math.floor(1000 + Math.random() * 9000);
-    const defaultPrefix = data.role === 'SUB_DSA' ? 'MS-SUB' : 'MS-PRT';
-    const partnerCode = data.partnerCode || `${defaultPrefix}-${randomSuffix}`;
-    const certNum = `MS-CERT-2026-${randomSuffix}`;
+    const partnerCode = data.partnerCode || generatePartnerCode(data.role, data.branchId);
+    const certNum = generateCertificateNumber(data.role, data.branchId);
     const partnerStatus = data.partnerStatus || 'APPROVED';
 
     db.prepare(
@@ -252,10 +250,134 @@ export function searchRegisteredPartners(query: string, tenantId = 'default'): U
   });
 }
 
+export function generatePartnerCode(
+  role: 'SUB_DSA' | 'CHANNEL_PARTNER' | Role,
+  branchIdOrHint?: string | null
+): string {
+  const isSubDsa = role === 'SUB_DSA';
+  const roleTag = isSubDsa ? 'SUB' : 'PRT';
+  const randomSuffix = Math.floor(1000 + Math.random() * 9000);
+
+  const hint = (branchIdOrHint || '').toLowerCase().trim();
+
+  // 1. Satara Branch -> LBC-STR
+  if (
+    hint === 'br_satara_01' ||
+    hint === 'str01' ||
+    hint.includes('satara') ||
+    hint.includes('lendbridge')
+  ) {
+    return `LBC-STR-${roleTag}-${randomSuffix}`;
+  }
+
+  // 2. Nashik / Nasik Branch -> MS-NSK
+  if (
+    hint === 'br_nashik_01' ||
+    hint === 'nsk01' ||
+    hint.includes('nashik') ||
+    hint.includes('nasik') ||
+    hint.includes('nsk')
+  ) {
+    return `MS-NSK-${roleTag}-${randomSuffix}`;
+  }
+
+  // 3. Pune Branch -> MS-PNE
+  if (
+    hint === 'br_c95492722e36abe1' ||
+    hint === 'pun01' ||
+    hint.includes('pune') ||
+    hint.includes('bavdhan')
+  ) {
+    return `MS-PNE-${roleTag}-${randomSuffix}`;
+  }
+
+  // 4. Mumbai Branch -> MS-MUM
+  if (
+    hint === 'br_3eb0a6c7ae0b095e' ||
+    hint === 'mum01' ||
+    hint.includes('mumbai') ||
+    hint.includes('andheri')
+  ) {
+    return `MS-MUM-${roleTag}-${randomSuffix}`;
+  }
+
+  // 5. Default -> MS-PNE
+  return `MS-PNE-${roleTag}-${randomSuffix}`;
+}
+
+export function generateCertificateNumber(
+  role: 'SUB_DSA' | 'CHANNEL_PARTNER' | Role,
+  branchIdOrHint?: string | null
+): string {
+  const isSubDsa = role === 'SUB_DSA';
+  const roleTag = isSubDsa ? 'SUB-CERT' : 'CERT';
+  const randomSuffix = Math.floor(1000 + Math.random() * 9000);
+
+  const hint = (branchIdOrHint || '').toLowerCase().trim();
+
+  if (
+    hint === 'br_satara_01' ||
+    hint === 'str01' ||
+    hint.includes('satara') ||
+    hint.includes('lendbridge')
+  ) {
+    return `LBC-STR-${roleTag}-2026-${randomSuffix}`;
+  }
+
+  if (
+    hint === 'br_nashik_01' ||
+    hint === 'nsk01' ||
+    hint.includes('nashik') ||
+    hint.includes('nasik') ||
+    hint.includes('nsk')
+  ) {
+    return `MS-NSK-${roleTag}-2026-${randomSuffix}`;
+  }
+
+  if (
+    hint === 'br_c95492722e36abe1' ||
+    hint === 'pun01' ||
+    hint.includes('pune') ||
+    hint.includes('bavdhan')
+  ) {
+    return `MS-PNE-${roleTag}-2026-${randomSuffix}`;
+  }
+
+  return `MS-PNE-${roleTag}-2026-${randomSuffix}`;
+}
+
 export function getPartnerByCode(code: string): User | undefined {
+  if (!code) return undefined;
   const clean = code.trim().toUpperCase();
   const users = listAllNetworkPartners();
-  return users.find((u) => (u.partnerCode || '').toUpperCase() === clean);
+
+  // Direct exact match
+  const direct = users.find((u) => (u.partnerCode || '').toUpperCase() === clean);
+  if (direct) return direct;
+
+  // Cross-compatibility for Tejas Ghorpade
+  if (
+    clean === 'QFS-SUB-9796' ||
+    clean === 'LBC-STR-SUB-9796' ||
+    clean === 'LBC-STR-9796'
+  ) {
+    const tejas = users.find(
+      (u) =>
+        (u.partnerCode && (u.partnerCode.includes('9796') || u.partnerCode.includes('LBC-STR') || u.partnerCode.includes('QFS-SUB'))) ||
+        (u.email && u.email.toLowerCase() === 'ghorpadets@gmail.com')
+    );
+    if (tejas) return tejas;
+  }
+
+  // Suffix matching (e.g. 4-digit code matching)
+  const numMatch = clean.match(/(\d{4})$/);
+  if (numMatch) {
+    const num = numMatch[1];
+    const match = users.find((u) => u.partnerCode && u.partnerCode.endsWith(num));
+    if (match) return match;
+  }
+
+  return undefined;
 }
 
 export function listRelationshipManagers(tenantId = 'default'): User[] {
@@ -290,8 +412,7 @@ export function approvePartnerOnboarding(
   }
   const effectiveId = existing ? existing.id : partnerId;
   const isSubDsa = existing?.role === 'SUB_DSA';
-  const certSuffix = Math.floor(1000 + Math.random() * 9000);
-  const certNum = isSubDsa ? `QFS-SUB-CERT-2026-${certSuffix}` : `QFS-CERT-2026-${certSuffix}`;
+  const certNum = generateCertificateNumber(existing?.role || 'CHANNEL_PARTNER', existing?.branchId || existing?.branchName);
 
   const commRate =
     commissionRate !== undefined && commissionRate !== null && !isNaN(Number(commissionRate))
@@ -497,10 +618,8 @@ export function createPartnerOnboarding(data: {
   if (isLendbridgeSatara) {
     branchId = 'br_satara_01';
   }
-  const randomSuffix = Math.floor(1000 + Math.random() * 9000);
   const targetRole: Role = data.role === 'SUB_DSA' ? 'SUB_DSA' : 'CHANNEL_PARTNER';
-  const prefix = targetRole === 'SUB_DSA' ? 'QFS-SUB' : 'QFS-PRT';
-  const partnerCode = `${prefix}-${randomSuffix}`;
+  const partnerCode = generatePartnerCode(targetRole, branchId || data.address);
 
   // Persist base64 data URLs to disk files to avoid database bloat and payload limits
   const cleanPanDocUrl = saveBase64Document(data.panDocumentUrl, 'partners', 'pan');

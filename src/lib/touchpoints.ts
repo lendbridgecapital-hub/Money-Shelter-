@@ -890,7 +890,7 @@ export async function notifyTouchpoint10_PartnerApproved(
             <p>Dear <strong>${partnerName}</strong>,</p>
             <p>Welcome to <strong>${companyName}</strong>! Your partner application has been approved by Central Support.</p>
             <div style="background-color: #f0fdf4; border-left: 4px solid #16a34a; padding: 14px 18px; margin: 20px 0; border-radius: 6px;">
-              <p style="margin: 4px 0;"><strong>Official Partner Code:</strong> <span style="font-family: monospace; font-size: 15px; font-weight: bold; color: #16a34a;">${partner.partnerCode || 'QFS-PRT-ACTIVE'}</span></p>
+              <p style="margin: 4px 0;"><strong>Official Partner Code:</strong> <span style="font-family: monospace; font-size: 15px; font-weight: bold; color: #16a34a;">${partner.partnerCode || 'MS-PRT-ACTIVE'}</span></p>
               <p style="margin: 4px 0;"><strong>Assigned Relationship Manager:</strong> ${assignedRmName} ${rmContactText}</p>
               <p style="margin: 4px 0;"><strong>Certificate Number:</strong> ${partner.certificateNumber || 'Issued'}</p>
               <p style="margin: 4px 0;"><strong>Privileges:</strong> Customer Link Generation & Digital Cards Active</p>

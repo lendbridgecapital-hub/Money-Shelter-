@@ -266,7 +266,7 @@ function createPortableStorage(storageFilePath: string): DatabaseAdapter {
   function ensureLendbridgeAndBranchIntegrity(data: any) {
     if (!data) return;
 
-    // 1. Ensure Satara branch has co-branding configured
+    // 1. Ensure Satara and Nashik branches are configured
     if (Array.isArray(data.branches)) {
       let satara = data.branches.find(
         (b: any) => b.id === 'br_satara_01' || b.code === 'STR01' || (b.name && b.name.toLowerCase().includes('satara'))
@@ -295,6 +295,25 @@ function createPortableStorage(storageFilePath: string): DatabaseAdapter {
         satara.co_brand_name = satara.co_brand_name || 'Lendbridge Capital';
         satara.co_brand_logo_url = '/lendbridge-logo.png';
         satara.co_brand_tagline = satara.co_brand_tagline || 'Co-Branded Regional Partner of Money Shelter';
+      }
+
+      let nashik = data.branches.find(
+        (b: any) => b.id === 'br_nashik_01' || b.code === 'NSK01' || (b.name && b.name.toLowerCase().includes('nashik'))
+      );
+      if (!nashik) {
+        nashik = {
+          id: 'br_nashik_01',
+          tenant_id: 'default',
+          name: 'Nashik Branch',
+          code: 'NSK01',
+          address: 'College Road, Nashik, Maharashtra - 422005',
+          phone: '+91 253 2570011',
+          email: 'nashik@moneyshelter.com',
+          is_co_branded: 0,
+          created_at: '2026-10-15T00:00:00.000Z',
+          updated_at: '2026-10-15T00:00:00.000Z',
+        };
+        data.branches.push(nashik);
       }
     }
 
@@ -332,71 +351,104 @@ function createPortableStorage(storageFilePath: string): DatabaseAdapter {
       }
     }
 
+    // 3. Ensure Tejas Suresh Ghorpade (LBC-STR-SUB-9796) is present and mapped to Satara Sub-DSA
+    let tejasGhorpade = data.users?.find(
+      (u: any) =>
+        u.partner_code === 'LBC-STR-SUB-9796' ||
+        u.partnerCode === 'LBC-STR-SUB-9796' ||
+        u.partner_code === 'QFS-SUB-9796' ||
+        u.partnerCode === 'QFS-SUB-9796' ||
+        (u.email && u.email.toLowerCase() === 'ghorpadets@gmail.com') ||
+        (u.name && u.name.toLowerCase().includes('tejas suresh ghorpade'))
+    );
+    if (!tejasGhorpade) {
+      tejasGhorpade = {
+        id: 'usr_tejas_ghorpade_satara_01',
+        tenant_id: 'default',
+        name: 'Tejas Suresh Ghorpade',
+        email: 'ghorpadets@gmail.com',
+        role: 'SUB_DSA',
+        branch_id: 'br_satara_01',
+        phone: '8796974799',
+        active: 1,
+        is_blocked: 0,
+        partner_status: 'APPROVED',
+        partner_code: 'LBC-STR-SUB-9796',
+        father_spouse_name: 'Suresh Ghorpade',
+        address: 'Satara, Maharashtra - 415001',
+        pan_number: 'ABCDE5678H',
+        pan_document_url: '/uploads/partners/1790971777138_wsrnzn_pan_document_url.png',
+        aadhaar_number: '987654321099',
+        aadhaar_document_url: '/uploads/partners/1790971777168_rr0mfp_aadhaar_document_url.png',
+        agreement_accepted: 1,
+        agreement_signed_at: '2026-10-18T18:17:23.000Z',
+        agreement_authorized_text:
+          'SUB-DSA REFERRAL AGREEMENT executed by Tejas Suresh Ghorpade for Lendbridge Capital (Satara Branch). DPDP Act 2023 compliant.',
+        city: 'Satara',
+        certificate_number: 'LBC-STR-SUB-CERT-2026-9796',
+        certificate_issued_at: '2026-10-19T09:00:00.000Z',
+        approved_at: '2026-10-19T09:00:00.000Z',
+        approved_by_id: 'usr_lendbridge_ops_01',
+        approved_by_name: 'Rutuja (Lendbridge Capital - Satara Ops)',
+        assigned_rm_id: 'usr_lendbridge_ops_01',
+        assigned_rm_name: 'Rutuja (Lendbridge Capital - Satara Ops)',
+        commission_rate: 1.5,
+        created_at: '2026-10-18T18:17:23.000Z',
+        updated_at: '2026-10-19T09:00:00.000Z',
+      };
+      data.users.push(tejasGhorpade);
+    } else {
+      tejasGhorpade.name = 'Tejas Suresh Ghorpade';
+      tejasGhorpade.email = 'ghorpadets@gmail.com';
+      tejasGhorpade.phone = tejasGhorpade.phone || '8796974799';
+      tejasGhorpade.role = 'SUB_DSA';
+      tejasGhorpade.branch_id = 'br_satara_01';
+      tejasGhorpade.partner_code = 'LBC-STR-SUB-9796';
+      tejasGhorpade.partner_status = 'APPROVED';
+      tejasGhorpade.pan_document_url = tejasGhorpade.pan_document_url || '/uploads/partners/1790971777138_wsrnzn_pan_document_url.png';
+      tejasGhorpade.aadhaar_document_url = tejasGhorpade.aadhaar_document_url || '/uploads/partners/1790971777168_rr0mfp_aadhaar_document_url.png';
+      tejasGhorpade.certificate_number = 'LBC-STR-SUB-CERT-2026-9796';
+      tejasGhorpade.certificate_issued_at = tejasGhorpade.certificate_issued_at || '2026-10-19T09:00:00.000Z';
+      tejasGhorpade.approved_at = tejasGhorpade.approved_at || '2026-10-19T09:00:00.000Z';
+      tejasGhorpade.approved_by_id = tejasGhorpade.approved_by_id || 'usr_lendbridge_ops_01';
+      tejasGhorpade.approved_by_name = tejasGhorpade.approved_by_name || 'Rutuja (Lendbridge Capital - Satara Ops)';
+      tejasGhorpade.assigned_rm_id = tejasGhorpade.assigned_rm_id || 'usr_lendbridge_ops_01';
+      tejasGhorpade.assigned_rm_name = tejasGhorpade.assigned_rm_name || 'Rutuja (Lendbridge Capital - Satara Ops)';
+      tejasGhorpade.commission_rate = tejasGhorpade.commission_rate ?? 1.5;
+    }
 
+    // 4. Migrate legacy QFS partner codes and certificates to branch-specific prefixes
+    if (Array.isArray(data.users)) {
+      for (const u of data.users) {
+        if (!u) continue;
+        const pCode = u.partner_code || u.partnerCode;
+        if (pCode && typeof pCode === 'string' && pCode.startsWith('QFS-')) {
+          const isSub = pCode.includes('SUB') || u.role === 'SUB_DSA';
+          const typeTag = isSub ? 'SUB' : 'PRT';
+          const digits = pCode.replace(/\D/g, '').slice(-4) || '1001';
+          const bId = String(u.branch_id || u.branchId || '').toLowerCase();
 
-      // 3. Ensure Tejas Suresh Ghorpade (QFS-SUB-9796) is present and mapped to Satara Sub-DSA
-      let tejasGhorpade = data.users.find(
-        (u: any) =>
-          u.partner_code === 'QFS-SUB-9796' ||
-          u.partnerCode === 'QFS-SUB-9796' ||
-          (u.email && u.email.toLowerCase() === 'ghorpadets@gmail.com') ||
-          (u.name && u.name.toLowerCase().includes('tejas suresh ghorpade'))
-      );
-      if (!tejasGhorpade) {
-        tejasGhorpade = {
-          id: 'usr_tejas_ghorpade_satara_01',
-          tenant_id: 'default',
-          name: 'Tejas Suresh Ghorpade',
-          email: 'ghorpadets@gmail.com',
-          role: 'SUB_DSA',
-          branch_id: 'br_satara_01',
-          phone: '8796974799',
-          active: 1,
-          is_blocked: 0,
-          partner_status: 'APPROVED',
-          partner_code: 'QFS-SUB-9796',
-          father_spouse_name: 'Suresh Ghorpade',
-          address: 'Satara, Maharashtra - 415001',
-          pan_number: 'ABCDE5678H',
-          pan_document_url: '/uploads/partners/1790971777138_wsrnzn_pan_document_url.png',
-          aadhaar_number: '987654321099',
-          aadhaar_document_url: '/uploads/partners/1790971777168_rr0mfp_aadhaar_document_url.png',
-          agreement_accepted: 1,
-          agreement_signed_at: '2026-10-18T18:17:23.000Z',
-          agreement_authorized_text:
-            'SUB-DSA REFERRAL AGREEMENT executed by Tejas Suresh Ghorpade for Lendbridge Capital (Satara Branch). DPDP Act 2023 compliant.',
-          city: 'Satara',
-          certificate_number: 'QFS-SUB-CERT-2026-9796',
-          certificate_issued_at: '2026-10-19T09:00:00.000Z',
-          approved_at: '2026-10-19T09:00:00.000Z',
-          approved_by_id: 'usr_lendbridge_ops_01',
-          approved_by_name: 'Rutuja (Lendbridge Capital - Satara Ops)',
-          assigned_rm_id: 'usr_lendbridge_ops_01',
-          assigned_rm_name: 'Rutuja (Lendbridge Capital - Satara Ops)',
-          commission_rate: 1.5,
-          created_at: '2026-10-18T18:17:23.000Z',
-          updated_at: '2026-10-19T09:00:00.000Z',
-        };
-        data.users.push(tejasGhorpade);
-      } else {
-        tejasGhorpade.name = 'Tejas Suresh Ghorpade';
-        tejasGhorpade.email = 'ghorpadets@gmail.com';
-        tejasGhorpade.phone = tejasGhorpade.phone || '8796974799';
-        tejasGhorpade.role = 'SUB_DSA';
-        tejasGhorpade.branch_id = 'br_satara_01';
-        tejasGhorpade.partner_code = tejasGhorpade.partner_code || 'QFS-SUB-9796';
-        tejasGhorpade.partner_status = 'APPROVED';
-        tejasGhorpade.pan_document_url = tejasGhorpade.pan_document_url || '/uploads/partners/1790971777138_wsrnzn_pan_document_url.png';
-        tejasGhorpade.aadhaar_document_url = tejasGhorpade.aadhaar_document_url || '/uploads/partners/1790971777168_rr0mfp_aadhaar_document_url.png';
-        tejasGhorpade.certificate_number = tejasGhorpade.certificate_number || 'QFS-SUB-CERT-2026-9796';
-        tejasGhorpade.certificate_issued_at = tejasGhorpade.certificate_issued_at || '2026-10-19T09:00:00.000Z';
-        tejasGhorpade.approved_at = tejasGhorpade.approved_at || '2026-10-19T09:00:00.000Z';
-        tejasGhorpade.approved_by_id = tejasGhorpade.approved_by_id || 'usr_lendbridge_ops_01';
-        tejasGhorpade.approved_by_name = tejasGhorpade.approved_by_name || 'Rutuja (Lendbridge Capital - Satara Ops)';
-        tejasGhorpade.assigned_rm_id = tejasGhorpade.assigned_rm_id || 'usr_lendbridge_ops_01';
-        tejasGhorpade.assigned_rm_name = tejasGhorpade.assigned_rm_name || 'Rutuja (Lendbridge Capital - Satara Ops)';
-        tejasGhorpade.commission_rate = tejasGhorpade.commission_rate ?? 1.5;
+          let prefix = 'MS-PNE';
+          if (bId.includes('satara') || bId.includes('str') || bId.includes('lendbridge')) {
+            prefix = 'LBC-STR';
+          } else if (bId.includes('nashik') || bId.includes('nsk') || bId.includes('nasik')) {
+            prefix = 'MS-NSK';
+          } else if (bId.includes('mumbai') || bId.includes('mum')) {
+            prefix = 'MS-MUM';
+          }
+
+          const newCode = `${prefix}-${typeTag}-${digits}`;
+          u.partner_code = newCode;
+          if (u.partnerCode) u.partnerCode = newCode;
+
+          const certProp = u.certificate_number ? 'certificate_number' : (u.certificateNumber ? 'certificateNumber' : null);
+          if (certProp && typeof u[certProp] === 'string' && u[certProp].startsWith('QFS-')) {
+            const certTypeTag = isSub ? 'SUB-CERT' : 'CERT';
+            u[certProp] = `${prefix}-${certTypeTag}-2026-${digits}`;
+          }
+        }
       }
+    }
 
     // 4. Purge tejas duplicate alias and any duplicate users from users array
     if (Array.isArray(data.users)) {
