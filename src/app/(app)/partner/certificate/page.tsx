@@ -22,13 +22,13 @@ export default async function PartnerCertificatePage({ searchParams }: Props) {
   let targetPartner: User = user;
   if (params.partnerId && (user.role === 'ADMIN' || user.role === 'CENTRAL_SUPPORT' || user.role === 'OPERATIONS' || user.role === 'RELATIONSHIP_MANAGER')) {
     const requested = getUserById(params.partnerId);
-    if (requested && requested.role === 'CHANNEL_PARTNER') {
+    if (requested && (requested.role === 'CHANNEL_PARTNER' || requested.role === 'SUB_DSA')) {
       targetPartner = requested;
     }
   }
 
   // If partner is not approved, show pending message
-  if (targetPartner.role === 'CHANNEL_PARTNER' && targetPartner.partnerStatus !== 'APPROVED') {
+  if ((targetPartner.role === 'CHANNEL_PARTNER' || targetPartner.role === 'SUB_DSA') && targetPartner.partnerStatus !== 'APPROVED') {
     return (
       <div className="max-w-xl mx-auto my-12 bg-white border border-amber-200 rounded-2xl p-8 text-center shadow-sm space-y-4">
         <span className="text-4xl block">⏳</span>
