@@ -5,8 +5,8 @@ const config: CapacitorConfig = {
   appName: 'Lendbridge Capital',
   webDir: 'public',
   server: {
-    // Dedicated Lendbridge Capital partner login portal
-    url: 'https://money-shelter.onrender.com/lendbridge/login',
+    // Dedicated Lendbridge Capital partner login portal on Vercel
+    url: 'https://money-shelter.vercel.app/lendbridge/login',
     cleartext: true,
     errorPath: 'index.html',
   },

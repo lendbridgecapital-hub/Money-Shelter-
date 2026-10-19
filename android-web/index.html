@@ -45,7 +45,7 @@
       </div>
 
       <label class="input-label" for="serverUrlInput">Portal Address:</label>
-      <input type="text" id="serverUrlInput" class="input-field" value="https://money-shelter.onrender.com" />
+      <input type="text" id="serverUrlInput" class="input-field" value="https://money-shelter.vercel.app" />
 
       <button class="btn btn-primary" onclick="connectToServer()">
         🔄 Retry Connection
@@ -54,7 +54,7 @@
   </div>
 
   <script>
-    const CLOUD_URL = "https://money-shelter.onrender.com";
+    const CLOUD_URL = "https://money-shelter.vercel.app";
     let activeUrl = localStorage.getItem("moneyshelter_server_url") || CLOUD_URL;
     document.getElementById("serverUrlInput").value = activeUrl;
 
