@@ -325,7 +325,15 @@ export default function MobileDrawer({
         <div className="p-4 border-t border-slate-200 bg-slate-50">
           <button
             type="button"
-            onClick={() => signOut({ callbackUrl: isCoBranded ? '/lendbridge/login' : '/login' })}
+            onClick={() =>
+              signOut({
+                callbackUrl: isSatara
+                  ? '/login/br_satara_01'
+                  : branchId
+                  ? `/login/${encodeURIComponent(branchId)}`
+                  : '/login',
+              })
+            }
             className="w-full py-2.5 px-4 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 text-xs font-bold transition flex items-center justify-center gap-2"
           >
             <span>🚪</span>

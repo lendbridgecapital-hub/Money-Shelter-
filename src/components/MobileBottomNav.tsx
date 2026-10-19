@@ -13,7 +13,9 @@ interface Props {
   companyName?: string;
   logoUrl?: string | null;
   branchName?: string;
+  branchId?: string;
   isDedicatedSiteRm?: boolean;
+  isCoBranded?: boolean;
 }
 
 export default function MobileBottomNav({
@@ -23,7 +25,9 @@ export default function MobileBottomNav({
   companyName = 'Money Shelter',
   logoUrl,
   branchName,
+  branchId,
   isDedicatedSiteRm = false,
+  isCoBranded = false,
 }: Props) {
   const pathname = usePathname();
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -216,7 +220,9 @@ export default function MobileBottomNav({
         companyName={companyName}
         logoUrl={logoUrl}
         branchName={branchName}
+        branchId={branchId}
         isDedicatedSiteRm={isDedicatedSiteRm}
+        isCoBranded={isCoBranded}
       />
     </>
   );

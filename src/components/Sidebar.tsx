@@ -625,7 +625,15 @@ export default function Sidebar({
               </p>
             </div>
             <button
-              onClick={() => signOut({ callbackUrl: '/login' })}
+              onClick={() =>
+                signOut({
+                  callbackUrl: isSatara
+                    ? '/login/br_satara_01'
+                    : branchId
+                    ? `/login/${encodeURIComponent(branchId)}`
+                    : '/login',
+                })
+              }
               title="Sign out"
               className="p-1 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-md transition-colors shrink-0"
             >
@@ -643,7 +651,15 @@ export default function Sidebar({
               {userName.charAt(0).toUpperCase()}
             </div>
             <button
-              onClick={() => signOut({ callbackUrl: '/login' })}
+              onClick={() =>
+                signOut({
+                  callbackUrl: isSatara
+                    ? '/login/br_satara_01'
+                    : branchId
+                    ? `/login/${encodeURIComponent(branchId)}`
+                    : '/login',
+                })
+              }
               title="Sign out"
               className="p-1 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-md transition-colors"
             >

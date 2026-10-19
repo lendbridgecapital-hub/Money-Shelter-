@@ -88,7 +88,9 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         companyName={settings.companyName}
         logoUrl={settings.logoUrl}
         branchName={session.user.branchName}
+        branchId={effectiveBranchId}
         isDedicatedSiteRm={isDedicatedSiteRm}
+        isCoBranded={isCoBranded}
       />
     </div>
   );
