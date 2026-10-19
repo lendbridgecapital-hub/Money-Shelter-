@@ -396,10 +396,13 @@ export default function CustomerApplicationForm({
               <div className="grid sm:grid-cols-2 gap-4">
                 {group.fields.map((field) => (
                   <div key={field.name} className="bg-white p-3.5 rounded-lg border border-slate-200/80">
-                    <label className="block text-xs font-semibold text-slate-800 mb-1">{field.label}</label>
+                    <label className="block text-xs font-semibold text-slate-800 mb-1">
+                      {field.label} {group.required && <span className="text-rose-500 font-bold">* Mandatory</span>}
+                    </label>
                     <input
                       type="file"
                       name={field.name}
+                      required={group.required}
                       accept={field.accept || '.pdf,image/*'}
                       className="w-full text-xs text-slate-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-slate-100 hover:file:bg-slate-200 cursor-pointer"
                     />

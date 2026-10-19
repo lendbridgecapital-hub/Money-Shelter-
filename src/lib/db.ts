@@ -358,7 +358,9 @@ function createPortableStorage(storageFilePath: string): DatabaseAdapter {
           father_spouse_name: 'Suresh Ghorpade',
           address: 'Satara, Maharashtra - 415001',
           pan_number: 'ABCDE5678H',
+          pan_document_url: '/uploads/partners/1790971777138_wsrnzn_pan_document_url.png',
           aadhaar_number: '987654321099',
+          aadhaar_document_url: '/uploads/partners/1790971777168_rr0mfp_aadhaar_document_url.png',
           agreement_accepted: 1,
           agreement_signed_at: '2026-10-18T18:17:23.000Z',
           agreement_authorized_text:
@@ -376,6 +378,8 @@ function createPortableStorage(storageFilePath: string): DatabaseAdapter {
         tejasGhorpade.branch_id = 'br_satara_01';
         tejasGhorpade.partner_code = 'QFS-SUB-9796';
         tejasGhorpade.partner_status = 'PENDING_APPROVAL';
+        tejasGhorpade.pan_document_url = tejasGhorpade.pan_document_url || '/uploads/partners/1790971777138_wsrnzn_pan_document_url.png';
+        tejasGhorpade.aadhaar_document_url = tejasGhorpade.aadhaar_document_url || '/uploads/partners/1790971777168_rr0mfp_aadhaar_document_url.png';
       }
 
     // 4. Purge tejas duplicate alias and any duplicate users from users array

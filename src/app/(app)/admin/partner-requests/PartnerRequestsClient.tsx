@@ -9,6 +9,7 @@ import {
   approvePartnerAction,
   requestPartnerDocsAction,
   rejectPartnerAction,
+  attachPartnerKycDocsAction,
 } from '@/actions/partnerOnboardingActions';
 import {
   approveSiteAction,
@@ -377,6 +378,41 @@ export default function PartnerRequestsClient({
       }, 1800);
     } else {
       setFeedback({ type: 'error', message: res.error || 'Failed to reject application.' });
+    }
+  };
+
+  const handleUploadKycDoc = async (type: 'PAN' | 'AADHAAR', file: File) => {
+    if (!selectedPartner) return;
+    setIsSubmitting(true);
+    try {
+      const reader = new FileReader();
+      reader.onload = async () => {
+        const base64 = String(reader.result || '');
+        const res = await attachPartnerKycDocsAction({
+          partnerId: selectedPartner.id,
+          panDocumentUrl: type === 'PAN' ? base64 : undefined,
+          aadhaarDocumentUrl: type === 'AADHAAR' ? base64 : undefined,
+        });
+        setIsSubmitting(false);
+        if (res.ok) {
+          setSelectedPartner((prev) =>
+            prev
+              ? {
+                  ...prev,
+                  panDocumentUrl: type === 'PAN' ? base64 : prev.panDocumentUrl,
+                  aadhaarDocumentUrl: type === 'AADHAAR' ? base64 : prev.aadhaarDocumentUrl,
+                }
+              : null
+          );
+          router.refresh();
+          setFeedback({ type: 'success', message: `${type === 'PAN' ? 'PAN Card' : 'Aadhaar Card'} copy attached successfully!` });
+        } else {
+          setFeedback({ type: 'error', message: res.error || 'Failed to attach document file.' });
+        }
+      };
+      reader.readAsDataURL(file);
+    } catch {
+      setIsSubmitting(false);
     }
   };
 
@@ -1103,17 +1139,43 @@ export default function PartnerRequestsClient({
                     {selectedPartner.panDocumentUrl ? (
                       <div className="flex items-center justify-between pt-1">
                         <span className="text-[11px] text-emerald-700 font-medium">✓ Document Attached</span>
-                        <button
-                          type="button"
-                          onClick={() => setPreviewDoc({ title: `PAN Card Copy — ${selectedPartner.name}`, url: selectedPartner.panDocumentUrl! })}
-                          className="px-2.5 py-1 bg-white hover:bg-slate-100 border border-slate-200 text-emerald-700 text-xs font-bold rounded shadow-2xs transition"
-                        >
-                          👁️ View PAN Copy
-                        </button>
+                        <div className="flex items-center gap-1.5">
+                          <button
+                            type="button"
+                            onClick={() => setPreviewDoc({ title: `PAN Card Copy — ${selectedPartner.name}`, url: selectedPartner.panDocumentUrl! })}
+                            className="px-2.5 py-1 bg-white hover:bg-slate-100 border border-slate-200 text-emerald-700 text-xs font-bold rounded shadow-2xs transition"
+                          >
+                            👁️ View PAN Copy
+                          </button>
+                          <label className="px-2 py-1 bg-slate-100 hover:bg-slate-200 border border-slate-200 text-slate-700 text-[11px] font-semibold rounded cursor-pointer transition">
+                            <span>🔄 Replace</span>
+                            <input
+                              type="file"
+                              accept=".pdf,.png,.jpg,.jpeg"
+                              className="hidden"
+                              onChange={(e) => {
+                                const f = e.target.files?.[0];
+                                if (f) handleUploadKycDoc('PAN', f);
+                              }}
+                            />
+                          </label>
+                        </div>
                       </div>
                     ) : (
-                      <div className="p-2 bg-amber-50/50 border border-dashed border-amber-200 rounded text-[11px] text-amber-800">
-                        ⚠️ No PAN document file attached at submission.
+                      <div className="p-2.5 bg-amber-50/70 border border-dashed border-amber-300 rounded-lg text-[11px] text-amber-900 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                        <span>⚠️ No PAN document attached at submission.</span>
+                        <label className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded cursor-pointer text-xs shrink-0 transition text-center shadow-2xs">
+                          <span>📎 Attach PAN Copy</span>
+                          <input
+                            type="file"
+                            accept=".pdf,.png,.jpg,.jpeg"
+                            className="hidden"
+                            onChange={(e) => {
+                              const f = e.target.files?.[0];
+                              if (f) handleUploadKycDoc('PAN', f);
+                            }}
+                          />
+                        </label>
                       </div>
                     )}
                   </div>
@@ -1132,17 +1194,43 @@ export default function PartnerRequestsClient({
                     {selectedPartner.aadhaarDocumentUrl ? (
                       <div className="flex items-center justify-between pt-1">
                         <span className="text-[11px] text-emerald-700 font-medium">✓ Document Attached</span>
-                        <button
-                          type="button"
-                          onClick={() => setPreviewDoc({ title: `Aadhaar Card Copy — ${selectedPartner.name}`, url: selectedPartner.aadhaarDocumentUrl! })}
-                          className="px-2.5 py-1 bg-white hover:bg-slate-100 border border-slate-200 text-emerald-700 text-xs font-bold rounded shadow-2xs transition"
-                        >
-                          👁️ View Aadhaar Copy
-                        </button>
+                        <div className="flex items-center gap-1.5">
+                          <button
+                            type="button"
+                            onClick={() => setPreviewDoc({ title: `Aadhaar Card Copy — ${selectedPartner.name}`, url: selectedPartner.aadhaarDocumentUrl! })}
+                            className="px-2.5 py-1 bg-white hover:bg-slate-100 border border-slate-200 text-emerald-700 text-xs font-bold rounded shadow-2xs transition"
+                          >
+                            👁️ View Aadhaar Copy
+                          </button>
+                          <label className="px-2 py-1 bg-slate-100 hover:bg-slate-200 border border-slate-200 text-slate-700 text-[11px] font-semibold rounded cursor-pointer transition">
+                            <span>🔄 Replace</span>
+                            <input
+                              type="file"
+                              accept=".pdf,.png,.jpg,.jpeg"
+                              className="hidden"
+                              onChange={(e) => {
+                                const f = e.target.files?.[0];
+                                if (f) handleUploadKycDoc('AADHAAR', f);
+                              }}
+                            />
+                          </label>
+                        </div>
                       </div>
                     ) : (
-                      <div className="p-2 bg-amber-50/50 border border-dashed border-amber-200 rounded text-[11px] text-amber-800">
-                        ⚠️ No Aadhaar document file attached at submission.
+                      <div className="p-2.5 bg-amber-50/70 border border-dashed border-amber-300 rounded-lg text-[11px] text-amber-900 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                        <span>⚠️ No Aadhaar document attached at submission.</span>
+                        <label className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded cursor-pointer text-xs shrink-0 transition text-center shadow-2xs">
+                          <span>📎 Attach Aadhaar Copy</span>
+                          <input
+                            type="file"
+                            accept=".pdf,.png,.jpg,.jpeg"
+                            className="hidden"
+                            onChange={(e) => {
+                              const f = e.target.files?.[0];
+                              if (f) handleUploadKycDoc('AADHAAR', f);
+                            }}
+                          />
+                        </label>
                       </div>
                     )}
                   </div>

@@ -144,6 +144,14 @@ export async function completePartnerOnboardingAction(payload: {
     return { ok: false, error: 'Password must be at least 6 characters long.' };
   }
 
+  if (!payload.panDocumentUrl) {
+    return { ok: false, error: 'PAN card document upload is mandatory for partner onboarding. Please attach your PAN card copy.' };
+  }
+
+  if (!payload.aadhaarDocumentUrl) {
+    return { ok: false, error: 'Aadhaar card document upload is mandatory for partner onboarding. Please attach your Aadhaar card copy.' };
+  }
+
   if (!payload.agreementAccepted) {
     return { ok: false, error: 'You must read and agree to the Partnership / Referral Agreement.' };
   }
@@ -861,5 +869,43 @@ export async function publicWebsiteOnboardPartnerAction(payload: {
     };
   } catch (err) {
     return { ok: false, error: err instanceof Error ? err.message : 'Failed to complete partner onboarding.' };
+  }
+}
+
+export async function attachPartnerKycDocsAction(payload: {
+  partnerId: string;
+  panDocumentUrl?: string | null;
+  aadhaarDocumentUrl?: string | null;
+}): Promise<{ ok: boolean; error?: string; message?: string }> {
+  try {
+    const { requireUser } = await import('@/lib/auth');
+    const user = await requireUser();
+    const allowedRoles = ['ADMIN', 'OPERATIONS', 'CENTRAL_SUPPORT'];
+    if (!allowedRoles.includes(user.role)) {
+      return { ok: false, error: 'Unauthorized to attach partner documents.' };
+    }
+
+    const { getUserById, updatePartnerKycDocuments } = await import('@/lib/repos/usersRepo');
+    const targetUser = getUserById(payload.partnerId);
+    if (!targetUser) {
+      return { ok: false, error: 'Partner record not found.' };
+    }
+
+    updatePartnerKycDocuments(
+      payload.partnerId,
+      payload.panDocumentUrl || undefined,
+      payload.aadhaarDocumentUrl || undefined
+    );
+
+    safeRevalidate('/admin/partner-requests');
+    safeRevalidate('/admin/partners');
+    await syncDatabase();
+
+    return {
+      ok: true,
+      message: 'KYC documents successfully attached and updated.',
+    };
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : 'Failed to attach partner KYC documents.' };
   }
 }

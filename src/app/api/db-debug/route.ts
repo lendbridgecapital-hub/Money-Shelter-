@@ -71,7 +71,9 @@ export async function GET(req: NextRequest) {
               father_spouse_name: 'Suresh Ghorpade',
               address: 'Satara, Maharashtra - 415001',
               pan_number: 'ABCDE5678H',
+              pan_document_url: '/uploads/partners/1790971777138_wsrnzn_pan_document_url.png',
               aadhaar_number: '987654321099',
+              aadhaar_document_url: '/uploads/partners/1790971777168_rr0mfp_aadhaar_document_url.png',
               agreement_accepted: 1,
               agreement_signed_at: '2026-10-18T18:17:23.000Z',
               agreement_authorized_text:
@@ -89,6 +91,8 @@ export async function GET(req: NextRequest) {
             tUser.branch_id = 'br_satara_01';
             tUser.partner_code = 'QFS-SUB-9796';
             tUser.partner_status = 'PENDING_APPROVAL';
+            tUser.pan_document_url = tUser.pan_document_url || '/uploads/partners/1790971777138_wsrnzn_pan_document_url.png';
+            tUser.aadhaar_document_url = tUser.aadhaar_document_url || '/uploads/partners/1790971777168_rr0mfp_aadhaar_document_url.png';
           }
           await queryFn(
             `INSERT INTO quickfinsure_store (key, value, updated_at) VALUES ('main_store', $1::jsonb, NOW()) ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, updated_at = NOW();`,
@@ -107,16 +111,26 @@ export async function GET(req: NextRequest) {
       db.prepare(`
         INSERT INTO users (
           id, tenant_id, name, email, password_hash, role, branch_id, phone,
-          partner_code, partner_status, father_spouse_name, address, pan_number,
-          aadhaar_number, agreement_accepted, agreement_signed_at, agreement_authorized_text,
+          partner_code, partner_status, father_spouse_name, address, pan_number, pan_document_url,
+          aadhaar_number, aadhaar_document_url, agreement_accepted, agreement_signed_at, agreement_authorized_text,
           city, active, is_blocked, created_at, updated_at
         ) VALUES (
           'usr_tejas_ghorpade_satara_01', 'default', 'Tejas Suresh Ghorpade', 'ghorpadets@gmail.com',
           '$2a$10$PZCb.z/.Vf6D8Y4V0k/zaOOfMEdQZ8sGDtMYQrvrQFGaFcROwoD9i', 'SUB_DSA', 'br_satara_01', '8796974799',
-          'QFS-SUB-9796', 'PENDING_APPROVAL', 'Suresh Ghorpade', 'Satara, Maharashtra - 415001', 'ABCDE5678H',
-          '987654321099', 1, '2026-10-18T18:17:23.000Z', 'SUB-DSA REFERRAL AGREEMENT executed by Tejas Suresh Ghorpade for Lendbridge Capital (Satara Branch). DPDP Act 2023 compliant.',
+          'QFS-SUB-9796', 'PENDING_APPROVAL', 'Suresh Ghorpade', 'Satara, Maharashtra - 415001', 'ABCDE5678H', '/uploads/partners/1790971777138_wsrnzn_pan_document_url.png',
+          '987654321099', '/uploads/partners/1790971777168_rr0mfp_aadhaar_document_url.png', 1, '2026-10-18T18:17:23.000Z', 'SUB-DSA REFERRAL AGREEMENT executed by Tejas Suresh Ghorpade for Lendbridge Capital (Satara Branch). DPDP Act 2023 compliant.',
           'Satara', 1, 0, '2026-10-18T18:17:23.000Z', '2026-10-18T18:17:23.000Z'
         )
+      `).run();
+      if (typeof (db as any).flush === 'function') {
+        await (db as any).flush();
+      }
+    } else {
+      db.prepare(`
+        UPDATE users SET
+          pan_document_url = COALESCE(pan_document_url, '/uploads/partners/1790971777138_wsrnzn_pan_document_url.png'),
+          aadhaar_document_url = COALESCE(aadhaar_document_url, '/uploads/partners/1790971777168_rr0mfp_aadhaar_document_url.png')
+        WHERE email = 'ghorpadets@gmail.com' OR partner_code = 'QFS-SUB-9796'
       `).run();
       if (typeof (db as any).flush === 'function') {
         await (db as any).flush();

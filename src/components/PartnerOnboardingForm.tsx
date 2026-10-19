@@ -231,8 +231,14 @@ export default function PartnerOnboardingForm({
     if (!/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/.test(panNumber)) {
       return setError('Please enter a valid 10-digit PAN format (e.g. ABCDE1234F).');
     }
+    if (!panDocUrl && !panFile) {
+      return setError('PAN Card document upload is mandatory. Please attach a clear copy (PDF, JPG, or PNG) of your PAN card.');
+    }
     if (aadhaarNumber.length !== 12) {
       return setError('Please enter a valid 12-digit Aadhaar number.');
+    }
+    if (!aadhaarDocUrl && !aadhaarFile) {
+      return setError('Aadhaar Card document upload is mandatory. Please attach a clear copy (PDF, JPG, or PNG) of your Aadhaar card.');
     }
 
     setCurrentStep(3);
@@ -243,6 +249,13 @@ export default function PartnerOnboardingForm({
   const handleConfirmAndSaveAgreement = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+
+    if (!panDocUrl) {
+      return setError('PAN Card copy is missing. Please go back to Step 2 and upload your PAN card document.');
+    }
+    if (!aadhaarDocUrl) {
+      return setError('Aadhaar Card copy is missing. Please go back to Step 2 and upload your Aadhaar card document.');
+    }
 
     if (!agreementAccepted) {
       return setError('You must read and tick the box confirming that you agree to the Sub-DSA / Partner Agreement.');
@@ -754,10 +767,11 @@ Compliance Undertaking: DPDP Act 2023 compliant, Zero-Cash Collection policy, no
 
                 <div>
                   <label className="block text-[11px] font-semibold text-slate-700 mb-1">
-                    Upload PAN Card Copy (PDF or Image)
+                    Upload PAN Card Copy (PDF or Image) <span className="text-rose-500 font-bold">* Mandatory</span>
                   </label>
                   <input
                     type="file"
+                    required
                     accept=".pdf,.png,.jpg,.jpeg"
                     onChange={async (e) => {
                       const f = e.target.files?.[0] || null;
@@ -771,9 +785,13 @@ Compliance Undertaking: DPDP Act 2023 compliant, Zero-Cash Collection policy, no
                     }}
                     className="w-full text-xs text-slate-500 file:mr-2 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-[11px] file:font-semibold file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100"
                   />
-                  {panFile && (
-                    <span className="text-[10px] text-emerald-600 block mt-0.5">
+                  {panFile ? (
+                    <span className="text-[10px] text-emerald-600 block mt-0.5 font-semibold">
                       ✓ Attached: {panFile.name} ({(panFile.size / 1024).toFixed(0)} KB)
+                    </span>
+                  ) : (
+                    <span className="text-[10px] text-rose-500 block mt-0.5 font-medium">
+                      * Required: Please attach color copy or scan of your PAN card
                     </span>
                   )}
                 </div>
@@ -815,10 +833,11 @@ Compliance Undertaking: DPDP Act 2023 compliant, Zero-Cash Collection policy, no
 
                 <div>
                   <label className="block text-[11px] font-semibold text-slate-700 mb-1">
-                    Upload Aadhaar Copy (PDF or Image)
+                    Upload Aadhaar Copy (PDF or Image) <span className="text-rose-500 font-bold">* Mandatory</span>
                   </label>
                   <input
                     type="file"
+                    required
                     accept=".pdf,.png,.jpg,.jpeg"
                     onChange={async (e) => {
                       const f = e.target.files?.[0] || null;
@@ -832,9 +851,13 @@ Compliance Undertaking: DPDP Act 2023 compliant, Zero-Cash Collection policy, no
                     }}
                     className="w-full text-xs text-slate-500 file:mr-2 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-[11px] file:font-semibold file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100"
                   />
-                  {aadhaarFile && (
-                    <span className="text-[10px] text-emerald-600 block mt-0.5">
+                  {aadhaarFile ? (
+                    <span className="text-[10px] text-emerald-600 block mt-0.5 font-semibold">
                       ✓ Attached: {aadhaarFile.name} ({(aadhaarFile.size / 1024).toFixed(0)} KB)
+                    </span>
+                  ) : (
+                    <span className="text-[10px] text-rose-500 block mt-0.5 font-medium">
+                      * Required: Please attach front/back copy of your Aadhaar card
                     </span>
                   )}
                 </div>

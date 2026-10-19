@@ -437,6 +437,27 @@ export function resubmitPartnerDocuments(
   return updated;
 }
 
+export function updatePartnerKycDocuments(
+  partnerId: string,
+  rawPanDocUrl?: string,
+  rawAadhaarDocUrl?: string
+): User {
+  const panDocUrl = rawPanDocUrl ? saveBase64Document(rawPanDocUrl, 'partners', 'pan') : undefined;
+  const aadhaarDocUrl = rawAadhaarDocUrl ? saveBase64Document(rawAadhaarDocUrl, 'partners', 'aadhaar') : undefined;
+
+  if (panDocUrl && aadhaarDocUrl) {
+    db.prepare('UPDATE users SET pan_document_url = ?, aadhaar_document_url = ? WHERE id = ?').run(panDocUrl, aadhaarDocUrl, partnerId);
+  } else if (panDocUrl) {
+    db.prepare('UPDATE users SET pan_document_url = ? WHERE id = ?').run(panDocUrl, partnerId);
+  } else if (aadhaarDocUrl) {
+    db.prepare('UPDATE users SET aadhaar_document_url = ? WHERE id = ?').run(aadhaarDocUrl, partnerId);
+  }
+
+  const updated = getUserById(partnerId);
+  if (!updated) throw new Error('Partner not found');
+  return updated;
+}
+
 export function createPartnerOnboarding(data: {
   name: string;
   email: string;
