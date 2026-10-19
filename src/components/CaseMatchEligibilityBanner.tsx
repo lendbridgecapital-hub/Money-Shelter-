@@ -38,7 +38,7 @@ export default function CaseMatchEligibilityBanner({ application, isOpsOrAdmin }
   const bestBank = savedOffer?.bankOffers?.[0];
   const publicShareUrl = typeof window !== 'undefined'
     ? `${window.location.origin}/offer/eligibility/${application.token}`
-    : `https://money-shelter.onrender.com/offer/eligibility/${application.token}`;
+    : `https://money-shelter.vercel.app/offer/eligibility/${application.token}`;
   const whatsAppUrl = savedOffer ? generateWhatsAppShareUrl(savedOffer, publicShareUrl) : '';
 
   return (

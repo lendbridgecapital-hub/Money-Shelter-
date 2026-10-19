@@ -602,7 +602,7 @@ export default function LoanEligibilityMatchModal({
                         offerData,
                         typeof window !== 'undefined'
                           ? `${window.location.origin}/offer/eligibility/${application.token}`
-                          : `https://money-shelter.onrender.com/offer/eligibility/${application.token}`
+                          : `https://money-shelter.vercel.app/offer/eligibility/${application.token}`
                       )}
                       target="_blank"
                       rel="noopener noreferrer"

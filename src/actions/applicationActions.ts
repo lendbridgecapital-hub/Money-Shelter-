@@ -99,9 +99,12 @@ export async function createApplicationLinkAction(
 
     const base =
       process.env.APP_BASE_URL ||
+      process.env.NEXT_PUBLIC_SITE_URL ||
+      (process.env.VERCEL_PROJECT_PRODUCTION_URL ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}` : null) ||
+      (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : null) ||
       process.env.RENDER_EXTERNAL_URL ||
       process.env.NEXTAUTH_URL ||
-      'https://money-shelter.onrender.com';
+      'https://money-shelter.vercel.app';
     const cleanBase = base.replace(/\/$/, '');
     const params = new URLSearchParams();
     if (loanType) params.set('loanType', loanType);
@@ -352,9 +355,12 @@ export async function submitDirectPartnerLoanAction(formData: FormData): Promise
 
     const base =
       process.env.APP_BASE_URL ||
+      process.env.NEXT_PUBLIC_SITE_URL ||
+      (process.env.VERCEL_PROJECT_PRODUCTION_URL ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}` : null) ||
+      (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : null) ||
       process.env.RENDER_EXTERNAL_URL ||
       process.env.NEXTAUTH_URL ||
-      'https://money-shelter.onrender.com';
+      'https://money-shelter.vercel.app';
     const cleanBase = base.replace(/\/$/, '');
     const url = `${cleanBase}/apply/${application.token}`;
 

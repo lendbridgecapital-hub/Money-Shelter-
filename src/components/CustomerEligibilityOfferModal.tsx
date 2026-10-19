@@ -46,7 +46,7 @@ export default function CustomerEligibilityOfferModal({
 
   const publicShareUrl = typeof window !== 'undefined'
     ? `${window.location.origin}/offer/eligibility/${applicationToken || initialData.applicationToken || 'sample'}`
-    : `https://money-shelter.onrender.com/offer/eligibility/${applicationToken || initialData.applicationToken || 'sample'}`;
+    : `https://money-shelter.vercel.app/offer/eligibility/${applicationToken || initialData.applicationToken || 'sample'}`;
 
   const handlePrint = () => {
     if (typeof window !== 'undefined') {

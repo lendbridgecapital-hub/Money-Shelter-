@@ -45,7 +45,7 @@ export default function CreateLinkPanel({
           // Resolve public origin: never generate localhost or capacitor:// links for clients
           const rawOrigin = typeof window !== 'undefined' ? window.location.origin : '';
           const isLocal = !rawOrigin || rawOrigin.includes('localhost') || rawOrigin.startsWith('capacitor:');
-          const productionHost = 'https://money-shelter.onrender.com';
+          const productionHost = 'https://money-shelter.vercel.app';
           const publicBase = isLocal ? productionHost : rawOrigin;
           const finalUrl = res.token ? `${publicBase}/apply/${res.token}` : res.url;
           setGeneratedUrl(finalUrl);

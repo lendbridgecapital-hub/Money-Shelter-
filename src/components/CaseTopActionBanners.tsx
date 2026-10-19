@@ -61,7 +61,7 @@ export default function CaseTopActionBanners({
       : baseUrl || '';
   const isLocal =
     !rawOrigin || rawOrigin.includes('localhost') || rawOrigin.startsWith('capacitor:');
-  const origin = isLocal ? 'https://money-shelter.onrender.com' : rawOrigin;
+  const origin = isLocal ? (baseUrl || 'https://money-shelter.vercel.app') : rawOrigin;
   const offerUrl = `${origin}/offer/${application.token}`;
 
   function copyToClipboard(url: string, type: 'offer') {
