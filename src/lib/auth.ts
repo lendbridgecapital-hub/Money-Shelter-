@@ -2,7 +2,7 @@ import { getServerSession, type NextAuthOptions } from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
 import { redirect } from 'next/navigation';
 import bcrypt from 'bcryptjs';
-import { getUserByEmail, getUserById } from '@/lib/repos/usersRepo';
+import { getUserByEmail, getUserById, getUserByUsernameOrPhoneOrEmail } from '@/lib/repos/usersRepo';
 import type { Role, User } from '@/types/db';
 import initialSeedData from '../../data/initial-data.json';
 import { db } from '@/lib/db';
@@ -37,15 +37,16 @@ export const authOptions: NextAuthOptions = {
     CredentialsProvider({
       name: 'Credentials',
       credentials: {
-        email: { label: 'Email', type: 'email' },
+        email: { label: 'Mobile Number or Email', type: 'text' },
         password: { label: 'Password', type: 'password' },
       },
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) return null;
 
-        const email = credentials.email.trim().toLowerCase();
-        console.log('[auth] Attempting login for:', email);
-        let user = getUserByEmail(email);
+        const rawIdentifier = credentials.email.trim();
+        const email = rawIdentifier.toLowerCase();
+        console.log('[auth] Attempting login for identifier:', rawIdentifier);
+        let user = getUserByUsernameOrPhoneOrEmail(rawIdentifier);
 
         if (!user && (email.includes('@moneyshelter.') || email.includes('@moneyshelter.in'))) {
           const alternateEmail = email.replace(/@moneyshelter\.(in|com)/, '@quickfinsure.com');

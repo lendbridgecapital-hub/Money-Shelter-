@@ -305,3 +305,42 @@ export async function updateUserProfileAction(formData: FormData): Promise<Actio
     return { ok: false, error: 'Failed to update profile details.' };
   }
 }
+
+export async function resetPasswordFromProfileAction(formData: FormData): Promise<ActionResult> {
+  try {
+    const currentUser = await requireUser();
+    const currentPassword = String(formData.get('currentPassword') || '');
+    const newPassword = String(formData.get('newPassword') || '');
+    const confirmPassword = String(formData.get('confirmPassword') || '');
+
+    if (!newPassword || newPassword.length < 6) {
+      return { ok: false, error: 'New password must be at least 6 characters long.' };
+    }
+    if (newPassword !== confirmPassword) {
+      return { ok: false, error: 'New password and confirm password do not match.' };
+    }
+
+    // Verify current password if user has an existing passwordHash
+    if (currentUser.passwordHash) {
+      if (!currentPassword) {
+        return { ok: false, error: 'Please enter your current password to confirm this change.' };
+      }
+      const isCurrentValid = await bcrypt.compare(currentPassword, currentUser.passwordHash);
+      if (!isCurrentValid) {
+        return { ok: false, error: 'The current password you entered is incorrect.' };
+      }
+    }
+
+    const newHash = await bcrypt.hash(newPassword, 10);
+    usersRepo.updateUserPassword(currentUser.id, newHash);
+    await syncDatabase();
+
+    revalidatePath('/profile');
+    return { ok: true, message: 'Your password has been changed successfully!' };
+  } catch (err) {
+    return {
+      ok: false,
+      error: err instanceof Error ? err.message : 'Failed to update password. Please try again.',
+    };
+  }
+}

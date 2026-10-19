@@ -82,6 +82,59 @@ export function getUserByEmail(email: string): User | undefined {
   return user;
 }
 
+export function getUserByPhone(phone: string): User | undefined {
+  const cleanPhone = phone.trim().replace(/[^0-9]/g, '');
+  if (!cleanPhone) return undefined;
+  // Match exact phone, or last 10 digits
+  const last10 = cleanPhone.length >= 10 ? cleanPhone.slice(-10) : cleanPhone;
+  
+  const allUsers = listUsers();
+  const matched = allUsers.find((u) => {
+    if (!u.phone) return false;
+    const uClean = u.phone.trim().replace(/[^0-9]/g, '');
+    return uClean === cleanPhone || (uClean.length >= 10 && uClean.slice(-10) === last10);
+  });
+  return matched;
+}
+
+export function getUserByUsernameOrPhoneOrEmail(identifier: string): User | undefined {
+  const trimmed = identifier.trim();
+  if (!trimmed) return undefined;
+
+  // 1. If it has digits and looks like a phone number (e.g. 10 digits, +91, etc.)
+  const digitsOnly = trimmed.replace(/[^0-9]/g, '');
+  if (digitsOnly.length >= 10) {
+    const byPhone = getUserByPhone(trimmed);
+    if (byPhone) return byPhone;
+  }
+
+  // 2. Try email
+  if (trimmed.includes('@')) {
+    const byEmail = getUserByEmail(trimmed);
+    if (byEmail) return byEmail;
+  }
+
+  // 3. Fallback: try by email first anyway
+  const byEmail = getUserByEmail(trimmed);
+  if (byEmail) return byEmail;
+
+  // 4. Try partner code (e.g. LBC-STR-xxx, MS-PNE-xxx)
+  const byCode = getPartnerByCode(trimmed);
+  if (byCode) return byCode;
+
+  // 5. Try phone lookup with any digits
+  if (digitsOnly.length > 0) {
+    const byPhone = getUserByPhone(digitsOnly);
+    if (byPhone) return byPhone;
+  }
+
+  return undefined;
+}
+
+export function updateUserPassword(id: string, newPasswordHash: string): void {
+  db.prepare('UPDATE users SET password_hash = ? WHERE id = ?').run(newPasswordHash, id);
+}
+
 export function isUserDedicatedSiteRm(userOrId: User | string): boolean {
   if (!userOrId) return false;
   const user = typeof userOrId === 'string' ? getUserById(userOrId) : userOrId;
