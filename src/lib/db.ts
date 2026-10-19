@@ -353,7 +353,7 @@ function createPortableStorage(storageFilePath: string): DatabaseAdapter {
           phone: '8796974799',
           active: 1,
           is_blocked: 0,
-          partner_status: 'PENDING_APPROVAL',
+          partner_status: 'APPROVED',
           partner_code: 'QFS-SUB-9796',
           father_spouse_name: 'Suresh Ghorpade',
           address: 'Satara, Maharashtra - 415001',
@@ -366,8 +366,16 @@ function createPortableStorage(storageFilePath: string): DatabaseAdapter {
           agreement_authorized_text:
             'SUB-DSA REFERRAL AGREEMENT executed by Tejas Suresh Ghorpade for Lendbridge Capital (Satara Branch). DPDP Act 2023 compliant.',
           city: 'Satara',
+          certificate_number: 'QFS-SUB-CERT-2026-9796',
+          certificate_issued_at: '2026-10-19T09:00:00.000Z',
+          approved_at: '2026-10-19T09:00:00.000Z',
+          approved_by_id: 'usr_lendbridge_ops_01',
+          approved_by_name: 'Rutuja (Lendbridge Capital - Satara Ops)',
+          assigned_rm_id: 'usr_lendbridge_ops_01',
+          assigned_rm_name: 'Rutuja (Lendbridge Capital - Satara Ops)',
+          commission_rate: 1.5,
           created_at: '2026-10-18T18:17:23.000Z',
-          updated_at: '2026-10-18T18:17:23.000Z',
+          updated_at: '2026-10-19T09:00:00.000Z',
         };
         data.users.push(tejasGhorpade);
       } else {
@@ -376,10 +384,18 @@ function createPortableStorage(storageFilePath: string): DatabaseAdapter {
         tejasGhorpade.phone = tejasGhorpade.phone || '8796974799';
         tejasGhorpade.role = 'SUB_DSA';
         tejasGhorpade.branch_id = 'br_satara_01';
-        tejasGhorpade.partner_code = 'QFS-SUB-9796';
-        tejasGhorpade.partner_status = 'PENDING_APPROVAL';
+        tejasGhorpade.partner_code = tejasGhorpade.partner_code || 'QFS-SUB-9796';
+        tejasGhorpade.partner_status = 'APPROVED';
         tejasGhorpade.pan_document_url = tejasGhorpade.pan_document_url || '/uploads/partners/1790971777138_wsrnzn_pan_document_url.png';
         tejasGhorpade.aadhaar_document_url = tejasGhorpade.aadhaar_document_url || '/uploads/partners/1790971777168_rr0mfp_aadhaar_document_url.png';
+        tejasGhorpade.certificate_number = tejasGhorpade.certificate_number || 'QFS-SUB-CERT-2026-9796';
+        tejasGhorpade.certificate_issued_at = tejasGhorpade.certificate_issued_at || '2026-10-19T09:00:00.000Z';
+        tejasGhorpade.approved_at = tejasGhorpade.approved_at || '2026-10-19T09:00:00.000Z';
+        tejasGhorpade.approved_by_id = tejasGhorpade.approved_by_id || 'usr_lendbridge_ops_01';
+        tejasGhorpade.approved_by_name = tejasGhorpade.approved_by_name || 'Rutuja (Lendbridge Capital - Satara Ops)';
+        tejasGhorpade.assigned_rm_id = tejasGhorpade.assigned_rm_id || 'usr_lendbridge_ops_01';
+        tejasGhorpade.assigned_rm_name = tejasGhorpade.assigned_rm_name || 'Rutuja (Lendbridge Capital - Satara Ops)';
+        tejasGhorpade.commission_rate = tejasGhorpade.commission_rate ?? 1.5;
       }
 
     // 4. Purge tejas duplicate alias and any duplicate users from users array
@@ -1020,12 +1036,15 @@ function createPortableStorage(storageFilePath: string): DatabaseAdapter {
               targetRows.forEach((row) => {
                 setAssignments.forEach((assignment: any) => {
                   const { col, val, isCoalesce } = assignment;
+                  const camelCol = col.replace(/_([a-z])/g, (_: string, l: string) => l.toUpperCase());
                   if (isCoalesce) {
                     if (val !== undefined && val !== null) {
                       row[col] = val;
+                      row[camelCol] = val;
                     }
                   } else {
                     row[col] = val;
+                    row[camelCol] = val;
                   }
                 });
                 changes++;

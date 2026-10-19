@@ -89,10 +89,20 @@ export async function GET(req: NextRequest) {
             tUser.phone = '8796974799';
             tUser.role = 'SUB_DSA';
             tUser.branch_id = 'br_satara_01';
-            tUser.partner_code = 'QFS-SUB-9796';
-            tUser.partner_status = 'PENDING_APPROVAL';
+            tUser.partner_code = tUser.partner_code || 'QFS-SUB-9796';
+            tUser.partner_status = tUser.partner_status || 'APPROVED';
             tUser.pan_document_url = tUser.pan_document_url || '/uploads/partners/1790971777138_wsrnzn_pan_document_url.png';
             tUser.aadhaar_document_url = tUser.aadhaar_document_url || '/uploads/partners/1790971777168_rr0mfp_aadhaar_document_url.png';
+            if (tUser.partner_status === 'APPROVED' && !tUser.certificate_number) {
+              tUser.certificate_number = 'QFS-SUB-CERT-2026-9796';
+              tUser.certificate_issued_at = tUser.certificate_issued_at || '2026-10-19T09:00:00.000Z';
+              tUser.approved_at = tUser.approved_at || '2026-10-19T09:00:00.000Z';
+              tUser.approved_by_id = tUser.approved_by_id || 'usr_lendbridge_ops_01';
+              tUser.approved_by_name = tUser.approved_by_name || 'Rutuja (Lendbridge Capital - Satara Ops)';
+              tUser.assigned_rm_id = tUser.assigned_rm_id || 'usr_lendbridge_ops_01';
+              tUser.assigned_rm_name = tUser.assigned_rm_name || 'Rutuja (Lendbridge Capital - Satara Ops)';
+              tUser.commission_rate = tUser.commission_rate ?? 1.5;
+            }
           }
           await queryFn(
             `INSERT INTO quickfinsure_store (key, value, updated_at) VALUES ('main_store', $1::jsonb, NOW()) ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, updated_at = NOW();`,
@@ -111,15 +121,19 @@ export async function GET(req: NextRequest) {
       db.prepare(`
         INSERT INTO users (
           id, tenant_id, name, email, password_hash, role, branch_id, phone,
-          partner_code, partner_status, father_spouse_name, address, pan_number, pan_document_url,
+          partner_code, partner_status, certificate_number, certificate_issued_at, approved_at,
+          approved_by_id, approved_by_name, assigned_rm_id, assigned_rm_name, commission_rate,
+          father_spouse_name, address, pan_number, pan_document_url,
           aadhaar_number, aadhaar_document_url, agreement_accepted, agreement_signed_at, agreement_authorized_text,
           city, active, is_blocked, created_at, updated_at
         ) VALUES (
           'usr_tejas_ghorpade_satara_01', 'default', 'Tejas Suresh Ghorpade', 'ghorpadets@gmail.com',
           '$2a$10$PZCb.z/.Vf6D8Y4V0k/zaOOfMEdQZ8sGDtMYQrvrQFGaFcROwoD9i', 'SUB_DSA', 'br_satara_01', '8796974799',
-          'QFS-SUB-9796', 'PENDING_APPROVAL', 'Suresh Ghorpade', 'Satara, Maharashtra - 415001', 'ABCDE5678H', '/uploads/partners/1790971777138_wsrnzn_pan_document_url.png',
+          'QFS-SUB-9796', 'APPROVED', 'QFS-SUB-CERT-2026-9796', '2026-10-19T09:00:00.000Z', '2026-10-19T09:00:00.000Z',
+          'usr_lendbridge_ops_01', 'Rutuja (Lendbridge Capital - Satara Ops)', 'usr_lendbridge_ops_01', 'Rutuja (Lendbridge Capital - Satara Ops)', 1.5,
+          'Suresh Ghorpade', 'Satara, Maharashtra - 415001', 'ABCDE5678H', '/uploads/partners/1790971777138_wsrnzn_pan_document_url.png',
           '987654321099', '/uploads/partners/1790971777168_rr0mfp_aadhaar_document_url.png', 1, '2026-10-18T18:17:23.000Z', 'SUB-DSA REFERRAL AGREEMENT executed by Tejas Suresh Ghorpade for Lendbridge Capital (Satara Branch). DPDP Act 2023 compliant.',
-          'Satara', 1, 0, '2026-10-18T18:17:23.000Z', '2026-10-18T18:17:23.000Z'
+          'Satara', 1, 0, '2026-10-18T18:17:23.000Z', '2026-10-19T09:00:00.000Z'
         )
       `).run();
       if (typeof (db as any).flush === 'function') {
@@ -128,6 +142,8 @@ export async function GET(req: NextRequest) {
     } else {
       db.prepare(`
         UPDATE users SET
+          partner_status = COALESCE(partner_status, 'APPROVED'),
+          certificate_number = COALESCE(certificate_number, 'QFS-SUB-CERT-2026-9796'),
           pan_document_url = COALESCE(pan_document_url, '/uploads/partners/1790971777138_wsrnzn_pan_document_url.png'),
           aadhaar_document_url = COALESCE(aadhaar_document_url, '/uploads/partners/1790971777168_rr0mfp_aadhaar_document_url.png')
         WHERE email = 'ghorpadets@gmail.com' OR partner_code = 'QFS-SUB-9796'
