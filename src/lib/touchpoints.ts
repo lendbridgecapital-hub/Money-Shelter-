@@ -51,6 +51,22 @@ function getTouchpointBrandName(
   return fallback;
 }
 
+function isSataraContext(
+  context?: { branchId?: string | null; branchName?: string | null; isCoBranded?: boolean | null; coBrandName?: string | null } | null
+): boolean {
+  if (!context) return false;
+  if (context.branchId === 'br_satara_01') return true;
+  if (context.coBrandName?.toLowerCase().includes('lendbridge')) return true;
+  if (context.branchName?.toLowerCase().includes('satara') || context.branchName?.toLowerCase().includes('lendbridge')) return true;
+  if (context.branchId) {
+    const branch = getBranchById(context.branchId);
+    if (branch?.id === 'br_satara_01' || branch?.code === 'STR01' || branch?.name?.toLowerCase().includes('satara')) {
+      return true;
+    }
+  }
+  return false;
+}
+
 /**
  * TOUCHPOINT 01: Customer Application Submitted
  * Trigger: Customer submits online loan form and uploads KYC documents via /apply/[token]
@@ -106,11 +122,15 @@ export async function notifyTouchpoint01_CustomerSubmitted(
     } catch {}
   }
 
+  const isSatara = isSataraContext(application);
+  const fromCustomer = isSatara && settings.smtpUser ? `"${companyName}" <${settings.smtpUser}>` : undefined;
+
   // 2. Email Notification 1: To Customer
   if (application.email) {
     try {
       await sendMail({
         to: application.email,
+        from: fromCustomer,
         tenantId,
         subject: `Loan Application Received — ${companyName}`,
         html: `
@@ -135,14 +155,19 @@ export async function notifyTouchpoint01_CustomerSubmitted(
 
   // 3. Email Notification 2: To Branch / Ops Desk
   const branch = application.branchId ? getBranchById(application.branchId) : undefined;
-  const branchName = branch?.name || application.branchName || 'Central Branch';
+  const isSataraBranchCase = isSatara || isSataraContext({ branchId: branch?.id, branchName: branch?.name });
+  const branchName = branch?.name || application.branchName || (isSataraBranchCase ? 'Satara Branch' : 'Central Branch');
   const handlingBranch = branch?.mappedBranchId ? getBranchById(branch.mappedBranchId) : undefined;
-  const alertRecipient = branch?.email || handlingBranch?.email || settings.officialEmail;
+  const alertRecipient = isSataraBranchCase
+    ? 'lendbridgecapital@gmail.com'
+    : (branch?.email || handlingBranch?.email || settings.officialEmail);
+  const fromBranch = isSataraBranchCase && settings.smtpUser ? `"Lendbridge Capital Notifications" <${settings.smtpUser}>` : undefined;
 
   if (alertRecipient) {
     try {
       await sendMail({
         to: alertRecipient,
+        from: fromBranch,
         tenantId,
         subject: `🔔 New Loan Application Received — ${fullName} (${branchName})`,
         html: `
@@ -429,11 +454,14 @@ export async function notifyTouchpoint04_DocumentsReUploaded(
 
   // 3. Email Notification: Internal Status Email
   const branch = application.branchId ? getBranchById(application.branchId) : undefined;
-  const alertRecipient = branch?.email || settings.officialEmail;
+  const isSataraBranchCase = isSataraContext(application) || (branch ? isSataraContext({ branchId: branch.id, branchName: branch.name }) : false);
+  const alertRecipient = isSataraBranchCase ? 'lendbridgecapital@gmail.com' : (branch?.email || settings.officialEmail);
+  const fromAlert = isSataraBranchCase && settings.smtpUser ? `"Lendbridge Capital Notifications" <${settings.smtpUser}>` : undefined;
   if (alertRecipient) {
     try {
       await sendMail({
         to: alertRecipient,
+        from: fromAlert,
         tenantId,
         subject: `🔔 Documents Re-Uploaded — ${fullName} (Case #${caseIdDisplay})`,
         html: `
@@ -596,11 +624,14 @@ export async function notifyTouchpoint06_OfferAccepted(
 
   // 3. Email Notification: Operations Final Order Copy
   const branch = application.branchId ? getBranchById(application.branchId) : undefined;
-  const alertRecipient = branch?.email || settings.officialEmail;
+  const isSataraBranchCase = isSataraContext(application) || (branch ? isSataraContext({ branchId: branch.id, branchName: branch.name }) : false);
+  const alertRecipient = isSataraBranchCase ? 'lendbridgecapital@gmail.com' : (branch?.email || settings.officialEmail);
+  const fromAlert = isSataraBranchCase && settings.smtpUser ? `"Lendbridge Capital Notifications" <${settings.smtpUser}>` : undefined;
   if (alertRecipient) {
     try {
       await sendMail({
         to: alertRecipient,
+        from: fromAlert,
         tenantId,
         subject: `🔔 Customer Acceptance Recorded — ${fullName} (Ref: ${acceptanceRef})`,
         html: `
