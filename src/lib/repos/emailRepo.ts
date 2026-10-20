@@ -87,3 +87,45 @@ export function listEmailLogs(tenantId = 'default', limit = 50): EmailLog[] {
     return [];
   }
 }
+
+export function getEmailLogById(id: string): EmailLog | null {
+  try {
+    const r = db.prepare('SELECT * FROM email_logs WHERE id = ?').get(id) as Record<string, unknown> | undefined;
+    if (!r) return null;
+    return {
+      id: String(r.id),
+      tenantId: String(r.tenant_id || r.tenantId || 'default'),
+      toEmail: String(r.to_email || r.toEmail || ''),
+      subject: String(r.subject || ''),
+      bodyHtml: String(r.body_html || r.bodyHtml || ''),
+      status: (r.status as 'SENT' | 'FAILED' | 'SMTP_NOT_CONFIGURED') || 'SENT',
+      errorMessage: r.error_message || r.errorMessage ? String(r.error_message || r.errorMessage) : null,
+      messageId: r.message_id || r.messageId ? String(r.message_id || r.messageId) : null,
+      createdAt: String(r.created_at || r.createdAt || ''),
+    };
+  } catch {
+    return null;
+  }
+}
+
+export function listFailedEmailLogs(tenantId = 'default'): EmailLog[] {
+  try {
+    const rows = db
+      .prepare('SELECT * FROM email_logs WHERE tenant_id = ? AND status != "SENT" ORDER BY created_at ASC')
+      .all(tenantId) as Record<string, unknown>[];
+
+    return rows.map((r) => ({
+      id: String(r.id),
+      tenantId: String(r.tenant_id || r.tenantId || 'default'),
+      toEmail: String(r.to_email || r.toEmail || ''),
+      subject: String(r.subject || ''),
+      bodyHtml: String(r.body_html || r.bodyHtml || ''),
+      status: (r.status as 'SENT' | 'FAILED' | 'SMTP_NOT_CONFIGURED') || 'SENT',
+      errorMessage: r.error_message || r.errorMessage ? String(r.error_message || r.errorMessage) : null,
+      messageId: r.message_id || r.messageId ? String(r.message_id || r.messageId) : null,
+      createdAt: String(r.created_at || r.createdAt || ''),
+    }));
+  } catch {
+    return [];
+  }
+}

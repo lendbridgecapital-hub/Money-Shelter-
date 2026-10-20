@@ -9,6 +9,7 @@ export interface SendMailOptions {
   html: string;
   from?: string;
   tenantId?: string;
+  existingLogId?: string;
 }
 
 export interface SendMailResult {
@@ -18,7 +19,7 @@ export interface SendMailResult {
   error?: string;
 }
 
-export async function sendMail({ to, subject, html, from, tenantId }: SendMailOptions): Promise<SendMailResult> {
+export async function sendMail({ to, subject, html, from, tenantId, existingLogId }: SendMailOptions): Promise<SendMailResult> {
   const settings = await getCompanySettings(tenantId || 'default');
 
   // Support database company settings with environment variable fallbacks
@@ -29,14 +30,14 @@ export async function sendMail({ to, subject, html, from, tenantId }: SendMailOp
   const smtpPassword = settings.smtpPassword || process.env.SMTP_PASSWORD || process.env.SMTP_PASS || process.env.EMAIL_SERVER_PASSWORD || '';
   const fromName = settings.smtpFromName || process.env.SMTP_FROM_NAME || settings.companyName || 'Money Shelter';
 
-  // Always log the email into the system database first
-  const logEntry = logEmail({
+  // Either reuse existing log entry (when re-initiating/re-sending) or log as new
+  const logId = existingLogId || logEmail({
     tenantId: tenantId || 'default',
     toEmail: to,
     subject,
     bodyHtml: html,
     status: smtpHost && smtpUser ? 'SENT' : 'SMTP_NOT_CONFIGURED',
-  });
+  }).id;
 
   if (!smtpHost || !smtpUser) {
     console.warn(
@@ -81,13 +82,13 @@ export async function sendMail({ to, subject, html, from, tenantId }: SendMailOp
       }
 
       const msgId = resJson?.messageId || 'brevo-sent';
-      updateEmailLog(logEntry.id, { status: 'SENT', messageId: msgId });
+      updateEmailLog(logId, { status: 'SENT', messageId: msgId });
       console.log(`[mail] Email dispatched via Brevo HTTP to ${to}. MessageId: ${msgId}`);
       return { sent: true, messageId: msgId };
     } catch (httpErr) {
       const errText = `Brevo HTTP Relay Failed: ${(httpErr as Error).message}`;
       console.error('[mail] Brevo error:', errText);
-      updateEmailLog(logEntry.id, { status: 'FAILED', errorMessage: errText });
+      updateEmailLog(logId, { status: 'FAILED', errorMessage: errText });
       return { sent: false, reason: 'SEND_FAILED', error: errText };
     }
   }
@@ -115,13 +116,13 @@ export async function sendMail({ to, subject, html, from, tenantId }: SendMailOp
       }
 
       const msgId = resJson?.id || 'resend-sent';
-      updateEmailLog(logEntry.id, { status: 'SENT', messageId: msgId });
+      updateEmailLog(logId, { status: 'SENT', messageId: msgId });
       console.log(`[mail] Email dispatched via Resend HTTP to ${to}. MessageId: ${msgId}`);
       return { sent: true, messageId: msgId };
     } catch (httpErr) {
       const errText = `Resend HTTP Relay Failed: ${(httpErr as Error).message}`;
       console.error('[mail] Resend error:', errText);
-      updateEmailLog(logEntry.id, { status: 'FAILED', errorMessage: errText });
+      updateEmailLog(logId, { status: 'FAILED', errorMessage: errText });
       return { sent: false, reason: 'SEND_FAILED', error: errText };
     }
   }
@@ -134,7 +135,7 @@ export async function sendMail({ to, subject, html, from, tenantId }: SendMailOp
 
     if (isGmailHost && !isBrevoSmtpKey && !cleanPassword) {
       const errMsg = 'Google App Password is missing. Please type your 16-character Google App Password in Email Settings.';
-      updateEmailLog(logEntry.id, { status: 'FAILED', errorMessage: errMsg });
+      updateEmailLog(logId, { status: 'FAILED', errorMessage: errMsg });
       return { sent: false, reason: 'SEND_FAILED', error: errMsg };
     }
 
@@ -193,7 +194,7 @@ export async function sendMail({ to, subject, html, from, tenantId }: SendMailOp
       html,
     });
 
-    updateEmailLog(logEntry.id, {
+    updateEmailLog(logId, {
       status: 'SENT',
       messageId: info.messageId,
     });
@@ -221,7 +222,7 @@ export async function sendMail({ to, subject, html, from, tenantId }: SendMailOp
       }
     }
 
-    updateEmailLog(logEntry.id, {
+    updateEmailLog(logId, {
       status: 'FAILED',
       errorMessage: errorMsg,
     });

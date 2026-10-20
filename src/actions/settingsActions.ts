@@ -7,6 +7,7 @@ import { saveUploadedFile } from '@/lib/uploads';
 import { sendMail } from '@/lib/mail';
 import { getCompanySettings } from '@/lib/settings';
 import { syncDatabase } from '@/lib/db';
+import { getEmailLogById, listFailedEmailLogs } from '@/lib/repos/emailRepo';
 
 export type ActionResult = { ok: true; message?: string } | { ok: false; error: string };
 
@@ -107,5 +108,98 @@ export async function sendTestEmail(toEmail: string): Promise<ActionResult> {
     return { ok: true, message: 'Test email sent successfully.' };
   } catch (err) {
     return { ok: false, error: err instanceof Error && err.message === 'FORBIDDEN' ? 'You do not have permission to do this.' : 'Something went wrong.' };
+  }
+}
+
+export async function resendEmailLog(logId: string): Promise<ActionResult> {
+  try {
+    await requireRole('ADMIN');
+    const log = getEmailLogById(logId);
+    if (!log) {
+      return { ok: false, error: 'Email log not found.' };
+    }
+
+    const result = await sendMail({
+      to: log.toEmail,
+      subject: log.subject,
+      html: log.bodyHtml,
+      tenantId: log.tenantId,
+      existingLogId: log.id,
+    });
+
+    await syncDatabase();
+    revalidatePath('/admin/email-settings');
+
+    if (!result.sent) {
+      return {
+        ok: false,
+        error: result.error || 'Failed to re-send email. Please check your Brevo/SMTP settings.',
+      };
+    }
+
+    return {
+      ok: true,
+      message: `Email re-dispatched successfully to ${log.toEmail}!`,
+    };
+  } catch (err) {
+    return {
+      ok: false,
+      error:
+        err instanceof Error && err.message === 'FORBIDDEN'
+          ? 'You do not have permission to do this.'
+          : 'Failed to re-send email.',
+    };
+  }
+}
+
+export async function resendAllFailedEmails(): Promise<ActionResult> {
+  try {
+    await requireRole('ADMIN');
+    const failedLogs = listFailedEmailLogs();
+    if (failedLogs.length === 0) {
+      return { ok: true, message: 'No failed or unsent emails found to re-send.' };
+    }
+
+    let successCount = 0;
+    let failCount = 0;
+
+    for (const log of failedLogs) {
+      const result = await sendMail({
+        to: log.toEmail,
+        subject: log.subject,
+        html: log.bodyHtml,
+        tenantId: log.tenantId,
+        existingLogId: log.id,
+      });
+
+      if (result.sent) {
+        successCount++;
+      } else {
+        failCount++;
+      }
+    }
+
+    await syncDatabase();
+    revalidatePath('/admin/email-settings');
+
+    if (failCount === 0) {
+      return {
+        ok: true,
+        message: `Successfully re-sent all ${successCount} queued email(s)!`,
+      };
+    }
+
+    return {
+      ok: true,
+      message: `Re-sent ${successCount} email(s) successfully (${failCount} failed).`,
+    };
+  } catch (err) {
+    return {
+      ok: false,
+      error:
+        err instanceof Error && err.message === 'FORBIDDEN'
+          ? 'You do not have permission to do this.'
+          : 'Failed to re-send emails.',
+    };
   }
 }

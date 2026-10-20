@@ -3,11 +3,20 @@
 import React, { useState, useMemo } from 'react';
 import type { EmailLog } from '@/types/db';
 import { formatDate } from '@/lib/format';
+import { resendEmailLog, resendAllFailedEmails } from '@/actions/settingsActions';
 
 export default function EmailOutboxTable({ logs }: { logs: EmailLog[] }) {
   const [selectedLog, setSelectedLog] = useState<EmailLog | null>(null);
-  const [filterMode, setFilterMode] = useState<'ALL' | 'SATARA' | 'CUSTOMER' | 'ALERTS'>('ALL');
+  const [filterMode, setFilterMode] = useState<'ALL' | 'SATARA' | 'CUSTOMER' | 'ALERTS' | 'FAILED'>('ALL');
   const [searchQuery, setSearchQuery] = useState('');
+
+  const [resendingId, setResendingId] = useState<string | null>(null);
+  const [isResendingAll, setIsResendingAll] = useState(false);
+  const [actionMessage, setActionMessage] = useState<{ ok: boolean; text: string } | null>(null);
+
+  const failedCount = useMemo(() => {
+    return logs.filter((l) => l.status !== 'SENT').length;
+  }, [logs]);
 
   const filteredLogs = useMemo(() => {
     return logs.filter((log) => {
@@ -31,6 +40,8 @@ export default function EmailOutboxTable({ logs }: { logs: EmailLog[] }) {
           log.subject.toLowerCase().includes('documents re-uploaded') ||
           log.subject.toLowerCase().includes('acceptance recorded');
         if (!isAlert) return false;
+      } else if (filterMode === 'FAILED') {
+        if (log.status === 'SENT') return false;
       }
 
       // 2. Text Search
@@ -46,6 +57,46 @@ export default function EmailOutboxTable({ logs }: { logs: EmailLog[] }) {
     });
   }, [logs, filterMode, searchQuery]);
 
+  const handleResend = async (logId: string) => {
+    setResendingId(logId);
+    setActionMessage(null);
+    try {
+      const res = await resendEmailLog(logId);
+      if (res.ok) {
+        setActionMessage({ ok: true, text: res.message || 'Email re-dispatched successfully!' });
+        if (selectedLog && selectedLog.id === logId) {
+          setSelectedLog({ ...selectedLog, status: 'SENT', errorMessage: null });
+        }
+      } else {
+        setActionMessage({ ok: false, text: res.error || 'Failed to re-send email.' });
+      }
+    } catch (e) {
+      setActionMessage({ ok: false, text: (e as Error).message || 'Failed to re-send email.' });
+    } finally {
+      setResendingId(null);
+    }
+  };
+
+  const handleResendAll = async () => {
+    if (!window.confirm(`Re-send all ${failedCount} unsent/failed emails now using current email settings?`)) {
+      return;
+    }
+    setIsResendingAll(true);
+    setActionMessage(null);
+    try {
+      const res = await resendAllFailedEmails();
+      if (res.ok) {
+        setActionMessage({ ok: true, text: res.message || 'Queued emails re-sent successfully!' });
+      } else {
+        setActionMessage({ ok: false, text: res.error || 'Failed to re-send queued emails.' });
+      }
+    } catch (e) {
+      setActionMessage({ ok: false, text: (e as Error).message || 'Failed to re-send queued emails.' });
+    } finally {
+      setIsResendingAll(false);
+    }
+  };
+
   return (
     <div className="bg-white border border-slate-200 rounded-2xl shadow-2xs overflow-hidden space-y-4 p-5 sm:p-6">
       {/* Header and Controls */}
@@ -59,12 +110,56 @@ export default function EmailOutboxTable({ logs }: { logs: EmailLog[] }) {
             Real-time audit log of automated customer confirmations, Satara branch alerts, and system emails.
           </p>
         </div>
-        <div className="flex items-center gap-2 self-start sm:self-auto">
+        <div className="flex flex-wrap items-center gap-2 self-start sm:self-auto">
+          {failedCount > 0 && (
+            <button
+              type="button"
+              onClick={handleResendAll}
+              disabled={isResendingAll || resendingId !== null}
+              className="px-3.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-xs transition active:scale-95 cursor-pointer flex items-center gap-1.5 disabled:opacity-50"
+              title="Re-send all failed and unconfigured emails using current Brevo/SMTP settings"
+            >
+              {isResendingAll ? (
+                <>
+                  <span className="animate-spin text-sm">⏳</span>
+                  <span>Re-sending All ({failedCount})…</span>
+                </>
+              ) : (
+                <>
+                  <span>⚡</span>
+                  <span>Re-send All Failed ({failedCount})</span>
+                </>
+              )}
+            </button>
+          )}
           <span className="text-xs font-bold px-3 py-1 rounded-full bg-slate-100 text-slate-700">
             {filteredLogs.length} / {logs.length} Logged
           </span>
         </div>
       </div>
+
+      {/* Action Notification Alert */}
+      {actionMessage && (
+        <div
+          className={`p-3.5 rounded-xl text-xs font-semibold flex items-center justify-between gap-2 animate-in fade-in ${
+            actionMessage.ok
+              ? 'bg-emerald-50 text-emerald-800 border border-emerald-200'
+              : 'bg-red-50 text-red-800 border border-red-200'
+          }`}
+        >
+          <div className="flex items-center gap-2">
+            <span>{actionMessage.ok ? '✓' : '✕'}</span>
+            <span>{actionMessage.text}</span>
+          </div>
+          <button
+            type="button"
+            onClick={() => setActionMessage(null)}
+            className="text-slate-400 hover:text-slate-600 text-xs font-bold cursor-pointer"
+          >
+            ✕
+          </button>
+        </div>
+      )}
 
       {/* Filter Chips & Search Bar */}
       <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
@@ -80,6 +175,20 @@ export default function EmailOutboxTable({ logs }: { logs: EmailLog[] }) {
           >
             All Logs
           </button>
+          {failedCount > 0 && (
+            <button
+              type="button"
+              onClick={() => setFilterMode('FAILED')}
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1 cursor-pointer ${
+                filterMode === 'FAILED'
+                  ? 'bg-rose-600 text-white shadow-xs'
+                  : 'bg-rose-50 text-rose-800 hover:bg-rose-100 border border-rose-200'
+              }`}
+            >
+              <span>⚠️</span>
+              <span>Needs Re-send ({failedCount})</span>
+            </button>
+          )}
           <button
             type="button"
             onClick={() => setFilterMode('SATARA')}
@@ -90,7 +199,7 @@ export default function EmailOutboxTable({ logs }: { logs: EmailLog[] }) {
             }`}
           >
             <span>📍</span>
-            <span>Satara Branch Only (lendbridgecapital@gmail.com)</span>
+            <span>Satara Branch Only</span>
           </button>
           <button
             type="button"
@@ -145,7 +254,7 @@ export default function EmailOutboxTable({ logs }: { logs: EmailLog[] }) {
                 <th className="py-2.5 px-3">Recipient</th>
                 <th className="py-2.5 px-3">Subject</th>
                 <th className="py-2.5 px-3">Status</th>
-                <th className="py-2.5 px-3 text-right">Action</th>
+                <th className="py-2.5 px-3 text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
@@ -159,12 +268,14 @@ export default function EmailOutboxTable({ logs }: { logs: EmailLog[] }) {
                 const statusLabels = {
                   SENT: '✓ Dispatched',
                   FAILED: '✕ Failed',
-                  SMTP_NOT_CONFIGURED: '⏳ Stored (No SMTP)',
+                  SMTP_NOT_CONFIGURED: '⏸ Stored (No SMTP)',
                 };
 
                 const isSataraRecipient =
                   log.toEmail.toLowerCase().includes('lendbridgecapital') ||
                   log.subject.toLowerCase().includes('satara');
+
+                const isCurrentResending = resendingId === log.id;
 
                 return (
                   <tr key={log.id} className="hover:bg-slate-50/80 transition">
@@ -193,14 +304,39 @@ export default function EmailOutboxTable({ logs }: { logs: EmailLog[] }) {
                         {statusLabels[log.status] || log.status}
                       </span>
                     </td>
-                    <td className="py-2.5 px-3 text-right">
-                      <button
-                        type="button"
-                        onClick={() => setSelectedLog(log)}
-                        className="px-3 py-1 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold active:scale-95 transition cursor-pointer"
-                      >
-                        Audit / View
-                      </button>
+                    <td className="py-2.5 px-3 text-right whitespace-nowrap">
+                      <div className="flex items-center justify-end gap-1.5">
+                        <button
+                          type="button"
+                          onClick={() => handleResend(log.id)}
+                          disabled={isCurrentResending || isResendingAll}
+                          className={`px-3 py-1 rounded-xl font-bold active:scale-95 transition cursor-pointer text-[11px] flex items-center gap-1 ${
+                            log.status !== 'SENT'
+                              ? 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs'
+                              : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
+                          } disabled:opacity-50`}
+                          title={`Re-send email to ${log.toEmail}`}
+                        >
+                          {isCurrentResending ? (
+                            <>
+                              <span className="animate-spin text-[10px]">⏳</span>
+                              <span>Sending…</span>
+                            </>
+                          ) : (
+                            <>
+                              <span>⚡</span>
+                              <span>{log.status === 'SENT' ? 'Re-send' : 'Re-send Now'}</span>
+                            </>
+                          )}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setSelectedLog(log)}
+                          className="px-3 py-1 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold active:scale-95 transition cursor-pointer text-[11px]"
+                        >
+                          Audit / View
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 );
@@ -249,7 +385,25 @@ export default function EmailOutboxTable({ logs }: { logs: EmailLog[] }) {
               />
             </div>
 
-            <div className="pt-2 border-t border-slate-100 flex items-center justify-end">
+            <div className="pt-3 border-t border-slate-100 flex items-center justify-between gap-3">
+              <button
+                type="button"
+                onClick={() => handleResend(selectedLog.id)}
+                disabled={resendingId === selectedLog.id || isResendingAll}
+                className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition active:scale-95 cursor-pointer flex items-center gap-1.5 disabled:opacity-50"
+              >
+                {resendingId === selectedLog.id ? (
+                  <>
+                    <span className="animate-spin text-xs">⏳</span>
+                    <span>Re-sending Email Now…</span>
+                  </>
+                ) : (
+                  <>
+                    <span>⚡</span>
+                    <span>Re-initiate & Send Now</span>
+                  </>
+                )}
+              </button>
               <button
                 type="button"
                 onClick={() => setSelectedLog(null)}
