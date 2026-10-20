@@ -45,35 +45,119 @@ export async function sendMail({ to, subject, html, from, tenantId }: SendMailOp
     return { sent: false, reason: 'SMTP_NOT_CONFIGURED' };
   }
 
+  // 1. HTTP API DELIVERY RELAYS (Port 443 HTTPS - 100% reliable on Vercel)
+  const brevoKey =
+    (smtpPassword && smtpPassword.startsWith('xkeysib-') ? smtpPassword : null) ||
+    process.env.BREVO_API_KEY ||
+    null;
+  const resendKey =
+    (smtpPassword && smtpPassword.startsWith('re_') ? smtpPassword : null) ||
+    process.env.RESEND_API_KEY ||
+    null;
+
+  if (brevoKey) {
+    try {
+      const senderEmail = smtpUser || settings.officialEmail || 'lendbridgecapital@gmail.com';
+      const senderDisplayName = fromName || settings.companyName || 'Lendbridge Capital Notifications';
+
+      const resp = await fetch('https://api.brevo.com/v3/smtp/email', {
+        method: 'POST',
+        headers: {
+          'accept': 'application/json',
+          'api-key': brevoKey,
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify({
+          sender: { name: senderDisplayName, email: senderEmail },
+          to: [{ email: to }],
+          subject,
+          htmlContent: html,
+        }),
+      });
+
+      const resJson = await resp.json();
+      if (!resp.ok) {
+        throw new Error(resJson?.message || `Brevo HTTP error ${resp.status}`);
+      }
+
+      const msgId = resJson?.messageId || 'brevo-sent';
+      updateEmailLog(logEntry.id, { status: 'SENT', messageId: msgId });
+      console.log(`[mail] Email dispatched via Brevo HTTP to ${to}. MessageId: ${msgId}`);
+      return { sent: true, messageId: msgId };
+    } catch (httpErr) {
+      const errText = `Brevo HTTP Relay Failed: ${(httpErr as Error).message}`;
+      console.error('[mail] Brevo error:', errText);
+      updateEmailLog(logEntry.id, { status: 'FAILED', errorMessage: errText });
+      return { sent: false, reason: 'SEND_FAILED', error: errText };
+    }
+  }
+
+  if (resendKey) {
+    try {
+      const fromAddr = from || (fromName ? `"${fromName}" <${smtpUser}>` : smtpUser);
+      const resp = await fetch('https://api.resend.com/emails', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${resendKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          from: fromAddr,
+          to: [to],
+          subject,
+          html,
+        }),
+      });
+
+      const resJson = await resp.json();
+      if (!resp.ok) {
+        throw new Error(resJson?.message || `Resend HTTP error ${resp.status}`);
+      }
+
+      const msgId = resJson?.id || 'resend-sent';
+      updateEmailLog(logEntry.id, { status: 'SENT', messageId: msgId });
+      console.log(`[mail] Email dispatched via Resend HTTP to ${to}. MessageId: ${msgId}`);
+      return { sent: true, messageId: msgId };
+    } catch (httpErr) {
+      const errText = `Resend HTTP Relay Failed: ${(httpErr as Error).message}`;
+      console.error('[mail] Resend error:', errText);
+      updateEmailLog(logEntry.id, { status: 'FAILED', errorMessage: errText });
+      return { sent: false, reason: 'SEND_FAILED', error: errText };
+    }
+  }
+
+  // 2. DIRECT SMTP DELIVERY RELAY
   try {
     const isGmail = smtpHost.toLowerCase().includes('gmail');
     const cleanPassword = smtpPassword ? smtpPassword.replace(/\s+/g, '') : '';
+
+    if (isGmail && !cleanPassword) {
+      const errMsg = 'Google App Password is missing. Please type your 16-character Google App Password in Email Settings.';
+      updateEmailLog(logEntry.id, { status: 'FAILED', errorMessage: errMsg });
+      return { sent: false, reason: 'SEND_FAILED', error: errMsg };
+    }
     
     // In serverless / cloud hosts (Vercel, AWS Lambda), Port 465 direct SSL with IPv4 is required.
-    // Port 587 (STARTTLS) and IPv6 are frequently blocked or throttled by cloud providers.
     const effectivePort = isGmail && (smtpPort === 587 || !smtpPort) ? 465 : (smtpPort || 465);
     const effectiveSecure = effectivePort === 465 ? true : Boolean(smtpSecure);
 
-    const makeTransporter = (p: number, s: boolean) =>
-      nodemailer.createTransport({
-        host: isGmail ? 'smtp.gmail.com' : smtpHost,
-        port: p,
-        secure: s,
-        family: 4, // CRITICAL: Force IPv4. Prevents 30s IPv6 connection timeout on Vercel/serverless
-        connectionTimeout: 12000,
-        greetingTimeout: 12000,
-        socketTimeout: 15000,
-        auth: {
-          user: smtpUser,
-          pass: cleanPassword,
-        },
-        tls: {
-          rejectUnauthorized: false,
-          servername: isGmail ? 'smtp.gmail.com' : undefined,
-        },
-      } as any);
-
-    let transporter = makeTransporter(effectivePort, effectiveSecure);
+    const transporter = nodemailer.createTransport({
+      host: isGmail ? 'smtp.gmail.com' : smtpHost,
+      port: effectivePort,
+      secure: effectiveSecure,
+      family: 4, // CRITICAL: Force IPv4. Prevents IPv6 connection timeout on Vercel/serverless
+      connectionTimeout: 8000,
+      greetingTimeout: 8000,
+      socketTimeout: 10000,
+      auth: {
+        user: smtpUser,
+        pass: cleanPassword,
+      },
+      tls: {
+        rejectUnauthorized: false,
+        servername: isGmail ? 'smtp.gmail.com' : undefined,
+      },
+    } as any);
 
     const fromAddress =
       from ||
@@ -81,32 +165,12 @@ export async function sendMail({ to, subject, html, from, tenantId }: SendMailOp
         ? `"${fromName}" <${smtpUser}>`
         : smtpUser);
 
-    let info;
-    try {
-      info = await transporter.sendMail({
-        from: fromAddress,
-        to,
-        subject,
-        html,
-      });
-    } catch (sendErr) {
-      const msg = (sendErr as Error).message || '';
-      // If primary port failed due to timeout on Gmail, attempt alternate port with IPv4
-      if (isGmail && (msg.includes('timeout') || msg.includes('ECONNREFUSED') || msg.includes('ETIMEDOUT'))) {
-        const altPort = effectivePort === 465 ? 587 : 465;
-        const altSecure = altPort === 465;
-        console.warn(`[mail] Primary port ${effectivePort} failed (${msg}). Retrying via Gmail port ${altPort} (IPv4)...`);
-        const fallbackTransporter = makeTransporter(altPort, altSecure);
-        info = await fallbackTransporter.sendMail({
-          from: fromAddress,
-          to,
-          subject,
-          html,
-        });
-      } else {
-        throw sendErr;
-      }
-    }
+    const info = await transporter.sendMail({
+      from: fromAddress,
+      to,
+      subject,
+      html,
+    });
 
     updateEmailLog(logEntry.id, {
       status: 'SENT',
@@ -122,7 +186,7 @@ export async function sendMail({ to, subject, html, from, tenantId }: SendMailOp
     if (errorMsg.includes('535') || errorMsg.includes('Username and Password not accepted') || errorMsg.includes('BadCredentials')) {
       errorMsg = 'Gmail Authentication Failed: Please make sure you are using a 16-character Google App Password (from myaccount.google.com/apppasswords), NOT your normal Gmail password.';
     } else if (errorMsg.includes('timeout') || errorMsg.includes('ETIMEDOUT')) {
-      errorMsg = 'Connection timeout: Cloud host blocked outbound port. Please ensure Port is set to 465 and "Use SSL/TLS" is checked.';
+      errorMsg = 'Connection timeout: Vercel serverless firewall blocked outbound SMTP socket. For 100% reliability on Vercel without socket blocks, you can paste a free Brevo API Key (starts with xkeysib-) into the SMTP Password field.';
     }
 
     updateEmailLog(logEntry.id, {

@@ -24,9 +24,10 @@ export default function EmailSettingsForm({ settings }: { settings: CompanySetti
   );
   const [smtpSecure, setSmtpSecure] = useState<boolean>(initialSecure);
   const [smtpPassword, setSmtpPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
 
   const [testEmailAddress, setTestEmailAddress] = useState(
-    settings.smtpUser || settings.officialEmail || 'kanase.hrishi@gmail.com'
+    'kanase.hrishi@gmail.com'
   );
   const [testResult, setTestResult] = useState<{ ok: boolean; text: string } | null>(null);
 
@@ -37,7 +38,7 @@ export default function EmailSettingsForm({ settings }: { settings: CompanySetti
     setSmtpFromName('Lendbridge Capital Notifications');
     setSmtpSecure(true);
     setTestEmailAddress('kanase.hrishi@gmail.com');
-    setMessage('Loaded Lendbridge Capital (Satara Branch) Gmail relay preset on secure Port 465 (SSL/TLS). Please enter your 16-character Google App Password and click Save.');
+    setMessage('Loaded Lendbridge Capital (Satara Branch) Gmail relay preset on secure Port 465 (SSL/TLS). Please enter your 16-character Google App Password (or Brevo API Key) below and click Save.');
     setError(null);
   };
 
@@ -155,16 +156,29 @@ export default function EmailSettingsForm({ settings }: { settings: CompanySetti
             </div>
             <div>
               <label className="block text-sm font-semibold text-slate-800 mb-1">
-                SMTP Password / Google App Password
+                Password / API Key
               </label>
-              <input
-                type="password"
-                name="smtpPassword"
-                value={smtpPassword}
-                onChange={(e) => setSmtpPassword(e.target.value)}
-                placeholder={settings.smtpPassword ? '•••••••••••• (leave blank to keep current)' : '16-character App Password'}
-                className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 font-mono"
-              />
+              <div className="relative">
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  name="smtpPassword"
+                  value={smtpPassword}
+                  onChange={(e) => setSmtpPassword(e.target.value)}
+                  placeholder={settings.smtpPassword ? '•••••••••••• (leave blank to keep current)' : '16-char App Password or Brevo Key'}
+                  className="w-full pl-3.5 pr-10 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 font-mono"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 text-xs font-semibold"
+                  title={showPassword ? 'Hide password' : 'Show password'}
+                >
+                  {showPassword ? '🙈' : '👁️'}
+                </button>
+              </div>
+              <p className="text-[11px] text-slate-500 mt-1">
+                Enter your 16-character <strong>Google App Password</strong> OR paste a <strong>Brevo API Key</strong> (<code>xkeysib-...</code>).
+              </p>
             </div>
           </div>
 
@@ -211,27 +225,6 @@ export default function EmailSettingsForm({ settings }: { settings: CompanySetti
 
       {/* Test Email & Instructions Section */}
       <div className="space-y-4">
-        {/* Google App Password Guide */}
-        <div className="bg-amber-50 border border-amber-200 rounded-2xl p-5 shadow-xs">
-          <h4 className="text-xs font-extrabold text-amber-900 uppercase tracking-wider mb-2 flex items-center gap-1.5">
-            <span>🔑</span> Google App Password Setup
-          </h4>
-          <p className="text-xs text-amber-800 mb-3 leading-relaxed">
-            Gmail requires a 16-character <strong>App Password</strong> instead of your normal account password:
-          </p>
-          <ol className="text-xs text-amber-900 space-y-1.5 list-decimal pl-4 leading-relaxed font-medium">
-            <li>
-              Enable <strong>2-Step Verification</strong> on <a href="https://myaccount.google.com/security" target="_blank" rel="noreferrer" className="underline font-bold text-amber-950">myaccount.google.com</a>.
-            </li>
-            <li>
-              Open <a href="https://myaccount.google.com/apppasswords" target="_blank" rel="noreferrer" className="underline font-bold text-amber-950">myaccount.google.com/apppasswords</a>.
-            </li>
-            <li>Enter App name (e.g. <code>Lendbridge</code>) and click <strong>Create</strong>.</li>
-            <li>Copy the generated 16-character key (e.g. <code>abcd efgh ijkl mnop</code>).</li>
-            <li>Paste it directly into the <strong>SMTP Password</strong> field on the left.</li>
-          </ol>
-        </div>
-
         {/* Send Test Email Card */}
         <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm space-y-3">
           <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wider">Test Delivery Relay</h3>
@@ -246,7 +239,7 @@ export default function EmailSettingsForm({ settings }: { settings: CompanySetti
                 type="email"
                 value={testEmailAddress}
                 onChange={(e) => setTestEmailAddress(e.target.value)}
-                placeholder="lendbridgecapital@gmail.com"
+                placeholder="kanase.hrishi@gmail.com"
                 className="w-full px-3 py-2 text-xs border border-slate-200 rounded-xl font-mono focus:ring-2 focus:ring-emerald-500 focus:outline-none"
               />
             </div>
@@ -272,7 +265,7 @@ export default function EmailSettingsForm({ settings }: { settings: CompanySetti
 
             {testResult && (
               <div
-                className={`p-3 rounded-xl text-xs font-medium ${
+                className={`p-3 rounded-xl text-xs font-medium leading-relaxed ${
                   testResult.ok
                     ? 'bg-emerald-50 text-emerald-800 border border-emerald-200'
                     : 'bg-rose-50 text-rose-800 border border-rose-200'
@@ -282,6 +275,43 @@ export default function EmailSettingsForm({ settings }: { settings: CompanySetti
               </div>
             )}
           </div>
+        </div>
+
+        {/* Option A: Google App Password Setup */}
+        <div className="bg-amber-50 border border-amber-200 rounded-2xl p-5 shadow-xs">
+          <h4 className="text-xs font-extrabold text-amber-900 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+            <span>🔑</span> Method A: Google App Password
+          </h4>
+          <p className="text-xs text-amber-800 mb-2 leading-relaxed">
+            If using Gmail SMTP directly, you <strong>must</strong> use a 16-character App Password (not your Gmail login password):
+          </p>
+          <ol className="text-xs text-amber-900 space-y-1.5 list-decimal pl-4 leading-relaxed font-medium">
+            <li>
+              Enable <strong>2-Step Verification</strong> on <a href="https://myaccount.google.com/security" target="_blank" rel="noreferrer" className="underline font-bold text-amber-950">myaccount.google.com</a>.
+            </li>
+            <li>
+              Open <a href="https://myaccount.google.com/apppasswords" target="_blank" rel="noreferrer" className="underline font-bold text-amber-950">myaccount.google.com/apppasswords</a>.
+            </li>
+            <li>Enter App name <code>Lendbridge</code> and click <strong>Create</strong>.</li>
+            <li>Copy the 16-character key (e.g. <code>abcd efgh ijkl mnop</code>).</li>
+            <li>Paste into <strong>Password</strong> field and click <strong>Save</strong>.</li>
+          </ol>
+        </div>
+
+        {/* Option B: Free Brevo HTTP Relay (Vercel-proof) */}
+        <div className="bg-blue-50 border border-blue-200 rounded-2xl p-5 shadow-xs">
+          <h4 className="text-xs font-extrabold text-blue-900 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+            <span>⚡</span> Method B: Brevo Free HTTP Relay (Guaranteed 100% on Vercel)
+          </h4>
+          <p className="text-xs text-blue-800 mb-2 leading-relaxed">
+            If Vercel blocks socket connections to Gmail, use Brevo's HTTPS REST API (300 free emails/day forever).
+          </p>
+          <ol className="text-xs text-blue-900 space-y-1.5 list-decimal pl-4 leading-relaxed font-medium">
+            <li>Sign up free at <a href="https://www.brevo.com" target="_blank" rel="noreferrer" className="underline font-bold text-blue-950">brevo.com</a>.</li>
+            <li>Go to <strong>SMTP & API → API Keys</strong> and create a free key.</li>
+            <li>Paste the API key (starts with <code>xkeysib-</code>) into the <strong>Password</strong> field.</li>
+            <li>Click <strong>Save</strong> and test — delivers over HTTPS in 0.3s without timeouts!</li>
+          </ol>
         </div>
       </div>
     </div>
