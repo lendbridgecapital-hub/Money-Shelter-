@@ -208,26 +208,34 @@ export default function EmailSettingsForm({ settings }: { settings: CompanySetti
                     <span>⚠️</span>
                     <span>Brevo SMTP Key Detected (xsmtpsib-...)</span>
                   </div>
-                  <p className="leading-relaxed">
-                    You entered a Brevo <strong>SMTP Key</strong>. If Host is currently set to <code>{smtpHost}</code>, Google will reject it.
-                  </p>
+                  {smtpHost.toLowerCase().includes('gmail') ? (
+                    <p className="leading-relaxed">
+                      You entered a Brevo SMTP key, but your Host is set to <strong>Google ({smtpHost})</strong>. Google will reject this key.
+                    </p>
+                  ) : (
+                    <p className="leading-relaxed text-emerald-800 font-medium">
+                      ✓ Host is correctly set to <strong>{smtpHost}:{smtpPort}</strong> for Brevo SMTP.
+                    </p>
+                  )}
                   <div className="flex flex-wrap items-center gap-2 pt-1">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setSmtpHost('smtp-relay.brevo.com');
-                        setSmtpPort(587);
-                        setSmtpSecure(false);
-                      }}
-                      className="px-2.5 py-1 bg-amber-600 hover:bg-amber-700 text-white font-bold rounded-lg text-[11px] shadow-xs transition active:scale-95 cursor-pointer"
-                    >
-                      ⚡ Auto-Fix Host to smtp-relay.brevo.com:587
-                    </button>
+                    {smtpHost.toLowerCase().includes('gmail') && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setSmtpHost('smtp-relay.brevo.com');
+                          setSmtpPort(587);
+                          setSmtpSecure(false);
+                        }}
+                        className="px-2.5 py-1 bg-amber-600 hover:bg-amber-700 text-white font-bold rounded-lg text-[11px] shadow-xs transition active:scale-95 cursor-pointer"
+                      >
+                        ⚡ Auto-Fix Host to smtp-relay.brevo.com:587
+                      </button>
+                    )}
                     <a
                       href="https://app.brevo.com/settings/keys/api"
                       target="_blank"
                       rel="noreferrer"
-                      className="px-2.5 py-1 bg-white hover:bg-amber-100 text-amber-900 border border-amber-300 font-bold rounded-lg text-[11px] transition inline-flex items-center gap-1"
+                      className="px-2.5 py-1 bg-white hover:bg-amber-100 text-amber-900 border border-amber-300 font-bold rounded-lg text-[11px] transition inline-flex items-center gap-1 font-semibold"
                     >
                       <span>Get API Key (xkeysib-) instead ↗</span>
                     </a>
