@@ -11,29 +11,33 @@ export default function EmailSettingsForm({ settings }: { settings: CompanySetti
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  // Controlled form states
-  const [smtpHost, setSmtpHost] = useState(settings.smtpHost || '');
-  const [smtpPort, setSmtpPort] = useState<number | string>(settings.smtpPort || 587);
-  const [smtpUser, setSmtpUser] = useState(settings.smtpUser || '');
+  // Controlled form states: default to Port 465 SSL for Gmail in cloud environments
+  const isHostGmail = (settings.smtpHost || '').toLowerCase().includes('gmail') || !settings.smtpHost;
+  const initialPort = settings.smtpPort && settings.smtpPort !== 587 ? settings.smtpPort : 465;
+  const initialSecure = isHostGmail ? true : Boolean(settings.smtpSecure);
+
+  const [smtpHost, setSmtpHost] = useState(settings.smtpHost || 'smtp.gmail.com');
+  const [smtpPort, setSmtpPort] = useState<number | string>(initialPort);
+  const [smtpUser, setSmtpUser] = useState(settings.smtpUser || 'lendbridgecapital@gmail.com');
   const [smtpFromName, setSmtpFromName] = useState(
     settings.smtpFromName || 'Lendbridge Capital Notifications'
   );
-  const [smtpSecure, setSmtpSecure] = useState<boolean>(Boolean(settings.smtpSecure));
+  const [smtpSecure, setSmtpSecure] = useState<boolean>(initialSecure);
   const [smtpPassword, setSmtpPassword] = useState('');
 
   const [testEmailAddress, setTestEmailAddress] = useState(
-    settings.smtpUser || settings.officialEmail || 'lendbridgecapital@gmail.com'
+    settings.smtpUser || settings.officialEmail || 'kanase.hrishi@gmail.com'
   );
   const [testResult, setTestResult] = useState<{ ok: boolean; text: string } | null>(null);
 
   const handleApplySataraPreset = () => {
     setSmtpHost('smtp.gmail.com');
-    setSmtpPort(587);
+    setSmtpPort(465);
     setSmtpUser('lendbridgecapital@gmail.com');
     setSmtpFromName('Lendbridge Capital Notifications');
-    setSmtpSecure(false);
-    setTestEmailAddress('lendbridgecapital@gmail.com');
-    setMessage('Loaded Lendbridge Capital (Satara Branch) Gmail relay preset. Please enter your 16-character Google App Password and click Save.');
+    setSmtpSecure(true);
+    setTestEmailAddress('kanase.hrishi@gmail.com');
+    setMessage('Loaded Lendbridge Capital (Satara Branch) Gmail relay preset on secure Port 465 (SSL/TLS). Please enter your 16-character Google App Password and click Save.');
     setError(null);
   };
 
@@ -128,9 +132,12 @@ export default function EmailSettingsForm({ settings }: { settings: CompanySetti
                 name="smtpPort"
                 value={smtpPort}
                 onChange={(e) => setSmtpPort(e.target.value)}
-                placeholder="587"
+                placeholder="465"
                 className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
               />
+              <p className="text-[11px] text-slate-500 mt-1">
+                Use <strong>465</strong> for Gmail SMTPS (recommended for Vercel).
+              </p>
             </div>
           </div>
 
@@ -186,7 +193,7 @@ export default function EmailSettingsForm({ settings }: { settings: CompanySetti
               className="rounded border-slate-300 text-emerald-600 focus:ring-emerald-500"
             />
             <label htmlFor="smtpSecure" className="text-sm font-medium text-slate-700 cursor-pointer">
-              Use SSL/TLS (leave <strong>UNCHECKED</strong> for Port 587 STARTTLS; check only if using Port 465)
+              Use SSL/TLS (<strong>REQUIRED</strong> for Port 465 on Gmail and Vercel cloud hosting)
             </label>
           </div>
 

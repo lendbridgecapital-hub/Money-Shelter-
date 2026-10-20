@@ -48,27 +48,32 @@ export async function sendMail({ to, subject, html, from, tenantId }: SendMailOp
   try {
     const isGmail = smtpHost.toLowerCase().includes('gmail');
     const cleanPassword = smtpPassword ? smtpPassword.replace(/\s+/g, '') : '';
-    const effectiveSecure = smtpPort === 465 ? true : smtpPort === 587 ? false : Boolean(smtpSecure);
+    
+    // In serverless / cloud hosts (Vercel, AWS Lambda), Port 465 direct SSL with IPv4 is required.
+    // Port 587 (STARTTLS) and IPv6 are frequently blocked or throttled by cloud providers.
+    const effectivePort = isGmail && (smtpPort === 587 || !smtpPort) ? 465 : (smtpPort || 465);
+    const effectiveSecure = effectivePort === 465 ? true : Boolean(smtpSecure);
 
-    const transporter = nodemailer.createTransport(
-      isGmail
-        ? {
-            service: 'gmail',
-            auth: {
-              user: smtpUser,
-              pass: cleanPassword,
-            },
-          }
-        : {
-            host: smtpHost,
-            port: smtpPort,
-            secure: effectiveSecure,
-            auth: {
-              user: smtpUser,
-              pass: cleanPassword,
-            },
-          }
-    );
+    const makeTransporter = (p: number, s: boolean) =>
+      nodemailer.createTransport({
+        host: isGmail ? 'smtp.gmail.com' : smtpHost,
+        port: p,
+        secure: s,
+        family: 4, // CRITICAL: Force IPv4. Prevents 30s IPv6 connection timeout on Vercel/serverless
+        connectionTimeout: 12000,
+        greetingTimeout: 12000,
+        socketTimeout: 15000,
+        auth: {
+          user: smtpUser,
+          pass: cleanPassword,
+        },
+        tls: {
+          rejectUnauthorized: false,
+          servername: isGmail ? 'smtp.gmail.com' : undefined,
+        },
+      } as any);
+
+    let transporter = makeTransporter(effectivePort, effectiveSecure);
 
     const fromAddress =
       from ||
@@ -76,12 +81,32 @@ export async function sendMail({ to, subject, html, from, tenantId }: SendMailOp
         ? `"${fromName}" <${smtpUser}>`
         : smtpUser);
 
-    const info = await transporter.sendMail({
-      from: fromAddress,
-      to,
-      subject,
-      html,
-    });
+    let info;
+    try {
+      info = await transporter.sendMail({
+        from: fromAddress,
+        to,
+        subject,
+        html,
+      });
+    } catch (sendErr) {
+      const msg = (sendErr as Error).message || '';
+      // If primary port failed due to timeout on Gmail, attempt alternate port with IPv4
+      if (isGmail && (msg.includes('timeout') || msg.includes('ECONNREFUSED') || msg.includes('ETIMEDOUT'))) {
+        const altPort = effectivePort === 465 ? 587 : 465;
+        const altSecure = altPort === 465;
+        console.warn(`[mail] Primary port ${effectivePort} failed (${msg}). Retrying via Gmail port ${altPort} (IPv4)...`);
+        const fallbackTransporter = makeTransporter(altPort, altSecure);
+        info = await fallbackTransporter.sendMail({
+          from: fromAddress,
+          to,
+          subject,
+          html,
+        });
+      } else {
+        throw sendErr;
+      }
+    }
 
     updateEmailLog(logEntry.id, {
       status: 'SENT',
@@ -91,8 +116,14 @@ export async function sendMail({ to, subject, html, from, tenantId }: SendMailOp
     console.log(`[mail] Email dispatched successfully to ${to}. MessageId: ${info.messageId}`);
     return { sent: true, messageId: info.messageId };
   } catch (err) {
-    const errorMsg = (err as Error).message;
+    let errorMsg = (err as Error).message || 'Failed to send email';
     console.error('[mail] Failed to send email via SMTP:', errorMsg);
+
+    if (errorMsg.includes('535') || errorMsg.includes('Username and Password not accepted') || errorMsg.includes('BadCredentials')) {
+      errorMsg = 'Gmail Authentication Failed: Please make sure you are using a 16-character Google App Password (from myaccount.google.com/apppasswords), NOT your normal Gmail password.';
+    } else if (errorMsg.includes('timeout') || errorMsg.includes('ETIMEDOUT')) {
+      errorMsg = 'Connection timeout: Cloud host blocked outbound port. Please ensure Port is set to 465 and "Use SSL/TLS" is checked.';
+    }
 
     updateEmailLog(logEntry.id, {
       status: 'FAILED',
