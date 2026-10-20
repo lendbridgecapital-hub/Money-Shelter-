@@ -7,15 +7,13 @@ import type { Role, User } from '@/types/db';
 import initialSeedData from '../../data/initial-data.json';
 import { db } from '@/lib/db';
 
-if (!process.env.NEXTAUTH_URL) {
-  if (process.env.NEXT_PUBLIC_SITE_URL) {
+if (!process.env.NEXTAUTH_URL || process.env.NEXTAUTH_URL.includes('onrender.com') || process.env.NEXTAUTH_URL.includes('render.com')) {
+  if (process.env.NEXT_PUBLIC_SITE_URL && !process.env.NEXT_PUBLIC_SITE_URL.includes('onrender.com')) {
     process.env.NEXTAUTH_URL = process.env.NEXT_PUBLIC_SITE_URL;
   } else if (process.env.VERCEL_PROJECT_PRODUCTION_URL) {
     process.env.NEXTAUTH_URL = `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`;
   } else if (process.env.VERCEL_URL) {
     process.env.NEXTAUTH_URL = `https://${process.env.VERCEL_URL}`;
-  } else if (process.env.RENDER_EXTERNAL_URL) {
-    process.env.NEXTAUTH_URL = process.env.RENDER_EXTERNAL_URL;
   } else if (process.env.NODE_ENV === 'production') {
     process.env.NEXTAUTH_URL = 'https://money-shelter.vercel.app';
   } else {

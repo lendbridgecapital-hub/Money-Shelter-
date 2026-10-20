@@ -36,9 +36,11 @@ export default function CaseMatchEligibilityBanner({ application, isOpsOrAdmin }
   }
 
   const bestBank = savedOffer?.bankOffers?.[0];
-  const publicShareUrl = typeof window !== 'undefined'
-    ? `${window.location.origin}/offer/eligibility/${application.token}`
-    : `https://money-shelter.vercel.app/offer/eligibility/${application.token}`;
+  const rawOrigin = typeof window !== 'undefined' ? window.location.origin : '';
+  const origin = !rawOrigin || rawOrigin.includes('localhost') || rawOrigin.includes('onrender.com') || rawOrigin.includes('render.com')
+    ? 'https://money-shelter.vercel.app'
+    : rawOrigin;
+  const publicShareUrl = `${origin}/offer/eligibility/${application.token}`;
   const whatsAppUrl = savedOffer ? generateWhatsAppShareUrl(savedOffer, publicShareUrl) : '';
 
   return (

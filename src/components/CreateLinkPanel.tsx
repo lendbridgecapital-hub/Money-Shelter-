@@ -42,12 +42,18 @@ export default function CreateLinkPanel({
         if (!res || !res.ok) {
           setError((res && res.error) || 'Could not generate application link. Your session may have expired. Please refresh or log in.');
         } else if (res.url) {
-          // Resolve public origin: never generate localhost or capacitor:// links for clients
-          const rawOrigin = typeof window !== 'undefined' ? window.location.origin : '';
-          const isLocal = !rawOrigin || rawOrigin.includes('localhost') || rawOrigin.startsWith('capacitor:');
+          // Resolve public origin: always prioritize production Vercel domain; never use onrender.com, localhost, or capacitor
           const productionHost = 'https://money-shelter.vercel.app';
-          const publicBase = isLocal ? productionHost : rawOrigin;
-          const finalUrl = res.token ? `${publicBase}/apply/${res.token}` : res.url;
+          const rawOrigin = typeof window !== 'undefined' ? window.location.origin : '';
+          const isInvalidOrigin =
+            !rawOrigin ||
+            rawOrigin.includes('localhost') ||
+            rawOrigin.startsWith('capacitor:') ||
+            rawOrigin.includes('onrender.com') ||
+            rawOrigin.includes('render.com');
+          const publicBase = isInvalidOrigin ? productionHost : rawOrigin;
+          const cleanServerUrl = (res.url || '').replace(/https?:\/\/[^/]*onrender\.com/gi, productionHost);
+          const finalUrl = res.token ? `${publicBase}/apply/${res.token}` : cleanServerUrl;
           setGeneratedUrl(finalUrl);
           setToken(res.token || null);
         }

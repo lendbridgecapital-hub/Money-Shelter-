@@ -35,7 +35,13 @@ function getPublicAppBaseUrl(): string {
     (process.env.NEXTAUTH_URL && !process.env.NEXTAUTH_URL.includes('localhost') ? process.env.NEXTAUTH_URL : null) ||
     'https://money-shelter.vercel.app';
   let clean = raw.trim().replace(/\/$/, '');
-  if (clean.includes('money-shelter.onrender.com') || (process.env.NODE_ENV === 'production' && clean.includes('localhost'))) {
+  if (
+    clean.includes('onrender.com') ||
+    clean.includes('render.com') ||
+    clean.includes('render') ||
+    (process.env.NODE_ENV === 'production' && clean.includes('localhost')) ||
+    !clean.startsWith('http')
+  ) {
     clean = 'https://money-shelter.vercel.app';
   }
   return clean;

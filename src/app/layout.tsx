@@ -49,6 +49,11 @@ export default async function RootLayout({
         <meta name="mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
         <link rel="manifest" href="/manifest.json" />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `if(typeof window!=='undefined'&&(window.location.hostname.includes('onrender.com')||window.location.hostname.includes('render.com'))){window.location.replace('https://money-shelter.vercel.app'+window.location.pathname+window.location.search);}`,
+          }}
+        />
         <style dangerouslySetInnerHTML={{ __html: dynamicThemeCss }} />
       </head>
       <body className="min-h-screen bg-slate-50 text-slate-900 antialiased">

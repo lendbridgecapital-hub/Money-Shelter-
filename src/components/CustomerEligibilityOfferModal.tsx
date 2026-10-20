@@ -44,9 +44,11 @@ export default function CustomerEligibilityOfferModal({
 
   if (!isOpen) return null;
 
-  const publicShareUrl = typeof window !== 'undefined'
-    ? `${window.location.origin}/offer/eligibility/${applicationToken || initialData.applicationToken || 'sample'}`
-    : `https://money-shelter.vercel.app/offer/eligibility/${applicationToken || initialData.applicationToken || 'sample'}`;
+  const rawOrigin = typeof window !== 'undefined' ? window.location.origin : '';
+  const origin = !rawOrigin || rawOrigin.includes('localhost') || rawOrigin.includes('onrender.com') || rawOrigin.includes('render.com')
+    ? 'https://money-shelter.vercel.app'
+    : rawOrigin;
+  const publicShareUrl = `${origin}/offer/eligibility/${applicationToken || initialData.applicationToken || 'sample'}`;
 
   const handlePrint = () => {
     if (typeof window !== 'undefined') {

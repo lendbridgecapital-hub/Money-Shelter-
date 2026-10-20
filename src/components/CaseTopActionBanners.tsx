@@ -59,9 +59,13 @@ export default function CaseTopActionBanners({
     typeof window !== 'undefined' && window.location.origin
       ? window.location.origin
       : baseUrl || '';
-  const isLocal =
-    !rawOrigin || rawOrigin.includes('localhost') || rawOrigin.startsWith('capacitor:');
-  const origin = isLocal ? (baseUrl || 'https://money-shelter.vercel.app') : rawOrigin;
+  const isInvalid =
+    !rawOrigin ||
+    rawOrigin.includes('localhost') ||
+    rawOrigin.startsWith('capacitor:') ||
+    rawOrigin.includes('onrender.com') ||
+    rawOrigin.includes('render.com');
+  const origin = isInvalid ? 'https://money-shelter.vercel.app' : rawOrigin;
   const offerUrl = `${origin}/offer/${application.token}`;
 
   function copyToClipboard(url: string, type: 'offer') {

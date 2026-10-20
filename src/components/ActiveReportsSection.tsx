@@ -40,7 +40,10 @@ export default function ActiveReportsSection({
   const [copiedRmLink, setCopiedRmLink] = useState(false);
 
   const getRmOnboardUrl = (id?: string) => {
-    const origin = typeof window !== 'undefined' ? window.location.origin : '';
+    const rawOrigin = typeof window !== 'undefined' ? window.location.origin : '';
+    const origin = !rawOrigin || rawOrigin.includes('localhost') || rawOrigin.includes('onrender.com') || rawOrigin.includes('render.com')
+      ? 'https://money-shelter.vercel.app'
+      : rawOrigin;
     return id ? `${origin}/partner/onboard?rmId=${id}` : `${origin}/partner/onboard`;
   };
 

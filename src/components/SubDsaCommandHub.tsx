@@ -31,7 +31,10 @@ export default function SubDsaCommandHub({ user }: Props) {
     user.email?.toLowerCase().includes('lendbridge')
   );
 
-  const origin = typeof window !== 'undefined' ? window.location.origin : '';
+  const rawOrigin = typeof window !== 'undefined' ? window.location.origin : '';
+  const origin = !rawOrigin || rawOrigin.includes('localhost') || rawOrigin.includes('onrender.com') || rawOrigin.includes('render.com')
+    ? 'https://money-shelter.vercel.app'
+    : rawOrigin;
   const agentReferralLink = isSatara
     ? `${origin}/lendbridge/onboard?subDsaId=${user.id}&code=${user.partnerCode || ''}`
     : `${origin}/partner/onboard?subDsaId=${user.id}&code=${user.partnerCode || ''}`;

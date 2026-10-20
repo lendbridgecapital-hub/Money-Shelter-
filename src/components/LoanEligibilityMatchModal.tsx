@@ -600,7 +600,7 @@ export default function LoanEligibilityMatchModal({
                     <a
                       href={generateWhatsAppShareUrl(
                         offerData,
-                        typeof window !== 'undefined'
+                        typeof window !== 'undefined' && !window.location.origin.includes('onrender.com') && !window.location.origin.includes('localhost')
                           ? `${window.location.origin}/offer/eligibility/${application.token}`
                           : `https://money-shelter.vercel.app/offer/eligibility/${application.token}`
                       )}

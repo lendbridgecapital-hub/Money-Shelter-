@@ -375,7 +375,11 @@ export default function BranchManager({
                                 <button
                                   type="button"
                                   onClick={() => {
-                                    const url = `${window.location.origin}/login/${b.code.toLowerCase()}`;
+                                    const rawOrigin = typeof window !== 'undefined' ? window.location.origin : '';
+                                    const origin = !rawOrigin || rawOrigin.includes('localhost') || rawOrigin.includes('onrender.com') || rawOrigin.includes('render.com')
+                                      ? 'https://money-shelter.vercel.app'
+                                      : rawOrigin;
+                                    const url = `${origin}/login/${b.code.toLowerCase()}`;
                                     navigator.clipboard.writeText(url);
                                     alert(`Copied co-branded login URL:\n${url}`);
                                   }}
