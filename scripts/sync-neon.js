@@ -945,6 +945,8 @@ function safeDeepUnionMerge(primary, secondary) {
 
   // All entity collections identified by 'id'
   const collections = [
+    'company_settings',
+    'tenants',
     'loan_applications',
     'branches',
     'application_documents',

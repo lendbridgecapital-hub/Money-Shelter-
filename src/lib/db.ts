@@ -546,6 +546,8 @@ function createPortableStorage(storageFilePath: string): DatabaseAdapter {
     }
 
     const collections = [
+      'company_settings',
+      'tenants',
       'loan_applications',
       'branches',
       'application_documents',

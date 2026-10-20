@@ -11,19 +11,19 @@ export default function EmailSettingsForm({ settings }: { settings: CompanySetti
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  // Controlled form states: default to Port 465 SSL for Gmail in cloud environments
-  const isHostGmail = (settings.smtpHost || '').toLowerCase().includes('gmail') || !settings.smtpHost;
-  const initialPort = settings.smtpPort && settings.smtpPort !== 587 ? settings.smtpPort : 465;
-  const initialSecure = isHostGmail ? true : Boolean(settings.smtpSecure);
+  // Controlled form states: faithfully restore saved settings from database
+  const isHostGmail = (settings.smtpHost || '').toLowerCase().includes('gmail');
+  const initialPort = settings.smtpPort ? settings.smtpPort : (isHostGmail ? 465 : 587);
+  const initialSecure = typeof settings.smtpSecure === 'boolean' ? settings.smtpSecure : (isHostGmail ? true : false);
 
-  const [smtpHost, setSmtpHost] = useState(settings.smtpHost || 'smtp.gmail.com');
+  const [smtpHost, setSmtpHost] = useState(settings.smtpHost || (isHostGmail ? 'smtp.gmail.com' : 'smtp-relay.brevo.com'));
   const [smtpPort, setSmtpPort] = useState<number | string>(initialPort);
   const [smtpUser, setSmtpUser] = useState(settings.smtpUser || 'lendbridgecapital@gmail.com');
   const [smtpFromName, setSmtpFromName] = useState(
     settings.smtpFromName || 'Lendbridge Capital Notifications'
   );
   const [smtpSecure, setSmtpSecure] = useState<boolean>(initialSecure);
-  const [smtpPassword, setSmtpPassword] = useState('');
+  const [smtpPassword, setSmtpPassword] = useState(settings.smtpPassword || '');
   const [showPassword, setShowPassword] = useState(false);
 
   const [testEmailAddress, setTestEmailAddress] = useState(
