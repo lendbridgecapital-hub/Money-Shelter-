@@ -42,6 +42,17 @@ export default function EmailSettingsForm({ settings }: { settings: CompanySetti
     setError(null);
   };
 
+  const handleApplyBrevoPreset = () => {
+    setSmtpHost('smtp-relay.brevo.com');
+    setSmtpPort(587);
+    setSmtpUser('lendbridgecapital@gmail.com');
+    setSmtpFromName('Lendbridge Capital Notifications');
+    setSmtpSecure(false);
+    setTestEmailAddress('kanase.hrishi@gmail.com');
+    setMessage('Loaded Brevo SMTP Relay preset (smtp-relay.brevo.com:587). Paste your Brevo SMTP key (xsmtpsib-) or API key (xkeysib-) below and click Save.');
+    setError(null);
+  };
+
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setMessage(null);
@@ -92,14 +103,24 @@ export default function EmailSettingsForm({ settings }: { settings: CompanySetti
               Deliver customer loan confirmations and internal Satara alerts using <strong className="text-white">lendbridgecapital@gmail.com</strong>.
             </p>
           </div>
-          <button
-            type="button"
-            onClick={handleApplySataraPreset}
-            className="shrink-0 px-4 py-2 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs rounded-xl shadow-md transition active:scale-95 flex items-center gap-1.5 cursor-pointer"
-          >
-            <span>⚡</span>
-            <span>Load Satara Gmail Preset</span>
-          </button>
+          <div className="flex flex-wrap sm:flex-col gap-2 shrink-0">
+            <button
+              type="button"
+              onClick={handleApplySataraPreset}
+              className="px-3.5 py-1.5 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs rounded-xl shadow-md transition active:scale-95 flex items-center justify-center gap-1.5 cursor-pointer"
+            >
+              <span>⚡</span>
+              <span>Load Satara Gmail (Port 465)</span>
+            </button>
+            <button
+              type="button"
+              onClick={handleApplyBrevoPreset}
+              className="px-3.5 py-1.5 bg-sky-500 hover:bg-sky-400 text-slate-950 font-bold text-xs rounded-xl shadow-md transition active:scale-95 flex items-center justify-center gap-1.5 cursor-pointer"
+            >
+              <span>⚡</span>
+              <span>Load Brevo Relay (Port 587)</span>
+            </button>
+          </div>
         </div>
 
         <form onSubmit={handleSubmit} className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm space-y-6">
@@ -179,6 +200,60 @@ export default function EmailSettingsForm({ settings }: { settings: CompanySetti
               <p className="text-[11px] text-slate-500 mt-1">
                 Enter your 16-character <strong>Google App Password</strong> OR paste a <strong>Brevo API Key</strong> (<code>xkeysib-...</code>).
               </p>
+
+              {/* Real-time key type detection and guided fix */}
+              {smtpPassword.trim().startsWith('xsmtpsib-') && (
+                <div className="mt-2.5 p-3 rounded-xl bg-amber-50 border border-amber-200 text-xs text-amber-900 space-y-2">
+                  <div className="flex items-center gap-1.5 font-bold text-amber-950">
+                    <span>⚠️</span>
+                    <span>Brevo SMTP Key Detected (xsmtpsib-...)</span>
+                  </div>
+                  <p className="leading-relaxed">
+                    You entered a Brevo <strong>SMTP Key</strong>. If Host is currently set to <code>{smtpHost}</code>, Google will reject it.
+                  </p>
+                  <div className="flex flex-wrap items-center gap-2 pt-1">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSmtpHost('smtp-relay.brevo.com');
+                        setSmtpPort(587);
+                        setSmtpSecure(false);
+                      }}
+                      className="px-2.5 py-1 bg-amber-600 hover:bg-amber-700 text-white font-bold rounded-lg text-[11px] shadow-xs transition active:scale-95 cursor-pointer"
+                    >
+                      ⚡ Auto-Fix Host to smtp-relay.brevo.com:587
+                    </button>
+                    <a
+                      href="https://app.brevo.com/settings/keys/api"
+                      target="_blank"
+                      rel="noreferrer"
+                      className="px-2.5 py-1 bg-white hover:bg-amber-100 text-amber-900 border border-amber-300 font-bold rounded-lg text-[11px] transition inline-flex items-center gap-1"
+                    >
+                      <span>Get API Key (xkeysib-) instead ↗</span>
+                    </a>
+                  </div>
+                </div>
+              )}
+
+              {smtpPassword.trim().startsWith('xkeysib-') && (
+                <div className="mt-2.5 p-2.5 rounded-xl bg-emerald-50 border border-emerald-200 text-xs text-emerald-800 flex items-start gap-1.5 font-medium">
+                  <span className="text-emerald-600 font-bold">✓</span>
+                  <div>
+                    <strong className="text-emerald-900">Brevo HTTPS REST API Key Active</strong>
+                    <div className="text-[11px] text-emerald-700">Delivers over HTTPS (Port 443) in ~0.3s — 100% immune to Vercel socket firewall blocks.</div>
+                  </div>
+                </div>
+              )}
+
+              {smtpHost.toLowerCase().includes('gmail') &&
+                smtpPassword.trim().length === 16 &&
+                !smtpPassword.trim().includes(' ') &&
+                !smtpPassword.trim().startsWith('x') && (
+                  <div className="mt-2.5 p-2.5 rounded-xl bg-emerald-50 border border-emerald-200 text-xs text-emerald-800 flex items-center gap-1.5 font-medium">
+                    <span className="text-emerald-600 font-bold">✓</span>
+                    <span>Google 16-character App Password format verified.</span>
+                  </div>
+                )}
             </div>
           </div>
 
@@ -298,20 +373,37 @@ export default function EmailSettingsForm({ settings }: { settings: CompanySetti
           </ol>
         </div>
 
-        {/* Option B: Free Brevo HTTP Relay (Vercel-proof) */}
-        <div className="bg-blue-50 border border-blue-200 rounded-2xl p-5 shadow-xs">
-          <h4 className="text-xs font-extrabold text-blue-900 uppercase tracking-wider mb-2 flex items-center gap-1.5">
-            <span>⚡</span> Method B: Brevo Free HTTP Relay (Guaranteed 100% on Vercel)
+        {/* Option B: Free Brevo Relay (Vercel-proof) */}
+        <div className="bg-sky-50 border border-sky-200 rounded-2xl p-5 shadow-xs space-y-3">
+          <h4 className="text-xs font-extrabold text-sky-950 uppercase tracking-wider flex items-center gap-1.5">
+            <span>⚡</span> Method B: Free Brevo Relay (300 emails/day)
           </h4>
-          <p className="text-xs text-blue-800 mb-2 leading-relaxed">
-            If Vercel blocks socket connections to Gmail, use Brevo's HTTPS REST API (300 free emails/day forever).
+          <p className="text-xs text-sky-800 leading-relaxed">
+            Brevo provides two different keys under <strong>SMTP & API</strong>. Choose either one below:
           </p>
-          <ol className="text-xs text-blue-900 space-y-1.5 list-decimal pl-4 leading-relaxed font-medium">
-            <li>Sign up free at <a href="https://www.brevo.com" target="_blank" rel="noreferrer" className="underline font-bold text-blue-950">brevo.com</a>.</li>
-            <li>Go to <strong>SMTP & API → API Keys</strong> and create a free key.</li>
-            <li>Paste the API key (starts with <code>xkeysib-</code>) into the <strong>Password</strong> field.</li>
-            <li>Click <strong>Save</strong> and test — delivers over HTTPS in 0.3s without timeouts!</li>
-          </ol>
+
+          <div className="bg-white/80 border border-sky-200/80 rounded-xl p-3 space-y-1.5 text-xs text-slate-800">
+            <div className="font-bold text-sky-900 flex items-center gap-1">
+              <span>🌟</span>
+              <span>1. REST API Key (xkeysib-...) [RECOMMENDED for Vercel]</span>
+            </div>
+            <p className="text-[11px] text-slate-600 leading-relaxed">
+              Open <a href="https://app.brevo.com/settings/keys/api" target="_blank" rel="noreferrer" className="underline font-bold text-sky-700">app.brevo.com/settings/keys/api</a> → click the <strong>"API Keys"</strong> tab → click <strong>"Generate a new API key"</strong>.
+            </p>
+            <p className="text-[11px] text-slate-600">
+              Paste the key (starts with <code>xkeysib-</code>) into Password. Delivers over HTTPS Port 443 with <strong>zero socket blocks or timeouts</strong>!
+            </p>
+          </div>
+
+          <div className="bg-white/80 border border-sky-200/80 rounded-xl p-3 space-y-1.5 text-xs text-slate-800">
+            <div className="font-bold text-slate-900 flex items-center gap-1">
+              <span>🔌</span>
+              <span>2. SMTP Relay Key (xsmtpsib-...)</span>
+            </div>
+            <p className="text-[11px] text-slate-600 leading-relaxed">
+              If copying from the <strong>"SMTP"</strong> tab, you MUST click <strong>"Load Brevo Relay (Port 587)"</strong> above so the host is <code>smtp-relay.brevo.com</code> (not Gmail).
+            </p>
+          </div>
         </div>
       </div>
     </div>

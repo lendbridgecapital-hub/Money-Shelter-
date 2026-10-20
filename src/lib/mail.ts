@@ -128,34 +128,55 @@ export async function sendMail({ to, subject, html, from, tenantId }: SendMailOp
 
   // 2. DIRECT SMTP DELIVERY RELAY
   try {
-    const isGmail = smtpHost.toLowerCase().includes('gmail');
     const cleanPassword = smtpPassword ? smtpPassword.replace(/\s+/g, '') : '';
+    const isBrevoSmtpKey = cleanPassword.startsWith('xsmtpsib-');
+    const isGmailHost = smtpHost.toLowerCase().includes('gmail');
 
-    if (isGmail && !cleanPassword) {
+    if (isGmailHost && !isBrevoSmtpKey && !cleanPassword) {
       const errMsg = 'Google App Password is missing. Please type your 16-character Google App Password in Email Settings.';
       updateEmailLog(logEntry.id, { status: 'FAILED', errorMessage: errMsg });
       return { sent: false, reason: 'SEND_FAILED', error: errMsg };
     }
-    
-    // In serverless / cloud hosts (Vercel, AWS Lambda), Port 465 direct SSL with IPv4 is required.
-    const effectivePort = isGmail && (smtpPort === 587 || !smtpPort) ? 465 : (smtpPort || 465);
-    const effectiveSecure = effectivePort === 465 ? true : Boolean(smtpSecure);
+
+    // Auto-detect destination host & port:
+    // If the user pasted a Brevo SMTP key (xsmtpsib-) but kept Host as smtp.gmail.com, auto-route to Brevo relay
+    let targetHost = smtpHost;
+    let effectivePort = Number(smtpPort) || 465;
+    let effectiveSecure = Boolean(smtpSecure);
+
+    if (isBrevoSmtpKey) {
+      if (isGmailHost || !targetHost) {
+        targetHost = 'smtp-relay.brevo.com';
+      }
+      if (targetHost === 'smtp-relay.brevo.com') {
+        if (effectivePort === 465) {
+          effectiveSecure = true;
+        } else {
+          effectivePort = effectivePort === 587 ? 587 : 587;
+          effectiveSecure = false;
+        }
+      }
+    } else if (isGmailHost) {
+      targetHost = 'smtp.gmail.com';
+      effectivePort = (smtpPort === 587 || !smtpPort) ? 465 : Number(smtpPort);
+      effectiveSecure = effectivePort === 465 ? true : Boolean(smtpSecure);
+    }
 
     const transporter = nodemailer.createTransport({
-      host: isGmail ? 'smtp.gmail.com' : smtpHost,
+      host: targetHost,
       port: effectivePort,
       secure: effectiveSecure,
       family: 4, // CRITICAL: Force IPv4. Prevents IPv6 connection timeout on Vercel/serverless
-      connectionTimeout: 8000,
-      greetingTimeout: 8000,
-      socketTimeout: 10000,
+      connectionTimeout: 10000,
+      greetingTimeout: 10000,
+      socketTimeout: 12000,
       auth: {
         user: smtpUser,
         pass: cleanPassword,
       },
       tls: {
         rejectUnauthorized: false,
-        servername: isGmail ? 'smtp.gmail.com' : undefined,
+        servername: targetHost,
       },
     } as any);
 
@@ -183,10 +204,21 @@ export async function sendMail({ to, subject, html, from, tenantId }: SendMailOp
     let errorMsg = (err as Error).message || 'Failed to send email';
     console.error('[mail] Failed to send email via SMTP:', errorMsg);
 
+    const cleanPassword = smtpPassword ? smtpPassword.replace(/\s+/g, '') : '';
+    const isBrevoSmtpKey = cleanPassword.startsWith('xsmtpsib-');
+
     if (errorMsg.includes('535') || errorMsg.includes('Username and Password not accepted') || errorMsg.includes('BadCredentials')) {
-      errorMsg = 'Gmail Authentication Failed: Please make sure you are using a 16-character Google App Password (from myaccount.google.com/apppasswords), NOT your normal Gmail password.';
+      if (isBrevoSmtpKey) {
+        errorMsg = 'Brevo SMTP Authentication Failed: Please verify that SMTP Username matches your Brevo account email, or use the Brevo REST API Key (xkeysib-) which delivers via HTTPS without SMTP auth.';
+      } else {
+        errorMsg = 'Gmail Authentication Failed: Please make sure you are using a 16-character Google App Password (from myaccount.google.com/apppasswords), NOT your normal Gmail password.';
+      }
     } else if (errorMsg.includes('timeout') || errorMsg.includes('ETIMEDOUT')) {
-      errorMsg = 'Connection timeout: Vercel serverless firewall blocked outbound SMTP socket. For 100% reliability on Vercel without socket blocks, you can paste a free Brevo API Key (starts with xkeysib-) into the SMTP Password field.';
+      if (isBrevoSmtpKey) {
+        errorMsg = 'Connection timeout: Vercel serverless firewall blocked outbound SMTP socket to Brevo. To bypass Vercel socket restrictions completely, use a Brevo REST API Key (starts with xkeysib-) from https://app.brevo.com/settings/keys/api under the "API Keys" tab.';
+      } else {
+        errorMsg = 'Connection timeout: Vercel serverless firewall blocked outbound SMTP socket. For 100% reliability on Vercel without socket blocks, please paste a free Brevo API Key (starts with xkeysib-) into the SMTP Password field.';
+      }
     }
 
     updateEmailLog(logEntry.id, {
