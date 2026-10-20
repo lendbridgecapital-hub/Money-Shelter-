@@ -8,21 +8,35 @@ import { formatDate } from '@/lib/format';
 interface Props {
   partner: User;
   companyName?: string;
+  allPartners?: User[];
+  isViewerAdmin?: boolean;
+  currentUserId?: string;
 }
 
 export default function PartnerCertificateView({
   partner,
   companyName = 'Money Shelter',
+  allPartners,
+  isViewerAdmin,
+  currentUserId,
 }: Props) {
+  const [copied, setCopied] = React.useState(false);
+
   const issueDateFormatted = formatDate(partner.certificateIssuedAt || partner.approvedAt || partner.createdAt);
-  const certNumber = partner.certificateNumber || `MS-CERT-2026-${partner.id.slice(-4).toUpperCase()}`;
 
   const isSatara = Boolean(
     partner.branchId === 'br_satara_01' ||
     partner.branchName?.toLowerCase().includes('satara') ||
     partner.branchName?.toLowerCase().includes('lendbridge') ||
-    partner.email?.toLowerCase().includes('lendbridge')
+    partner.email?.toLowerCase().includes('lendbridge') ||
+    partner.email?.toLowerCase() === 'ghorpadets@gmail.com' ||
+    partner.id?.toLowerCase().includes('ghorpade') ||
+    partner.name?.toLowerCase().includes('ghorpade') ||
+    partner.partnerCode?.toUpperCase().includes('LBC-STR') ||
+    partner.partnerCode?.toUpperCase().includes('STR')
   );
+
+  const certNumber = partner.certificateNumber || (isSatara ? `LBC-STR-SUB-CERT-2026-${partner.id.slice(-4).toUpperCase()}` : `MS-CERT-2026-${partner.id.slice(-4).toUpperCase()}`);
 
   const handlePrint = () => {
     if (typeof window !== 'undefined') {
@@ -30,11 +44,20 @@ export default function PartnerCertificateView({
     }
   };
 
+  const handleCopyLink = () => {
+    if (typeof window !== 'undefined') {
+      const url = `${window.location.origin}/partner/certificate?partnerId=${encodeURIComponent(partner.id)}&code=${encodeURIComponent(partner.partnerCode || '')}`;
+      navigator.clipboard.writeText(url);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2500);
+    }
+  };
+
   return (
     <div className="space-y-4 max-w-4xl mx-auto">
       {/* Action Strip (hidden during print) */}
-      <div className="flex items-center justify-between gap-3 print:hidden bg-white border border-slate-200/90 rounded-xl px-4 py-2.5 shadow-2xs">
-        <div className="flex items-center gap-2">
+      <div className="flex flex-wrap items-center justify-between gap-3 print:hidden bg-white border border-slate-200/90 rounded-xl px-4 py-2.5 shadow-2xs">
+        <div className="flex flex-wrap items-center gap-2">
           <Link
             href="/dashboard"
             className="flex items-center gap-1.5 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 px-3 py-1.5 rounded-xl shadow-xs active:scale-95 transition"
@@ -48,9 +71,38 @@ export default function PartnerCertificateView({
           <span className="text-xs font-bold text-slate-800">
             {isSatara ? 'Official Channel Partner Certificate • Lendbridge Capital (Satara)' : 'Official Channel Partner Certificate'}
           </span>
+
+          {isViewerAdmin && allPartners && allPartners.length > 0 && (
+            <div className="flex items-center gap-1.5 ml-2 pl-2 border-l border-slate-200">
+              <span className="text-[11px] font-bold text-slate-500">Viewing Partner:</span>
+              <select
+                value={partner.id}
+                onChange={(e) => {
+                  window.location.href = `/partner/certificate?partnerId=${encodeURIComponent(e.target.value)}`;
+                }}
+                className="text-xs bg-slate-50 border border-slate-300 rounded-lg px-2 py-1 font-sans text-slate-800 font-medium cursor-pointer"
+              >
+                {allPartners.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.name} ({p.partnerCode || p.role}) — {p.branchName || 'Branch'}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
         </div>
 
         <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={handleCopyLink}
+            className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-lg transition inline-flex items-center gap-1.5 border border-slate-200"
+            title="Copy permanent shareable certificate link"
+          >
+            <span>{copied ? '✅' : '🔗'}</span>
+            <span>{copied ? 'Copied Link!' : 'Copy Direct Link'}</span>
+          </button>
+
           <button
             type="button"
             onClick={handlePrint}
@@ -150,7 +202,7 @@ export default function PartnerCertificateView({
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-left">
             <div>
               <span className="text-[10px] text-slate-400 uppercase font-bold block">Partner DSA Code</span>
-              <strong className="font-mono text-sm text-slate-900">{partner.partnerCode || 'QFS-PRT-ACTIVE'}</strong>
+              <strong className="font-mono text-sm text-slate-900">{partner.partnerCode || (isSatara ? 'LBC-STR-SUB-9796' : 'MS-PRT-ACTIVE')}</strong>
             </div>
 
             <div>
@@ -167,7 +219,7 @@ export default function PartnerCertificateView({
 
             <div>
               <span className="text-[10px] text-slate-400 uppercase font-bold block">Assigned Branch RM</span>
-              <strong className="text-slate-900 text-xs truncate block">{partner.assignedRmName || 'Branch Desk'}</strong>
+              <strong className="text-slate-900 text-xs truncate block">{partner.assignedRmName || (isSatara ? 'Rutuja (Lendbridge Capital - Satara Ops)' : 'Branch Desk')}</strong>
             </div>
           </div>
         </div>

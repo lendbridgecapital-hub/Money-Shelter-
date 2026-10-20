@@ -789,7 +789,7 @@ export default function ActiveReportsSection({
                 </div>
               </div>
               <Link
-                href="/partner/certificate"
+                href={currentUserId ? `/partner/certificate?partnerId=${encodeURIComponent(currentUserId)}` : '/partner/certificate'}
                 className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-lg shadow-2xs transition"
               >
                 View Certificate →

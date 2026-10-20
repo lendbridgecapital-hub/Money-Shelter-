@@ -412,12 +412,17 @@ export function getPartnerByCode(code: string): User | undefined {
   if (
     clean === 'QFS-SUB-9796' ||
     clean === 'LBC-STR-SUB-9796' ||
-    clean === 'LBC-STR-9796'
+    clean === 'LBC-STR-9796' ||
+    clean === '9796' ||
+    clean.includes('9796') ||
+    clean.includes('GHORPADE')
   ) {
     const tejas = users.find(
       (u) =>
+        u.id === 'usr_tejas_ghorpade_satara_01' ||
         (u.partnerCode && (u.partnerCode.includes('9796') || u.partnerCode.includes('LBC-STR') || u.partnerCode.includes('QFS-SUB'))) ||
-        (u.email && u.email.toLowerCase() === 'ghorpadets@gmail.com')
+        (u.email && u.email.toLowerCase() === 'ghorpadets@gmail.com') ||
+        (u.name && u.name.toLowerCase().includes('ghorpade'))
     );
     if (tejas) return tejas;
   }

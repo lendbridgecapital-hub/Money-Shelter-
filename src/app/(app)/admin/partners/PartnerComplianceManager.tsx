@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import type { User, Role, Branch, LoanApplication, RewardLedgerEntry } from '@/types/db';
 import { blockPartnerAction } from '@/actions/workflowActions';
@@ -1150,6 +1151,16 @@ export default function PartnerComplianceManager({
                       {(isAdmin || isSupport || isRM) && (
                         <td className="px-4 py-3.5 text-right">
                           <div className="flex items-center justify-end gap-1.5">
+                            {status === 'APPROVED' && (
+                              <Link
+                                href={`/partner/certificate?partnerId=${encodeURIComponent(p.id)}&code=${encodeURIComponent(p.partnerCode || '')}`}
+                                target="_blank"
+                                className="px-2 py-1 bg-amber-50 hover:bg-amber-100 text-amber-800 text-xs font-bold rounded-lg border border-amber-300 transition inline-flex items-center gap-1 cursor-pointer shadow-2xs"
+                                title="View & Download Official Certificate of Association"
+                              >
+                                <span>🎖️ Certificate</span>
+                              </Link>
+                            )}
                             <button
                               type="button"
                               onClick={() => setSelectedPartnerForActivity(p)}

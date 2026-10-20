@@ -894,7 +894,12 @@ export async function notifyTouchpoint10_PartnerApproved(
   const companyName = getTouchpointBrandName(partner, settings.companyName || 'Money Shelter');
   const partnerName = partner.name;
   const baseUrl = getBaseUrl();
-  const certUrl = `${baseUrl}/partner/certificate`;
+  const certParams = new URLSearchParams({
+    partnerId: partner.id,
+    code: partner.partnerCode || '',
+    cert: partner.certificateNumber || '',
+  });
+  const certUrl = `${baseUrl}/partner/certificate?${certParams.toString()}`;
 
   // 1. In-App Notification (To Channel Partner)
   try {

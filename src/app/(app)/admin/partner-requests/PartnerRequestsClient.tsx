@@ -1339,8 +1339,8 @@ export default function PartnerRequestsClient({
                   <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-xl flex items-center justify-between">
                     <div>
                       <span className="text-[10px] font-bold text-emerald-800 uppercase block">Certificate of Association</span>
-                      <strong className="text-xs text-emerald-950">
-                        {selectedPartner.certificateNumber || 'QFS-CERT-ACTIVE'}
+                      <strong className="text-xs text-emerald-950 font-mono">
+                        {selectedPartner.certificateNumber || selectedPartner.partnerCode || 'Approved'}
                       </strong>
                       <span className="text-[10px] text-emerald-700 block">
                         Issued on {formatDate(selectedPartner.certificateIssuedAt || selectedPartner.approvedAt)}
@@ -1348,7 +1348,7 @@ export default function PartnerRequestsClient({
                     </div>
 
                     <Link
-                      href={`/partner/certificate?partnerId=${selectedPartner.id}`}
+                      href={`/partner/certificate?partnerId=${encodeURIComponent(selectedPartner.id)}&code=${encodeURIComponent(selectedPartner.partnerCode || '')}`}
                       target="_blank"
                       className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-lg shadow-2xs transition inline-flex items-center gap-1"
                     >
