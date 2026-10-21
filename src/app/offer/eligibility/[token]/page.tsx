@@ -1,5 +1,5 @@
 import { notFound } from 'next/navigation';
-import { getApplicationByToken } from '@/lib/repos/applicationsRepo';
+import { getApplicationByToken, getApplicationByTokenAsync } from '@/lib/repos/applicationsRepo';
 import { getBranchById } from '@/lib/repos/branchesRepo';
 import { getCompanySettings } from '@/lib/settings';
 import { listBankPolicyCards } from '@/lib/repos/policyCardsRepo';
@@ -11,7 +11,7 @@ import EligibilityOfferPublicClient from './EligibilityOfferPublicClient';
 export const dynamic = 'force-dynamic';
 
 export async function generateMetadata({ params }: { params: { token: string } }) {
-  const application = getApplicationByToken(params.token);
+  const application = await getApplicationByTokenAsync(params.token);
   const branch = application?.branchId ? getBranchById(application.branchId) : null;
   const isSatara = Boolean(
     application?.branchId === 'br_satara_01' ||
@@ -45,7 +45,7 @@ export default async function EligibilityOfferPublicPage({
 }: {
   params: { token: string };
 }) {
-  const application = getApplicationByToken(params.token);
+  const application = await getApplicationByTokenAsync(params.token);
 
   if (!application) {
     // If not found, check if it's a demo or invalid token

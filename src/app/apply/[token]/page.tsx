@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { getApplicationByToken, updateApplicationStatus } from '@/lib/repos/applicationsRepo';
+import { getApplicationByToken, getApplicationByTokenAsync, updateApplicationStatus } from '@/lib/repos/applicationsRepo';
 import { getBranchById } from '@/lib/repos/branchesRepo';
 import { getUserById } from '@/lib/repos/usersRepo';
 import { getCompanySettings } from '@/lib/settings';
@@ -17,7 +17,7 @@ export async function generateMetadata({
   params: { token: string };
   searchParams?: { branch?: string; loanType?: string; incomeType?: string };
 }): Promise<Metadata> {
-  const application = getApplicationByToken(params.token);
+  const application = await getApplicationByTokenAsync(params.token);
   const settings = await getCompanySettings(application?.tenantId || 'default');
   const branch = application?.branchId
     ? getBranchById(application.branchId)
@@ -110,7 +110,7 @@ export default async function CustomerApplyPage({
   params: { token: string };
   searchParams?: { loanType?: string; incomeType?: string; branch?: string };
 }) {
-  const application = getApplicationByToken(params.token);
+  const application = await getApplicationByTokenAsync(params.token);
   if (!application) {
     const defaultSettings = await getCompanySettings('default');
     return (

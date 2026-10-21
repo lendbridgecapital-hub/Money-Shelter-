@@ -175,6 +175,32 @@ export default function LoginPage() {
             </Link>
           </p>
         </div>
+
+        {/* Android App Download Banner */}
+        <div className="mt-4 p-3 bg-gradient-to-r from-emerald-50/80 via-teal-50/70 to-cyan-50/80 border border-emerald-200/80 rounded-2xl flex items-center justify-between gap-3 text-left">
+          <div className="flex items-center gap-2.5">
+            <span className="text-xl">📱</span>
+            <div>
+              <p className="text-xs font-bold text-slate-900">Money Shelter Android App</p>
+              <p className="text-[11px] text-slate-500">Official Mobile APK for Partners & RMs</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <a
+              href="/Money-Shelter.apk"
+              download="Money-Shelter.apk"
+              className="px-3 py-1.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-xs font-bold rounded-xl shadow-2xs transition whitespace-nowrap"
+            >
+              Download APK ↓
+            </a>
+            <Link
+              href="/download"
+              className="px-2.5 py-1.5 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-semibold rounded-xl transition whitespace-nowrap"
+            >
+              Guide
+            </Link>
+          </div>
+        </div>
       </div>
     </div>
   );

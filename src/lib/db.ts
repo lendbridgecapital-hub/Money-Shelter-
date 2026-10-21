@@ -13,6 +13,7 @@ export interface DatabaseAdapter {
   exec(sql: string): void;
   close(): void;
   flush?(): Promise<void>;
+  ensureReady?(force?: boolean): Promise<void>;
 }
 
 let instance: DatabaseAdapter | null = null;
@@ -788,6 +789,8 @@ function createPortableStorage(storageFilePath: string): DatabaseAdapter {
   }
 
   let initialHydrationStarted = false;
+  let activeHydrationPromise: Promise<void> | null = null;
+
   async function hydrateFromNeon(): Promise<void> {
     const dbUrl = getDbUrl();
     if (!dbUrl) return;
@@ -844,10 +847,27 @@ function createPortableStorage(storageFilePath: string): DatabaseAdapter {
     }
   }
 
+  async function ensureReady(force = false): Promise<void> {
+    const dbUrl = getDbUrl();
+    if (!dbUrl) return Promise.resolve();
+
+    if (force || !hasHydratedFromNeon) {
+      if (!activeHydrationPromise || force) {
+        activeHydrationPromise = hydrateFromNeon();
+      }
+      try {
+        await activeHydrationPromise;
+      } finally {
+        activeHydrationPromise = null;
+      }
+    }
+    return Promise.resolve();
+  }
+
   // Trigger immediate background hydration if Neon URL exists
   if (getDbUrl()) {
     initialHydrationStarted = true;
-    hydrateFromNeon();
+    activeHydrationPromise = hydrateFromNeon();
   }
 
   function syncWithNeon(): Promise<void> {
@@ -1026,6 +1046,9 @@ function createPortableStorage(storageFilePath: string): DatabaseAdapter {
         syncTimeout = null;
       }
       return performNeonSync(true);
+    },
+    ensureReady(force?: boolean): Promise<void> {
+      return ensureReady(force);
     },
     prepare(sql: string): Statement {
       const cleanSql = sql.replace(/\s+/g, ' ').trim();
@@ -1248,4 +1271,11 @@ export async function syncDatabase(): Promise<void> {
     await instance.flush();
   }
 }
+
+export async function ensureDatabaseReady(force = false): Promise<void> {
+  if (instance && typeof instance.ensureReady === 'function') {
+    await instance.ensureReady(force);
+  }
+}
+
 

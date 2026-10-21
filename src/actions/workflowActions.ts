@@ -604,7 +604,7 @@ export async function customerAcceptOfferAction(
   customerName?: string
 ): Promise<ActionResult & { acceptanceRef?: string }> {
   try {
-    const application = applicationsRepo.getApplicationByToken(token);
+    const application = await applicationsRepo.getApplicationByTokenAsync(token);
     if (!application) {
       return { ok: false, error: 'Application not found or link has expired.' };
     }

@@ -170,6 +170,32 @@ export default function LendbridgePartnerLoginForm({}: LendbridgePartnerLoginFor
           </p>
         </div>
 
+        {/* Android App Download Banner */}
+        <div className="mt-4 p-3 bg-gradient-to-r from-blue-50 via-indigo-50 to-blue-50 border border-blue-200/80 rounded-2xl flex items-center justify-between gap-3 text-left">
+          <div className="flex items-center gap-2.5">
+            <span className="text-xl">📱</span>
+            <div>
+              <p className="text-xs font-bold text-slate-900">Lendbridge Capital App</p>
+              <p className="text-[11px] text-slate-500">Official Android APK for Satara Partners</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <a
+              href="/Lendbridge-Capital.apk"
+              download="Lendbridge-Capital.apk"
+              className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl shadow-2xs transition whitespace-nowrap"
+            >
+              Download APK ↓
+            </a>
+            <Link
+              href="/lendbridge/download"
+              className="px-2.5 py-1.5 bg-white border border-blue-200 hover:bg-blue-50 text-blue-700 text-xs font-semibold rounded-xl transition whitespace-nowrap"
+            >
+              Guide
+            </Link>
+          </div>
+        </div>
+
         {/* Contact Info Footer for Satara Branch */}
         <div className="mt-4 pt-3 border-t border-slate-200/70 max-w-sm mx-auto text-center flex items-center justify-center gap-4 text-xs font-medium text-slate-500">
           <a

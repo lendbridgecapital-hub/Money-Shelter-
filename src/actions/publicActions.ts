@@ -38,7 +38,7 @@ function collectFiles(formData: FormData, fieldName: string): File[] {
 }
 
 export async function submitCustomerApplication(token: string, formData: FormData): Promise<SubmitResult> {
-  const application = applicationsRepo.getApplicationByToken(token);
+  const application = await applicationsRepo.getApplicationByTokenAsync(token);
   if (!application) return { ok: false, error: 'This application link is invalid.' };
   if (application.status !== 'LINK_SHARED') {
     return { ok: false, error: 'This link has already been used. Please contact your loan executive for a new link.' };
@@ -242,7 +242,7 @@ export async function uploadCustomerRequiredDocumentAction(
       return { ok: false, error: 'Invalid document upload request.' };
     }
 
-    const application = applicationsRepo.getApplicationByToken(token);
+    const application = await applicationsRepo.getApplicationByTokenAsync(token);
     if (!application) {
       return { ok: false, error: 'Loan application not found.' };
     }

@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
-import { getApplicationByToken } from '@/lib/repos/applicationsRepo';
+import { getApplicationByToken, getApplicationByTokenAsync } from '@/lib/repos/applicationsRepo';
 import { getBranchById } from '@/lib/repos/branchesRepo';
 import { getCompanySettings } from '@/lib/settings';
 import OfferClient from './OfferClient';
@@ -10,7 +10,7 @@ export async function generateMetadata({
 }: {
   params: { token: string };
 }): Promise<Metadata> {
-  const application = getApplicationByToken(params.token);
+  const application = await getApplicationByTokenAsync(params.token);
   const settings = await getCompanySettings(application?.tenantId || 'default');
   const branch = application?.branchId ? getBranchById(application.branchId) : null;
 
@@ -45,7 +45,7 @@ export async function generateMetadata({
 }
 
 export default async function OfferPage({ params }: { params: { token: string } }) {
-  const application = getApplicationByToken(params.token);
+  const application = await getApplicationByTokenAsync(params.token);
   if (!application) {
     notFound();
   }

@@ -10,7 +10,7 @@ import * as workflowRepo from '@/lib/repos/workflowRepo';
 import { getBranchById } from '@/lib/repos/branchesRepo';
 import { getCompanySettings } from '@/lib/settings';
 import { sendMail, customerConfirmationEmail, branchAlertEmail } from '@/lib/mail';
-import { syncDatabase } from '@/lib/db';
+import { syncDatabase, ensureDatabaseReady } from '@/lib/db';
 import { saveUploadedFile } from '@/lib/uploads';
 import { generateApplicationToken } from '@/lib/tokens';
 import { LOAN_TYPE_LABELS, formatCurrencyINR } from '@/lib/format';
@@ -55,6 +55,7 @@ export async function createApplicationLinkAction(
   incomeType?: IncomeType
 ): Promise<CreateLinkResult> {
   try {
+    await ensureDatabaseReady();
     const user = await getAuthenticatedUser();
     if (!user) {
       return {

@@ -142,7 +142,9 @@ export function getApplicationById(id: string): LoanApplication | undefined {
 
 export function getApplicationByToken(token: string): LoanApplication | undefined {
   if (!token) return undefined;
-  const clean = String(token).trim();
+  let clean = String(token).trim().replace(/\/+$/, '');
+  if (clean.includes('?')) clean = clean.split('?')[0];
+  if (clean.includes('&')) clean = clean.split('&')[0];
   let decoded = clean;
   try {
     decoded = decodeURIComponent(clean);
@@ -192,6 +194,18 @@ export function getApplicationByToken(token: string): LoanApplication | undefine
   } catch {}
 
   return undefined;
+}
+
+export async function getApplicationByTokenAsync(token: string): Promise<LoanApplication | undefined> {
+  if (!token) return undefined;
+  const { ensureDatabaseReady } = await import('@/lib/db');
+  await ensureDatabaseReady();
+  let app = getApplicationByToken(token);
+  if (!app) {
+    await ensureDatabaseReady(true);
+    app = getApplicationByToken(token);
+  }
+  return app;
 }
 
 export function recordCustomerSubmission(
