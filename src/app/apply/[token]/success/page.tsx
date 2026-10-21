@@ -10,21 +10,42 @@ import ExitFormButton from '@/components/ExitFormButton';
 
 export async function generateMetadata({
   params,
+  searchParams,
 }: {
   params: { token: string };
+  searchParams?: { branch?: string };
 }): Promise<Metadata> {
   const application = getApplicationByToken(params.token);
   const settings = await getCompanySettings(application?.tenantId || 'default');
-  const branch = application?.branchId ? getBranchById(application.branchId) : null;
+  const branch = application?.branchId
+    ? getBranchById(application.branchId)
+    : (searchParams?.branch ? getBranchById(searchParams.branch) : null);
+
+  const advisor = application?.channelPartnerId
+    ? getUserById(application.channelPartnerId)
+    : application?.createdById
+    ? getUserById(application.createdById)
+    : null;
 
   const isSatara = Boolean(
+    searchParams?.branch === 'br_satara_01' ||
+    searchParams?.branch === 'STR01' ||
+    searchParams?.branch?.toLowerCase().includes('satara') ||
+    searchParams?.branch?.toLowerCase().includes('lendbridge') ||
     application?.branchId === 'br_satara_01' ||
+    application?.branchId === 'STR01' ||
     branch?.id === 'br_satara_01' ||
     branch?.code === 'STR01' ||
+    branch?.name?.toLowerCase().includes('satara') ||
     application?.isCoBranded ||
     branch?.isCoBranded ||
     application?.coBrandName?.toLowerCase().includes('lendbridge') ||
-    branch?.name?.toLowerCase().includes('satara')
+    branch?.coBrandName?.toLowerCase().includes('lendbridge') ||
+    advisor?.email?.toLowerCase().includes('lendbridge') ||
+    advisor?.email === 'kanase.hrishi@gmail.com' ||
+    advisor?.phone?.includes('9049301089') ||
+    advisor?.branchId === 'br_satara_01' ||
+    advisor?.partnerCode?.startsWith('LBC-STR')
   );
 
   if (isSatara) {
@@ -47,7 +68,13 @@ export async function generateMetadata({
   };
 }
 
-export default async function ApplicationSuccessPage({ params }: { params: { token: string } }) {
+export default async function ApplicationSuccessPage({
+  params,
+  searchParams,
+}: {
+  params: { token: string };
+  searchParams?: { branch?: string };
+}) {
   const application = getApplicationByToken(params.token);
   if (!application) {
     const defaultSettings = await getCompanySettings('default');
@@ -78,16 +105,35 @@ export default async function ApplicationSuccessPage({ params }: { params: { tok
   }
 
   const settings = await getCompanySettings(application.tenantId || 'default');
-  const branch = getBranchById(application.branchId);
+  const branch = application.branchId
+    ? getBranchById(application.branchId)
+    : (searchParams?.branch ? getBranchById(searchParams.branch) : null);
+
+  const advisor = application.channelPartnerId
+    ? getUserById(application.channelPartnerId)
+    : application.createdById
+    ? getUserById(application.createdById)
+    : undefined;
 
   const isSatara = Boolean(
+    searchParams?.branch === 'br_satara_01' ||
+    searchParams?.branch === 'STR01' ||
+    searchParams?.branch?.toLowerCase().includes('satara') ||
+    searchParams?.branch?.toLowerCase().includes('lendbridge') ||
     application.branchId === 'br_satara_01' ||
+    application.branchId === 'STR01' ||
     branch?.id === 'br_satara_01' ||
     branch?.code === 'STR01' ||
+    branch?.name?.toLowerCase().includes('satara') ||
     application.isCoBranded ||
     branch?.isCoBranded ||
     application.coBrandName?.toLowerCase().includes('lendbridge') ||
-    branch?.name?.toLowerCase().includes('satara')
+    branch?.coBrandName?.toLowerCase().includes('lendbridge') ||
+    advisor?.email?.toLowerCase().includes('lendbridge') ||
+    advisor?.email === 'kanase.hrishi@gmail.com' ||
+    advisor?.phone?.includes('9049301089') ||
+    advisor?.branchId === 'br_satara_01' ||
+    advisor?.partnerCode?.startsWith('LBC-STR')
   );
 
   const isCoBranded = Boolean(application.isCoBranded || branch?.isCoBranded || isSatara);
@@ -95,11 +141,6 @@ export default async function ApplicationSuccessPage({ params }: { params: { tok
   const coBrandLogoUrl = isSatara ? '/lendbridge-logo.png' : (application.coBrandLogoUrl || branch?.coBrandLogoUrl || null);
   const coBrandTagline = isSatara ? 'Satara Regional Branch' : (application.coBrandTagline || branch?.coBrandTagline || null);
 
-  const advisor = application.channelPartnerId
-    ? getUserById(application.channelPartnerId)
-    : application.createdById
-    ? getUserById(application.createdById)
-    : undefined;
   const advisorName = advisor?.name || application.channelPartnerName || application.createdByName || 'Your Financial Advisor';
   const advisorPhone = isSatara ? '+91 9049301089' : (advisor?.phone || branch?.phone || settings.supportPhone);
   const advisorEmail = isSatara ? 'lendbridgecapital@gmail.com' : (advisor?.email || branch?.email || settings.officialEmail);
@@ -109,7 +150,7 @@ export default async function ApplicationSuccessPage({ params }: { params: { tok
     <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4 sm:p-6">
       <div className="max-w-xl w-full bg-white border border-slate-200 rounded-3xl p-6 sm:p-10 text-center shadow-lg">
         {/* Brand Logo Header */}
-        {isSatara ? (
+        {isSatara || (coBrandName && coBrandName.toLowerCase().includes('lendbridge')) ? (
           <div className="flex items-center justify-center gap-2.5 mb-6 pb-4 border-b border-slate-100">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src="/lendbridge-logo.png" alt="Lendbridge Capital" className="h-9 max-w-[160px] object-contain" />

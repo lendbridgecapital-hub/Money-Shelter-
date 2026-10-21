@@ -12,21 +12,42 @@ import type { LoanType, IncomeType } from '@/types/db';
 
 export async function generateMetadata({
   params,
+  searchParams,
 }: {
   params: { token: string };
+  searchParams?: { branch?: string; loanType?: string; incomeType?: string };
 }): Promise<Metadata> {
   const application = getApplicationByToken(params.token);
   const settings = await getCompanySettings(application?.tenantId || 'default');
-  const branch = application?.branchId ? getBranchById(application.branchId) : null;
+  const branch = application?.branchId
+    ? getBranchById(application.branchId)
+    : (searchParams?.branch ? getBranchById(searchParams.branch) : null);
+
+  const advisor = application?.channelPartnerId
+    ? getUserById(application.channelPartnerId)
+    : application?.createdById
+    ? getUserById(application.createdById)
+    : null;
 
   const isSatara = Boolean(
+    searchParams?.branch === 'br_satara_01' ||
+    searchParams?.branch === 'STR01' ||
+    searchParams?.branch?.toLowerCase().includes('satara') ||
+    searchParams?.branch?.toLowerCase().includes('lendbridge') ||
     application?.branchId === 'br_satara_01' ||
+    application?.branchId === 'STR01' ||
     branch?.id === 'br_satara_01' ||
     branch?.code === 'STR01' ||
+    branch?.name?.toLowerCase().includes('satara') ||
     application?.isCoBranded ||
     branch?.isCoBranded ||
     application?.coBrandName?.toLowerCase().includes('lendbridge') ||
-    branch?.name?.toLowerCase().includes('satara')
+    branch?.coBrandName?.toLowerCase().includes('lendbridge') ||
+    advisor?.email?.toLowerCase().includes('lendbridge') ||
+    advisor?.email === 'kanase.hrishi@gmail.com' ||
+    advisor?.phone?.includes('9049301089') ||
+    advisor?.branchId === 'br_satara_01' ||
+    advisor?.partnerCode?.startsWith('LBC-STR')
   );
 
   if (isSatara) {
@@ -87,7 +108,7 @@ export default async function CustomerApplyPage({
   searchParams,
 }: {
   params: { token: string };
-  searchParams?: { loanType?: string; incomeType?: string };
+  searchParams?: { loanType?: string; incomeType?: string; branch?: string };
 }) {
   const application = getApplicationByToken(params.token);
   if (!application) {
@@ -148,16 +169,35 @@ export default async function CustomerApplyPage({
   }
 
   const settings = await getCompanySettings(application.tenantId || 'default');
-  const branch = getBranchById(application.branchId);
+  const branch = application.branchId
+    ? getBranchById(application.branchId)
+    : (searchParams?.branch ? getBranchById(searchParams.branch) : null);
+
+  const advisor = application.channelPartnerId
+    ? getUserById(application.channelPartnerId)
+    : application.createdById
+    ? getUserById(application.createdById)
+    : undefined;
 
   const isSatara = Boolean(
+    searchParams?.branch === 'br_satara_01' ||
+    searchParams?.branch === 'STR01' ||
+    searchParams?.branch?.toLowerCase().includes('satara') ||
+    searchParams?.branch?.toLowerCase().includes('lendbridge') ||
     application.branchId === 'br_satara_01' ||
+    application.branchId === 'STR01' ||
     branch?.id === 'br_satara_01' ||
     branch?.code === 'STR01' ||
+    branch?.name?.toLowerCase().includes('satara') ||
     application.isCoBranded ||
     branch?.isCoBranded ||
     application.coBrandName?.toLowerCase().includes('lendbridge') ||
-    branch?.name?.toLowerCase().includes('satara')
+    branch?.coBrandName?.toLowerCase().includes('lendbridge') ||
+    advisor?.email?.toLowerCase().includes('lendbridge') ||
+    advisor?.email === 'kanase.hrishi@gmail.com' ||
+    advisor?.phone?.includes('9049301089') ||
+    advisor?.branchId === 'br_satara_01' ||
+    advisor?.partnerCode?.startsWith('LBC-STR')
   );
 
   const isCoBranded = Boolean(application.isCoBranded || branch?.isCoBranded || isSatara);
@@ -234,7 +274,7 @@ export default async function CustomerApplyPage({
         >
           <div className="max-w-4xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between">
             <div className="flex items-center gap-3">
-              {isSatara ? (
+              {isSatara || (coBrandName && coBrandName.toLowerCase().includes('lendbridge')) ? (
                 <div className="flex items-center gap-2.5 sm:gap-3">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
@@ -418,7 +458,7 @@ export default async function CustomerApplyPage({
       >
         <div className="max-w-4xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            {isSatara ? (
+            {isSatara || (coBrandName && coBrandName.toLowerCase().includes('lendbridge')) ? (
               <div className="flex items-center gap-2.5 sm:gap-3">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img

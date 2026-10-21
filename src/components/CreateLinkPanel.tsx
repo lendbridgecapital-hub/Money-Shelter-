@@ -20,7 +20,15 @@ export default function CreateLinkPanel({
   branches = [],
 }: CreateLinkPanelProps) {
   const [isPending, startTransition] = useTransition();
-  const [selectedBranchId, setSelectedBranchId] = useState<string>(userBranch?.id || '');
+  const [selectedBranchId, setSelectedBranchId] = useState<string>(() => {
+    if (userBranch?.id) return userBranch.id;
+    if (companyName?.toLowerCase().includes('lendbridge')) {
+      const satara = branches.find((b) => b.id === 'br_satara_01' || b.name.toLowerCase().includes('satara'));
+      if (satara) return satara.id;
+      return 'br_satara_01';
+    }
+    return '';
+  });
   const [generatedUrl, setGeneratedUrl] = useState<string | null>(null);
   const [token, setToken] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
@@ -30,6 +38,24 @@ export default function CreateLinkPanel({
   const activeBranch = branches.find((b) => b.id === selectedBranchId) || userBranch;
   const isSite = activeBranch?.type === 'SITE';
 
+  const isSatara = Boolean(
+    activeBranch?.id === 'br_satara_01' ||
+    activeBranch?.code === 'STR01' ||
+    activeBranch?.isCoBranded ||
+    activeBranch?.name?.toLowerCase().includes('satara') ||
+    userBranch?.id === 'br_satara_01' ||
+    userBranch?.code === 'STR01' ||
+    userBranch?.isCoBranded ||
+    userBranch?.name?.toLowerCase().includes('satara') ||
+    companyName?.toLowerCase().includes('lendbridge') ||
+    (typeof window !== 'undefined' && (
+      window.location.search.toLowerCase().includes('satara') ||
+      window.location.search.toLowerCase().includes('lendbridge') ||
+      window.location.pathname.toLowerCase().includes('satara') ||
+      window.location.pathname.toLowerCase().includes('lendbridge')
+    ))
+  );
+
   const canSelectBranch = userRole === 'ADMIN' || userRole === 'CENTRAL_SUPPORT' || userRole === 'OPERATIONS' || userRole === 'RELATIONSHIP_MANAGER';
 
   const handleGenerate = () => {
@@ -38,7 +64,8 @@ export default function CreateLinkPanel({
 
     startTransition(async () => {
       try {
-        const res = await createApplicationLinkAction(undefined, selectedBranchId || undefined, undefined);
+        const branchToUse = selectedBranchId || (isSatara ? 'br_satara_01' : undefined);
+        const res = await createApplicationLinkAction(undefined, branchToUse, undefined);
         if (!res || !res.ok) {
           setError((res && res.error) || 'Could not generate application link. Your session may have expired. Please refresh or log in.');
         } else if (res.url) {
@@ -53,7 +80,8 @@ export default function CreateLinkPanel({
             rawOrigin.includes('render.com');
           const publicBase = isInvalidOrigin ? productionHost : rawOrigin;
           const cleanServerUrl = (res.url || '').replace(/https?:\/\/[^/]*onrender\.com/gi, productionHost);
-          const finalUrl = res.token ? `${publicBase}/apply/${res.token}` : cleanServerUrl;
+          const branchParam = isSatara ? '?branch=br_satara_01' : '';
+          const finalUrl = res.token ? `${publicBase}/apply/${res.token}${branchParam}` : `${cleanServerUrl}${branchParam}`;
           setGeneratedUrl(finalUrl);
           setToken(res.token || null);
         }
@@ -72,17 +100,6 @@ export default function CreateLinkPanel({
 
   const advisorName = partnerName || 'Financial Advisor';
   const shareUrl = generatedUrl || '';
-
-  const isSatara = Boolean(
-    activeBranch?.id === 'br_satara_01' ||
-    activeBranch?.code === 'STR01' ||
-    activeBranch?.isCoBranded ||
-    activeBranch?.name?.toLowerCase().includes('satara') ||
-    userBranch?.id === 'br_satara_01' ||
-    userBranch?.code === 'STR01' ||
-    userBranch?.isCoBranded ||
-    userBranch?.name?.toLowerCase().includes('satara')
-  );
 
   const displayBrandName = isSatara
     ? (activeBranch?.coBrandName || userBranch?.coBrandName || 'Lendbridge Capital')

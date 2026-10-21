@@ -63,22 +63,38 @@ export function createApplicationLink(data: {
     } catch {}
   }
 
-  // Failsafe: if creator or partner belongs to a specific branch (e.g. Satara / Lendbridge), inherit it
-  if (!effectiveBranchId || effectiveBranchId === 'default') {
+  // Failsafe: check if creator or partner belongs to a specific branch or is associated with Satara / Lendbridge Capital
+  let creatorEmail = '';
+  let creatorPhone = '';
+  if (data.createdById) {
     try {
-      const creatorUser = data.createdById ? (db.prepare('SELECT email, branch_id FROM users WHERE id = ?').get(data.createdById) as { email?: string; branch_id?: string } | undefined) : undefined;
-      if (creatorUser?.branch_id && creatorUser.branch_id !== 'default') {
-        effectiveBranchId = creatorUser.branch_id;
-      } else if (creatorUser?.email?.toLowerCase().includes('lendbridge') || partnerName?.toLowerCase().includes('lendbridge')) {
-        const satara = listBranches(tenantId).find(b => b.id === 'br_satara_01' || b.name.toLowerCase().includes('satara'));
-        if (satara) {
-          effectiveBranchId = satara.id;
-          isCoBranded = 1;
-          coBrandName = satara.coBrandName || 'Lendbridge Capital';
-          coBrandTagline = satara.coBrandTagline || 'In strategic loan distribution partnership with Money Shelter Pvt. Ltd.';
+      const creatorUser = db.prepare('SELECT email, phone, branch_id FROM users WHERE id = ?').get(data.createdById) as { email?: string; phone?: string; branch_id?: string } | undefined;
+      if (creatorUser) {
+        creatorEmail = (creatorUser.email || '').toLowerCase();
+        creatorPhone = (creatorUser.phone || '').replace(/[^0-9]/g, '');
+        if (creatorUser.branch_id && creatorUser.branch_id !== 'default' && (!effectiveBranchId || effectiveBranchId === 'default')) {
+          effectiveBranchId = creatorUser.branch_id;
         }
       }
     } catch {}
+  }
+
+  const isSataraBranchOrDesk = Boolean(
+    effectiveBranchId === 'br_satara_01' ||
+    effectiveBranchId === 'STR01' ||
+    effectiveBranchId.toLowerCase().includes('satara') ||
+    creatorEmail === 'kanase.hrishi@gmail.com' ||
+    creatorEmail.includes('lendbridge') ||
+    creatorPhone.includes('9049301089') ||
+    partnerName?.toLowerCase().includes('lendbridge')
+  );
+
+  if (isSataraBranchOrDesk) {
+    effectiveBranchId = 'br_satara_01';
+    isCoBranded = 1;
+    coBrandName = 'Lendbridge Capital';
+    coBrandLogoUrl = '/lendbridge-logo.png';
+    coBrandTagline = 'In strategic loan distribution partnership with Money Shelter Pvt. Ltd.';
   }
 
   db.prepare(
@@ -706,6 +722,37 @@ function mapRowToApplication(row: Record<string, unknown>): LoanApplication {
     } catch {}
   }
 
+  // Enforce Lendbridge Capital co-branding and logo for Satara branch applications
+  const creatorId = String(row.created_by_id || row.createdById || '');
+  const partnerId = String(row.channel_partner_id || row.channelPartnerId || '');
+  let isCreatorSatara = false;
+  if (creatorId || partnerId) {
+    try {
+      const u = db.prepare('SELECT email, phone, branch_id FROM users WHERE id = ? OR id = ?').get(creatorId, partnerId) as { email?: string; phone?: string; branch_id?: string } | undefined;
+      if (u) {
+        const uEmail = (u.email || '').toLowerCase();
+        const uPhone = (u.phone || '').replace(/[^0-9]/g, '');
+        if (u.branch_id === 'br_satara_01' || uEmail === 'kanase.hrishi@gmail.com' || uEmail.includes('lendbridge') || uPhone.includes('9049301089')) {
+          isCreatorSatara = true;
+        }
+      }
+    } catch {}
+  }
+
+  if (
+    branchId === 'br_satara_01' ||
+    branchId === 'STR01' ||
+    branchName?.toLowerCase().includes('satara') ||
+    (coBrandName && coBrandName.toLowerCase().includes('lendbridge')) ||
+    isCreatorSatara
+  ) {
+    isCoBranded = true;
+    coBrandName = 'Lendbridge Capital';
+    coBrandLogoUrl = '/lendbridge-logo.png';
+    coBrandTagline = 'In strategic loan distribution partnership with Money Shelter Pvt. Ltd.';
+    branchName = branchName || 'Satara Branch';
+  }
+
   return {
     id: String(row.id),
     tenantId: String(row.tenant_id || row.tenantId || 'default'),
@@ -827,19 +874,25 @@ export function createInquiryFromCard(data: {
   const isRM = user?.role === 'RELATIONSHIP_MANAGER';
 
   const isLendbridgeOrSataraUser =
-    Boolean(user?.email && (user.email.toLowerCase().includes('lendbridge') || user.email.toLowerCase().includes('satara'))) ||
-    Boolean(user?.name && (user.name.toLowerCase().includes('lendbridge') || user.name.toLowerCase().includes('satara')));
-
-  if ((!branchId || branchId === 'default') && isLendbridgeOrSataraUser) {
-    branchId = 'br_satara_01';
-  }
+    Boolean(user?.email && (user.email.toLowerCase().includes('lendbridge') || user.email.toLowerCase().includes('satara') || user.email.toLowerCase() === 'kanase.hrishi@gmail.com')) ||
+    Boolean(user?.name && (user.name.toLowerCase().includes('lendbridge') || user.name.toLowerCase().includes('satara'))) ||
+    Boolean(user?.phone && user.phone.includes('9049301089')) ||
+    Boolean(user?.partnerCode && user.partnerCode.startsWith('LBC-STR')) ||
+    branchId === 'br_satara_01' ||
+    branchId === 'STR01';
 
   let isCoBranded = 0;
   let coBrandName: string | null = null;
   let coBrandLogoUrl: string | null = null;
   let coBrandTagline: string | null = null;
 
-  if (branchId && branchId !== 'default') {
+  if (isLendbridgeOrSataraUser) {
+    branchId = 'br_satara_01';
+    isCoBranded = 1;
+    coBrandName = 'Lendbridge Capital';
+    coBrandLogoUrl = '/lendbridge-logo.png';
+    coBrandTagline = 'In strategic loan distribution partnership with Money Shelter Pvt. Ltd.';
+  } else if (branchId && branchId !== 'default') {
     try {
       const bRow = db
         .prepare('SELECT id, is_co_branded, co_brand_name, co_brand_logo_url, co_brand_tagline FROM branches WHERE id = ? OR code = ? OR name = ?')
@@ -924,19 +977,25 @@ export function createDirectPartnerApplication(data: {
   const status = data.status || 'DOCUMENTS_IN';
 
   const isLendbridgeOrSataraUser =
-    Boolean(user?.email && (user.email.toLowerCase().includes('lendbridge') || user.email.toLowerCase().includes('satara'))) ||
-    Boolean(user?.name && (user.name.toLowerCase().includes('lendbridge') || user.name.toLowerCase().includes('satara')));
-
-  if ((!branchId || branchId === 'default') && isLendbridgeOrSataraUser) {
-    branchId = 'br_satara_01';
-  }
+    Boolean(user?.email && (user.email.toLowerCase().includes('lendbridge') || user.email.toLowerCase().includes('satara') || user.email.toLowerCase() === 'kanase.hrishi@gmail.com')) ||
+    Boolean(user?.name && (user.name.toLowerCase().includes('lendbridge') || user.name.toLowerCase().includes('satara'))) ||
+    Boolean(user?.phone && user.phone.includes('9049301089')) ||
+    Boolean(user?.partnerCode && user.partnerCode.startsWith('LBC-STR')) ||
+    branchId === 'br_satara_01' ||
+    branchId === 'STR01';
 
   let isCoBranded = 0;
   let coBrandName: string | null = null;
   let coBrandLogoUrl: string | null = null;
   let coBrandTagline: string | null = null;
 
-  if (branchId && branchId !== 'default') {
+  if (isLendbridgeOrSataraUser) {
+    branchId = 'br_satara_01';
+    isCoBranded = 1;
+    coBrandName = 'Lendbridge Capital';
+    coBrandLogoUrl = '/lendbridge-logo.png';
+    coBrandTagline = 'In strategic loan distribution partnership with Money Shelter Pvt. Ltd.';
+  } else if (branchId && branchId !== 'default') {
     try {
       const bRow = db
         .prepare('SELECT id, is_co_branded, co_brand_name, co_brand_logo_url, co_brand_tagline FROM branches WHERE id = ? OR code = ? OR name = ?')

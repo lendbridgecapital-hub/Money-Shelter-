@@ -741,12 +741,48 @@ function ensureLendbridgeAndBranchIntegrity(data) {
       lbUser.branch_id = 'br_satara_01';
     }
 
-    // Also ensure Tejas and Prafulla belong to Satara
+    // Also ensure Tejas, Prafulla, and Hrishi (9049301089) belong to Satara
     for (const u of data.users) {
-      if (u.email && (u.email.toLowerCase().includes('tejas') || u.email.toLowerCase().includes('prafulla'))) {
-        if (!u.branch_id || u.branch_id === 'default') {
-          u.branch_id = 'br_satara_01';
+      if (!u) continue;
+      const email = String(u.email || '').toLowerCase();
+      const phone = String(u.phone || '').replace(/[^0-9]/g, '');
+      const pCode = String(u.partner_code || u.partnerCode || '');
+      if (
+        email.includes('tejas') ||
+        email.includes('prafulla') ||
+        email === 'kanase.hrishi@gmail.com' ||
+        email.includes('lendbridge') ||
+        phone === '9049301089' ||
+        pCode.startsWith('LBC-STR')
+      ) {
+        u.branch_id = 'br_satara_01';
+        if (!u.city) u.city = 'Satara';
+        if (pCode && pCode.startsWith('MS-PNE-')) {
+          const updatedCode = pCode.replace('MS-PNE-', 'LBC-STR-');
+          u.partner_code = updatedCode;
+          if (u.partnerCode) u.partnerCode = updatedCode;
         }
+      }
+    }
+  }
+
+  // Ensure all Satara branch or Lendbridge applications are properly tagged and co-branded
+  if (Array.isArray(data.loan_applications)) {
+    for (const app of data.loan_applications) {
+      if (!app) continue;
+      const bId = String(app.branch_id || app.branchId || '');
+      const cbName = String(app.co_brand_name || app.coBrandName || '');
+      if (
+        bId === 'br_satara_01' ||
+        bId === 'STR01' ||
+        bId.toLowerCase().includes('satara') ||
+        cbName.toLowerCase().includes('lendbridge')
+      ) {
+        app.branch_id = 'br_satara_01';
+        app.is_co_branded = 1;
+        app.co_brand_name = 'Lendbridge Capital';
+        app.co_brand_logo_url = '/lendbridge-logo.png';
+        app.co_brand_tagline = 'In strategic loan distribution partnership with Money Shelter Pvt. Ltd.';
       }
     }
   }

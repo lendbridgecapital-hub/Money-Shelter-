@@ -30,11 +30,13 @@ export function listBranchesWithCounts(tenantId = 'default'): BranchWithCounts[]
 }
 
 export function getBranchById(id: string): Branch | undefined {
+  if (!id) return undefined;
   const row = db
-    .prepare('SELECT * FROM branches WHERE id = ?')
-    .get(id) as Record<string, unknown> | undefined;
+    .prepare('SELECT * FROM branches WHERE id = ? OR code = ?')
+    .get(id, id) as Record<string, unknown> | undefined;
 
-  return row ? mapRowToBranch(row) : undefined;
+  if (row) return mapRowToBranch(row);
+  return getBranchByCodeOrSlug(id);
 }
 
 export function getBranchByCodeOrSlug(identifier: string, tenantId = 'default'): Branch | undefined {
@@ -285,11 +287,33 @@ export function deleteBranch(id: string): void {
 }
 
 function mapRowToBranch(row: Record<string, unknown>): Branch {
+  const id = String(row.id);
+  const code = String(row.code);
+  const name = String(row.name);
+
+  let isCoBranded = Boolean(row.is_co_branded || row.isCoBranded);
+  let coBrandName = row.co_brand_name || row.coBrandName ? String(row.co_brand_name || row.coBrandName) : null;
+  let coBrandLogoUrl = row.co_brand_logo_url || row.coBrandLogoUrl ? String(row.co_brand_logo_url || row.coBrandLogoUrl) : null;
+  let coBrandTagline = row.co_brand_tagline || row.coBrandTagline ? String(row.co_brand_tagline || row.coBrandTagline) : null;
+
+  // Enforce Lendbridge Capital co-branding for Satara branch
+  if (
+    id === 'br_satara_01' ||
+    code === 'STR01' ||
+    name.toLowerCase().includes('satara') ||
+    (coBrandName && coBrandName.toLowerCase().includes('lendbridge'))
+  ) {
+    isCoBranded = true;
+    coBrandName = 'Lendbridge Capital';
+    coBrandLogoUrl = '/lendbridge-logo.png';
+    coBrandTagline = coBrandTagline || 'In strategic loan distribution partnership with Money Shelter Pvt. Ltd.';
+  }
+
   return {
-    id: String(row.id),
+    id,
     tenantId: String(row.tenant_id || row.tenantId || 'default'),
-    name: String(row.name),
-    code: String(row.code),
+    name,
+    code,
     type: (row.type as Branch['type']) || 'BRANCH',
     status: (row.status as Branch['status']) || 'APPROVED',
     mappedBranchId: row.mapped_branch_id || row.mappedBranchId ? String(row.mapped_branch_id || row.mappedBranchId) : null,
@@ -300,10 +324,10 @@ function mapRowToBranch(row: Record<string, unknown>): Branch {
     dedicatedRmId: row.dedicated_rm_id || row.dedicatedRmId ? String(row.dedicated_rm_id || row.dedicatedRmId) : null,
     dedicatedRmName: row.dedicated_rm_name || row.dedicatedRmName ? String(row.dedicated_rm_name || row.dedicatedRmName) : null,
     developerName: row.developer_name || row.developerName ? String(row.developer_name || row.developerName) : null,
-    isCoBranded: Boolean(row.is_co_branded || row.isCoBranded),
-    coBrandName: row.co_brand_name || row.coBrandName ? String(row.co_brand_name || row.coBrandName) : null,
-    coBrandLogoUrl: row.co_brand_logo_url || row.coBrandLogoUrl ? String(row.co_brand_logo_url || row.coBrandLogoUrl) : null,
-    coBrandTagline: row.co_brand_tagline || row.coBrandTagline ? String(row.co_brand_tagline || row.coBrandTagline) : null,
+    isCoBranded,
+    coBrandName,
+    coBrandLogoUrl,
+    coBrandTagline,
     createdAt: String(row.created_at || row.createdAt || ''),
     updatedAt: String(row.updated_at || row.updatedAt || ''),
   };
