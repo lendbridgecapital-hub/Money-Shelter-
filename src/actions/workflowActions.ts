@@ -16,7 +16,9 @@ import { syncDatabase } from '@/lib/db';
 import { saveUploadedFile, MAX_FILE_SIZE } from '@/lib/uploads';
 import type { ApplicationStatus, Bank, Role, LoanType } from '@/types/db';
 import type { ActionResult } from '@/actions/settingsActions';
+import { sendMail } from '@/lib/mail';
 import {
+  getBaseUrl,
   notifyTouchpoint02_SentToBank,
   notifyTouchpoint03_DocumentsRequired,
   notifyTouchpoint04_DocumentsReUploaded,
@@ -216,6 +218,39 @@ export async function submitRemarkAction(
           title: notifTitle,
           message: notifMsg,
         });
+      }
+    }
+
+    // EMAIL ALERT: Notify lendbridgecapital@gmail.com of recorded activity/query if not already handled by TP03/TP08
+    if (status !== 'DOCUMENTS_REQUIRED' && status !== 'REJECTED') {
+      try {
+        const baseUrl = getBaseUrl();
+        const caseUrl = `${baseUrl}/branch/requests/${application.id}`;
+        await sendMail({
+          to: 'lendbridgecapital@gmail.com',
+          tenantId: application.tenantId,
+          subject: `📝 Loan Case Activity Recorded: #${application.id.slice(-6)} — ${application.fullName || 'Customer'} (${status})`,
+          html: `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 24px; border: 1px solid #e2e8f0; border-radius: 12px; color: #1e293b; background-color: #ffffff;">
+              <h2 style="color: #1e40af; margin-top: 0;">Case Activity / Query Logged</h2>
+              <p>A new activity or query update has been recorded on loan case <strong>#${application.id.slice(-6)}</strong>.</p>
+              <div style="background-color: #f8fafc; border-left: 4px solid #1e40af; padding: 14px 18px; margin: 20px 0; border-radius: 6px;">
+                <p style="margin: 4px 0;"><strong>Customer Name:</strong> ${application.fullName || 'Customer'}</p>
+                <p style="margin: 4px 0;"><strong>Case Status:</strong> ${status}</p>
+                <p style="margin: 4px 0;"><strong>Author:</strong> ${user.name} (${user.role})</p>
+                <p style="margin: 4px 0;"><strong>Remark / Query:</strong> "${remark.trim()}"</p>
+              </div>
+              <p style="margin: 24px 0;">
+                <a href="${caseUrl}" style="background-color: #1e40af; color: #ffffff; padding: 12px 20px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">
+                  Open Case in Portal →
+                </a>
+              </p>
+              <p style="color: #64748b; font-size: 13px;">Money Shelter / Lendbridge Capital Automated Workflow</p>
+            </div>
+          `,
+        });
+      } catch (mailErr) {
+        console.warn('[submitRemarkAction] Activity email notification failed:', mailErr);
       }
     }
 

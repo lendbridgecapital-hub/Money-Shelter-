@@ -15,7 +15,7 @@ import * as workflowRepo from '@/lib/repos/workflowRepo';
 import { syncDatabase } from '@/lib/db';
 import { getDocumentGroupsForApplication } from '@/lib/documentChecklist';
 import { LOAN_TYPE_LABELS } from '@/lib/format';
-import { notifyTouchpoint01_CustomerSubmitted } from '@/lib/touchpoints';
+import { notifyTouchpoint01_CustomerSubmitted, notifyTouchpoint04_DocumentsReUploaded } from '@/lib/touchpoints';
 import type { LoanType, IncomeType } from '@/types/db';
 
 export type SubmitResult = { ok: false; error: string } | { ok: true };
@@ -221,6 +221,35 @@ export async function submitDigitalCardInquiryAction(formData: FormData): Promis
     // MAIN SYSTEM SYNC: Flush inquiry lead directly to Neon PostgreSQL
     await syncDatabase();
 
+    // EMAIL ALERT: Notify lendbridgecapital@gmail.com with advisor in CC
+    const productLabel = LOAN_TYPE_LABELS[loanType] || loanType;
+    try {
+      await sendMail({
+        to: 'lendbridgecapital@gmail.com',
+        cc: advisor.email && advisor.email.toLowerCase() !== 'lendbridgecapital@gmail.com' ? advisor.email : undefined,
+        subject: `🔔 Direct Inquiry via Digital Card — ${fullName} (${advisor.name})`,
+        html: `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 24px; border: 1px solid #e2e8f0; border-radius: 12px; color: #1e293b; background-color: #ffffff;">
+            <h2 style="color: #1e40af; margin-top: 0;">New Direct Digital Card Inquiry</h2>
+            <p>A customer has submitted a loan inquiry through <strong>${advisor.name}</strong>'s Digital Business Card.</p>
+            <div style="background-color: #f8fafc; border-left: 4px solid #1e40af; padding: 14px 18px; margin: 20px 0; border-radius: 6px;">
+              <p style="margin: 4px 0;"><strong>Customer Name:</strong> ${fullName}</p>
+              <p style="margin: 4px 0;"><strong>Mobile:</strong> <a href="tel:${cleanMobile}">${cleanMobile}</a></p>
+              ${email ? `<p style="margin: 4px 0;"><strong>Email:</strong> <a href="mailto:${email}">${email}</a></p>` : ''}
+              <p style="margin: 4px 0;"><strong>Product:</strong> ${productLabel}</p>
+              ${loanAmount > 0 ? `<p style="margin: 4px 0;"><strong>Requested Amount:</strong> ₹${loanAmount.toLocaleString('en-IN')}</p>` : ''}
+              ${city ? `<p style="margin: 4px 0;"><strong>City:</strong> ${city}</p>` : ''}
+              ${notes ? `<p style="margin: 4px 0;"><strong>Notes / Requirement:</strong> ${notes}</p>` : ''}
+              <p style="margin: 4px 0;"><strong>Assigned Financial Advisor:</strong> ${advisor.name} (${advisor.role})</p>
+            </div>
+            <p style="color: #64748b; font-size: 13px; margin-top: 24px;">Money Shelter / Lendbridge Capital Digital Platform</p>
+          </div>
+        `,
+      });
+    } catch (mailErr) {
+      console.warn('[submitDigitalCardInquiryAction] Email dispatch failed:', mailErr);
+    }
+
     return {
       ok: true,
       message: `Thank you, ${fullName}! Your inquiry has been sent directly to ${advisor.name}. They will contact you shortly on ${cleanMobile}.`,
@@ -304,6 +333,12 @@ export async function uploadCustomerRequiredDocumentAction(
           message: `Applicant ${application.fullName || 'Customer'} uploaded all requested documents for Case #${application.id.slice(-6)}.`,
         });
       }
+
+      try {
+        await notifyTouchpoint04_DocumentsReUploaded(application, { tenantId: application.tenantId });
+      } catch (tpErr) {
+        console.warn('[uploadCustomerRequiredDocumentAction] Error notifying TP04:', tpErr);
+      }
     } else {
       statusHistoryRepo.addStatusHistory({
         applicationId: application.id,
@@ -376,6 +411,33 @@ export async function submitGeneralWebsiteInquiryAction(
     revalidatePath('/dashboard');
 
     await syncDatabase();
+
+    // EMAIL ALERT: Send instant lead alert to lendbridgecapital@gmail.com
+    const productLabel = LOAN_TYPE_LABELS[loanType] || loanType;
+    try {
+      await sendMail({
+        to: 'lendbridgecapital@gmail.com',
+        subject: `🔔 Direct Website Loan Inquiry — ${fullName} (${productLabel})`,
+        html: `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 24px; border: 1px solid #e2e8f0; border-radius: 12px; color: #1e293b; background-color: #ffffff;">
+            <h2 style="color: #059669; margin-top: 0;">New Direct Website Loan Inquiry</h2>
+            <p>A new customer inquiry has just been submitted through the main website.</p>
+            <div style="background-color: #f0fdf4; border-left: 4px solid #059669; padding: 14px 18px; margin: 20px 0; border-radius: 6px;">
+              <p style="margin: 4px 0;"><strong>Customer Name:</strong> ${fullName}</p>
+              <p style="margin: 4px 0;"><strong>Mobile:</strong> <a href="tel:${cleanMobile}">${cleanMobile}</a></p>
+              ${email ? `<p style="margin: 4px 0;"><strong>Email:</strong> <a href="mailto:${email}">${email}</a></p>` : ''}
+              <p style="margin: 4px 0;"><strong>Product:</strong> ${productLabel}</p>
+              ${loanAmount > 0 ? `<p style="margin: 4px 0;"><strong>Requested Amount:</strong> ₹${loanAmount.toLocaleString('en-IN')}</p>` : ''}
+              ${city ? `<p style="margin: 4px 0;"><strong>City:</strong> ${city}</p>` : ''}
+              ${notes ? `<p style="margin: 4px 0;"><strong>Customer Notes:</strong> ${notes}</p>` : ''}
+            </div>
+            <p style="color: #64748b; font-size: 13px; margin-top: 24px;">Automated Alert from Money Shelter / Lendbridge Capital</p>
+          </div>
+        `,
+      });
+    } catch (mailErr) {
+      console.warn('[submitGeneralWebsiteInquiryAction] Email dispatch failed:', mailErr);
+    }
 
     return {
       ok: true,

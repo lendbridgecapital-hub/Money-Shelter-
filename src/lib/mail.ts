@@ -10,6 +10,8 @@ export interface SendMailOptions {
   from?: string;
   tenantId?: string;
   existingLogId?: string;
+  cc?: string | string[];
+  bcc?: string | string[];
 }
 
 export interface SendMailResult {
@@ -19,7 +21,7 @@ export interface SendMailResult {
   error?: string;
 }
 
-export async function sendMail({ to, subject, html, from, tenantId, existingLogId }: SendMailOptions): Promise<SendMailResult> {
+export async function sendMail({ to, subject, html, from, tenantId, existingLogId, cc, bcc }: SendMailOptions): Promise<SendMailResult> {
   const settings = await getCompanySettings(tenantId || 'default');
 
   // Support database company settings with environment variable fallbacks
@@ -30,10 +32,13 @@ export async function sendMail({ to, subject, html, from, tenantId, existingLogI
   const smtpPassword = settings.smtpPassword || process.env.SMTP_PASSWORD || process.env.SMTP_PASS || process.env.EMAIL_SERVER_PASSWORD || '';
   const fromName = settings.smtpFromName || process.env.SMTP_FROM_NAME || settings.companyName || 'Money Shelter';
 
+  const ccStr = cc ? (Array.isArray(cc) ? cc.join(', ') : cc) : '';
+  const toDisplay = ccStr ? `${to} (CC: ${ccStr})` : to;
+
   // Either reuse existing log entry (when re-initiating/re-sending) or log as new
   const logId = existingLogId || logEmail({
     tenantId: tenantId || 'default',
-    toEmail: to,
+    toEmail: toDisplay,
     subject,
     bodyHtml: html,
     status: smtpHost && smtpUser ? 'SENT' : 'SMTP_NOT_CONFIGURED',
@@ -61,6 +66,27 @@ export async function sendMail({ to, subject, html, from, tenantId, existingLogI
       const senderEmail = smtpUser || settings.officialEmail || 'lendbridgecapital@gmail.com';
       const senderDisplayName = fromName || settings.companyName || 'Lendbridge Capital Notifications';
 
+      const brevoBody: any = {
+        sender: { name: senderDisplayName, email: senderEmail },
+        to: [{ email: to }],
+        subject,
+        htmlContent: html,
+      };
+
+      if (cc) {
+        const ccList = (Array.isArray(cc) ? cc : [cc]).map((e) => String(e).trim()).filter(Boolean);
+        if (ccList.length > 0) {
+          brevoBody.cc = ccList.map((email) => ({ email }));
+        }
+      }
+
+      if (bcc) {
+        const bccList = (Array.isArray(bcc) ? bcc : [bcc]).map((e) => String(e).trim()).filter(Boolean);
+        if (bccList.length > 0) {
+          brevoBody.bcc = bccList.map((email) => ({ email }));
+        }
+      }
+
       const resp = await fetch('https://api.brevo.com/v3/smtp/email', {
         method: 'POST',
         headers: {
@@ -68,12 +94,7 @@ export async function sendMail({ to, subject, html, from, tenantId, existingLogI
           'api-key': brevoKey,
           'content-type': 'application/json',
         },
-        body: JSON.stringify({
-          sender: { name: senderDisplayName, email: senderEmail },
-          to: [{ email: to }],
-          subject,
-          htmlContent: html,
-        }),
+        body: JSON.stringify(brevoBody),
       });
 
       const resJson = await resp.json();
@@ -96,18 +117,34 @@ export async function sendMail({ to, subject, html, from, tenantId, existingLogI
   if (resendKey) {
     try {
       const fromAddr = from || (fromName ? `"${fromName}" <${smtpUser}>` : smtpUser);
+      const resendBody: any = {
+        from: fromAddr,
+        to: [to],
+        subject,
+        html,
+      };
+
+      if (cc) {
+        const ccList = (Array.isArray(cc) ? cc : [cc]).map((e) => String(e).trim()).filter(Boolean);
+        if (ccList.length > 0) {
+          resendBody.cc = ccList;
+        }
+      }
+
+      if (bcc) {
+        const bccList = (Array.isArray(bcc) ? bcc : [bcc]).map((e) => String(e).trim()).filter(Boolean);
+        if (bccList.length > 0) {
+          resendBody.bcc = bccList;
+        }
+      }
+
       const resp = await fetch('https://api.resend.com/emails', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${resendKey}`,
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          from: fromAddr,
-          to: [to],
-          subject,
-          html,
-        }),
+        body: JSON.stringify(resendBody),
       });
 
       const resJson = await resp.json();
@@ -187,12 +224,16 @@ export async function sendMail({ to, subject, html, from, tenantId, existingLogI
         ? `"${fromName}" <${smtpUser}>`
         : smtpUser);
 
-    const info = await transporter.sendMail({
+    const mailOptions: any = {
       from: fromAddress,
       to,
       subject,
       html,
-    });
+    };
+    if (cc) mailOptions.cc = Array.isArray(cc) ? cc.join(', ') : cc;
+    if (bcc) mailOptions.bcc = Array.isArray(bcc) ? bcc.join(', ') : bcc;
+
+    const info = await transporter.sendMail(mailOptions);
 
     updateEmailLog(logId, {
       status: 'SENT',

@@ -169,13 +169,17 @@ export async function notifyTouchpoint01_CustomerSubmitted(
   const handlingBranch = branch?.mappedBranchId ? getBranchById(branch.mappedBranchId) : undefined;
   const alertRecipient = isSataraBranchCase
     ? 'lendbridgecapital@gmail.com'
-    : (branch?.email || handlingBranch?.email || settings.officialEmail);
+    : (branch?.email || handlingBranch?.email || settings.officialEmail || 'lendbridgecapital@gmail.com');
   const fromBranch = isSataraBranchCase && settings.smtpUser ? `"Lendbridge Capital Notifications" <${settings.smtpUser}>` : undefined;
 
-  if (alertRecipient) {
+  const targetRecipient = alertRecipient || 'lendbridgecapital@gmail.com';
+  const ccRecipient = targetRecipient.toLowerCase() !== 'lendbridgecapital@gmail.com' ? 'lendbridgecapital@gmail.com' : undefined;
+
+  if (targetRecipient) {
     try {
       await sendMail({
-        to: alertRecipient,
+        to: targetRecipient,
+        cc: ccRecipient,
         from: fromBranch,
         tenantId,
         subject: `🔔 New Loan Application Received — ${fullName} (${branchName})`,
@@ -211,10 +215,11 @@ export async function notifyTouchpoint01_CustomerSubmitted(
   }
 
   // Also send to handling branch email if distinct from site email
-  if (handlingBranch?.email && handlingBranch.email !== alertRecipient) {
+  if (handlingBranch?.email && handlingBranch.email !== targetRecipient) {
     try {
       await sendMail({
         to: handlingBranch.email,
+        cc: 'lendbridgecapital@gmail.com',
         tenantId,
         subject: `🔔 Operations Alert: Site Project Application Received — ${fullName} (${branchName})`,
         html: `
@@ -298,6 +303,7 @@ export async function notifyTouchpoint02_SentToBank(
       try {
         await sendMail({
           to: partner.email,
+          cc: 'lendbridgecapital@gmail.com',
           tenantId,
           subject: `Loan File Dispatched to Bank: ${bankName} — ${fullName}`,
           html: `
@@ -373,42 +379,42 @@ export async function notifyTouchpoint03_DocumentsRequired(
     } catch {}
   }
 
-  // 3. Email Notification: Actionable Deficiency Notice to Partner
-  if (partnerId) {
-    const partner = getUserById(partnerId);
-    if (partner?.email) {
-      const docListHtml = requiredDocTitles && requiredDocTitles.length > 0
-        ? `<div style="margin-top: 10px;"><strong>Missing Documents Requested:</strong><ul style="margin: 6px 0 0 16px; padding: 0;">${requiredDocTitles.map((d) => `<li style="margin-bottom: 4px;">${d}</li>`).join('')}</ul></div>`
-        : '';
+  // 3. Email Notification: Actionable Deficiency Notice to Partner & Ops Desk
+  const partner = partnerId ? getUserById(partnerId) : undefined;
+  const docListHtml = requiredDocTitles && requiredDocTitles.length > 0
+    ? `<div style="margin-top: 10px;"><strong>Missing Documents Requested:</strong><ul style="margin: 6px 0 0 16px; padding: 0;">${requiredDocTitles.map((d) => `<li style="margin-bottom: 4px;">${d}</li>`).join('')}</ul></div>`
+    : '';
 
-      try {
-        await sendMail({
-          to: partner.email,
-          tenantId,
-          subject: `Action Required: Additional Documents Requested for ${fullName}`,
-          html: `
-            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 24px; border: 1px solid #e2e8f0; border-radius: 12px; color: #1e293b; background-color: #ffffff;">
-              <h2 style="color: #d97706; margin-top: 0;">⚠️ Action Required: Additional Documents Requested</h2>
-              <p>Dear <strong>${partner.name}</strong>,</p>
-              <p>The credit appraisal team has raised an operational query for customer <strong>${fullName}</strong> (Case #${caseIdDisplay}).</p>
-              <div style="background-color: #fffbeb; border-left: 4px solid #d97706; padding: 14px 18px; margin: 20px 0; border-radius: 6px;">
-                <p style="margin: 4px 0;"><strong>Query / Remark:</strong> "${remarkText}"</p>
-                ${docListHtml}
-              </div>
-              <p>Please upload the requested paperwork promptly via your portal to resume credit processing:</p>
-              <p style="margin: 24px 0;">
-                <a href="${uploadUrl}" style="background-color: #d97706; color: #ffffff; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">
-                  Upload Requested Documents →
-                </a>
-              </p>
-              <p style="font-size: 13px; color: #64748b;">Portal Link: <a href="${uploadUrl}">${uploadUrl}</a></p>
-              <p style="color: #64748b; font-size: 13px; margin-top: 24px;">Warm regards,<br/><strong>${companyName} Operations Team</strong></p>
-            </div>
-          `,
-        });
-      } catch {}
-    }
-  }
+  const targetPartnerEmail = partner?.email || 'lendbridgecapital@gmail.com';
+  const ccPartnerEmail = targetPartnerEmail.toLowerCase() !== 'lendbridgecapital@gmail.com' ? 'lendbridgecapital@gmail.com' : undefined;
+
+  try {
+    await sendMail({
+      to: targetPartnerEmail,
+      cc: ccPartnerEmail,
+      tenantId,
+      subject: `Action Required: Additional Documents Requested for ${fullName}`,
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 24px; border: 1px solid #e2e8f0; border-radius: 12px; color: #1e293b; background-color: #ffffff;">
+          <h2 style="color: #d97706; margin-top: 0;">⚠️ Action Required: Additional Documents Requested</h2>
+          <p>Dear <strong>${partner?.name || 'Partner'}</strong>,</p>
+          <p>The credit appraisal team has raised an operational query for customer <strong>${fullName}</strong> (Case #${caseIdDisplay}).</p>
+          <div style="background-color: #fffbeb; border-left: 4px solid #d97706; padding: 14px 18px; margin: 20px 0; border-radius: 6px;">
+            <p style="margin: 4px 0;"><strong>Query / Remark:</strong> "${remarkText}"</p>
+            ${docListHtml}
+          </div>
+          <p>Please upload the requested paperwork promptly via your portal to resume credit processing:</p>
+          <p style="margin: 24px 0;">
+            <a href="${uploadUrl}" style="background-color: #d97706; color: #ffffff; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">
+              Upload Requested Documents →
+            </a>
+          </p>
+          <p style="font-size: 13px; color: #64748b;">Portal Link: <a href="${uploadUrl}">${uploadUrl}</a></p>
+          <p style="color: #64748b; font-size: 13px; margin-top: 24px;">Warm regards,<br/><strong>${companyName} Operations Team</strong></p>
+        </div>
+      `,
+    });
+  } catch {}
 }
 
 /**
@@ -464,12 +470,17 @@ export async function notifyTouchpoint04_DocumentsReUploaded(
   // 3. Email Notification: Internal Status Email
   const branch = application.branchId ? getBranchById(application.branchId) : undefined;
   const isSataraBranchCase = isSataraContext(application) || (branch ? isSataraContext({ branchId: branch.id, branchName: branch.name }) : false);
-  const alertRecipient = isSataraBranchCase ? 'lendbridgecapital@gmail.com' : (branch?.email || settings.officialEmail);
+  const alertRecipient = isSataraBranchCase ? 'lendbridgecapital@gmail.com' : (branch?.email || settings.officialEmail || 'lendbridgecapital@gmail.com');
   const fromAlert = isSataraBranchCase && settings.smtpUser ? `"Lendbridge Capital Notifications" <${settings.smtpUser}>` : undefined;
-  if (alertRecipient) {
+
+  const targetRecipient = alertRecipient || 'lendbridgecapital@gmail.com';
+  const ccRecipient = targetRecipient.toLowerCase() !== 'lendbridgecapital@gmail.com' ? 'lendbridgecapital@gmail.com' : undefined;
+
+  if (targetRecipient) {
     try {
       await sendMail({
-        to: alertRecipient,
+        to: targetRecipient,
+        cc: ccRecipient,
         from: fromAlert,
         tenantId,
         subject: `🔔 Documents Re-Uploaded — ${fullName} (Case #${caseIdDisplay})`,
@@ -552,6 +563,7 @@ export async function notifyTouchpoint05_LoanSanctioned(
     try {
       await sendMail({
         to: application.email,
+        cc: 'lendbridgecapital@gmail.com',
         tenantId,
         subject: `Congratulations! Your Loan Sanction Offer is Ready — ${companyName}`,
         html: `
@@ -634,12 +646,17 @@ export async function notifyTouchpoint06_OfferAccepted(
   // 3. Email Notification: Operations Final Order Copy
   const branch = application.branchId ? getBranchById(application.branchId) : undefined;
   const isSataraBranchCase = isSataraContext(application) || (branch ? isSataraContext({ branchId: branch.id, branchName: branch.name }) : false);
-  const alertRecipient = isSataraBranchCase ? 'lendbridgecapital@gmail.com' : (branch?.email || settings.officialEmail);
+  const alertRecipient = isSataraBranchCase ? 'lendbridgecapital@gmail.com' : (branch?.email || settings.officialEmail || 'lendbridgecapital@gmail.com');
   const fromAlert = isSataraBranchCase && settings.smtpUser ? `"Lendbridge Capital Notifications" <${settings.smtpUser}>` : undefined;
-  if (alertRecipient) {
+
+  const targetRecipient = alertRecipient || 'lendbridgecapital@gmail.com';
+  const ccRecipient = targetRecipient.toLowerCase() !== 'lendbridgecapital@gmail.com' ? 'lendbridgecapital@gmail.com' : undefined;
+
+  if (targetRecipient) {
     try {
       await sendMail({
-        to: alertRecipient,
+        to: targetRecipient,
+        cc: ccRecipient,
         from: fromAlert,
         tenantId,
         subject: `🔔 Customer Acceptance Recorded — ${fullName} (Ref: ${acceptanceRef})`,
@@ -706,6 +723,7 @@ export async function notifyTouchpoint07_LoanDisbursed(
     try {
       await sendMail({
         to: partner.email,
+        cc: 'lendbridgecapital@gmail.com',
         tenantId,
         subject: `Disbursement Confirmed & Commission Credit Notice — ${fullName}`,
         html: `
@@ -790,6 +808,7 @@ export async function notifyTouchpoint08_LoanRejected(
       try {
         await sendMail({
           to: partner.email,
+          cc: 'lendbridgecapital@gmail.com',
           tenantId,
           subject: `Loan Application Update: Case #${caseIdDisplay} Closed / Rejected`,
           html: `
@@ -865,6 +884,7 @@ export async function notifyTouchpoint09_PartnerOnboarded(
     try {
       await sendMail({
         to: partner.email,
+        cc: 'lendbridgecapital@gmail.com',
         tenantId,
         subject: `Welcome to ${companyName} — Partner Application Received`,
         html: `
@@ -880,6 +900,26 @@ export async function notifyTouchpoint09_PartnerOnboarded(
             </div>
             <p>Our Central Support desk will verify your details within 24 business hours. You will receive your official Partner Code and Certificate upon approval.</p>
             <p style="color: #64748b; font-size: 13px; margin-top: 24px;">Warm regards,<br/><strong>${companyName} Partner Network</strong></p>
+          </div>
+        `,
+      });
+    } catch {}
+  } else {
+    // If partner doesn't have email registered, send notice to admin
+    try {
+      await sendMail({
+        to: 'lendbridgecapital@gmail.com',
+        tenantId,
+        subject: `New Partner Onboarding Submission — ${partnerName}`,
+        html: `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 24px; border: 1px solid #e2e8f0; border-radius: 12px; color: #1e293b; background-color: #ffffff;">
+            <h2 style="color: #1e40af; margin-top: 0;">New Partner Onboarding Submission</h2>
+            <p>A new partner has registered on the platform:</p>
+            <div style="background-color: #f8fafc; border-left: 4px solid #1e40af; padding: 14px 18px; margin: 20px 0; border-radius: 6px;">
+              <p style="margin: 4px 0;"><strong>Partner Name:</strong> ${partnerName}</p>
+              <p style="margin: 4px 0;"><strong>Mobile:</strong> ${partner.phone || '—'}</p>
+              <p style="margin: 4px 0;"><strong>Assigned RM:</strong> ${rmName}</p>
+            </div>
           </div>
         `,
       });
@@ -930,6 +970,7 @@ export async function notifyTouchpoint10_PartnerApproved(
     try {
       await sendMail({
         to: partner.email,
+        cc: 'lendbridgecapital@gmail.com',
         tenantId,
         subject: `Welcome to ${companyName} — Channel Partner Approval & Certificate Issued`,
         html: `
@@ -994,6 +1035,7 @@ export async function notifyTouchpoint11_PartnerDocsRequested(
     try {
       await sendMail({
         to: partner.email,
+        cc: 'lendbridgecapital@gmail.com',
         tenantId,
         subject: `Action Required: Additional Documents Requested for Your Partner Account`,
         html: `
@@ -1052,6 +1094,7 @@ export async function notifyTouchpoint12_ClawbackRecorded(
     try {
       await sendMail({
         to: partner.email,
+        cc: 'lendbridgecapital@gmail.com',
         tenantId,
         subject: `Notice of Commission Adjustment / Clawback — ₹${amount.toLocaleString('en-IN')}`,
         html: `
@@ -1073,3 +1116,4 @@ export async function notifyTouchpoint12_ClawbackRecorded(
     } catch {}
   }
 }
+
