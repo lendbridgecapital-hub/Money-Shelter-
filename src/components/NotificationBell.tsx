@@ -33,6 +33,7 @@ export default function NotificationBell({ align = 'auto' }: NotificationBellPro
   const [popoverStyle, setPopoverStyle] = useState<React.CSSProperties>({});
   const [soundMode, setSoundMode] = useState<SoundMode>('voice');
   const [activeToast, setActiveToast] = useState<PartnerNotification | null>(null);
+  const [permissionState, setPermissionState] = useState<NotificationPermission | 'unsupported'>('default');
 
   const buttonRef = useRef<HTMLButtonElement>(null);
   const popoverRef = useRef<HTMLDivElement>(null);
@@ -40,9 +41,88 @@ export default function NotificationBell({ align = 'auto' }: NotificationBellPro
   const toastTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const router = useRouter();
 
-  // Load sound mode on client mount
+  function getNotificationUrl(notif: PartnerNotification): string {
+    if (notif.applicationId && notif.applicationId !== 'partner-onboarding' && notif.applicationId !== 'general') {
+      return `/branch/requests/${notif.applicationId}`;
+    } else if (notif.applicationId === 'partner-onboarding') {
+      return '/admin/partner-requests';
+    }
+    return '/dashboard';
+  }
+
+  const showDeviceNotification = useCallback(
+    async (item: { title: string; body: string; url?: string; id?: string }) => {
+      if (typeof window === 'undefined' || !('Notification' in window)) return;
+      if (Notification.permission !== 'granted') return;
+
+      const targetUrl = item.url || '/dashboard';
+      const options = {
+        body: item.body,
+        icon: '/logo.png',
+        badge: '/logo.png',
+        tag: item.id || `notif-${Date.now()}`,
+        data: { url: targetUrl },
+        vibrate: [200, 100, 200],
+      };
+
+      try {
+        if ('serviceWorker' in navigator) {
+          const reg = await navigator.serviceWorker.ready;
+          if (reg && reg.showNotification) {
+            await reg.showNotification(item.title, options);
+            return;
+          }
+        }
+      } catch {}
+
+      try {
+        const sysNotif = new Notification(item.title, options);
+        sysNotif.onclick = () => {
+          window.focus();
+          router.push(targetUrl);
+        };
+      } catch {}
+    },
+    [router]
+  );
+
+  const requestDeviceNotificationPermission = useCallback(async () => {
+    if (typeof window === 'undefined' || !('Notification' in window)) {
+      alert('Device push notifications are not supported in this browser.');
+      return;
+    }
+    try {
+      unlockAudio();
+      const perm = await Notification.requestPermission();
+      setPermissionState(perm);
+      if (perm === 'granted') {
+        showDeviceNotification({
+          title: 'Device Notifications Active! 🔔',
+          body: 'You will now receive alerts in your phone & desktop notification tray.',
+          url: '/dashboard',
+          id: 'welcome-device-alert',
+        });
+      }
+    } catch (err) {
+      console.warn('[Notification] Permission request failed:', err);
+    }
+  }, [showDeviceNotification]);
+
+  // Load sound mode and check device notification permission on client mount
   useEffect(() => {
     setSoundMode(getNotificationSoundMode());
+    if (typeof window !== 'undefined') {
+      if ('Notification' in window) {
+        setPermissionState(Notification.permission);
+      } else {
+        setPermissionState('unsupported');
+      }
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('/sw.js').catch((err) => {
+          console.warn('[SW] ServiceWorker registration failed:', err);
+        });
+      }
+    }
   }, []);
 
   const loadNotifications = useCallback(async () => {
@@ -70,6 +150,14 @@ export default function NotificationBell({ align = 'auto' }: NotificationBellPro
             const latest = brandNew[0];
             triggerNotificationAlert(latest);
 
+            // Trigger Device / OS System Notification in phone status bar / lock screen
+            showDeviceNotification({
+              title: latest.title,
+              body: latest.message,
+              url: getNotificationUrl(latest),
+              id: latest.id,
+            });
+
             // Show floating real-time in-app toast banner
             setActiveToast(latest);
             if (toastTimeoutRef.current) clearTimeout(toastTimeoutRef.current);
@@ -80,7 +168,7 @@ export default function NotificationBell({ align = 'auto' }: NotificationBellPro
         }
       }
     } catch {}
-  }, []);
+  }, [showDeviceNotification]);
 
   useEffect(() => {
     loadNotifications();
@@ -322,6 +410,51 @@ export default function NotificationBell({ align = 'auto' }: NotificationBellPro
               Test Alert 🔈
             </button>
           </div>
+
+          {/* Device / Phone Tray Notification Bar */}
+          {permissionState === 'default' && (
+            <div className="px-3.5 py-2 bg-amber-50 border-b border-amber-200 flex items-center justify-between text-[11px] text-amber-950">
+              <span className="flex items-center gap-1.5 font-medium">
+                <span>📲</span>
+                <span>Show alerts on phone & lock screen</span>
+              </span>
+              <button
+                type="button"
+                onClick={requestDeviceNotificationPermission}
+                className="px-2.5 py-1 rounded-md bg-amber-600 hover:bg-amber-700 text-white font-bold text-[10px] active:scale-95 transition shadow-2xs"
+              >
+                Allow Alerts
+              </button>
+            </div>
+          )}
+          {permissionState === 'granted' && (
+            <div className="px-3.5 py-1.5 bg-slate-50 border-b border-slate-200/60 flex items-center justify-between text-[10px] text-slate-600">
+              <span className="flex items-center gap-1 text-emerald-700 font-semibold">
+                <span>📱</span>
+                <span>Phone Tray Alerts: Active</span>
+              </span>
+              <button
+                type="button"
+                onClick={() =>
+                  showDeviceNotification({
+                    title: 'Money Shelter Alert 🔔',
+                    body: 'Device notifications are active on your phone & desktop!',
+                    url: '/dashboard',
+                    id: 'test-device-notif',
+                  })
+                }
+                className="text-slate-500 hover:text-emerald-700 underline font-medium active:scale-95"
+              >
+                Test Phone Tray
+              </button>
+            </div>
+          )}
+          {permissionState === 'denied' && (
+            <div className="px-3.5 py-1.5 bg-rose-50 border-b border-rose-200 text-[10px] text-rose-800 flex items-center gap-1.5">
+              <span>⚠️</span>
+              <span>Phone notifications blocked. Allow in site settings to receive alerts.</span>
+            </div>
+          )}
 
           {/* Notification List */}
           <div className="flex-1 overflow-y-auto divide-y divide-slate-100 min-h-0">
