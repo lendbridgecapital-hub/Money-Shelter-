@@ -28,7 +28,10 @@ export default function SubDsaCommandHub({ user }: Props) {
     user.branchId === 'br_satara_01' ||
     user.branchName?.toLowerCase().includes('satara') ||
     user.branchName?.toLowerCase().includes('lendbridge') ||
-    user.email?.toLowerCase().includes('lendbridge')
+    user.email?.toLowerCase().includes('lendbridge') ||
+    user.email === 'kanase.hrishi@gmail.com' ||
+    user.phone?.includes('9049301089') ||
+    user.partnerCode?.startsWith('LBC-STR')
   );
 
   const rawOrigin = typeof window !== 'undefined' ? window.location.origin : '';

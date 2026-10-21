@@ -122,6 +122,16 @@ export async function createApplicationLinkAction(
     const params = new URLSearchParams();
     if (loanType) params.set('loanType', loanType);
     if (incomeType) params.set('incomeType', incomeType);
+    const isSataraLink =
+      application.branchId === 'br_satara_01' ||
+      application.isCoBranded ||
+      user.branchId === 'br_satara_01' ||
+      (user.email && (user.email.toLowerCase().includes('lendbridge') || user.email.toLowerCase() === 'kanase.hrishi@gmail.com')) ||
+      (user.phone && user.phone.includes('9049301089')) ||
+      (user.partnerCode && user.partnerCode.startsWith('LBC-STR'));
+    if (isSataraLink) {
+      params.set('branch', 'br_satara_01');
+    }
     const queryString = params.toString() ? `?${params.toString()}` : '';
     const url = `${cleanBase}/apply/${token}${queryString}`;
 
@@ -367,7 +377,15 @@ export async function submitDirectPartnerLoanAction(formData: FormData): Promise
     });
 
     const cleanBase = getPublicAppBaseUrl();
-    const url = `${cleanBase}/apply/${application.token}`;
+    const isSataraApp =
+      application.branchId === 'br_satara_01' ||
+      application.isCoBranded ||
+      user.branchId === 'br_satara_01' ||
+      (user.email && (user.email.toLowerCase().includes('lendbridge') || user.email.toLowerCase() === 'kanase.hrishi@gmail.com')) ||
+      (user.phone && user.phone.includes('9049301089')) ||
+      (user.partnerCode && user.partnerCode.startsWith('LBC-STR'));
+    const branchQuery = isSataraApp ? '?branch=br_satara_01' : '';
+    const url = `${cleanBase}/apply/${application.token}${branchQuery}`;
 
     // MAIL SYSTEM DISPATCH: Send notification emails to branch and customer
     let emailDispatched = false;
