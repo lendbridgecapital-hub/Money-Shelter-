@@ -198,12 +198,50 @@ export function getApplicationByToken(token: string): LoanApplication | undefine
 
 export async function getApplicationByTokenAsync(token: string): Promise<LoanApplication | undefined> {
   if (!token) return undefined;
-  const { ensureDatabaseReady } = await import('@/lib/db');
+  let clean = String(token).trim().replace(/\/+$/, '');
+  if (clean.includes('?')) clean = clean.split('?')[0];
+  if (clean.includes('&')) clean = clean.split('&')[0];
+  let decoded = clean;
+  try {
+    decoded = decodeURIComponent(clean);
+  } catch {}
+
+  const { ensureDatabaseReady, findLiveApplicationByTokenOrId } = await import('@/lib/db');
   await ensureDatabaseReady();
-  let app = getApplicationByToken(token);
+  let app = getApplicationByToken(clean);
+  if (!app && decoded !== clean) {
+    app = getApplicationByToken(decoded);
+  }
   if (!app) {
     await ensureDatabaseReady(true);
-    app = getApplicationByToken(token);
+    app = getApplicationByToken(clean) || getApplicationByToken(decoded);
+  }
+
+  // FAILSAFE: If still not found in memory, query Neon PostgreSQL live store directly
+  if (!app && typeof findLiveApplicationByTokenOrId === 'function') {
+    const directRow = (await findLiveApplicationByTokenOrId(clean)) || (await findLiveApplicationByTokenOrId(decoded));
+    if (directRow) {
+      app = mapRowToApplication(directRow);
+    }
+  }
+
+  return app;
+}
+
+export async function getApplicationByIdAsync(id: string): Promise<LoanApplication | undefined> {
+  if (!id) return undefined;
+  const { ensureDatabaseReady, findLiveApplicationByTokenOrId } = await import('@/lib/db');
+  await ensureDatabaseReady();
+  let app = getApplicationById(id);
+  if (!app) {
+    await ensureDatabaseReady(true);
+    app = getApplicationById(id);
+  }
+  if (!app && typeof findLiveApplicationByTokenOrId === 'function') {
+    const directRow = await findLiveApplicationByTokenOrId(id);
+    if (directRow) {
+      app = mapRowToApplication(directRow);
+    }
   }
   return app;
 }

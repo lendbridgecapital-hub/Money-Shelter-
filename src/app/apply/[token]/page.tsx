@@ -207,8 +207,19 @@ export default async function CustomerApplyPage({
 
   // Check 7-Day Auto-Expiry or FAILED bucket status
   const nowMs = Date.now();
-  const createdMs = application.createdAt ? new Date(application.createdAt).getTime() : nowMs;
-  const isSevenDaysExpired = application.status === 'LINK_SHARED' && (nowMs - createdMs) >= 7 * 24 * 60 * 60 * 1000;
+  const createdDate = application.createdAt ? new Date(application.createdAt) : null;
+  const createdMs = createdDate && !Number.isNaN(createdDate.getTime()) ? createdDate.getTime() : nowMs;
+  const isUnderSevenDays = createdMs > 1000000000000 && (nowMs - createdMs) < 7 * 24 * 60 * 60 * 1000;
+
+  // Auto-heal: If an application was recently created (within 7 days) but was mistakenly marked FAILED, recover it to LINK_SHARED
+  if (application.status === 'FAILED' && isUnderSevenDays) {
+    try {
+      updateApplicationStatus(application.id, 'LINK_SHARED');
+      application.status = 'LINK_SHARED';
+    } catch {}
+  }
+
+  const isSevenDaysExpired = application.status === 'LINK_SHARED' && createdMs > 1000000000000 && (nowMs - createdMs) >= 7 * 24 * 60 * 60 * 1000;
   const isFailed = application.status === 'FAILED' || isSevenDaysExpired;
 
   if (isFailed) {

@@ -14,6 +14,7 @@ export interface DatabaseAdapter {
   close(): void;
   flush?(): Promise<void>;
   ensureReady?(force?: boolean): Promise<void>;
+  injectApplication?(appRow: Record<string, unknown>): void;
 }
 
 let instance: DatabaseAdapter | null = null;
@@ -839,6 +840,7 @@ function createPortableStorage(storageFilePath: string): DatabaseAdapter {
             fs.writeFileSync(storageFilePath, JSON.stringify(cachedData, null, 2), 'utf8');
             lastDiskMtime = fs.statSync(storageFilePath).mtimeMs;
           } catch {}
+          lastDiskMtime = Date.now();
           console.log(`[db] ✓ Proactively hydrated from Neon PostgreSQL: ${cachedData.loan_applications?.length || 0} applications, ${cachedData.users?.length || 0} users`);
         }
       }
@@ -886,6 +888,12 @@ function createPortableStorage(storageFilePath: string): DatabaseAdapter {
   }
 
   function loadData(): StorageData {
+    // If we have already successfully hydrated from Neon, NEVER revert back to local disk files
+    if (hasHydratedFromNeon && Array.isArray(cachedData.users) && cachedData.users.length > 0) {
+      ensureLendbridgeAndBranchIntegrity(cachedData);
+      return cachedData;
+    }
+
     if (!hasHydratedFromNeon && getDbUrl() && !initialHydrationStarted) {
       initialHydrationStarted = true;
       hydrateFromNeon();
@@ -903,7 +911,6 @@ function createPortableStorage(storageFilePath: string): DatabaseAdapter {
             sanitizeBlobs(parsed);
             cachedData = { ...defaultData, ...parsed };
             ensureLendbridgeAndBranchIntegrity(cachedData);
-            hasHydratedFromNeon = true;
             return cachedData;
           }
         }
@@ -915,7 +922,7 @@ function createPortableStorage(storageFilePath: string): DatabaseAdapter {
       return cachedData;
     }
 
-    // 2. Check initial-data.json
+    // 2. Check initial-data.json (Seed fallback only, do NOT flag as Neon hydrated)
     const initialSeedFilePath = path.resolve(process.cwd(), 'data/initial-data.json');
     if (fs.existsSync(initialSeedFilePath)) {
       try {
@@ -926,7 +933,6 @@ function createPortableStorage(storageFilePath: string): DatabaseAdapter {
           sanitizeBlobs(parsed);
           cachedData = { ...defaultData, ...parsed };
           ensureLendbridgeAndBranchIntegrity(cachedData);
-          hasHydratedFromNeon = true;
           return cachedData;
         }
       } catch {}
@@ -1049,6 +1055,22 @@ function createPortableStorage(storageFilePath: string): DatabaseAdapter {
     },
     ensureReady(force?: boolean): Promise<void> {
       return ensureReady(force);
+    },
+    injectApplication(appRow: Record<string, unknown>) {
+      if (!appRow || !appRow.id) return;
+      if (!Array.isArray(cachedData.loan_applications)) {
+        cachedData.loan_applications = [];
+      }
+      const existingIdx = cachedData.loan_applications.findIndex(
+        (a: any) => a && (a.id === appRow.id || (a.token && appRow.token && a.token === appRow.token))
+      );
+      if (existingIdx >= 0) {
+        cachedData.loan_applications[existingIdx] = { ...cachedData.loan_applications[existingIdx], ...appRow };
+      } else {
+        cachedData.loan_applications.unshift(appRow);
+      }
+      memoryData = cachedData;
+      hasHydratedFromNeon = true;
     },
     prepare(sql: string): Statement {
       const cleanSql = sql.replace(/\s+/g, ' ').trim();
@@ -1277,5 +1299,67 @@ export async function ensureDatabaseReady(force = false): Promise<void> {
     await instance.ensureReady(force);
   }
 }
+
+export function injectApplicationIntoMemory(appRow: Record<string, unknown>): void {
+  if (!appRow || !appRow.id) return;
+  if (!instance) {
+    instance = initDatabase();
+  }
+  if (typeof (instance as any).injectApplication === 'function') {
+    (instance as any).injectApplication(appRow);
+  }
+}
+
+export async function findLiveApplicationByTokenOrId(tokenOrId: string): Promise<Record<string, unknown> | null> {
+  const dbUrl = process.env.DATABASE_URL || process.env.POSTGRES_URL;
+  if (!tokenOrId) return null;
+  const clean = String(tokenOrId).trim().toLowerCase();
+
+  // 1. Direct PostgreSQL Neon query failsafe
+  if (dbUrl) {
+    try {
+      let rows: any[] = [];
+      try {
+        const { neon } = require('@neondatabase/serverless');
+        const sql = neon(dbUrl);
+        const queryFn = sql.query ? sql.query.bind(sql) : sql;
+        rows = await queryFn(
+          `SELECT elem FROM quickfinsure_store, jsonb_array_elements(COALESCE(value->'loan_applications', value->'default'->'loan_applications', '[]'::jsonb)) AS elem 
+           WHERE lower(elem->>'token') = $1 OR lower(elem->>'id') = $1 LIMIT 1;`,
+          [clean]
+        );
+      } catch (_) {
+        const { Pool } = require('pg');
+        const pool = new Pool({
+          connectionString: dbUrl,
+          ssl: { rejectUnauthorized: false },
+        });
+        try {
+          const res = await pool.query(
+            `SELECT elem FROM quickfinsure_store, jsonb_array_elements(COALESCE(value->'loan_applications', value->'default'->'loan_applications', '[]'::jsonb)) AS elem 
+             WHERE lower(elem->>'token') = $1 OR lower(elem->>'id') = $1 LIMIT 1;`,
+            [clean]
+          );
+          rows = res.rows || [];
+        } finally {
+          await pool.end().catch(() => {});
+        }
+      }
+
+      if (rows && rows.length > 0) {
+        const found = rows[0].elem || rows[0];
+        if (found && typeof found === 'object') {
+          injectApplicationIntoMemory(found);
+          return found;
+        }
+      }
+    } catch (err) {
+      console.warn('[db] findLiveApplicationByTokenOrId error:', (err as Error).message);
+    }
+  }
+
+  return null;
+}
+
 
 
