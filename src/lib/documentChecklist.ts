@@ -554,6 +554,29 @@ export function getDocumentGroupsForApplication(
         ],
       });
     }
+
+    if (loanType === 'CAR_LOAN' || loanType === 'VEHICLE_LOAN' || loanType.includes('CAR')) {
+      groups.push({
+        category: 'CAR_QUOTATION',
+        title: 'Car Quotation / Dealer Proforma Invoice',
+        description: 'Official price quotation or on-road price break-up / proforma invoice from authorized car showroom or dealer (if finalized).',
+        required: false,
+        fields: [
+          {
+            name: 'car_quotation',
+            label: 'Car Quotation / Dealer Proforma Invoice Copy',
+            helperText: 'PDF, JPG, or PNG up to 10MB (Dealer quotation or booking receipt)',
+            accept: '.pdf,image/*',
+          },
+          {
+            name: 'car_quotation_extra',
+            label: 'Additional Vehicle Document (Booking receipt / Old RC copy for used car)',
+            helperText: 'Optional supplementary vehicle document',
+            accept: '.pdf,image/*',
+          },
+        ],
+      });
+    }
   }
 
   // Supporting other docs

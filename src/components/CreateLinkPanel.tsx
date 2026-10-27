@@ -8,7 +8,7 @@ import { LOAN_TYPE_LABELS } from '@/lib/format';
 export const LOAN_OPTIONS: { id: LoanType; label: string; icon: string; description: string }[] = [
   { id: 'HOME_LOAN', label: 'Home Loan', icon: '🏠', description: 'Purchase, construction, plot & flat' },
   { id: 'PERSONAL_LOAN', label: 'Personal Loan', icon: '👤', description: 'Quick unsecured cash & personal needs' },
-  { id: 'CAR_LOAN', label: 'Car / Vehicle Loan', icon: '🚗', description: 'New & pre-owned 4-wheeler & auto finance' },
+  { id: 'CAR_LOAN', label: 'New / Used Car Loan', icon: '🚗', description: 'New car quotation & pre-owned 4-wheeler auto finance' },
   { id: 'BUSINESS_LOAN', label: 'Business Loan', icon: '🏢', description: 'SME, working capital & machinery' },
   { id: 'LOAN_AGAINST_PROPERTY', label: 'Loan Against Property (LAP)', icon: '🏦', description: 'Mortgage against residential or commercial asset' },
   { id: 'EDUCATION_LOAN', label: 'Education Loan', icon: '🎓', description: 'Higher studies in India or abroad' },

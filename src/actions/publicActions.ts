@@ -130,6 +130,8 @@ export async function submitCustomerApplication(token: string, formData: FormDat
           label = `Residence Proof — ${residenceProofType}`;
         } else if (group.category === 'PROPERTY_PAPERS' && propertyPaperType) {
           label = `Property Paper — ${propertyPaperType}`;
+        } else if (group.category === 'CAR_QUOTATION') {
+          label = field.name === 'car_quotation_extra' ? 'Vehicle Document (Additional / Old RC)' : 'Car Quotation / Dealer Invoice';
         }
         documentsRepo.addDocument({
           applicationId: application.id,

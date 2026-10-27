@@ -33,6 +33,7 @@ const CATEGORY_TITLES: Record<string, string> = {
   BANK_STATEMENT: 'Bank Statements & Financials',
   LOAN_TRACK_RECORD: 'Track Record of Loans (Running Loans / RTR)',
   PROPERTY_PAPERS: 'Property Documents',
+  CAR_QUOTATION: 'Car Quotation / Vehicle Proforma',
   FORECLOSURE_LETTER: 'Foreclosure Letter / Loan Repayment Statement (SOA)',
   ADDITIONAL_REQUIRED: 'Operational Additional Documents',
   ACCEPTANCE_LETTER: 'Sanction Acceptance Letter',
