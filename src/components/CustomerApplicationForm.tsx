@@ -175,6 +175,7 @@ export default function CustomerApplicationForm({
             >
               <option value="HOME_LOAN">Home Loan</option>
               <option value="PERSONAL_LOAN">Personal Loan</option>
+              <option value="CAR_LOAN">Car / Vehicle Loan</option>
               <option value="BUSINESS_LOAN">Business Loan</option>
               <option value="BALANCE_TRANSFER">Balance Transfer</option>
               <option value="LOAN_AGAINST_PROPERTY">Loan Against Property (LAP)</option>

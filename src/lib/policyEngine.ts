@@ -82,6 +82,7 @@ export function getMaxTenureYearsForLoanType(loanType?: string | null): number {
   const lt = loanType.toUpperCase().trim();
   if (lt === 'HOME_LOAN' || lt === 'HOME') return 30;
   if (lt === 'PERSONAL_LOAN' || lt === 'PERSONAL' || lt === 'PL') return 7;
+  if (lt === 'CAR_LOAN' || lt === 'CAR' || lt === 'VEHICLE_LOAN') return 8;
   if (lt === 'BUSINESS_LOAN' || lt === 'BUSINESS' || lt === 'BL') return 7;
   if (lt === 'LOAN_AGAINST_PROPERTY' || lt === 'LAP') return 20;
   if (lt === 'EDUCATION_LOAN' || lt === 'EDUCATION') return 15;
@@ -96,6 +97,7 @@ export function getDefaultTenureYearsForLoanType(loanType?: string | null): numb
   const lt = loanType.toUpperCase().trim();
   if (lt === 'HOME_LOAN' || lt === 'HOME') return 20;
   if (lt === 'PERSONAL_LOAN' || lt === 'PERSONAL' || lt === 'PL') return 5;
+  if (lt === 'CAR_LOAN' || lt === 'CAR' || lt === 'VEHICLE_LOAN') return 5;
   if (lt === 'BUSINESS_LOAN' || lt === 'BUSINESS' || lt === 'BL') return 3;
   if (lt === 'LOAN_AGAINST_PROPERTY' || lt === 'LAP') return 15;
   if (lt === 'EDUCATION_LOAN' || lt === 'EDUCATION') return 7;

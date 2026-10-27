@@ -2,7 +2,20 @@
 
 import React, { useState, useTransition } from 'react';
 import { createApplicationLinkAction } from '@/actions/applicationActions';
-import type { Branch } from '@/types/db';
+import type { Branch, LoanType } from '@/types/db';
+import { LOAN_TYPE_LABELS } from '@/lib/format';
+
+export const LOAN_OPTIONS: { id: LoanType; label: string; icon: string; description: string }[] = [
+  { id: 'HOME_LOAN', label: 'Home Loan', icon: '🏠', description: 'Purchase, construction, plot & flat' },
+  { id: 'PERSONAL_LOAN', label: 'Personal Loan', icon: '👤', description: 'Quick unsecured cash & personal needs' },
+  { id: 'CAR_LOAN', label: 'Car / Vehicle Loan', icon: '🚗', description: 'New & pre-owned 4-wheeler & auto finance' },
+  { id: 'BUSINESS_LOAN', label: 'Business Loan', icon: '🏢', description: 'SME, working capital & machinery' },
+  { id: 'LOAN_AGAINST_PROPERTY', label: 'Loan Against Property (LAP)', icon: '🏦', description: 'Mortgage against residential or commercial asset' },
+  { id: 'EDUCATION_LOAN', label: 'Education Loan', icon: '🎓', description: 'Higher studies in India or abroad' },
+  { id: 'GOLD_LOAN', label: 'Gold Loan', icon: '🪙', description: 'Instant liquidity against physical gold jewelry' },
+  { id: 'BALANCE_TRANSFER', label: 'Balance Transfer', icon: '🔄', description: 'Refinance existing loans at lower interest rate' },
+  { id: 'OTHERS', label: 'Other / Custom Loan', icon: '📋', description: 'General requirement or custom financing' },
+];
 
 interface CreateLinkPanelProps {
   companyName: string;
@@ -20,6 +33,7 @@ export default function CreateLinkPanel({
   branches = [],
 }: CreateLinkPanelProps) {
   const [isPending, startTransition] = useTransition();
+  const [selectedLoanType, setSelectedLoanType] = useState<LoanType>('HOME_LOAN');
   const [selectedBranchId, setSelectedBranchId] = useState<string>(() => {
     if (userBranch?.id) return userBranch.id;
     if (companyName?.toLowerCase().includes('lendbridge')) {
@@ -65,7 +79,7 @@ export default function CreateLinkPanel({
     startTransition(async () => {
       try {
         const branchToUse = selectedBranchId || (isSatara ? 'br_satara_01' : undefined);
-        const res = await createApplicationLinkAction(undefined, branchToUse, undefined);
+        const res = await createApplicationLinkAction(selectedLoanType, branchToUse, undefined);
         if (!res || !res.ok) {
           setError((res && res.error) || 'Could not generate application link. Your session may have expired. Please refresh or log in.');
         } else if (res.url) {
@@ -79,9 +93,21 @@ export default function CreateLinkPanel({
             rawOrigin.includes('onrender.com') ||
             rawOrigin.includes('render.com');
           const publicBase = isInvalidOrigin ? productionHost : rawOrigin;
-          const cleanServerUrl = (res.url || '').replace(/https?:\/\/[^/]*onrender\.com/gi, productionHost);
-          const branchParam = isSatara ? '?branch=br_satara_01' : '';
-          const finalUrl = res.token ? `${publicBase}/apply/${res.token}${branchParam}` : `${cleanServerUrl}${branchParam}`;
+
+          let queryString = `?loanType=${encodeURIComponent(selectedLoanType)}`;
+          if (res.url) {
+            try {
+              const parsedUrl = new URL(res.url, productionHost);
+              if (parsedUrl.search) {
+                queryString = parsedUrl.search;
+              }
+            } catch {}
+          }
+          if (isSatara && !queryString.includes('branch=br_satara_01')) {
+            queryString += queryString.includes('?') ? '&branch=br_satara_01' : '?branch=br_satara_01';
+          }
+
+          const finalUrl = res.token ? `${publicBase}/apply/${res.token}${queryString}` : `${publicBase}/apply/${queryString}`;
           setGeneratedUrl(finalUrl);
           setToken(res.token || null);
         }
@@ -100,6 +126,7 @@ export default function CreateLinkPanel({
 
   const advisorName = partnerName || 'Financial Advisor';
   const shareUrl = generatedUrl || '';
+  const loanLabel = LOAN_TYPE_LABELS[selectedLoanType] || 'Loan';
 
   const displayBrandName = isSatara
     ? (activeBranch?.coBrandName || userBranch?.coBrandName || 'Lendbridge Capital')
@@ -107,18 +134,22 @@ export default function CreateLinkPanel({
 
   // WhatsApp message: Advisor name, brand name, and link on a separate line for 100% clickability
   const siteTagText = isSite && activeBranch ? ` for ${activeBranch.name}` : (isSatara ? ' (Satara Branch)' : '');
-  const whatsappMessage = `Hello! I am your financial advisor ${advisorName}. Please complete your loan application with ${displayBrandName}${siteTagText} by uploading your documents here:
+  const whatsappMessage = `Hello! I am your financial advisor ${advisorName}. Please complete your ${loanLabel} application with ${displayBrandName}${siteTagText} by uploading your documents here:
 
-${shareUrl}`;
+${shareUrl}
+
+(Note: You can review and modify your loan type directly on the form if needed).`;
 
   const whatsappHref = `https://api.whatsapp.com/send?text=${encodeURIComponent(whatsappMessage)}`;
 
-  const emailSubject = `Loan Application Link — ${displayBrandName}${siteTagText}`;
+  const emailSubject = `${loanLabel} Application Link — ${displayBrandName}${siteTagText}`;
   const emailBody = `Hello! I am your financial advisor ${advisorName}.
 
-Please complete your loan application with ${displayBrandName}${siteTagText} by uploading your documents here:
+Please complete your ${loanLabel} application with ${displayBrandName}${siteTagText} by uploading your documents here:
 
 ${shareUrl}
+
+(Note: You can review and modify your loan type directly on the form if needed).
 
 Warm regards,
 ${advisorName}
@@ -190,6 +221,86 @@ ${displayBrandName}`;
         </div>
       )}
 
+      {/* 1. Required Loan Type Selector (Asked First) */}
+      <div className="p-4 sm:p-5 bg-gradient-to-br from-slate-50/90 via-indigo-50/20 to-white border border-slate-200/90 rounded-2xl space-y-3.5 shadow-2xs">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 pb-2.5 border-b border-slate-100">
+          <div>
+            <label className="block text-xs font-bold text-slate-900 uppercase tracking-wider flex items-center gap-1.5">
+              <span>🏷️</span>
+              <span>Step 1: Select Desired Loan Type</span>
+              <span className="text-rose-500">*</span>
+            </label>
+            <p className="text-[11px] text-slate-500 mt-0.5">
+              Choose the loan product for your direct lead. This will be automatically pre-filled in the customer&apos;s application form.
+            </p>
+          </div>
+          <span className="text-[10px] font-semibold text-emerald-800 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200 self-start sm:self-auto shrink-0 flex items-center gap-1">
+            <span>✓</span>
+            <span>Pre-fills form • Customer can modify</span>
+          </span>
+        </div>
+
+        {/* Visual Pill / Card Grid */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-2.5">
+          {LOAN_OPTIONS.map((opt) => {
+            const isSelected = selectedLoanType === opt.id;
+            return (
+              <button
+                key={opt.id}
+                type="button"
+                onClick={() => {
+                  setSelectedLoanType(opt.id);
+                  if (generatedUrl) {
+                    setGeneratedUrl(null);
+                    setToken(null);
+                  }
+                }}
+                className={`flex items-start gap-2.5 p-3 rounded-xl border text-left transition-all active:scale-95 ${
+                  isSelected
+                    ? isSite
+                      ? 'bg-amber-50/90 border-amber-500 ring-2 ring-amber-500/30 text-amber-950 shadow-xs font-bold'
+                      : 'bg-emerald-50/90 border-emerald-500 ring-2 ring-emerald-500/30 text-emerald-950 shadow-xs font-bold'
+                    : 'bg-white border-slate-200 hover:border-slate-300 hover:bg-slate-50/50 text-slate-700'
+                }`}
+              >
+                <span className="text-xl sm:text-2xl shrink-0 mt-0.5">{opt.icon}</span>
+                <div className="min-w-0">
+                  <div className="text-xs font-bold truncate flex items-center gap-1">
+                    <span>{opt.label}</span>
+                    {isSelected && <span className="text-emerald-600 font-extrabold text-[11px]">✓</span>}
+                  </div>
+                  <p className="text-[10px] text-slate-500 line-clamp-1 mt-0.5">{opt.description}</p>
+                </div>
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Alternative Quick Select Dropdown */}
+        <div className="pt-1">
+          <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">
+            Or select from dropdown:
+          </label>
+          <select
+            value={selectedLoanType}
+            onChange={(e) => {
+              setSelectedLoanType(e.target.value as LoanType);
+              if (generatedUrl) {
+                setGeneratedUrl(null);
+                setToken(null);
+              }
+            }}
+            className="w-full px-3 py-2 text-xs font-semibold bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500"
+          >
+            {LOAN_OPTIONS.map((opt) => (
+              <option key={opt.id} value={opt.id}>
+                {opt.icon} {opt.label} — {opt.description}
+              </option>
+            ))}
+          </select>
+        </div>
+      </div>
+
       <div className="text-center py-2 sm:py-4">
         <div
           className={`w-14 h-14 rounded-2xl mx-auto flex items-center justify-center text-white shadow-sm mb-3.5 ${
@@ -205,10 +316,10 @@ ${displayBrandName}`;
           )}
         </div>
         <h2 className="text-base sm:text-lg font-bold text-slate-900 mb-1">
-          {isSite ? 'Direct Project Customer Application Link' : 'Single-Use Customer Application Link'}
+          {isSite ? `Direct Project ${loanLabel} Application Link` : `Single-Use ${loanLabel} Application Link`}
         </h2>
         <p className="text-xs text-slate-500 max-w-md mx-auto leading-relaxed">
-          Generate an encrypted single-use link for your customer. Once submitted with KYC docs, it auto-expires and notifies your assigned desk and dedicated RM.
+          Generate an encrypted single-use link for your customer for <strong>{loanLabel}</strong>. The loan type will be pre-filled on their form, and customer can adjust if needed.
         </p>
 
         <div className="mt-5">
@@ -222,14 +333,14 @@ ${displayBrandName}`;
             {isPending ? (
               <>
                 <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                <span>Generating Secure Link…</span>
+                <span>Generating {loanLabel} Link…</span>
               </>
             ) : (
               <>
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" />
                 </svg>
-                <span>Generate Application Link</span>
+                <span>Generate {loanLabel} Link</span>
               </>
             )}
           </button>

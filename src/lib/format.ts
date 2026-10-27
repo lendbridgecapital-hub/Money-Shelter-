@@ -39,6 +39,7 @@ export const PARTNER_STATUS_LABELS: Record<PartnerStatus, { label: string; color
 export const LOAN_TYPE_LABELS: Record<LoanType, string> = {
   HOME_LOAN: 'Home Loan',
   PERSONAL_LOAN: 'Personal Loan',
+  CAR_LOAN: 'Car / Vehicle Loan',
   BUSINESS_LOAN: 'Business Loan',
   LOAN_AGAINST_PROPERTY: 'Loan Against Property (LAP)',
   EDUCATION_LOAN: 'Education Loan',

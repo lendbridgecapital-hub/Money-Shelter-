@@ -26,6 +26,7 @@ export type ApplicationStatus =
 export type LoanType =
   | 'HOME_LOAN'
   | 'PERSONAL_LOAN'
+  | 'CAR_LOAN'
   | 'BUSINESS_LOAN'
   | 'LOAN_AGAINST_PROPERTY'
   | 'EDUCATION_LOAN'
